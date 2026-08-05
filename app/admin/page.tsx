@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation';
 import { ajouterCours, desactiverCours, definirSemaineReference, attribuerFormule, suspendreAcces, decompterCoaching, modifierQuotaRestant, modifierExpiration, gelerPass, degelerPass } from './actions';
 import { FORMULES } from '@/lib/formules';
 
+export const dynamic = 'force-dynamic';
+
 const JOURS = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
 
 export default async function AdminPage() {

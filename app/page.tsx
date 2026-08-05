@@ -2,6 +2,8 @@ import { supabaseServer } from '@/lib/supabase-server';
 import { calculerSemaine } from '@/lib/semaine';
 import { reserverCours } from './booking/actions';
 
+export const dynamic = 'force-dynamic';
+
 const JOURS = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
 
 export default async function PlanningPage() {
