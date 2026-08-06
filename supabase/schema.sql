@@ -128,8 +128,8 @@ create policy "profil_select_own" on profiles for select using (auth.uid() = id)
 create policy "profil_update_own" on profiles for update using (auth.uid() = id);
 
 -- Tout le monde connecté peut lire le planning
-create policy "cours_select_all" on cours for select using (auth.role() = 'authenticated');
-create policy "semaine_ref_select_all" on semaine_reference for select using (auth.role() = 'authenticated');
+create policy "cours_select_all" on cours for select using (true);
+create policy "semaine_ref_select_all" on semaine_reference for select using (true);
 
 -- Un élève voit ses réservations, en crée, les annule
 create policy "reservations_select_own" on reservations for select using (auth.uid() = eleve_id);
