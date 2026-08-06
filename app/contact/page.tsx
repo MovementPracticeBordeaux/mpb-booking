@@ -40,6 +40,9 @@ export default function ContactPage() {
           <p style={{ margin: '0 0 8px', color: COULEURS.texte }}>Movement Practice Bordeaux</p>
           <p style={{ margin: '0 0 8px', color: COULEURS.texteAtt }}>Darwin écosystème, 87 Quai des Queyries, 33100 Bordeaux</p>
           <p style={{ margin: '0 0 8px', color: COULEURS.texteAtt }}>Lun · Mer · Ven, 9h–21h</p>
+          <p style={{ margin: '0 0 8px' }}>
+            <a href="tel:+33620477064" style={{ color: COULEURS.texte, textDecoration: 'none' }}>06 20 47 70 64</a>
+          </p>
           <a href="https://www.instagram.com/movement_practice_bordeaux/" target="_blank" rel="noopener noreferrer" style={{ color: '#FF2D78', textDecoration: 'none', fontWeight: 600 }}>
             @movement_practice_bordeaux sur Instagram →
           </a>
