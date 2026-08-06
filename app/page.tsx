@@ -75,9 +75,9 @@ export default function AccueilPage() {
       {/* MÉTHODE */}
       <section style={{ maxWidth: 860, margin: '0 auto', padding: '64px 20px', display: 'flex', gap: 32, flexWrap: 'wrap-reverse', alignItems: 'center' }}>
         <img
-          src="/sylvain-methode.jpg"
-          alt="Pratique du mouvement en extérieur, Movement Practice Bordeaux"
-          style={{ width: 220, height: 280, objectFit: 'cover', borderRadius: 16, flexShrink: 0 }}
+          src="/sylvain-handstand-spot.png"
+          alt="Handstand en pratique du mouvement à Bordeaux"
+          style={{ width: 220, height: 280, objectFit: 'cover', objectPosition: 'center 60%', borderRadius: 16, flexShrink: 0 }}
         />
         <div style={{ flex: 1, minWidth: 260 }}>
           <p style={{ fontSize: 12, letterSpacing: 2, color: COULEURS.texteFaible, marginBottom: 10 }}>LA MÉTHODE</p>
