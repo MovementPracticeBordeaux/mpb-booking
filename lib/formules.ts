@@ -22,9 +22,6 @@ export type Formule = {
 };
 
 export const FORMULES: Record<string, Formule> = {
-  // --- Formule de test temporaire (à retirer une fois les vrais tests faits) ---
-  test_temporaire: { nom: 'Test (1€)', categorie: 'planning', unite: 'séance', quota: 1, validiteMois: 1, prixIndicatif: 1 },
-
   // --- Cours collectifs ---
   illimite: { nom: 'Illimité', categorie: 'planning', unite: null, quota: null, validiteMois: 1, prixIndicatif: 89 },
   mensuel_8: { nom: '8 cours / mois', categorie: 'planning', unite: 'séance', quota: 8, validiteMois: 1, prixIndicatif: 69 },
