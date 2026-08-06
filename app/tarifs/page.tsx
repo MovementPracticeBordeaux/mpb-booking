@@ -23,6 +23,7 @@ async function acheter(priceId: string, formuleNom: string) {
 // ⚠️ Remplace ces price_id par les tiens, créés dans le Dashboard Stripe (Produits > Prix).
 // Tous en "Achat ponctuel" (aucun n'est récurrent).
 const PRICE_IDS: Record<string, string> = {
+  test_temporaire: 'price_1U1LFXA7uUFwYAcPjmdLd5st',
   cours_decouverte: 'price_1U0elPA7uUFwYAcPMLZhjc6x',
   mensuel_4: 'price_1U0fdzA7uUFwYAcPnpkuSxMV',
   mensuel_8: 'price_1U0fegA7uUFwYAcPHADTfVBr',
@@ -38,6 +39,7 @@ const PRICE_IDS: Record<string, string> = {
 };
 
 const GROUPES = [
+  { titre: '🧪 Test (temporaire)', cles: ['test_temporaire'] },
   { titre: 'Cours collectifs', cles: ['cours_decouverte', 'illimite', 'mensuel_8', 'mensuel_4', 'carnet_10', 'carnet_5'] },
   { titre: 'Coaching individuel & Mentorship', cles: ['coaching_unite', 'coaching_carnet_4h', 'coaching_carnet_3h', 'coaching_online', 'mentorship', 'post_mentorship'] },
 ];
