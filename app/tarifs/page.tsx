@@ -38,7 +38,7 @@ const PRICE_IDS: Record<string, string> = {
 };
 
 const GROUPES = [
-  { titre: 'Cours collectifs', cles: ['cours_decouverte', 'illimite', 'mensuel_8', 'mensuel_4', 'carnet_10', 'carnet_5'] },
+  { titre: 'Cours collectifs', cles: ['cours_decouverte', 'mensuel_4', 'mensuel_8', 'illimite', 'carnet_5', 'carnet_10'] },
   { titre: 'Coaching individuel & Mentorship', cles: ['coaching_unite', 'coaching_carnet_4h', 'coaching_carnet_3h', 'coaching_online', 'mentorship', 'post_mentorship'] },
 ];
 

@@ -11,7 +11,7 @@ const DISCIPLINES = [
   { nom: 'Altinha', icone: '/disciplines/altinha.png', desc: 'Jonglerie au pied façon futevôlei, coordination et jeu.' },
 ];
 
-const FORMULES_TEASER = ['cours_decouverte', 'illimite', 'mensuel_8', 'mensuel_4', 'carnet_10', 'carnet_5'];
+const FORMULES_TEASER = ['cours_decouverte', 'mensuel_4', 'mensuel_8', 'illimite', 'carnet_5', 'carnet_10'];
 
 const FAQ = [
   { q: "C'est adapté aux débutants ?", r: 'Oui. Les séances sont accessibles à tous niveaux, avec des options et progressions individuelles.' },
