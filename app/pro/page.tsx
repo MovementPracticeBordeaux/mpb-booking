@@ -3,37 +3,37 @@ import { FORMULES } from '@/lib/formules';
 import Temoignages, { Temoignage } from '../components/Temoignages';
 
 export const metadata = {
-  title: 'Mentorship — Formation Mouvement pour professionnels | Movement Practice Bordeaux',
+  title: 'Mentorship — Mentorat Mouvement | Movement Practice Bordeaux',
   description:
-    'Programme de Mentorship pour professionnels et passionnés du Mouvement à Bordeaux : comprendre, organiser et maîtriser une pratique de calisthenics, handstand et mobilité.',
-  keywords: ['mentorship', 'formation mouvement', 'formation coach sportif', 'Bordeaux', 'calisthenics', 'handstand'],
+    'Mentorat Mouvement à Bordeaux : contenu et accompagnement pour comprendre, organiser et transmettre une pratique de calisthenics, handstand et mobilité.',
+  keywords: ['mentorat mouvement', 'mentorship', 'movement practice', 'Bordeaux', 'calisthenics', 'handstand'],
 };
 
 const OBJECTIFS = [
   'Bâtir des fondations solides',
-  'Comprendre, organiser, maîtriser',
-  'Enseigner le mouvement',
+  'Comprendre et organiser sa pratique',
+  'Pouvoir la transmettre, si tu le souhaites',
 ];
 
 const ETAPES = [
   {
     titre: '1. Comprendre',
-    texte: "Une vision globale de l'univers du Mouvement, à travers ses différents secteurs. Apprendre à analyser et décomposer un mouvement pour mieux le comprendre et le reconstruire efficacement.",
+    texte: "Une vision globale de l'univers du Mouvement, à travers ses différents secteurs. Apprendre à analyser et décomposer un mouvement pour mieux le comprendre.",
   },
   {
     titre: '2. Organiser',
-    texte: "La structure et l'organisation de la progression du pratiquant, à différentes échelles de temps, avec une méthodologie propre à Sylvain pour bâtir un plan de progression clair et cohérent.",
+    texte: "La structure et l'organisation de ta progression, à différentes échelles de temps, avec une méthodologie propre à Sylvain pour bâtir un plan clair et cohérent.",
   },
   {
-    titre: '3. Maîtriser',
-    texte: "L'acquisition d'une vraie maîtrise des outils, de la méthode et des premiers objectifs du programme, en appliquant les connaissances acquises jusqu'aux premiers jalons fixés.",
+    titre: '3. Transmettre',
+    texte: "Une fois les bases acquises et organisées, la possibilité de les partager à ton tour — à toi de voir si tu veux aller jusque-là.",
   },
 ];
 
 const EXPERTISE = [
   'Support théorique sur le Mouvement',
   "Support méthodologique de l'entraînement",
-  'Accès au contenu vidéo online Amplitude',
+  'Accès au contenu vidéo en ligne',
   'Accès aux objectifs du Module 1',
   'Assistance vocale et vidéo avec Sylvain',
 ];
@@ -69,14 +69,14 @@ export default function ProPage() {
       {/* HERO */}
       <section style={{ maxWidth: 720, margin: '0 auto', padding: '64px 20px 40px', textAlign: 'center' }}>
         <p style={{ fontSize: 12, letterSpacing: 3, color: COULEURS.texteFaible, marginBottom: 16 }}>
-          POUR PROFESSIONNELS &amp; PASSIONNÉS
+          POUR LES CURIEUX DU MOUVEMENT
         </p>
         <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 'clamp(28px, 7.5vw, 56px)', lineHeight: 1.08, letterSpacing: 0.5, margin: '0 0 20px' }}>
-          PROGRAMME <span style={GRADIENT_TEXTE}>MENTORSHIP</span>
+          LE <span style={GRADIENT_TEXTE}>MENTORSHIP</span>
         </h1>
         <p style={{ fontSize: 18, color: COULEURS.texteAtt, maxWidth: 560, margin: '0 auto' }}>
-          Une recherche physique profonde du Mouvement, pour construire une vraie boîte à outils —
-          utilisable dans ta pratique personnelle comme dans l'enseignement.
+          Un mentorat, pas un coaching personnalisé : du contenu et un accompagnement pour comprendre et
+          organiser ta pratique du Mouvement dans son ensemble, et pouvoir un jour la transmettre.
         </p>
       </section>
 
@@ -97,14 +97,14 @@ export default function ProPage() {
       <section style={{ maxWidth: 720, margin: '0 auto', padding: '0 20px 64px' }}>
         <p style={{ fontSize: 12, letterSpacing: 2, color: COULEURS.texteFaible, marginBottom: 10 }}>DESCRIPTIF</p>
         <p style={{ color: COULEURS.texteAtt, lineHeight: 1.6, marginBottom: 12 }}>
-          Le Mentorship propose une recherche physique profonde du Mouvement, pour fournir une boîte à
-          outils utilisable dans diverses disciplines sportives de haut niveau comme dans un entraînement
-          personnel.
+          Le Mentorship n'est ni une formation, ni un coaching personnalisé : c'est un mentorat qui donne
+          accès à du contenu et à une assistance pour comprendre et organiser ta pratique du Mouvement —
+          et, si tu le souhaites, pour apprendre à la transmettre à ton tour.
         </p>
         <p style={{ color: COULEURS.texteAtt, lineHeight: 1.6 }}>
-          C'est une formation conçue pour les professionnels et les passionnés qui veulent approfondir
-          leurs connaissances et compétences dans le domaine du Mouvement, avec ou sans objectif
-          d'enseignement.
+          Il s'adresse à celles et ceux qui sont curieux de découvrir le process de Sylvain : appréhender
+          la movement practice dans sa globalité et acquérir l'ensemble des bases pour mieux les faire
+          vivre, dans ta propre pratique comme auprès des autres.
         </p>
       </section>
 
