@@ -35,7 +35,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         backgroundImage: 'url(/texture-beton.jpg)',
         backgroundRepeat: 'repeat',
         backgroundSize: '900px',
-        backgroundBlendMode: 'multiply',
+        backgroundBlendMode: 'soft-light',
       }}>
         <nav style={{
           display: 'flex', flexWrap: 'wrap', gap: 18, padding: '14px 20px',
