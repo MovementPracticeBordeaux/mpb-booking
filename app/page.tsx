@@ -36,9 +36,9 @@ export default function AccueilPage() {
           BORDEAUX RIVE DROITE · DARWIN &amp; LES QUAIS
         </p>
         <img
-          src="https://static.wixstatic.com/media/df5d8f_8626edf8379a437d94db19b060f8c5b9~mv2.png"
+          src="/logo.png"
           alt="Movement Practice Bordeaux"
-          style={{ height: 56, margin: '0 auto 24px', display: 'block' }}
+          style={{ height: 96, margin: '0 auto 20px', display: 'block' }}
         />
         <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 'clamp(32px, 9vw, 76px)', lineHeight: 1.02, letterSpacing: 0.5, margin: '0 0 20px', whiteSpace: 'nowrap' }}>
           MOVEMENT <span style={GRADIENT_TEXTE}>PRACTICE</span>
@@ -70,6 +70,15 @@ export default function AccueilPage() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* PHOTO D'ACTION */}
+      <div style={{ maxHeight: 420, overflow: 'hidden' }}>
+        <img
+          src="/sylvain-handstand-spot.png"
+          alt="Handstand en pratique du mouvement à Bordeaux"
+          style={{ width: '100%', display: 'block', objectFit: 'cover', objectPosition: 'center 30%' }}
+        />
       </div>
 
       {/* MÉTHODE */}
@@ -111,18 +120,25 @@ export default function AccueilPage() {
       </section>
 
       {/* QUI EST SYLVAIN */}
-      <section style={{ maxWidth: 720, margin: '0 auto', padding: '0 20px 64px' }}>
-        <p style={{ fontSize: 12, letterSpacing: 2, color: COULEURS.texteFaible, marginBottom: 10 }}>QUI EST SYLVAIN ?</p>
-        <p style={{ color: COULEURS.texteAtt, lineHeight: 1.6, marginBottom: 12 }}>
-          Movement Practice Bordeaux existe depuis 2018. Sylvain Noury, coach BPJEPS et ancien
-          instructeur de kung-fu, y enseigne une approche du mouvement construite à partir de ses
-          propres années de pratique et de recherche — loin d'un programme standardisé.
-        </p>
-        <p style={{ color: COULEURS.texteAtt, lineHeight: 1.6 }}>
-          Débutants, passionnés ou professionnels en quête de force et de mobilité : son enseignement
-          s'adresse à tous, y compris en intervention dans des studios de yoga. Son travail a été
-          présenté dans plusieurs podcasts et un reportage TF1 en 2024.
-        </p>
+      <section style={{ maxWidth: 860, margin: '0 auto', padding: '0 20px 64px', display: 'flex', gap: 32, flexWrap: 'wrap', alignItems: 'center' }}>
+        <img
+          src="/sylvain-portrait.jpg"
+          alt="Sylvain Noury, coach Movement Practice Bordeaux"
+          style={{ width: 220, height: 280, objectFit: 'cover', borderRadius: 16, flexShrink: 0 }}
+        />
+        <div style={{ flex: 1, minWidth: 260 }}>
+          <p style={{ fontSize: 12, letterSpacing: 2, color: COULEURS.texteFaible, marginBottom: 10 }}>QUI EST SYLVAIN ?</p>
+          <p style={{ color: COULEURS.texteAtt, lineHeight: 1.6, marginBottom: 12 }}>
+            Movement Practice Bordeaux existe depuis 2018. Sylvain Noury, coach BPJEPS et ancien
+            instructeur de kung-fu, y enseigne une approche du mouvement construite à partir de ses
+            propres années de pratique et de recherche — loin d'un programme standardisé.
+          </p>
+          <p style={{ color: COULEURS.texteAtt, lineHeight: 1.6 }}>
+            Débutants, passionnés ou professionnels en quête de force et de mobilité : son enseignement
+            s'adresse à tous, y compris en intervention dans des studios de yoga. Son travail a été
+            présenté dans plusieurs podcasts et un reportage TF1 en 2024.
+          </p>
+        </div>
       </section>
 
       {/* FORMULES TEASER */}
