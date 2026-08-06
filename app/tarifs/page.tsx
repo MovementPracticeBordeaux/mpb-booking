@@ -3,13 +3,21 @@
 import { FORMULES } from '@/lib/formules';
 
 async function acheter(priceId: string, formuleNom: string) {
-  const res = await fetch('/api/stripe/checkout', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ price_id: priceId, formule_nom: formuleNom }),
-  });
-  const data = await res.json();
-  if (data.url) window.location.href = data.url;
+  try {
+    const res = await fetch('/api/stripe/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ price_id: priceId, formule_nom: formuleNom }),
+    });
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      alert('Erreur : ' + (data.error ?? 'réponse inattendue du serveur'));
+    }
+  } catch (e: any) {
+    alert('Erreur réseau : ' + e.message);
+  }
 }
 
 // ⚠️ Remplace ces price_id par les tiens, créés dans le Dashboard Stripe (Produits > Prix).
