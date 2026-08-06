@@ -182,6 +182,12 @@ export default function CoachingPage() {
           </details>
         ))}
       </section>
+
+      {/* FOOTER */}
+      <footer style={{ borderTop: `1px solid ${COULEURS.bordure}`, padding: '32px 20px', fontSize: 13, color: COULEURS.texteFaible }}>
+        <p style={{ margin: '0 0 6px' }}>Movement Practice Bordeaux — Darwin écosystème, 87 Quai des Queyries, 33100 Bordeaux</p>
+        <p style={{ margin: 0 }}>Lun · Mer · Ven, 9h–21h</p>
+      </footer>
     </main>
   );
 }
