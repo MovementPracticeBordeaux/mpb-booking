@@ -12,9 +12,17 @@ export default async function AdminPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const { data: profil } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+  const { data: profil, error: erreurProfil } = await supabase.from('profiles').select('role').eq('id', user.id).single();
   if (!profil || profil.role !== 'admin') {
-    return <main style={{ padding: 20 }}>Accès réservé à l'admin.</main>;
+    return (
+      <main style={{ padding: 20, fontFamily: 'monospace', fontSize: 13, color: '#eee', background: '#111' }}>
+        <p>Accès réservé à l'admin. — DIAGNOSTIC TEMPORAIRE :</p>
+        <p>user.id détecté : {user.id}</p>
+        <p>user.email détecté : {user.email}</p>
+        <p>profil trouvé : {JSON.stringify(profil)}</p>
+        <p>erreur requête : {JSON.stringify(erreurProfil)}</p>
+      </main>
+    );
   }
 
   const { data: ref } = await supabase.from('semaine_reference').select('*').eq('id', 1).single();
