@@ -1,5 +1,6 @@
 import { COULEURS, GRADIENT, GRADIENT_TEXTE, POLICE_DISPLAY, POLICE_CORPS } from '@/lib/theme';
 import { FORMULES } from '@/lib/formules';
+import Temoignages from './components/Temoignages';
 
 const DISCIPLINES = [
   { nom: 'Handstand', icone: '/disciplines/handstand.png', desc: "Équilibre sur les mains, du gainage aux figures libres." },
@@ -109,13 +110,8 @@ export default function AccueilPage() {
         </div>
       </section>
 
-      {/* TÉMOIGNAGE */}
-      <section style={{ maxWidth: 640, margin: '0 auto', padding: '20px 20px 64px', textAlign: 'center' }}>
-        <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 24, lineHeight: 1.4, letterSpacing: 0.3 }}>
-          « Une vraie réappropriation de ma mobilité, et une réconciliation avec le sport. »
-        </p>
-        <p style={{ color: COULEURS.texteFaible, fontSize: 14, marginTop: 12 }}>— Florence, élève</p>
-      </section>
+      {/* TÉMOIGNAGES */}
+      <Temoignages />
 
       {/* QUI EST SYLVAIN */}
       <section style={{ maxWidth: 860, margin: '0 auto', padding: '0 20px 64px', display: 'flex', gap: 32, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -171,7 +167,7 @@ export default function AccueilPage() {
 
       {/* FOOTER */}
       <footer style={{ borderTop: `1px solid ${COULEURS.bordure}`, padding: '32px 20px', fontSize: 13, color: COULEURS.texteFaible }}>
-        <p style={{ margin: '0 0 6px' }}>Amplitude Mouvement — Darwin écosystème, 87 Quai des Queyries, 33100 Bordeaux</p>
+        <p style={{ margin: '0 0 6px' }}>Movement Practice Bordeaux — Darwin écosystème, 87 Quai des Queyries, 33100 Bordeaux</p>
         <p style={{ margin: 0 }}>Lun · Mer · Ven, 9h–21h</p>
       </footer>
     </main>
