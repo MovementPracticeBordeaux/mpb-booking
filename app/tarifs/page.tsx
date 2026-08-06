@@ -58,7 +58,7 @@ export default function TarifsPage({ searchParams }: { searchParams: { erreur?: 
           {groupe.cles.map((cle) => {
             const f = FORMULES[cle];
             return (
-              <div key={cle} style={{ border: '1px solid #333', borderRadius: 8, padding: 16, marginBottom: 12 }}>
+              <div key={cle} id={cle} style={{ border: '1px solid #333', borderRadius: 8, padding: 16, marginBottom: 12, scrollMarginTop: 20 }}>
                 <h3 style={{ margin: '0 0 4px' }}>{f.nom}</h3>
                 <p style={{ fontSize: 12, opacity: 0.6, margin: '0 0 12px' }}>
                   {f.quota ? `${f.quota} ${f.unite}${f.quota > 1 ? 's' : ''}` : 'Illimité'} · valable {f.validiteMois} mois

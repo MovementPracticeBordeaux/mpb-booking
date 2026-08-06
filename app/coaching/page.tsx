@@ -64,15 +64,10 @@ export default function CoachingPage() {
           <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 28, letterSpacing: 0.5, margin: '0 0 16px' }}>
             Coaching présentiel
           </h2>
-          <p style={{ color: COULEURS.texteAtt, lineHeight: 1.6, marginBottom: 12 }}>
-            Séances individuelles sur Bordeaux, adaptées à ton profil, ton niveau et ton objectif : remise
-            en forme, force, mobilité, handstand, locomotion, posture ou projet spécifique. Chaque séance
-            se déroule sur une heure dédiée, avec observation, corrections techniques et consignes
-            immédiates.
-          </p>
           <p style={{ color: COULEURS.texteAtt, lineHeight: 1.6, marginBottom: 16 }}>
-            Le présentiel permet un retour instantané, un contrôle de la technique et une progression
-            accélérée — accessible à tous niveaux, il suffit d'une bonne motivation et d'un objectif clair.
+            Séances individuelles à Bordeaux, adaptées à ton profil et ton objectif : remise en forme,
+            force, mobilité, handstand, locomotion ou projet spécifique. Une heure dédiée, avec
+            observation, corrections techniques et retour instantané pour progresser plus vite.
           </p>
           <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
             {ATOUTS_PRESENTIEL.map((a) => (
@@ -85,10 +80,10 @@ export default function CoachingPage() {
             {CLES_PRESENTIEL.map((cle) => {
               const f = FORMULES[cle];
               return (
-                <div key={cle} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${COULEURS.bordure}`, padding: '8px 0', fontSize: 14 }}>
+                <a key={cle} href={`/tarifs#${cle}`} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${COULEURS.bordure}`, padding: '8px 0', fontSize: 14, textDecoration: 'none', color: 'inherit' }}>
                   <span>{f.nom}</span>
-                  <span style={{ color: COULEURS.texteAtt }}>{f.prixIndicatif} €</span>
-                </div>
+                  <span style={{ color: '#FF2D78', fontWeight: 600 }}>{f.prixIndicatif} € →</span>
+                </a>
               );
             })}
           </div>
@@ -107,16 +102,10 @@ export default function CoachingPage() {
           <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 28, letterSpacing: 0.5, margin: '0 0 16px' }}>
             Coaching Online
           </h2>
-          <p style={{ color: COULEURS.texteAtt, lineHeight: 1.6, marginBottom: 12 }}>
-            Où que tu sois dans le monde et quel que soit ton niveau, un accompagnement à distance : chaque
-            mois, tu reçois un programme d'entraînement personnalisé selon ton objectif — remise en forme
-            générale, mobilité, renforcement fonctionnel, handstand, flexibilité ou locomotion.
-          </p>
           <p style={{ color: COULEURS.texteAtt, lineHeight: 1.6, marginBottom: 16 }}>
-            Le travail se fait via une application dédiée, accessible sur smartphone et ordinateur, avec
-            des séances guidées par tutoriels vidéo et consignes techniques. Un feedback direct par
-            message et vidéo, ainsi qu'une validation régulière de ta progression, t'accompagnent tout au
-            long du mois.
+            Où que tu sois dans le monde, un accompagnement à distance : chaque mois, un programme
+            personnalisé selon ton objectif (remise en forme, mobilité, renforcement, handstand,
+            locomotion), livré via une application dédiée avec tutoriels vidéo et feedback direct.
           </p>
           <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
             {ATOUTS_ONLINE.map((a) => (
@@ -125,10 +114,10 @@ export default function CoachingPage() {
               </li>
             ))}
           </ul>
-          <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${COULEURS.bordure}`, padding: '8px 0', fontSize: 14, maxWidth: 320 }}>
+          <a href="/tarifs#coaching_online" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${COULEURS.bordure}`, padding: '8px 0', fontSize: 14, maxWidth: 320, textDecoration: 'none', color: 'inherit' }}>
             <span>{FORMULES.coaching_online.nom}</span>
-            <span style={{ color: COULEURS.texteAtt }}>{FORMULES.coaching_online.prixIndicatif} € / mois</span>
-          </div>
+            <span style={{ color: '#FF2D78', fontWeight: 600 }}>{FORMULES.coaching_online.prixIndicatif} € / mois →</span>
+          </a>
         </div>
       </section>
 
