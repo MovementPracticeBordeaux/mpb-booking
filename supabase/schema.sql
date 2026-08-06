@@ -109,12 +109,13 @@ create trigger on_auth_user_created
 
 -- Droits d'accès de base (distincts des policies RLS ci-dessus : sans ces
 -- lignes, Postgres refuse l'accès même si les policies RLS sont correctes)
-grant usage on schema public to anon, authenticated;
+grant usage on schema public to anon, authenticated, service_role;
 grant select on public.cours to anon, authenticated;
 grant select on public.semaine_reference to anon, authenticated;
 grant select, update on public.profiles to authenticated;
 grant select, insert, update on public.reservations to authenticated;
 grant select on public.paiements to authenticated;
+grant all privileges on all tables in schema public to service_role;
 
 alter table profiles enable row level security;
 alter table cours enable row level security;
