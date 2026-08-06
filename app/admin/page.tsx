@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 const JOURS = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
 
-export default async function AdminPage() {
+export default async function AdminPage({ searchParams }: { searchParams: { erreur?: string } }) {
   const supabase = supabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
@@ -33,6 +33,11 @@ export default async function AdminPage() {
   return (
     <main style={{ maxWidth: 640, margin: '0 auto', padding: 20 }}>
       <h1>Admin - Planning</h1>
+      {searchParams.erreur && (
+        <p style={{ background: '#5a1a1a', color: '#ffb4b4', padding: 12, borderRadius: 8 }}>
+          ⚠️ {searchParams.erreur}
+        </p>
+      )}
 
       <section style={{ marginBottom: 32 }}>
         <h2>Semaine de référence</h2>

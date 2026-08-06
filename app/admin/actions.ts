@@ -2,13 +2,21 @@
 
 import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
+import { FORMULES } from '@/lib/formules';
+
+// Toute erreur dans une action admin redirige vers /admin avec un message
+// clair, au lieu de crasher (Next.js masque les throw en production).
+function echouer(message: string): never {
+  redirect(`/admin?erreur=${encodeURIComponent(message)}`);
+}
 
 async function verifierAdmin() {
   const supabase = supabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Non connecté');
+  if (!user) redirect('/login');
   const { data: profil } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-  if (!profil || profil.role !== 'admin') throw new Error('Accès refusé');
+  if (!profil || profil.role !== 'admin') echouer('Accès refusé.');
   return user;
 }
 
@@ -23,7 +31,7 @@ export async function ajouterCours(formData: FormData) {
     heure_fin: formData.get('heure_fin') as string,
     lieu: formData.get('lieu') as string,
   });
-  if (error) throw new Error(error.message);
+  if (error) echouer(error.message);
   revalidatePath('/admin');
   revalidatePath('/');
 }
@@ -33,7 +41,7 @@ export async function desactiverCours(formData: FormData) {
   const admin = supabaseAdmin();
   const id = formData.get('id') as string;
   const { error } = await admin.from('cours').update({ actif: false }).eq('id', id);
-  if (error) throw new Error(error.message);
+  if (error) echouer(error.message);
   revalidatePath('/admin');
   revalidatePath('/');
 }
@@ -46,12 +54,10 @@ export async function definirSemaineReference(formData: FormData) {
     date_lundi_reference: formData.get('date_lundi_reference') as string,
     semaine_ce_lundi: formData.get('semaine_ce_lundi') as string,
   });
-  if (error) throw new Error(error.message);
+  if (error) echouer(error.message);
   revalidatePath('/admin');
   revalidatePath('/');
 }
-
-import { FORMULES } from '@/lib/formules';
 
 // Permet à l'admin d'octroyer une formule à un élève sans passer par Stripe
 // (offert gratuitement, payé en liquide/virement, geste commercial, etc.)
@@ -64,8 +70,10 @@ export async function attribuerFormule(formData: FormData) {
   const paye = formData.get('paye') === 'on';
   const montant = Number(formData.get('montant') ?? 0);
 
+  if (!eleveId) echouer('Choisis un élève.');
+
   const formule = FORMULES[formuleNom];
-  if (!formule) throw new Error('Formule inconnue');
+  if (!formule) echouer('Formule inconnue.');
 
   const expiration = new Date();
   expiration.setMonth(expiration.getMonth() + formule.validiteMois);
@@ -79,16 +87,17 @@ export async function attribuerFormule(formData: FormData) {
     origine: 'manuel',
     paye,
   }).eq('id', eleveId);
-  if (error) throw new Error(error.message);
+  if (error) echouer(error.message);
 
   // Historise le paiement (ou le don) pour que l'élève puisse générer sa facture
-  await admin.from('paiements').insert({
+  const { error: errPaiement } = await admin.from('paiements').insert({
     eleve_id: eleveId,
     formule_nom: formuleNom,
     montant: paye ? montant : 0,
     origine: 'manuel',
     paye,
   });
+  if (errPaiement) echouer(errPaiement.message);
 
   revalidatePath('/admin');
 }
@@ -103,13 +112,13 @@ export async function decompterCoaching(formData: FormData) {
   const quantite = Number(formData.get('quantite'));
 
   const { data: profil } = await admin.from('profiles').select('quota_restant').eq('id', eleveId).single();
-  if (!profil || profil.quota_restant == null) throw new Error('Pas de quota à décompter pour cet élève.');
-  if (profil.quota_restant < quantite) throw new Error('Quantité supérieure au quota restant.');
+  if (!profil || profil.quota_restant == null) echouer('Pas de quota à décompter pour cet élève.');
+  if (profil.quota_restant < quantite) echouer('Quantité supérieure au quota restant.');
 
   const { error } = await admin.from('profiles')
     .update({ quota_restant: profil.quota_restant - quantite })
     .eq('id', eleveId);
-  if (error) throw new Error(error.message);
+  if (error) echouer(error.message);
 
   revalidatePath('/admin');
 }
@@ -120,7 +129,7 @@ export async function suspendreAcces(formData: FormData) {
   const admin = supabaseAdmin();
   const eleveId = formData.get('eleve_id') as string;
   const { error } = await admin.from('profiles').update({ abonnement_actif: false }).eq('id', eleveId);
-  if (error) throw new Error(error.message);
+  if (error) echouer(error.message);
   revalidatePath('/admin');
 }
 
@@ -133,7 +142,7 @@ export async function modifierQuotaRestant(formData: FormData) {
   const eleveId = formData.get('eleve_id') as string;
   const nouveauQuota = Number(formData.get('quota_restant'));
   const { error } = await admin.from('profiles').update({ quota_restant: nouveauQuota }).eq('id', eleveId);
-  if (error) throw new Error(error.message);
+  if (error) echouer(error.message);
   revalidatePath('/admin');
 }
 
@@ -144,7 +153,7 @@ export async function modifierExpiration(formData: FormData) {
   const eleveId = formData.get('eleve_id') as string;
   const nouvelleDate = formData.get('date_expiration') as string;
   const { error } = await admin.from('profiles').update({ date_expiration: nouvelleDate }).eq('id', eleveId);
-  if (error) throw new Error(error.message);
+  if (error) echouer(error.message);
   revalidatePath('/admin');
 }
 
@@ -158,7 +167,7 @@ export async function gelerPass(formData: FormData) {
     gele: true,
     date_gel_debut: new Date().toISOString().slice(0, 10),
   }).eq('id', eleveId);
-  if (error) throw new Error(error.message);
+  if (error) echouer(error.message);
   revalidatePath('/admin');
 }
 
@@ -173,7 +182,7 @@ export async function degelerPass(formData: FormData) {
     .select('date_gel_debut, date_expiration')
     .eq('id', eleveId)
     .single();
-  if (!profil?.date_gel_debut) throw new Error("Ce pass n'est pas gelé.");
+  if (!profil?.date_gel_debut) echouer("Ce pass n'est pas gelé.");
 
   const debutGel = new Date(profil.date_gel_debut);
   const joursGeles = Math.max(0, Math.round((Date.now() - debutGel.getTime()) / (1000 * 60 * 60 * 24)));
@@ -186,7 +195,7 @@ export async function degelerPass(formData: FormData) {
     date_gel_debut: null,
     date_expiration: nouvelleExpiration.toISOString().slice(0, 10),
   }).eq('id', eleveId);
-  if (error) throw new Error(error.message);
+  if (error) echouer(error.message);
 
   revalidatePath('/admin');
 }
