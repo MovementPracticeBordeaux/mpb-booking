@@ -6,7 +6,7 @@ export const metadata = {
   title: 'Mentorship — Mentorat Mouvement | Movement Practice Bordeaux',
   description:
     'Mentorat Mouvement à Bordeaux : contenu et accompagnement pour comprendre, organiser et transmettre une pratique de calisthenics, handstand et mobilité.',
-  keywords: ['mentorat mouvement', 'mentorship', 'movement practice', 'Bordeaux', 'calisthenics', 'handstand'],
+  keywords: ['mentorat mouvement', 'mentorship', 'movement practice', 'Bordeaux', 'calisthenics', 'handstand', 'locomotion', 'mobilité'],
 };
 
 const OBJECTIFS = [
@@ -76,7 +76,8 @@ export default function ProPage() {
         </h1>
         <p style={{ fontSize: 18, color: COULEURS.texteAtt, maxWidth: 560, margin: '0 auto' }}>
           Un mentorat : du contenu et un accompagnement pour comprendre et
-          organiser ta pratique du Mouvement dans son ensemble.
+          organiser ta pratique du Mouvement dans son ensemble — calisthenics, handstand, mobilité et
+          locomotion.
         </p>
       </section>
 

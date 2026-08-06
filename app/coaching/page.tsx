@@ -3,7 +3,7 @@ import { FORMULES } from '@/lib/formules';
 import Temoignages, { Temoignage } from '../components/Temoignages';
 
 export const metadata = {
-  title: 'Coaching calisthenics, handstand & mobilité à Bordeaux & en ligne | Movement Practice Bordeaux',
+  title: 'Coaching calisthenics, handstand & mobilité à Bordeaux | MPB',
   description:
     'Coaching calisthenics, handstand et mobilité à Bordeaux, en présentiel ou en ligne. Programmes personnalisés et progression tous niveaux avec Sylvain Noury.',
   keywords: ['coaching calisthenics', 'coaching handstand', 'coaching mobilité', 'Bordeaux', 'coaching en ligne', 'locomotion'],
