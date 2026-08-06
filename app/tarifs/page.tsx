@@ -34,10 +34,15 @@ const GROUPES = [
   { titre: 'Coaching individuel & Mentorship', cles: ['coaching_unite', 'coaching_carnet_4h', 'coaching_carnet_3h', 'coaching_online', 'mentorship', 'post_mentorship'] },
 ];
 
-export default function TarifsPage() {
+export default function TarifsPage({ searchParams }: { searchParams: { erreur?: string } }) {
   return (
     <main style={{ maxWidth: 480, margin: '0 auto', padding: 20 }}>
       <h1>Tarifs & formules</h1>
+      {searchParams.erreur && (
+        <p style={{ background: '#5a1a1a', color: '#ffb4b4', padding: 12, borderRadius: 8 }}>
+          ⚠️ {searchParams.erreur}
+        </p>
+      )}
       {GROUPES.map((groupe) => (
         <section key={groupe.titre} style={{ marginBottom: 28 }}>
           <h2 style={{ fontSize: 16, opacity: 0.7 }}>{groupe.titre}</h2>

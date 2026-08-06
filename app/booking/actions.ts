@@ -13,6 +13,7 @@ export async function reserverCours(formData: FormData) {
   const dateSeance = formData.get('date_seance') as string;
 
   const echouer = (message: string) => redirect(`/?erreur=${encodeURIComponent(message)}`);
+  const versLesTarifs = (message: string) => redirect(`/tarifs?erreur=${encodeURIComponent(message)}`);
 
   const { data: profil } = await supabase
     .from('profiles')
@@ -21,7 +22,7 @@ export async function reserverCours(formData: FormData) {
     .single();
 
   if (!profil || !profil.abonnement_actif || !profil.formule_nom) {
-    echouer("Aucun pass actif. Rends-toi sur la page tarifs pour en acheter un.");
+    versLesTarifs("Tu n'as pas encore de pass actif — choisis une formule ci-dessous pour pouvoir réserver.");
     return;
   }
 
@@ -31,14 +32,14 @@ export async function reserverCours(formData: FormData) {
   }
 
   if (profil.date_expiration && new Date(profil.date_expiration) < new Date()) {
-    echouer('Ton pass a expiré.');
+    versLesTarifs('Ton pass a expiré — renouvelle-le ci-dessous pour continuer à réserver.');
     return;
   }
 
   // 'illimite' : pas de décompte. Toutes les autres formules ont un quota.
   if (profil.formule_nom !== 'illimite') {
     if (profil.quota_restant <= 0) {
-      echouer('Ton pass est épuisé (toutes les séances ont été utilisées).');
+      versLesTarifs('Ton pass est épuisé — choisis une nouvelle formule ci-dessous.');
       return;
     }
     const { error: errUpdate } = await supabase
