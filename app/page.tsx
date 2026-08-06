@@ -72,30 +72,28 @@ export default function AccueilPage() {
         </div>
       </div>
 
-      {/* PHOTO D'ACTION */}
-      <div style={{ maxHeight: 520, overflow: 'hidden' }}>
-        <img
-          src="/sylvain-handstand-spot.png"
-          alt="Handstand en pratique du mouvement à Bordeaux"
-          style={{ width: '100%', display: 'block', objectFit: 'cover', objectPosition: 'center 62%' }}
-        />
-      </div>
-
       {/* MÉTHODE */}
-      <section style={{ maxWidth: 720, margin: '0 auto', padding: '64px 20px' }}>
-        <p style={{ fontSize: 12, letterSpacing: 2, color: COULEURS.texteFaible, marginBottom: 10 }}>LA MÉTHODE</p>
-        <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 32, letterSpacing: 0.5, margin: '0 0 16px' }}>
-          Un corps polyvalent, pas un corps spécialisé
-        </h2>
-        <p style={{ color: COULEURS.texteAtt, lineHeight: 1.6, marginBottom: 12 }}>
-          La pratique combine calisthenics, mobilité, force, locomotion et travail sur les mains pour
-          construire une base solide et adaptable. On part des fondamentaux, et chacun progresse à son
-          rythme vers des enchaînements plus complexes.
-        </p>
-        <p style={{ color: COULEURS.texteAtt, lineHeight: 1.6 }}>
-          Bien plus qu'un entraînement physique : patience, concentration et conscience corporelle se
-          construisent séance après séance.
-        </p>
+      <section style={{ maxWidth: 860, margin: '0 auto', padding: '64px 20px', display: 'flex', gap: 32, flexWrap: 'wrap-reverse', alignItems: 'center' }}>
+        <img
+          src="/sylvain-methode.jpg"
+          alt="Pratique du mouvement en extérieur, Movement Practice Bordeaux"
+          style={{ width: 220, height: 280, objectFit: 'cover', borderRadius: 16, flexShrink: 0 }}
+        />
+        <div style={{ flex: 1, minWidth: 260 }}>
+          <p style={{ fontSize: 12, letterSpacing: 2, color: COULEURS.texteFaible, marginBottom: 10 }}>LA MÉTHODE</p>
+          <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 32, letterSpacing: 0.5, margin: '0 0 16px' }}>
+            Un corps polyvalent, pas un corps spécialisé
+          </h2>
+          <p style={{ color: COULEURS.texteAtt, lineHeight: 1.6, marginBottom: 12 }}>
+            La pratique combine calisthenics, mobilité, force, locomotion et travail sur les mains pour
+            construire une base solide et adaptable. On part des fondamentaux, et chacun progresse à son
+            rythme vers des enchaînements plus complexes.
+          </p>
+          <p style={{ color: COULEURS.texteAtt, lineHeight: 1.6 }}>
+            Bien plus qu'un entraînement physique : patience, concentration et conscience corporelle se
+            construisent séance après séance.
+          </p>
+        </div>
       </section>
 
       {/* DISCIPLINES */}
