@@ -77,7 +77,7 @@ export default function AccueilPage() {
         <img
           src="/sylvain-handstand-spot.png"
           alt="Handstand en pratique du mouvement à Bordeaux"
-          style={{ width: 220, height: 280, objectFit: 'cover', objectPosition: 'center 60%', borderRadius: 16, flexShrink: 0 }}
+          style={{ width: 220, height: 280, objectFit: 'cover', objectPosition: 'center 50%', borderRadius: 16, flexShrink: 0 }}
         />
         <div style={{ flex: 1, minWidth: 260 }}>
           <p style={{ fontSize: 12, letterSpacing: 2, color: COULEURS.texteFaible, marginBottom: 10 }}>LA MÉTHODE</p>

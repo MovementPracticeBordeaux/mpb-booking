@@ -29,7 +29,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <head>
         <link rel="stylesheet" href={FONTS_IMPORT_URL} />
       </head>
-      <body style={{ fontFamily: POLICE_CORPS, margin: 0, background: COULEURS.fond, color: COULEURS.texte }}>
+      <body style={{
+        fontFamily: POLICE_CORPS, margin: 0, color: COULEURS.texte,
+        backgroundColor: COULEURS.fond,
+        backgroundImage: 'url(/texture-beton.jpg)',
+        backgroundRepeat: 'repeat',
+        backgroundSize: '900px',
+        backgroundBlendMode: 'multiply',
+      }}>
         <nav style={{
           display: 'flex', flexWrap: 'wrap', gap: 18, padding: '14px 20px',
           borderBottom: `1px solid ${COULEURS.bordure}`, alignItems: 'center', fontSize: 14,
