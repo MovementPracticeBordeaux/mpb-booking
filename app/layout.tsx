@@ -1,5 +1,6 @@
 import { supabaseServer } from '@/lib/supabase-server';
 import { COULEURS, FONTS_IMPORT_URL, POLICE_CORPS } from '@/lib/theme';
+import ChatWidget from './components/ChatWidget';
 
 export const metadata = {
   title: 'Movement Practice Bordeaux — Calisthenics, Handstand, Locomotion & Mobilité',
@@ -13,6 +14,7 @@ const LIENS = [
   { href: '/tarifs', label: 'Tarifs' },
   { href: '/coaching', label: 'Coaching' },
   { href: '/pro', label: 'Pro' },
+  { href: '/contact', label: 'Contact' },
   { href: '/factures', label: 'Mes factures' },
 ];
 
@@ -63,6 +65,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           )}
         </nav>
         {children}
+        <ChatWidget />
       </body>
     </html>
   );
