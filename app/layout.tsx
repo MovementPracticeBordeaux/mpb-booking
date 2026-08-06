@@ -1,14 +1,16 @@
 import { supabaseServer } from '@/lib/supabase-server';
+import { COULEURS, FONTS_IMPORT_URL, POLICE_CORPS } from '@/lib/theme';
 
 export const metadata = {
-  title: 'Movement Practice Bordeaux - Réservation',
-  description: 'Planning et réservation des cours Movement Practice Bordeaux',
+  title: 'Movement Practice Bordeaux — Calisthenics, Handstand & Mobilité',
+  description: 'Coaching, cours et ateliers au poids de corps à Bordeaux : calisthenics, handstand, locomotion, mobilité.',
 };
 
 const LIENS = [
-  { href: '/', label: 'Planning' },
+  { href: '/', label: 'Accueil' },
+  { href: '/planning', label: 'Planning' },
   { href: '/tarifs', label: 'Tarifs' },
-  { href: '/coaching', label: 'Mon coaching' },
+  { href: '/coaching', label: 'Coaching' },
   { href: '/factures', label: 'Mes factures' },
 ];
 
@@ -23,20 +25,24 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="fr">
-      <body style={{ fontFamily: 'sans-serif', margin: 0, background: '#111', color: '#fff' }}>
+      <head>
+        <link rel="stylesheet" href={FONTS_IMPORT_URL} />
+      </head>
+      <body style={{ fontFamily: POLICE_CORPS, margin: 0, background: COULEURS.fond, color: COULEURS.texte }}>
         <nav style={{
-          display: 'flex', flexWrap: 'wrap', gap: 16, padding: '12px 20px',
-          borderBottom: '1px solid #333', alignItems: 'center', fontSize: 14,
+          display: 'flex', flexWrap: 'wrap', gap: 18, padding: '14px 20px',
+          borderBottom: `1px solid ${COULEURS.bordure}`, alignItems: 'center', fontSize: 14,
+          position: 'sticky', top: 0, background: 'rgba(11,11,13,0.9)', backdropFilter: 'blur(6px)', zIndex: 10,
         }}>
           {LIENS.map((l) => (
-            <a key={l.href} href={l.href} style={{ color: '#ddd', textDecoration: 'none' }}>{l.label}</a>
+            <a key={l.href} href={l.href} style={{ color: COULEURS.texteAtt, textDecoration: 'none' }}>{l.label}</a>
           ))}
-          {estAdmin && <a href="/admin" style={{ color: '#f0a', textDecoration: 'none' }}>Admin</a>}
+          {estAdmin && <a href="/admin" style={{ color: '#FF2D78', textDecoration: 'none' }}>Admin</a>}
           <span style={{ flex: 1 }} />
           {user ? (
-            <span style={{ color: '#888' }}>{user.email}</span>
+            <span style={{ color: COULEURS.texteFaible, fontSize: 13 }}>{user.email}</span>
           ) : (
-            <a href="/login" style={{ color: '#f0a', textDecoration: 'none' }}>Connexion</a>
+            <a href="/login" style={{ color: '#FF2D78', textDecoration: 'none' }}>Connexion</a>
           )}
         </nav>
         {children}

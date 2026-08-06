@@ -12,7 +12,7 @@ export async function reserverCours(formData: FormData) {
   const coursId = formData.get('cours_id') as string;
   const dateSeance = formData.get('date_seance') as string;
 
-  const echouer = (message: string) => redirect(`/?erreur=${encodeURIComponent(message)}`);
+  const echouer = (message: string) => redirect(`/planning?erreur=${encodeURIComponent(message)}`);
   const versLesTarifs = (message: string) => redirect(`/tarifs?erreur=${encodeURIComponent(message)}`);
 
   const { data: profil } = await supabase
@@ -63,5 +63,5 @@ export async function reserverCours(formData: FormData) {
     return;
   }
 
-  revalidatePath('/');
+  revalidatePath('/planning');
 }

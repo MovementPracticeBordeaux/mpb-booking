@@ -34,7 +34,7 @@ export async function ajouterCours(formData: FormData) {
   });
   if (error) echouer(error.message);
   revalidatePath('/admin');
-  revalidatePath('/');
+  revalidatePath('/planning');
 }
 
 export async function desactiverCours(formData: FormData) {
@@ -44,7 +44,7 @@ export async function desactiverCours(formData: FormData) {
   const { error } = await admin.from('cours').update({ actif: false }).eq('id', id);
   if (error) echouer(error.message);
   revalidatePath('/admin');
-  revalidatePath('/');
+  revalidatePath('/planning');
 }
 
 export async function definirSemaineReference(formData: FormData) {
@@ -57,7 +57,7 @@ export async function definirSemaineReference(formData: FormData) {
   });
   if (error) echouer(error.message);
   revalidatePath('/admin');
-  revalidatePath('/');
+  revalidatePath('/planning');
 }
 
 // Permet à l'admin d'octroyer une formule à un élève sans passer par Stripe
