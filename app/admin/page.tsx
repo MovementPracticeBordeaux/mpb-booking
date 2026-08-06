@@ -42,6 +42,44 @@ export default async function AdminPage({ searchParams }: { searchParams: { erre
     .order('created_at', { ascending: false })
     .limit(20);
 
+  // Données pour la section Statistiques : historique complet des paiements
+  // (pas seulement les 20 derniers affichés) et des réservations confirmées.
+  const { data: paiementsTous } = await admin
+    .from('paiements')
+    .select('montant, created_at, paye, rembourse');
+
+  const { data: reservationsTotales } = await admin
+    .from('reservations')
+    .select('cours_id')
+    .eq('statut', 'confirmee');
+
+  const nbAbonnementsActifs = (eleves ?? []).filter((e) => e.abonnement_actif).length;
+  const nbActifsCollectif = (eleves ?? []).filter(
+    (e) => e.abonnement_actif && FORMULES[e.formule_nom ?? '']?.categorie === 'planning'
+  ).length;
+  const nbActifsCoaching = (eleves ?? []).filter(
+    (e) => e.abonnement_actif && FORMULES[e.formule_nom ?? '']?.categorie === 'coaching'
+  ).length;
+
+  const reservationsParCours = new Map<string, number>();
+  for (const r of reservationsTotales ?? []) {
+    reservationsParCours.set(r.cours_id, (reservationsParCours.get(r.cours_id) ?? 0) + 1);
+  }
+  const coursAvecStats = (coursListe ?? [])
+    .map((c) => ({ ...c, nbReservations: reservationsParCours.get(c.id) ?? 0 }))
+    .sort((a, b) => b.nbReservations - a.nbReservations);
+  const maxReservations = Math.max(1, ...coursAvecStats.map((c) => c.nbReservations));
+
+  const revenusParMois = new Map<string, number>();
+  for (const p of paiementsTous ?? []) {
+    if (!p.paye || p.rembourse) continue;
+    const mois = (p.created_at as string).slice(0, 7); // YYYY-MM
+    revenusParMois.set(mois, (revenusParMois.get(mois) ?? 0) + Number(p.montant));
+  }
+  const moisTries = [...revenusParMois.entries()].sort(([a], [b]) => a.localeCompare(b)).slice(-6);
+  const maxRevenu = Math.max(1, ...moisTries.map(([, m]) => m));
+  const NOMS_MOIS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+
   return (
     <main style={{ maxWidth: 640, margin: '0 auto', padding: 20 }}>
       <h1>Admin - Planning</h1>
@@ -50,6 +88,58 @@ export default async function AdminPage({ searchParams }: { searchParams: { erre
           ⚠️ {searchParams.erreur}
         </p>
       )}
+
+      <section style={{ marginBottom: 32 }}>
+        <h2>Statistiques</h2>
+
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
+          <div style={{ border: '1px solid #333', borderRadius: 8, padding: 12, flex: '1 1 140px' }}>
+            <p style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>{nbAbonnementsActifs}</p>
+            <p style={{ fontSize: 12, opacity: 0.7, margin: 0 }}>abonnements actifs</p>
+          </div>
+          <div style={{ border: '1px solid #333', borderRadius: 8, padding: 12, flex: '1 1 140px' }}>
+            <p style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>{nbActifsCollectif}</p>
+            <p style={{ fontSize: 12, opacity: 0.7, margin: 0 }}>sur cours collectifs</p>
+          </div>
+          <div style={{ border: '1px solid #333', borderRadius: 8, padding: 12, flex: '1 1 140px' }}>
+            <p style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>{nbActifsCoaching}</p>
+            <p style={{ fontSize: 12, opacity: 0.7, margin: 0 }}>coaching / mentorship</p>
+          </div>
+        </div>
+
+        <p style={{ fontSize: 13, fontWeight: 600, opacity: 0.8, marginBottom: 4 }}>Revenus mensuels (encaissé, hors remboursements)</p>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 100, marginBottom: 20 }}>
+          {moisTries.length === 0 && <p style={{ fontSize: 12, opacity: 0.6 }}>Pas encore de paiement enregistré.</p>}
+          {moisTries.map(([mois, montant]) => {
+            const [annee, m] = mois.split('-');
+            return (
+              <div key={mois} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+                <p style={{ fontSize: 11, margin: '0 0 4px' }}>{montant.toFixed(0)}€</p>
+                <div style={{ width: '100%', maxWidth: 36, height: Math.max(4, (montant / maxRevenu) * 70), background: '#f0a', borderRadius: 4 }} />
+                <p style={{ fontSize: 10, opacity: 0.6, margin: '4px 0 0' }}>{NOMS_MOIS[Number(m) - 1]} {annee.slice(2)}</p>
+              </div>
+            );
+          })}
+        </div>
+
+        <p style={{ fontSize: 13, fontWeight: 600, opacity: 0.8, marginBottom: 4 }}>
+          Créneaux les plus / moins réservés (total réservations depuis toujours)
+        </p>
+        <p style={{ fontSize: 11, opacity: 0.5, marginBottom: 8 }}>
+          Chiffre brut, pas ramené au nombre d'occurrences passées — à lire comme une tendance relative.
+        </p>
+        {coursAvecStats.map((c) => (
+          <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, fontSize: 12 }}>
+            <span style={{ width: 170, flexShrink: 0 }}>
+              [{c.semaine}] {JOURS[c.jour_semaine].slice(0, 3)} {c.heure_debut.slice(0, 5)} — {c.discipline}
+            </span>
+            <div style={{ flex: 1, background: '#222', borderRadius: 4, height: 14, overflow: 'hidden' }}>
+              <div style={{ width: `${(c.nbReservations / maxReservations) * 100}%`, height: '100%', background: '#f0a' }} />
+            </div>
+            <span style={{ width: 24, textAlign: 'right', flexShrink: 0 }}>{c.nbReservations}</span>
+          </div>
+        ))}
+      </section>
 
       <section style={{ marginBottom: 32 }}>
         <h2>Semaine de référence</h2>
@@ -247,10 +337,14 @@ export default async function AdminPage({ searchParams }: { searchParams: { erre
         </p>
         {(['A', 'B'] as const).map((sem) => {
           const coursSemaine = (coursListe ?? []).filter((c) => c.semaine === sem);
+          const disciplinesSemaine = [...new Set(coursSemaine.map((c) => c.discipline))];
           return (
             <div key={sem} style={{ marginBottom: 24 }}>
-              <p style={{ fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, opacity: 0.7, marginBottom: 8 }}>
+              <p style={{ fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, opacity: 0.7, marginBottom: 2 }}>
                 Semaine {sem}
+              </p>
+              <p style={{ fontSize: 12, opacity: 0.6, marginBottom: 8 }}>
+                {disciplinesSemaine.length > 0 ? disciplinesSemaine.join(' · ') : 'Aucun créneau'}
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 8 }}>
                 {JOURS.map((nomJour, i) => {
