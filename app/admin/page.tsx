@@ -28,7 +28,6 @@ export default async function AdminPage() {
   const { data: eleves } = await supabase
     .from('profiles')
     .select('*')
-    .eq('role', 'eleve')
     .order('email');
 
   return (
