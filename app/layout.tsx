@@ -38,8 +38,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           backgroundImage: 'url(/texture-beton.jpg)',
           backgroundRepeat: 'repeat',
           backgroundSize: '900px',
-          filter: 'brightness(2.4) contrast(0.9)',
-          opacity: 0.4,
+          filter: 'brightness(1.3) contrast(1.1)',
+          opacity: 0.12,
           pointerEvents: 'none',
         }} />
         <nav style={{
