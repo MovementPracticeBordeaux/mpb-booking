@@ -32,11 +32,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body style={{
         fontFamily: POLICE_CORPS, margin: 0, color: COULEURS.texte,
         backgroundColor: COULEURS.fond,
-        backgroundImage: 'url(/texture-beton.jpg)',
-        backgroundRepeat: 'repeat',
-        backgroundSize: '900px',
-        backgroundBlendMode: 'soft-light',
       }}>
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: -1,
+          backgroundImage: 'url(/texture-beton.jpg)',
+          backgroundRepeat: 'repeat',
+          backgroundSize: '900px',
+          filter: 'brightness(2.4) contrast(0.9)',
+          opacity: 0.4,
+          pointerEvents: 'none',
+        }} />
         <nav style={{
           display: 'flex', flexWrap: 'wrap', gap: 18, padding: '14px 20px',
           borderBottom: `1px solid ${COULEURS.bordure}`, alignItems: 'center', fontSize: 14,
