@@ -38,7 +38,7 @@ export default function AccueilPage() {
         <img
           src="/logo.png"
           alt="Movement Practice Bordeaux"
-          style={{ height: 96, margin: '0 auto 20px', display: 'block' }}
+          style={{ height: 64, margin: '0 auto 24px', display: 'block' }}
         />
         <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 'clamp(32px, 9vw, 76px)', lineHeight: 1.02, letterSpacing: 0.5, margin: '0 0 20px', whiteSpace: 'nowrap' }}>
           MOVEMENT <span style={GRADIENT_TEXTE}>PRACTICE</span>
@@ -73,11 +73,11 @@ export default function AccueilPage() {
       </div>
 
       {/* PHOTO D'ACTION */}
-      <div style={{ maxHeight: 420, overflow: 'hidden' }}>
+      <div style={{ maxHeight: 520, overflow: 'hidden' }}>
         <img
           src="/sylvain-handstand-spot.png"
           alt="Handstand en pratique du mouvement à Bordeaux"
-          style={{ width: '100%', display: 'block', objectFit: 'cover', objectPosition: 'center 30%' }}
+          style={{ width: '100%', display: 'block', objectFit: 'cover', objectPosition: 'center 62%' }}
         />
       </div>
 
@@ -124,7 +124,7 @@ export default function AccueilPage() {
         <img
           src="/sylvain-portrait.jpg"
           alt="Sylvain Noury, coach Movement Practice Bordeaux"
-          style={{ width: 220, height: 280, objectFit: 'cover', borderRadius: 16, flexShrink: 0 }}
+          style={{ width: 220, height: 280, objectFit: 'cover', objectPosition: 'center 10%', borderRadius: 16, flexShrink: 0 }}
         />
         <div style={{ flex: 1, minWidth: 260 }}>
           <p style={{ fontSize: 12, letterSpacing: 2, color: COULEURS.texteFaible, marginBottom: 10 }}>QUI EST SYLVAIN ?</p>

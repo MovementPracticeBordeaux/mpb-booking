@@ -36,7 +36,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           position: 'sticky', top: 0, background: 'rgba(11,11,13,0.9)', backdropFilter: 'blur(6px)', zIndex: 10,
         }}>
           <a href="/" style={{ display: 'flex', alignItems: 'center' }}>
-            <img src="/logo.png" alt="Movement Practice Bordeaux" style={{ height: 32 }} />
+            <img src="/logo.png" alt="Movement Practice Bordeaux" style={{ height: 24 }} />
           </a>
           {LIENS.map((l) => (
             <a key={l.href} href={l.href} style={{ color: COULEURS.texteAtt, textDecoration: 'none' }}>{l.label}</a>
