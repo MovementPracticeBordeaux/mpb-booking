@@ -34,7 +34,7 @@ export const COURS_DETAILS: Record<string, CoursDetail> = {
     intensite: 3,
     motsCles: ['locomotion', 'déplacement au sol', 'capoeira', 'acrobaties douces', 'motricité', 'coordination'],
     description:
-      "Un mélange dynamique de mobilité et de renforcement en mouvement, centré sur les déplacements au sol — plus proche de la capoeira et des acrobaties douces que du parkour : coordination, motricité et créativité au service d'une locomotion plus fluide.",
+      "Un mélange dynamique de mobilité et de renforcement en mouvement, centré sur les déplacements au sol — assez proche de la capoeira et des acrobaties douces : coordination, motricité et créativité au service d'une locomotion plus fluide.",
   },
   'Arm Balance': {
     nom: 'Arm Balance',
