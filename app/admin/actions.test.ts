@@ -1,0 +1,184 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { supabaseAdmin, supabaseServer } from '@/lib/supabase-server';
+import { stripe } from '@/lib/stripe';
+import { redirect } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
+import { decompterCoaching, degelerPass, rembourserPaiement, suspendreAcces } from './actions';
+
+vi.mock('@/lib/supabase-server', () => ({
+  supabaseServer: vi.fn(),
+  supabaseAdmin: vi.fn(),
+}));
+
+vi.mock('@/lib/stripe', () => ({
+  stripe: {
+    checkout: { sessions: { retrieve: vi.fn() } },
+    refunds: { create: vi.fn() },
+  },
+}));
+
+vi.mock('next/navigation', () => ({
+  redirect: vi.fn((url: string) => {
+    throw new Error(`REDIRECT:${url}`);
+  }),
+}));
+
+vi.mock('next/cache', () => ({
+  revalidatePath: vi.fn(),
+}));
+
+function makeChainable(result: { data?: any; error?: any }) {
+  const chainable: any = {
+    then: (resolve: any) => resolve(result),
+  };
+  for (const methode of ['select', 'eq', 'update', 'insert', 'upsert', 'single', 'order']) {
+    chainable[methode] = vi.fn(() => chainable);
+  }
+  return chainable;
+}
+
+function mockAdminClient(fromResults: Array<{ data?: any; error?: any }>) {
+  let i = 0;
+  return { from: vi.fn(() => makeChainable(fromResults[i++])) };
+}
+
+const ADMIN_USER = { id: 'admin-1' };
+
+function mockAdminAuth() {
+  return {
+    auth: { getUser: vi.fn(async () => ({ data: { user: ADMIN_USER } })) },
+    from: vi.fn(() => makeChainable({ data: { role: 'admin' }, error: null })),
+  };
+}
+
+function formData(entries: Record<string, string>) {
+  const fd = new FormData();
+  for (const [k, v] of Object.entries(entries)) fd.set(k, v);
+  return fd;
+}
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.mocked(supabaseServer).mockReturnValue(mockAdminAuth() as any);
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
+
+describe('decompterCoaching', () => {
+  it("refuse de décompter plus que le quota restant", async () => {
+    vi.mocked(supabaseAdmin).mockReturnValue(
+      mockAdminClient([{ data: { quota_restant: 2 }, error: null }]) as any
+    );
+
+    await expect(
+      decompterCoaching(formData({ eleve_id: 'e1', quantite: '3' }))
+    ).rejects.toThrow(/REDIRECT:\/admin\?erreur=/);
+  });
+
+  it('décompte correctement le quota restant', async () => {
+    const admin = mockAdminClient([
+      { data: { quota_restant: 5 }, error: null },
+      { error: null },
+    ]);
+    vi.mocked(supabaseAdmin).mockReturnValue(admin as any);
+
+    await decompterCoaching(formData({ eleve_id: 'e1', quantite: '2' }));
+
+    const updateChain = admin.from.mock.results[1].value;
+    expect(updateChain.update).toHaveBeenCalledWith({ quota_restant: 3 });
+    expect(revalidatePath).toHaveBeenCalledWith('/admin');
+  });
+});
+
+describe('suspendreAcces', () => {
+  it("coupe l'abonnement de l'élève", async () => {
+    const admin = mockAdminClient([{ error: null }]);
+    vi.mocked(supabaseAdmin).mockReturnValue(admin as any);
+
+    await suspendreAcces(formData({ eleve_id: 'e1' }));
+
+    const updateChain = admin.from.mock.results[0].value;
+    expect(updateChain.update).toHaveBeenCalledWith({ abonnement_actif: false });
+    expect(revalidatePath).toHaveBeenCalledWith('/admin');
+  });
+});
+
+describe('degelerPass', () => {
+  it('prolonge la date d\'expiration du nombre de jours passés gelé', async () => {
+    vi.setSystemTime(new Date('2026-08-06T00:00:00Z'));
+    const admin = mockAdminClient([
+      { data: { date_gel_debut: '2026-08-01', date_expiration: '2026-08-20' }, error: null },
+      { error: null },
+    ]);
+    vi.mocked(supabaseAdmin).mockReturnValue(admin as any);
+
+    await degelerPass(formData({ eleve_id: 'e1' }));
+
+    const updateChain = admin.from.mock.results[1].value;
+    expect(updateChain.update).toHaveBeenCalledWith({
+      gele: false,
+      date_gel_debut: null,
+      date_expiration: '2026-08-25', // +5 jours
+    });
+  });
+
+  it("refuse si le pass n'est pas gelé", async () => {
+    vi.mocked(supabaseAdmin).mockReturnValue(
+      mockAdminClient([{ data: { date_gel_debut: null, date_expiration: '2026-08-20' }, error: null }]) as any
+    );
+
+    await expect(degelerPass(formData({ eleve_id: 'e1' }))).rejects.toThrow(/REDIRECT:\/admin\?erreur=/);
+  });
+});
+
+describe('rembourserPaiement', () => {
+  function setupStripeSuccess() {
+    vi.mocked(stripe.checkout.sessions.retrieve).mockResolvedValue({ payment_intent: 'pi_123' } as any);
+    vi.mocked(stripe.refunds.create).mockResolvedValue({} as any);
+  }
+
+  it('refuse si déjà remboursé', async () => {
+    vi.mocked(supabaseAdmin).mockReturnValue(
+      mockAdminClient([
+        { data: { id: 'p1', rembourse: true, stripe_session_id: 'sess_1' }, error: null },
+      ]) as any
+    );
+
+    await expect(rembourserPaiement(formData({ paiement_id: 'p1' }))).rejects.toThrow(
+      /REDIRECT:\/admin\?erreur=/
+    );
+  });
+
+  it("coupe l'accès de l'élève quand la formule remboursée est sa formule active", async () => {
+    setupStripeSuccess();
+    const admin = mockAdminClient([
+      { data: { id: 'p1', eleve_id: 'e1', formule_nom: 'mensuel_4', rembourse: false, stripe_session_id: 'sess_1' }, error: null },
+      { error: null }, // update paiements.rembourse
+      { data: { formule_nom: 'mensuel_4', abonnement_actif: true }, error: null }, // select profil
+      { error: null }, // update profiles.abonnement_actif = false
+    ]);
+    vi.mocked(supabaseAdmin).mockReturnValue(admin as any);
+
+    await rembourserPaiement(formData({ paiement_id: 'p1' }));
+
+    expect(admin.from).toHaveBeenCalledTimes(4);
+    const coupureChain = admin.from.mock.results[3].value;
+    expect(coupureChain.update).toHaveBeenCalledWith({ abonnement_actif: false });
+  });
+
+  it("ne coupe pas l'accès si l'élève a changé de formule depuis", async () => {
+    setupStripeSuccess();
+    const admin = mockAdminClient([
+      { data: { id: 'p1', eleve_id: 'e1', formule_nom: 'mensuel_4', rembourse: false, stripe_session_id: 'sess_1' }, error: null },
+      { error: null }, // update paiements.rembourse
+      { data: { formule_nom: 'illimite', abonnement_actif: true }, error: null }, // select profil (formule différente désormais)
+    ]);
+    vi.mocked(supabaseAdmin).mockReturnValue(admin as any);
+
+    await rembourserPaiement(formData({ paiement_id: 'p1' }));
+
+    expect(admin.from).toHaveBeenCalledTimes(3); // pas d'appel de coupure supplémentaire
+  });
+});
