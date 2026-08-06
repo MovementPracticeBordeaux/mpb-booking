@@ -1,5 +1,6 @@
 import { COULEURS, GRADIENT, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
 import { FORMULES } from '@/lib/formules';
+import Temoignages, { Temoignage } from '../components/Temoignages';
 
 export const metadata = {
   title: 'Coaching calisthenics, handstand & mobilité à Bordeaux & en ligne | Movement Practice Bordeaux',
@@ -34,6 +35,24 @@ const FAQ_COACHING = [
 ];
 
 const CLES_PRESENTIEL = ['coaching_unite', 'coaching_carnet_4h', 'coaching_carnet_3h'];
+
+const TEMOIGNAGES_COACHING: Temoignage[] = [
+  {
+    nom: 'Stéphane, Toulouse',
+    note: 5,
+    texte: "J'ai beaucoup apprécié ces 6 mois de mouvement Online avec Sylvain. En quelques semaines j'ai ressenti des progrès surtout en souplesse. L'accompagnement est vraiment parfait, sensible à l'état de forme et disponible.",
+  },
+  {
+    nom: 'Salomé, Bretagne',
+    note: 5,
+    texte: "Inscrite au coaching en ligne de Sylvain depuis quelques mois et ravie de l'être ! Son enseignement précis, varié et rigoureux éveille la curiosité dans l'apprentissage tout en construisant des bases solides pour évoluer dans sa pratique.",
+  },
+  {
+    nom: 'Manex, Pays Basque',
+    note: 5,
+    texte: "J'ai rejoint la communauté en ligne après avoir assisté à un workshop avec Sylvain. Très bonne méthode pour ceux qui ne peuvent pas assister aux cours à Bordeaux : bien organisé, tutoriels clairs, grande disponibilité pour répondre aux questions.",
+  },
+];
 
 export default function CoachingPage() {
   return (
@@ -121,17 +140,8 @@ export default function CoachingPage() {
         </div>
       </section>
 
-      {/* TÉMOIGNAGE */}
-      <section style={{ maxWidth: 640, margin: '0 auto', padding: '0 20px 64px', textAlign: 'center' }}>
-        <p style={{ fontSize: 12, letterSpacing: 2, color: COULEURS.texteFaible, marginBottom: 10 }}>TÉMOIGNAGE</p>
-        <p style={{ fontWeight: 600, marginBottom: 4 }}>Stéphane, Toulouse</p>
-        <p style={{ color: '#FF8A00', letterSpacing: 2, marginBottom: 12, fontSize: 14 }}>★★★★★</p>
-        <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 22, lineHeight: 1.4, letterSpacing: 0.3 }}>
-          « J'ai beaucoup apprécié ces 6 mois de mouvement Online avec Sylvain. En quelques semaines j'ai
-          ressenti des progrès surtout en souplesse. L'accompagnement est vraiment parfait, sensible à
-          l'état de forme et disponible. »
-        </p>
-      </section>
+      {/* TÉMOIGNAGES */}
+      <Temoignages items={TEMOIGNAGES_COACHING} titre="TÉMOIGNAGES — COACHING ONLINE" />
 
       {/* MENTORSHIP TEASER */}
       <section style={{ maxWidth: 720, margin: '0 auto', padding: '0 20px 64px' }}>

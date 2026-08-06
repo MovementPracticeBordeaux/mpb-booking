@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import { COULEURS, POLICE_DISPLAY } from '@/lib/theme';
 
-const TEMOIGNAGES = [
+export type Temoignage = { nom: string; note: number; texte: string };
+
+const TEMOIGNAGES_DEFAUT: Temoignage[] = [
   {
     nom: 'Florence',
     note: 5,
@@ -36,17 +38,17 @@ const TEMOIGNAGES = [
   },
 ];
 
-export default function Temoignages() {
+export default function Temoignages({ items = TEMOIGNAGES_DEFAUT, titre = 'TÉMOIGNAGES' }: { items?: Temoignage[]; titre?: string }) {
   const [index, setIndex] = useState(0);
-  const total = TEMOIGNAGES.length;
-  const actuel = TEMOIGNAGES[index];
+  const total = items.length;
+  const actuel = items[index];
 
   const precedent = () => setIndex((i) => (i - 1 + total) % total);
   const suivant = () => setIndex((i) => (i + 1) % total);
 
   return (
     <section style={{ maxWidth: 640, margin: '0 auto', padding: '20px 20px 64px', textAlign: 'center', position: 'relative' }}>
-      <p style={{ fontSize: 12, letterSpacing: 2, color: COULEURS.texteFaible, marginBottom: 10 }}>TÉMOIGNAGES</p>
+      <p style={{ fontSize: 12, letterSpacing: 2, color: COULEURS.texteFaible, marginBottom: 10 }}>{titre}</p>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
         <button
@@ -77,9 +79,9 @@ export default function Temoignages() {
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 16 }}>
-        {TEMOIGNAGES.map((t, i) => (
+        {items.map((t, i) => (
           <button
-            key={t.nom}
+            key={t.nom + i}
             onClick={() => setIndex(i)}
             aria-label={`Voir le témoignage de ${t.nom}`}
             style={{
