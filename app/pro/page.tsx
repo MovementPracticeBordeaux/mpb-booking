@@ -87,6 +87,15 @@ export default function ProPage() {
         </p>
       </section>
 
+      {/* IMAGE MENTORSHIP */}
+      <section style={{ maxWidth: 900, margin: '0 auto', padding: '0 20px 40px' }}>
+        <img
+          src="/mentorship.jpg"
+          alt="Mentorship — comprendre en profondeur la pratique du Mouvement"
+          style={{ width: '100%', height: 'auto', maxHeight: 380, objectFit: 'cover', borderRadius: 16, display: 'block' }}
+        />
+      </section>
+
       {/* OBJECTIFS */}
       <section style={{ maxWidth: 720, margin: '0 auto', padding: '0 20px 64px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
