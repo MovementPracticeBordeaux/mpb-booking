@@ -15,7 +15,6 @@ const LIENS = [
   { href: '/coaching', label: 'Coaching' },
   { href: '/pro', label: 'Pro' },
   { href: '/contact', label: 'Contact' },
-  { href: '/factures', label: 'Mes factures' },
 ];
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -59,9 +58,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           {estAdmin && <a href="/admin" style={{ color: '#FF2D78', textDecoration: 'none' }}>Admin</a>}
           <span style={{ flex: 1 }} />
           {user ? (
-            <span style={{ color: COULEURS.texteFaible, fontSize: 13 }}>{user.email}</span>
+            <a href="/profil" style={{ color: COULEURS.texteFaible, fontSize: 13, textDecoration: 'none' }}>{user.email}</a>
           ) : (
-            <a href="/login" style={{ color: '#FF2D78', textDecoration: 'none' }}>Connexion</a>
+            <a href="/profil" style={{ color: '#FF2D78', textDecoration: 'none' }}>Connexion</a>
           )}
         </nav>
         {children}

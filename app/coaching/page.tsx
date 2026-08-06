@@ -166,7 +166,7 @@ export default function CoachingPage() {
           <a href="/tarifs" style={{ background: GRADIENT, color: 'white', fontWeight: 600, padding: '13px 26px', borderRadius: 999, textDecoration: 'none' }}>
             Voir tous les tarifs
           </a>
-          <a href="/coaching/statut" style={{ border: `1px solid ${COULEURS.bordure}`, color: COULEURS.texte, fontWeight: 600, padding: '13px 26px', borderRadius: 999, textDecoration: 'none' }}>
+          <a href="/profil" style={{ border: `1px solid ${COULEURS.bordure}`, color: COULEURS.texte, fontWeight: 600, padding: '13px 26px', borderRadius: 999, textDecoration: 'none' }}>
             Déjà élève ? Mon suivi coaching
           </a>
         </div>
