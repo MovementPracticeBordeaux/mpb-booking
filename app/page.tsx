@@ -171,7 +171,7 @@ export default function AccueilPage() {
         <div style={{ borderRadius: 12, overflow: 'hidden', border: `1px solid ${COULEURS.bordure}` }}>
           <iframe
             title="Movement Practice Bordeaux sur Google Maps"
-            src="https://www.google.com/maps?q=Darwin+écosystème,+87+Quai+des+Queyries,+33100+Bordeaux&output=embed"
+            src="https://www.google.com/maps?q=Movement+practice+Bordeaux&output=embed"
             width="100%"
             height="320"
             style={{ border: 0, display: 'block' }}
