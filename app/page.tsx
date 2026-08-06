@@ -165,6 +165,22 @@ export default function AccueilPage() {
         ))}
       </section>
 
+      {/* LOCALISATION */}
+      <section style={{ maxWidth: 720, margin: '0 auto', padding: '0 20px 64px' }}>
+        <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 28, letterSpacing: 0.5, margin: '0 0 16px' }}>Où nous trouver</h2>
+        <div style={{ borderRadius: 12, overflow: 'hidden', border: `1px solid ${COULEURS.bordure}` }}>
+          <iframe
+            title="Movement Practice Bordeaux sur Google Maps"
+            src="https://www.google.com/maps?q=Darwin+écosystème,+87+Quai+des+Queyries,+33100+Bordeaux&output=embed"
+            width="100%"
+            height="320"
+            style={{ border: 0, display: 'block' }}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          />
+        </div>
+      </section>
+
       {/* FOOTER */}
       <footer style={{ borderTop: `1px solid ${COULEURS.bordure}`, padding: '32px 20px', fontSize: 13, color: COULEURS.texteFaible }}>
         <p style={{ margin: '0 0 6px' }}>Movement Practice Bordeaux — Darwin écosystème, 87 Quai des Queyries, 33100 Bordeaux</p>
