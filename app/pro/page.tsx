@@ -12,7 +12,7 @@ export const metadata = {
 const OBJECTIFS = [
   'Bâtir des fondations solides',
   'Comprendre et organiser sa pratique',
-  'Pouvoir la transmettre, si tu le souhaites',
+  'Poser les premières bases de la transmission',
 ];
 
 const ETAPES = [
@@ -25,8 +25,8 @@ const ETAPES = [
     texte: "La structure et l'organisation de ta progression, à différentes échelles de temps, avec une méthodologie propre à Sylvain pour bâtir un plan clair et cohérent.",
   },
   {
-    titre: '3. Transmettre',
-    texte: "Une fois les bases acquises et organisées, la possibilité de les partager à ton tour — à toi de voir si tu veux aller jusque-là.",
+    titre: '3. S\'initier à la transmission',
+    texte: "Une première approche des bases pour qui veut, plus tard, transmettre à son tour — une initiation, pas une qualification : devenir coach demande des années d'expérience et de pratique bien au-delà du Mentorship.",
   },
 ];
 
@@ -76,7 +76,7 @@ export default function ProPage() {
         </h1>
         <p style={{ fontSize: 18, color: COULEURS.texteAtt, maxWidth: 560, margin: '0 auto' }}>
           Un mentorat, pas un coaching personnalisé : du contenu et un accompagnement pour comprendre et
-          organiser ta pratique du Mouvement dans son ensemble, et pouvoir un jour la transmettre.
+          organiser ta pratique du Mouvement dans son ensemble.
         </p>
       </section>
 
@@ -101,10 +101,16 @@ export default function ProPage() {
           accès à du contenu et à une assistance pour comprendre et organiser ta pratique du Mouvement —
           et, si tu le souhaites, pour apprendre à la transmettre à ton tour.
         </p>
-        <p style={{ color: COULEURS.texteAtt, lineHeight: 1.6 }}>
+        <p style={{ color: COULEURS.texteAtt, lineHeight: 1.6, marginBottom: 12 }}>
           Il s'adresse à celles et ceux qui sont curieux de découvrir le process de Sylvain : appréhender
           la movement practice dans sa globalité et acquérir l'ensemble des bases pour mieux les faire
-          vivre, dans ta propre pratique comme auprès des autres.
+          vivre, dans ta propre pratique comme, plus tard, auprès des autres.
+        </p>
+        <p style={{ color: COULEURS.texteAtt, lineHeight: 1.6, fontStyle: 'italic' }}>
+          Important : le Mentorship n'est pas une certification. Quelques mois de contenu et de pratique
+          ne font pas de toi un enseignant du Mouvement — cela demande de l'expérience, du recul et
+          énormément de pratique dans la durée. Le Mentorship pose des bases solides pour qui veut,
+          un jour, aller dans cette direction, pas un raccourci vers le statut de coach.
         </p>
       </section>
 
