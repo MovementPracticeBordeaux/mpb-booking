@@ -4,6 +4,7 @@ import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { FORMULES } from '@/lib/formules';
+import { stripe } from '@/lib/stripe';
 
 // Toute erreur dans une action admin redirige vers /admin avec un message
 // clair, au lieu de crasher (Next.js masque les throw en production).
@@ -195,6 +196,34 @@ export async function degelerPass(formData: FormData) {
     date_gel_debut: null,
     date_expiration: nouvelleExpiration.toISOString().slice(0, 10),
   }).eq('id', eleveId);
+  if (error) echouer(error.message);
+
+  revalidatePath('/admin');
+}
+
+// Rembourse un paiement passé par Stripe directement depuis l'admin
+// (retrouve la session Stripe, crée un remboursement complet).
+export async function rembourserPaiement(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+  const paiementId = formData.get('paiement_id') as string;
+
+  const { data: paiement } = await admin.from('paiements').select('*').eq('id', paiementId).single();
+  if (!paiement) echouer('Paiement introuvable.');
+  if (paiement.rembourse) echouer('Déjà remboursé.');
+  if (!paiement.stripe_session_id) {
+    echouer("Ce paiement n'est pas passé par Stripe (manuel/offert) — rien à rembourser automatiquement.");
+  }
+
+  try {
+    const session = await stripe.checkout.sessions.retrieve(paiement.stripe_session_id);
+    if (!session.payment_intent) echouer('Aucun paiement Stripe associé à cette session.');
+    await stripe.refunds.create({ payment_intent: session.payment_intent as string });
+  } catch (e: any) {
+    echouer('Erreur Stripe : ' + e.message);
+  }
+
+  const { error } = await admin.from('paiements').update({ rembourse: true }).eq('id', paiementId);
   if (error) echouer(error.message);
 
   revalidatePath('/admin');

@@ -1,6 +1,6 @@
-import { supabaseServer } from '@/lib/supabase-server';
+import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
-import { ajouterCours, desactiverCours, definirSemaineReference, attribuerFormule, suspendreAcces, decompterCoaching, modifierQuotaRestant, modifierExpiration, gelerPass, degelerPass } from './actions';
+import { ajouterCours, desactiverCours, definirSemaineReference, attribuerFormule, suspendreAcces, decompterCoaching, modifierQuotaRestant, modifierExpiration, gelerPass, degelerPass, rembourserPaiement } from './actions';
 import { FORMULES } from '@/lib/formules';
 
 export const dynamic = 'force-dynamic';
@@ -17,18 +17,30 @@ export default async function AdminPage({ searchParams }: { searchParams: { erre
     return <main style={{ padding: 20 }}>Accès réservé à l'admin.</main>;
   }
 
-  const { data: ref } = await supabase.from('semaine_reference').select('*').eq('id', 1).single();
-  const { data: coursListe } = await supabase
+  // À partir d'ici, l'utilisateur est confirmé admin : on utilise le client
+  // service_role pour voir TOUS les élèves et paiements (pas seulement les
+  // siens), puisque la sécurité RLS classique limite chacun à ses propres
+  // données par défaut.
+  const admin = supabaseAdmin();
+
+  const { data: ref } = await admin.from('semaine_reference').select('*').eq('id', 1).single();
+  const { data: coursListe } = await admin
     .from('cours')
     .select('*')
     .eq('actif', true)
     .order('semaine')
     .order('jour_semaine');
 
-  const { data: eleves } = await supabase
+  const { data: eleves } = await admin
     .from('profiles')
     .select('*')
     .order('email');
+
+  const { data: paiements } = await admin
+    .from('paiements')
+    .select('*, profiles!paiements_eleve_id_fkey(email)')
+    .order('created_at', { ascending: false })
+    .limit(20);
 
   return (
     <main style={{ maxWidth: 640, margin: '0 auto', padding: 20 }}>
@@ -180,6 +192,26 @@ export default async function AdminPage({ searchParams }: { searchParams: { erre
             </div>
           );
         })}
+      </section>
+
+      <section style={{ marginBottom: 32 }}>
+        <h2>Paiements récents</h2>
+        {(paiements ?? []).map((p: any) => (
+          <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #333', padding: 8, fontSize: 13 }}>
+            <span>
+              {p.profiles?.email} — {FORMULES[p.formule_nom]?.nom ?? p.formule_nom} — {Number(p.montant).toFixed(2)} €
+              {' · '}{new Date(p.created_at).toLocaleDateString('fr-FR')}
+              {' · '}{p.origine === 'manuel' ? 'manuel' : 'Stripe'}
+              {p.rembourse && ' · ↩️ remboursé'}
+            </span>
+            {p.origine === 'stripe' && !p.rembourse && Number(p.montant) > 0 && (
+              <form action={rembourserPaiement}>
+                <input type="hidden" name="paiement_id" value={p.id} />
+                <button type="submit">Rembourser</button>
+              </form>
+            )}
+          </div>
+        ))}
       </section>
 
       <section>

@@ -83,6 +83,7 @@ create table paiements (
   montant numeric(10,2) not null default 0,
   origine text not null default 'stripe' check (origine in ('stripe', 'manuel')),
   paye boolean not null default true,
+  rembourse boolean not null default false,
   stripe_session_id text,
   created_at timestamptz not null default now()
 );
