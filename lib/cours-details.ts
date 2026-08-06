@@ -32,9 +32,9 @@ export const COURS_DETAILS: Record<string, CoursDetail> = {
   Locomotion: {
     nom: 'Locomotion',
     intensite: 3,
-    motsCles: ['locomotion', 'déplacement au sol', 'parkour', 'motricité', 'coordination'],
+    motsCles: ['locomotion', 'déplacement au sol', 'capoeira', 'acrobaties douces', 'motricité', 'coordination'],
     description:
-      "Un mélange dynamique de mobilité et de renforcement en mouvement, centré sur les déplacements au sol : coordination, motricité et créativité au service d'une locomotion plus fluide.",
+      "Un mélange dynamique de mobilité et de renforcement en mouvement, centré sur les déplacements au sol — plus proche de la capoeira et des acrobaties douces que du parkour : coordination, motricité et créativité au service d'une locomotion plus fluide.",
   },
   'Arm Balance': {
     nom: 'Arm Balance',
@@ -46,8 +46,8 @@ export const COURS_DETAILS: Record<string, CoursDetail> = {
   Altinha: {
     nom: 'Altinha',
     intensite: 3,
-    motsCles: ['altinha', 'jonglerie', 'futevôlei', 'coordination', 'jeu'],
+    motsCles: ['altinha', 'jonglerie', 'futevôlei', 'balle de tennis', 'ballon de foot', 'coordination', 'jeu'],
     description:
-      "Un jeu d'adresse au pied inspiré du futevôlei, à la balle de tennis : jongle, enchaîne des figures de plus en plus complexes et progresse en t'amusant avec tes partenaires.",
+      "Un jeu d'adresse au pied inspiré du futevôlei, à la balle de tennis comme au ballon de foot : jongle, enchaîne des figures de plus en plus complexes et progresse en t'amusant avec tes partenaires.",
   },
 };
