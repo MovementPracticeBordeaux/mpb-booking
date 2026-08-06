@@ -149,64 +149,69 @@ export default async function AdminPage({ searchParams }: { searchParams: { erre
         <h2>Élèves</h2>
         {(eleves ?? []).map((e) => {
           const formule = e.formule_nom ? FORMULES[e.formule_nom] : null;
+          const statut = e.gele ? '❄️ gelé' : e.abonnement_actif ? '✅ actif' : '⛔ inactif';
           return (
-            <div key={e.id} style={{ borderBottom: '1px solid #333', padding: 8, fontSize: 14 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>
-                  {e.nom ?? e.email} — {formule?.nom ?? 'aucune formule'}
-                  {formule?.quota && ` (${e.quota_restant}/${e.quota_total} ${formule.unite}s)`}
-                  {e.date_expiration && ` · exp. ${e.date_expiration}`}
-                  {' · '}{e.gele ? '❄️ gelé' : e.abonnement_actif ? '✅ actif' : '⛔ inactif'}
-                  {' · '}{e.origine === 'manuel' ? 'manuel' : 'Stripe'}
-                  {!e.paye && ' · offert'}
-                </span>
-                {e.abonnement_actif && (
-                  <form action={suspendreAcces}>
-                    <input type="hidden" name="eleve_id" value={e.id} />
-                    <button type="submit">Suspendre</button>
-                  </form>
-                )}
-              </div>
+            <details key={e.id} style={{ borderBottom: '1px solid #333', padding: 8 }}>
+              <summary style={{ fontSize: 14, cursor: 'pointer' }}>
+                {e.nom ?? e.email} — {formule?.nom ?? 'aucune formule'} · {statut}
+              </summary>
 
-              {e.formule_nom && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6, fontSize: 12 }}>
-                  {formule?.quota && (
-                    <form action={modifierQuotaRestant} style={{ display: 'flex', gap: 4 }}>
+              <div style={{ marginTop: 10 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, opacity: 0.8, marginBottom: 8 }}>
+                  <span>
+                    {formule?.quota && `${e.quota_restant}/${e.quota_total} ${formule.unite}s`}
+                    {e.date_expiration && ` · exp. ${e.date_expiration}`}
+                    {' · '}{e.origine === 'manuel' ? 'manuel' : 'Stripe'}
+                    {!e.paye && ' · offert'}
+                  </span>
+                  {e.abonnement_actif && (
+                    <form action={suspendreAcces}>
                       <input type="hidden" name="eleve_id" value={e.id} />
-                      <input type="number" name="quota_restant" defaultValue={e.quota_restant ?? 0} style={{ width: 50 }} />
-                      <button type="submit">Corriger quota</button>
-                    </form>
-                  )}
-                  <form action={modifierExpiration} style={{ display: 'flex', gap: 4 }}>
-                    <input type="hidden" name="eleve_id" value={e.id} />
-                    <input type="date" name="date_expiration" defaultValue={e.date_expiration ?? ''} />
-                    <button type="submit">Corriger date</button>
-                  </form>
-                  {e.gele ? (
-                    <form action={degelerPass}>
-                      <input type="hidden" name="eleve_id" value={e.id} />
-                      <button type="submit">Dégeler (prolonge auto)</button>
-                    </form>
-                  ) : (
-                    <form action={gelerPass}>
-                      <input type="hidden" name="eleve_id" value={e.id} />
-                      <button type="submit">❄️ Geler (blessure, vacances...)</button>
+                      <button type="submit">Suspendre</button>
                     </form>
                   )}
                 </div>
-              )}
-              {formule?.categorie === 'coaching' && formule.quota && e.abonnement_actif && (
-                <form action={decompterCoaching} style={{ display: 'flex', gap: 6, marginTop: 6 }}>
-                  <input type="hidden" name="eleve_id" value={e.id} />
-                  <input
-                    type="number" name="quantite" min="1" step="1" defaultValue="1"
-                    style={{ width: 60 }}
-                    aria-label={`${formule.unite}s consommées`}
-                  />
-                  <button type="submit">Décompter ({formule.unite}s consommées après séance)</button>
-                </form>
-              )}
-            </div>
+
+                {e.formule_nom && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, fontSize: 12 }}>
+                    {formule?.quota && (
+                      <form action={modifierQuotaRestant} style={{ display: 'flex', gap: 4 }}>
+                        <input type="hidden" name="eleve_id" value={e.id} />
+                        <input type="number" name="quota_restant" defaultValue={e.quota_restant ?? 0} style={{ width: 50 }} />
+                        <button type="submit">Corriger quota</button>
+                      </form>
+                    )}
+                    <form action={modifierExpiration} style={{ display: 'flex', gap: 4 }}>
+                      <input type="hidden" name="eleve_id" value={e.id} />
+                      <input type="date" name="date_expiration" defaultValue={e.date_expiration ?? ''} />
+                      <button type="submit">Corriger date</button>
+                    </form>
+                    {e.gele ? (
+                      <form action={degelerPass}>
+                        <input type="hidden" name="eleve_id" value={e.id} />
+                        <button type="submit">Dégeler (prolonge auto)</button>
+                      </form>
+                    ) : (
+                      <form action={gelerPass}>
+                        <input type="hidden" name="eleve_id" value={e.id} />
+                        <button type="submit">❄️ Geler (blessure, vacances...)</button>
+                      </form>
+                    )}
+                  </div>
+                )}
+                {formule?.categorie === 'coaching' && formule.quota && e.abonnement_actif && (
+                  <form action={decompterCoaching} style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                    <input type="hidden" name="eleve_id" value={e.id} />
+                    <input
+                      type="number" name="quantite" min="1" step="1" defaultValue="1"
+                      style={{ width: 60 }}
+                      aria-label={`${formule.unite}s consommées`}
+                    />
+                    <button type="submit">Décompter ({formule.unite}s consommées après séance)</button>
+                  </form>
+                )}
+              </div>
+            </details>
           );
         })}
       </section>
@@ -214,36 +219,65 @@ export default async function AdminPage({ searchParams }: { searchParams: { erre
       <section style={{ marginBottom: 32 }}>
         <h2>Paiements récents</h2>
         {(paiements ?? []).map((p: any) => (
-          <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #333', padding: 8, fontSize: 13 }}>
-            <span>
-              {p.profiles?.email} — {FORMULES[p.formule_nom]?.nom ?? p.formule_nom} — {Number(p.montant).toFixed(2)} €
-              {' · '}{new Date(p.created_at).toLocaleDateString('fr-FR')}
-              {' · '}{p.origine === 'manuel' ? 'manuel' : 'Stripe'}
+          <details key={p.id} style={{ borderBottom: '1px solid #333', padding: 8 }}>
+            <summary style={{ fontSize: 13, cursor: 'pointer' }}>
+              {new Date(p.created_at).toLocaleDateString('fr-FR')} · {p.profiles?.email} · {Number(p.montant).toFixed(2)} €
               {p.rembourse && ' · ↩️ remboursé'}
-            </span>
-            {p.origine === 'stripe' && !p.rembourse && Number(p.montant) > 0 && (
-              <form action={rembourserPaiement}>
-                <input type="hidden" name="paiement_id" value={p.id} />
-                <button type="submit">Rembourser</button>
-              </form>
-            )}
-          </div>
+            </summary>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, marginTop: 8 }}>
+              <span>
+                {FORMULES[p.formule_nom]?.nom ?? p.formule_nom}
+                {' · '}{p.origine === 'manuel' ? 'manuel' : 'Stripe'}
+              </span>
+              {p.origine === 'stripe' && !p.rembourse && Number(p.montant) > 0 && (
+                <form action={rembourserPaiement}>
+                  <input type="hidden" name="paiement_id" value={p.id} />
+                  <button type="submit">Rembourser</button>
+                </form>
+              )}
+            </div>
+          </details>
         ))}
       </section>
 
       <section>
         <h2>Créneaux actifs</h2>
-        {(coursListe ?? []).map((c) => (
-          <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #333', padding: 8 }}>
-            <span>
-              [{c.semaine}] {JOURS[c.jour_semaine]} {c.heure_debut.slice(0, 5)}-{c.heure_fin.slice(0, 5)} — {c.discipline}
-            </span>
-            <form action={desactiverCours}>
-              <input type="hidden" name="id" value={c.id} />
-              <button type="submit">Désactiver</button>
-            </form>
-          </div>
-        ))}
+        <p style={{ fontSize: 13, opacity: 0.7, marginBottom: 12 }}>
+          Repère-toi comme sur le planning public : un bloc par semaine (A/B), une colonne par jour.
+        </p>
+        {(['A', 'B'] as const).map((sem) => {
+          const coursSemaine = (coursListe ?? []).filter((c) => c.semaine === sem);
+          return (
+            <div key={sem} style={{ marginBottom: 24 }}>
+              <p style={{ fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, opacity: 0.7, marginBottom: 8 }}>
+                Semaine {sem}
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 8 }}>
+                {JOURS.map((nomJour, i) => {
+                  const coursDuJour = coursSemaine.filter((c) => c.jour_semaine === i);
+                  if (coursDuJour.length === 0) return null;
+                  return (
+                    <div key={i}>
+                      <p style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, opacity: 0.6, marginBottom: 6 }}>
+                        {nomJour}
+                      </p>
+                      {coursDuJour.map((c) => (
+                        <div key={c.id} style={{ border: '1px solid #333', borderRadius: 8, padding: 8, marginBottom: 6, fontSize: 12 }}>
+                          <strong style={{ display: 'block' }}>{c.discipline}</strong>
+                          <span style={{ opacity: 0.7 }}>{c.heure_debut.slice(0, 5)}-{c.heure_fin.slice(0, 5)}</span>
+                          <form action={desactiverCours} style={{ marginTop: 4 }}>
+                            <input type="hidden" name="id" value={c.id} />
+                            <button type="submit" style={{ fontSize: 11 }}>Désactiver</button>
+                          </form>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
       </section>
     </main>
   );
