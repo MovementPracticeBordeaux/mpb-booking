@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 const JOURS = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
 
-export default async function PlanningPage() {
+export default async function PlanningPage({ searchParams }: { searchParams: { erreur?: string } }) {
   const supabase = supabaseServer();
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -48,6 +48,11 @@ export default async function PlanningPage() {
   return (
     <main style={{ maxWidth: 640, margin: '0 auto', padding: 20 }}>
       <h1>Planning - Movement Practice Bordeaux</h1>
+      {searchParams.erreur && (
+        <p style={{ background: '#5a1a1a', color: '#ffb4b4', padding: 12, borderRadius: 8 }}>
+          ⚠️ {searchParams.erreur}
+        </p>
+      )}
       {!user && (
         <p>
           <a href="/login" style={{ color: '#f0a' }}>Connecte-toi</a> pour réserver un cours.
