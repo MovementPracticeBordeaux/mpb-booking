@@ -1,6 +1,7 @@
 import { COULEURS, GRADIENT, GRADIENT_TEXTE, POLICE_DISPLAY, POLICE_CORPS } from '@/lib/theme';
 import { FORMULES } from '@/lib/formules';
 import Temoignages from './components/Temoignages';
+import CarteDiscipline from './components/CarteDiscipline';
 
 const DISCIPLINES = [
   { nom: 'Handstand', icone: '/disciplines/handstand.png', desc: "Équilibre sur les mains, du gainage aux figures libres." },
@@ -101,11 +102,7 @@ export default function AccueilPage() {
       <section style={{ maxWidth: 960, margin: '0 auto', padding: '0 20px 64px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
           {DISCIPLINES.map((d) => (
-            <div key={d.nom} style={{ border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surface, borderRadius: 14, padding: 20, textAlign: 'center' }}>
-              <img src={d.icone} alt={d.nom} style={{ width: 72, height: 72, borderRadius: '50%', marginBottom: 12 }} />
-              <h3 style={{ fontFamily: POLICE_DISPLAY, fontSize: 20, letterSpacing: 0.5, margin: '0 0 8px' }}>{d.nom.toUpperCase()}</h3>
-              <p style={{ fontSize: 14, color: COULEURS.texteAtt, margin: 0, lineHeight: 1.5 }}>{d.desc}</p>
-            </div>
+            <CarteDiscipline key={d.nom} nom={d.nom} icone={d.icone} desc={d.desc} />
           ))}
         </div>
       </section>

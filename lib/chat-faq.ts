@@ -1,8 +1,10 @@
 // Base de connaissances du chat FAQ. Chaque entrée a des mots-clés pour le
 // matching simple (pas d'IA, juste un score de correspondance de mots).
+import { COURS_DETAILS } from './cours-details';
+
 export type ChatFAQ = { question: string; reponse: string; motsCles: string[] };
 
-export const CHAT_FAQ: ChatFAQ[] = [
+const FAQ_GENERALE: ChatFAQ[] = [
   {
     question: 'Où se trouve Movement Practice Bordeaux ?',
     reponse: "Les cours ont lieu à Darwin écosystème, 87 Quai des Queyries, 33100 Bordeaux — en extérieur sur les quais ou en intérieur selon la météo.",
@@ -49,3 +51,13 @@ export const CHAT_FAQ: ChatFAQ[] = [
     motsCles: ['annuler', 'annulation', 'reporter', 'modifier', 'changer'],
   },
 ];
+
+// Une entrée de chat générée pour chaque discipline, à partir de la même
+// source que les cartes cliquables de la homepage.
+const FAQ_DISCIPLINES: ChatFAQ[] = Object.values(COURS_DETAILS).map((c) => ({
+  question: `En quoi consiste le cours ${c.nom} ?`,
+  reponse: `${c.description} (intensité ${c.intensite}/5)`,
+  motsCles: [c.nom.toLowerCase(), ...c.motsCles.map((m) => m.toLowerCase())],
+}));
+
+export const CHAT_FAQ: ChatFAQ[] = [...FAQ_GENERALE, ...FAQ_DISCIPLINES];
