@@ -36,8 +36,8 @@ export default function AccueilPage() {
           BORDEAUX RIVE DROITE · DARWIN &amp; LES QUAIS
         </p>
         <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 'clamp(40px, 8vw, 76px)', lineHeight: 1.02, letterSpacing: 0.5, margin: '0 0 20px' }}>
-          LE MOUVEMENT,<br />
-          <span style={GRADIENT_TEXTE}>SANS SPÉCIALISATION</span>
+          MOVEMENT<br />
+          <span style={GRADIENT_TEXTE}>PRACTICE</span>
         </h1>
         <p style={{ fontSize: 18, color: COULEURS.texteAtt, maxWidth: 520, margin: '0 auto 32px' }}>
           Ton corps n'est pas fait pour choisir. Calisthenics, handstand, mobilité et locomotion réunis

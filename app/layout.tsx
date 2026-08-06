@@ -2,8 +2,9 @@ import { supabaseServer } from '@/lib/supabase-server';
 import { COULEURS, FONTS_IMPORT_URL, POLICE_CORPS } from '@/lib/theme';
 
 export const metadata = {
-  title: 'Movement Practice Bordeaux — Calisthenics, Handstand & Mobilité',
+  title: 'Movement Practice Bordeaux — Calisthenics, Handstand, Locomotion & Mobilité',
   description: 'Coaching, cours et ateliers au poids de corps à Bordeaux : calisthenics, handstand, locomotion, mobilité.',
+  keywords: ['calisthenics', 'handstand', 'locomotion', 'mobilité', 'Bordeaux', 'coaching sportif', 'mouvement'],
 };
 
 const LIENS = [
