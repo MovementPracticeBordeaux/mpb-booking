@@ -75,7 +75,7 @@ export default function ProPage() {
           LE <span style={GRADIENT_TEXTE}>MENTORSHIP</span>
         </h1>
         <p style={{ fontSize: 18, color: COULEURS.texteAtt, maxWidth: 560, margin: '0 auto' }}>
-          Un mentorat, pas un coaching personnalisé : du contenu et un accompagnement pour comprendre et
+          Un mentorat : du contenu et un accompagnement pour comprendre et
           organiser ta pratique du Mouvement dans son ensemble.
         </p>
       </section>
