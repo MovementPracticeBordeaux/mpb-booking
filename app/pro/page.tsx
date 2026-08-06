@@ -97,7 +97,7 @@ export default function ProPage() {
       <section style={{ maxWidth: 720, margin: '0 auto', padding: '0 20px 64px' }}>
         <p style={{ fontSize: 12, letterSpacing: 2, color: COULEURS.texteFaible, marginBottom: 10 }}>DESCRIPTIF</p>
         <p style={{ color: COULEURS.texteAtt, lineHeight: 1.6, marginBottom: 12 }}>
-          Le Mentorship n'est ni une formation, ni un coaching personnalisé : c'est un mentorat qui donne
+          <span style={{ color: '#FF8A00' }}>Le Mentorship n'est ni une formation, ni un coaching personnalisé</span> : c'est un mentorat qui donne
           accès à du contenu et à une assistance pour comprendre et organiser ta pratique du Mouvement —
           et, si tu le souhaites, pour apprendre à la transmettre à ton tour.
         </p>
