@@ -61,8 +61,8 @@ export default async function PlanningPage({ searchParams }: { searchParams: { e
         </p>
       )}
       {!ref && (
-        <p style={{ color: 'orange' }}>
-          Aucune semaine de référence configurée. Un admin doit la définir depuis /admin.
+        <p style={{ color: COULEURS.texteAtt }}>
+          Le planning est en cours de mise à jour, reviens très bientôt !
         </p>
       )}
       {jours.map(({ date, semaine }) => {

@@ -1,6 +1,7 @@
 'use client';
 
 import { FORMULES } from '@/lib/formules';
+import { COULEURS, GRADIENT, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
 
 async function acheter(priceId: string, formuleNom: string) {
   try {
@@ -46,7 +47,9 @@ const GROUPES = [
 export default function TarifsPage({ searchParams }: { searchParams: { erreur?: string } }) {
   return (
     <main style={{ maxWidth: 480, margin: '0 auto', padding: 20 }}>
-      <h1>Tarifs & formules</h1>
+      <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 36, letterSpacing: 0.5, margin: '0 0 20px' }}>
+        TARIFS &amp; <span style={GRADIENT_TEXTE}>FORMULES</span>
+      </h1>
       {searchParams.erreur && (
         <p style={{ background: '#5a1a1a', color: '#ffb4b4', padding: 12, borderRadius: 8 }}>
           ⚠️ {searchParams.erreur}
@@ -54,17 +57,24 @@ export default function TarifsPage({ searchParams }: { searchParams: { erreur?: 
       )}
       {GROUPES.map((groupe) => (
         <section key={groupe.titre} style={{ marginBottom: 28 }}>
-          <h2 style={{ fontSize: 16, opacity: 0.7 }}>{groupe.titre}</h2>
+          <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 20, letterSpacing: 1, margin: '0 0 12px', ...GRADIENT_TEXTE }}>
+            {groupe.titre.toUpperCase()}
+          </h2>
           {groupe.cles.map((cle) => {
             const f = FORMULES[cle];
             return (
-              <div key={cle} id={cle} style={{ border: '1px solid #333', borderRadius: 8, padding: 16, marginBottom: 12, scrollMarginTop: 20 }}>
-                <h3 style={{ margin: '0 0 4px' }}>{f.nom}</h3>
-                <p style={{ fontSize: 12, opacity: 0.6, margin: '0 0 12px' }}>
+              <div key={cle} id={cle} style={{ border: `1px solid ${COULEURS.bordure}`, borderRadius: 8, padding: 16, marginBottom: 12, scrollMarginTop: 20 }}>
+                <h3 style={{ fontFamily: POLICE_DISPLAY, letterSpacing: 0.3, fontSize: 20, margin: '0 0 4px' }}>{f.nom}</h3>
+                <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: '0 0 12px' }}>
                   {f.quota ? `${f.quota} ${f.unite}${f.quota > 1 ? 's' : ''}` : 'Illimité'} · valable {f.validiteMois} mois
                   {f.categorie === 'coaching' && ' · mise en relation après achat'}
                 </p>
-                <button onClick={() => acheter(PRICE_IDS[cle], cle)}>Acheter</button>
+                <button
+                  onClick={() => acheter(PRICE_IDS[cle], cle)}
+                  style={{ background: GRADIENT, color: 'white', border: 'none', borderRadius: 999, padding: '10px 20px', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}
+                >
+                  Acheter
+                </button>
               </div>
             );
           })}

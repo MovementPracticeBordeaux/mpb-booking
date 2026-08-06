@@ -28,6 +28,12 @@ export default function AccueilPage() {
       <style>{`
         @keyframes defiler { from { transform: translateX(0); } to { transform: translateX(-50%); } }
         .marquee-piste { display: flex; width: max-content; animation: defiler 22s linear infinite; }
+        .marquee-item { font-family: ${POLICE_DISPLAY}; font-size: 28px; letter-spacing: 1px; padding: 0 28px; white-space: nowrap; }
+        @media (max-width: 640px) {
+          .marquee-item { font-size: 16px; padding: 0 14px; }
+          .img-portrait { width: 100% !important; max-width: 340px; height: 360px !important; margin: 0 auto; }
+        }
+        .img-portrait { width: 220px; height: 280px; display: block; }
         details > summary { cursor: pointer; list-style: none; }
         details > summary::-webkit-details-marker { display: none; }
       `}</style>
@@ -65,7 +71,7 @@ export default function AccueilPage() {
           {[...Array(2)].map((_, i) => (
             <div key={i} style={{ display: 'flex' }}>
               {DISCIPLINES.map((d) => (
-                <span key={d.nom + i} style={{ fontFamily: POLICE_DISPLAY, fontSize: 28, letterSpacing: 1, padding: '0 28px', whiteSpace: 'nowrap', ...GRADIENT_TEXTE }}>
+                <span key={d.nom + i} className="marquee-item" style={GRADIENT_TEXTE}>
                   {d.nom.toUpperCase()} ✦
                 </span>
               ))}
@@ -79,7 +85,8 @@ export default function AccueilPage() {
         <img
           src="/sylvain-handstand-spot.png"
           alt="Handstand en pratique du mouvement à Bordeaux"
-          style={{ width: 220, height: 280, objectFit: 'cover', objectPosition: 'center 50%', borderRadius: 16, flexShrink: 0 }}
+          className="img-portrait"
+          style={{ objectFit: 'cover', objectPosition: 'center 50%', borderRadius: 16, flexShrink: 0 }}
         />
         <div style={{ flex: 1, minWidth: 260 }}>
           <p style={{ fontSize: 12, letterSpacing: 2, color: COULEURS.texteFaible, marginBottom: 10 }}>LA MÉTHODE</p>
@@ -115,7 +122,8 @@ export default function AccueilPage() {
         <img
           src="/sylvain-portrait.jpg"
           alt="Sylvain Noury, coach Movement Practice Bordeaux"
-          style={{ width: 220, height: 280, objectFit: 'cover', objectPosition: 'center 10%', borderRadius: 16, flexShrink: 0 }}
+          className="img-portrait"
+          style={{ objectFit: 'cover', objectPosition: 'center 10%', borderRadius: 16, flexShrink: 0 }}
         />
         <div style={{ flex: 1, minWidth: 260 }}>
           <p style={{ fontSize: 12, letterSpacing: 2, color: COULEURS.texteFaible, marginBottom: 10 }}>QUI EST SYLVAIN ?</p>

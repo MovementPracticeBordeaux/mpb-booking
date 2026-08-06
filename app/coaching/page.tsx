@@ -63,6 +63,13 @@ const TEMOIGNAGES_COACHING: Temoignage[] = [
 export default function CoachingPage() {
   return (
     <main>
+      <style>{`
+        .img-coaching { width: 240px; height: 300px; display: block; }
+        @media (max-width: 640px) {
+          .img-coaching { width: 100% !important; max-width: 340px; height: 360px !important; margin: 0 auto; }
+        }
+      `}</style>
+
       {/* HERO */}
       <section style={{ maxWidth: 720, margin: '0 auto', padding: '64px 20px 40px', textAlign: 'center' }}>
         <p style={{ fontSize: 12, letterSpacing: 3, color: COULEURS.texteFaible, marginBottom: 16 }}>
@@ -82,7 +89,8 @@ export default function CoachingPage() {
         <img
           src="/coaching-presentiel.jpg"
           alt="Coaching présentiel calisthenics à Bordeaux, Sylvain avec un élève"
-          style={{ width: 240, height: 300, objectFit: 'cover', borderRadius: 16, flexShrink: 0 }}
+          className="img-coaching"
+          style={{ objectFit: 'cover', borderRadius: 16, flexShrink: 0 }}
         />
         <div style={{ flex: 1, minWidth: 260 }}>
           <p style={{ fontSize: 12, letterSpacing: 2, color: COULEURS.texteFaible, marginBottom: 10 }}>EN PRÉSENTIEL, À BORDEAUX</p>
@@ -120,7 +128,8 @@ export default function CoachingPage() {
         <img
           src="/coaching-online.png"
           alt="Élève suivant un programme de coaching en ligne Movement Practice Bordeaux"
-          style={{ width: 240, height: 300, objectFit: 'cover', borderRadius: 16, flexShrink: 0 }}
+          className="img-coaching"
+          style={{ objectFit: 'cover', borderRadius: 16, flexShrink: 0 }}
         />
         <div style={{ flex: 1, minWidth: 260 }}>
           <p style={{ fontSize: 12, letterSpacing: 2, color: COULEURS.texteFaible, marginBottom: 10 }}>OÙ QUE TU SOIS</p>
