@@ -23,7 +23,7 @@ const FAQ_GENERALE: ChatFAQ[] = [
   {
     question: 'Quelles disciplines sont enseignées ?',
     reponse: 'Handstand, calisthenics, mobilité, locomotion (mouvement au sol), arm balance et altinha.',
-    motsCles: ['discipline', 'cours', 'quoi', 'propose', 'calisthenics', 'handstand', 'mobilité', 'locomotion'],
+    motsCles: ['discipline', 'disciplines', 'enseigné', 'propose-tu', 'quelles disciplines'],
   },
   {
     question: "C'est adapté aux débutants ?",
@@ -43,7 +43,7 @@ const FAQ_GENERALE: ChatFAQ[] = [
   {
     question: "Qu'est-ce que le Mentorship ?",
     reponse: "Un mentorat (pas une formation ni un coaching personnalisé) pour comprendre et organiser sa pratique du Mouvement en profondeur. Plus d'infos sur la page Pro.",
-    motsCles: ['mentorship', 'mentorat', 'pro', 'professionnel', 'formation', 'enseigner', 'transmettre'],
+    motsCles: ['mentorship', 'mentorat', 'professionnel', 'formation', 'enseigner', 'transmettre'],
   },
   {
     question: 'Puis-je annuler ou reporter une réservation ?',
@@ -53,11 +53,12 @@ const FAQ_GENERALE: ChatFAQ[] = [
 ];
 
 // Une entrée de chat générée pour chaque discipline, à partir de la même
-// source que les cartes cliquables de la homepage.
+// source que les cartes cliquables de la homepage. On déduplique les
+// mots-clés (le nom de la discipline est parfois déjà dans motsCles).
 const FAQ_DISCIPLINES: ChatFAQ[] = Object.values(COURS_DETAILS).map((c) => ({
   question: `En quoi consiste le cours ${c.nom} ?`,
   reponse: `${c.description} (intensité ${c.intensite}/5)`,
-  motsCles: [c.nom.toLowerCase(), ...c.motsCles.map((m) => m.toLowerCase())],
+  motsCles: [...new Set([c.nom.toLowerCase(), ...c.motsCles.map((m) => m.toLowerCase())])],
 }));
 
 export const CHAT_FAQ: ChatFAQ[] = [...FAQ_GENERALE, ...FAQ_DISCIPLINES];
