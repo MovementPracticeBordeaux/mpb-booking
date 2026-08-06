@@ -60,6 +60,29 @@ export async function definirSemaineReference(formData: FormData) {
   revalidatePath('/planning');
 }
 
+// Période de vacances : tant que la date du jour est dans cet intervalle, le
+// planning public affiche un message "en vacances" au lieu des cours.
+// Champs vides -> null -> pas de période active.
+export async function definirVacances(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+  const debut = (formData.get('vacances_debut') as string) || null;
+  const fin = (formData.get('vacances_fin') as string) || null;
+
+  const { data: existant } = await admin.from('semaine_reference').select('id').eq('id', 1).single();
+  if (!existant) {
+    echouer("Configure d'abord la semaine de référence ci-dessus avant de définir une période de vacances.");
+  }
+
+  const { error } = await admin.from('semaine_reference').update({
+    vacances_debut: debut,
+    vacances_fin: fin,
+  }).eq('id', 1);
+  if (error) echouer(error.message);
+  revalidatePath('/admin');
+  revalidatePath('/planning');
+}
+
 // Permet à l'admin d'octroyer une formule à un élève sans passer par Stripe
 // (offert gratuitement, payé en liquide/virement, geste commercial, etc.)
 export async function attribuerFormule(formData: FormData) {

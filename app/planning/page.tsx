@@ -36,17 +36,21 @@ export default async function PlanningPage({ searchParams }: { searchParams: { e
 
   // On calcule 5 semaines glissantes (35 jours) pour permettre la navigation
   // "semaine suivante" dans la vue calendrier.
+  const vacDebut = ref?.vacances_debut as string | null | undefined;
+  const vacFin = ref?.vacances_fin as string | null | undefined;
+
   const jours: JourPlanning[] = [];
   if (ref) {
     const lundiRef = new Date(ref.date_lundi_reference);
     for (let i = 0; i < 35; i++) {
       const d = new Date();
       d.setDate(d.getDate() + i);
+      const dateStr = d.toISOString().slice(0, 10);
+      const enVacances = !!(vacDebut && vacFin && dateStr >= vacDebut && dateStr <= vacFin);
       const semaine = calculerSemaine(d, lundiRef, ref.semaine_ce_lundi);
-      const coursDuJour = (coursListe ?? [])
+      const coursDuJour = enVacances ? [] : (coursListe ?? [])
         .filter((c) => c.jour_semaine === d.getDay() && c.semaine === semaine)
         .map((c) => {
-          const dateStr = d.toISOString().slice(0, 10);
           return {
             id: c.id as string,
             discipline: c.discipline as string,
@@ -56,7 +60,7 @@ export default async function PlanningPage({ searchParams }: { searchParams: { e
             dejaReserve: mesReservations.some((r) => r.cours_id === c.id && r.date_seance === dateStr),
           };
         });
-      jours.push({ dateISO: d.toISOString().slice(0, 10), jourSemaine: d.getDay(), semaine, cours: coursDuJour });
+      jours.push({ dateISO: dateStr, jourSemaine: d.getDay(), semaine, cours: coursDuJour, enVacances });
     }
   }
 
@@ -78,6 +82,11 @@ export default async function PlanningPage({ searchParams }: { searchParams: { e
       {!ref && (
         <p style={{ color: COULEURS.texteAtt }}>
           Le planning est en cours de mise à jour, reviens très bientôt !
+        </p>
+      )}
+      {jours[0]?.enVacances && (
+        <p style={{ color: COULEURS.texteAtt, marginBottom: 20 }}>
+          🏝️ Sylvain est actuellement en vacances{vacFin ? ` jusqu'au ${new Date(vacFin + 'T00:00:00').toLocaleDateString('fr-FR')}` : ''}, pas de cours pour le moment — les jours concernés sont grisés ci-dessous.
         </p>
       )}
       {ref && <PlanningVue jours={jours} connecte={!!user} reserverCours={reserverCours} />}

@@ -17,6 +17,7 @@ export type JourPlanning = {
   jourSemaine: number; // 0 = dimanche
   semaine: 'A' | 'B';
   cours: CoursJour[];
+  enVacances?: boolean;
 };
 
 const NOMS_JOURS = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
@@ -137,11 +138,13 @@ export default function PlanningVue({
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
             {semaineActuelle.map((j) => (
-              <div key={j.dateISO}>
+              <div key={j.dateISO} style={j.enVacances ? { opacity: 0.4 } : undefined}>
                 <p style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, color: COULEURS.texteFaible, marginBottom: 8 }}>
                   {NOMS_JOURS_COURTS[j.jourSemaine]} {formaterDate(j.dateISO)}
                 </p>
-                {j.cours.length === 0 ? (
+                {j.enVacances ? (
+                  <p style={{ fontSize: 12, color: COULEURS.texteFaible }}>🏝️ Vacances</p>
+                ) : j.cours.length === 0 ? (
                   <p style={{ fontSize: 12, color: COULEURS.texteFaible, opacity: 0.6 }}>—</p>
                 ) : (
                   j.cours.map((c) => (
@@ -176,7 +179,9 @@ export default function PlanningVue({
             </button>
           </div>
 
-          {jourActuel && jourActuel.cours.length === 0 ? (
+          {jourActuel?.enVacances ? (
+            <p style={{ color: COULEURS.texteFaible }}>🏝️ Vacances, pas de cours ce jour-là.</p>
+          ) : jourActuel && jourActuel.cours.length === 0 ? (
             <p style={{ color: COULEURS.texteFaible }}>Aucun cours ce jour-là.</p>
           ) : (
             jourActuel?.cours.map((c) => (

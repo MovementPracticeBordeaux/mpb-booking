@@ -1,6 +1,6 @@
 import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
-import { ajouterCours, desactiverCours, definirSemaineReference, attribuerFormule, suspendreAcces, decompterCoaching, modifierQuotaRestant, modifierExpiration, gelerPass, degelerPass, rembourserPaiement } from './actions';
+import { ajouterCours, desactiverCours, definirSemaineReference, definirVacances, attribuerFormule, suspendreAcces, decompterCoaching, modifierQuotaRestant, modifierExpiration, gelerPass, degelerPass, rembourserPaiement } from './actions';
 import { FORMULES } from '@/lib/formules';
 
 export const dynamic = 'force-dynamic';
@@ -67,6 +67,23 @@ export default async function AdminPage({ searchParams }: { searchParams: { erre
             <option value="A">Semaine A</option>
             <option value="B">Semaine B</option>
           </select>
+          <button type="submit">Enregistrer</button>
+        </form>
+      </section>
+
+      <section style={{ marginBottom: 32 }}>
+        <h2>Période de vacances</h2>
+        <p style={{ fontSize: 13, opacity: 0.7 }}>
+          Pendant cette période, le planning public affiche un message "en vacances" et les jours
+          concernés sont grisés (non réservables). Laisse les deux champs vides pour désactiver.
+        </p>
+        <form action={definirVacances} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          <label style={{ fontSize: 13 }}>Du
+            <input type="date" name="vacances_debut" defaultValue={ref?.vacances_debut ?? ''} style={{ marginLeft: 4 }} />
+          </label>
+          <label style={{ fontSize: 13 }}>Au
+            <input type="date" name="vacances_fin" defaultValue={ref?.vacances_fin ?? ''} style={{ marginLeft: 4 }} />
+          </label>
           <button type="submit">Enregistrer</button>
         </form>
       </section>
