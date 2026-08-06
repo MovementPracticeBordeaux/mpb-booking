@@ -61,6 +61,13 @@ export default async function AdminPage({ searchParams }: { searchParams: { erre
     (e) => e.abonnement_actif && FORMULES[e.formule_nom ?? '']?.categorie === 'coaching'
   ).length;
 
+  const eleveParFormule = new Map<string, number>();
+  for (const e of eleves ?? []) {
+    if (!e.abonnement_actif || !e.formule_nom) continue;
+    eleveParFormule.set(e.formule_nom, (eleveParFormule.get(e.formule_nom) ?? 0) + 1);
+  }
+
+  const COULEUR_SEMAINE: Record<'A' | 'B', string> = { A: '#4FC3F7', B: '#FFB74D' };
   const reservationsParCours = new Map<string, number>();
   for (const r of reservationsTotales ?? []) {
     reservationsParCours.set(r.cours_id, (reservationsParCours.get(r.cours_id) ?? 0) + 1);
@@ -107,6 +114,20 @@ export default async function AdminPage({ searchParams }: { searchParams: { erre
           </div>
         </div>
 
+        <p style={{ fontSize: 13, fontWeight: 600, opacity: 0.8, marginBottom: 4 }}>Élèves actifs par formule</p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 20 }}>
+          {Object.entries(FORMULES).map(([cle, f]) => {
+            const n = eleveParFormule.get(cle) ?? 0;
+            if (n === 0) return null;
+            return (
+              <span key={cle} style={{ border: '1px solid #333', borderRadius: 999, padding: '4px 10px', fontSize: 12 }}>
+                {f.nom} · {n}
+              </span>
+            );
+          })}
+          {eleveParFormule.size === 0 && <p style={{ fontSize: 12, opacity: 0.6 }}>Aucun abonnement actif pour le moment.</p>}
+        </div>
+
         <p style={{ fontSize: 13, fontWeight: 600, opacity: 0.8, marginBottom: 4 }}>Revenus mensuels (encaissé, hors remboursements)</p>
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 100, marginBottom: 20 }}>
           {moisTries.length === 0 && <p style={{ fontSize: 12, opacity: 0.6 }}>Pas encore de paiement enregistré.</p>}
@@ -130,8 +151,8 @@ export default async function AdminPage({ searchParams }: { searchParams: { erre
         </p>
         {coursAvecStats.map((c) => (
           <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, fontSize: 12 }}>
-            <span style={{ width: 170, flexShrink: 0 }}>
-              [{c.semaine}] {JOURS[c.jour_semaine].slice(0, 3)} {c.heure_debut.slice(0, 5)} — {c.discipline}
+            <span style={{ width: 178, flexShrink: 0 }}>
+              <span style={{ color: COULEUR_SEMAINE[c.semaine as 'A' | 'B'] }}>●</span> {JOURS[c.jour_semaine].slice(0, 3)} {c.heure_debut.slice(0, 5)} — {c.discipline}
             </span>
             <div style={{ flex: 1, background: '#222', borderRadius: 4, height: 14, overflow: 'hidden' }}>
               <div style={{ width: `${(c.nbReservations / maxReservations) * 100}%`, height: '100%', background: '#f0a' }} />
@@ -339,9 +360,9 @@ export default async function AdminPage({ searchParams }: { searchParams: { erre
           const coursSemaine = (coursListe ?? []).filter((c) => c.semaine === sem);
           const disciplinesSemaine = [...new Set(coursSemaine.map((c) => c.discipline))];
           return (
-            <div key={sem} style={{ marginBottom: 24 }}>
-              <p style={{ fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, opacity: 0.7, marginBottom: 2 }}>
-                Semaine {sem}
+            <div key={sem} style={{ marginBottom: 24, borderLeft: `3px solid ${COULEUR_SEMAINE[sem]}`, paddingLeft: 12 }}>
+              <p style={{ fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: COULEUR_SEMAINE[sem], marginBottom: 2 }}>
+                ● Semaine {sem}
               </p>
               <p style={{ fontSize: 12, opacity: 0.6, marginBottom: 8 }}>
                 {disciplinesSemaine.length > 0 ? disciplinesSemaine.join(' · ') : 'Aucun créneau'}
