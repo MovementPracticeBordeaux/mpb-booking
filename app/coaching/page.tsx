@@ -55,8 +55,8 @@ export default function CoachingPage() {
       {/* COACHING PRÉSENTIEL */}
       <section style={{ maxWidth: 860, margin: '0 auto', padding: '32px 20px 64px', display: 'flex', gap: 32, flexWrap: 'wrap', alignItems: 'center' }}>
         <img
-          src="/sylvain-methode.jpg"
-          alt="Séance de coaching présentiel calisthenics et mobilité à Bordeaux"
+          src="/coaching-presentiel.jpg"
+          alt="Coaching présentiel calisthenics à Bordeaux, Sylvain avec un élève"
           style={{ width: 240, height: 300, objectFit: 'cover', borderRadius: 16, flexShrink: 0 }}
         />
         <div style={{ flex: 1, minWidth: 260 }}>
@@ -93,8 +93,8 @@ export default function CoachingPage() {
       {/* COACHING ONLINE */}
       <section style={{ maxWidth: 860, margin: '0 auto', padding: '0 20px 64px', display: 'flex', gap: 32, flexWrap: 'wrap-reverse', alignItems: 'center' }}>
         <img
-          src="/sylvain-handstand-spot.png"
-          alt="Programme de coaching en ligne calisthenics et handstand Movement Practice Bordeaux"
+          src="/coaching-online.png"
+          alt="Élève suivant un programme de coaching en ligne Movement Practice Bordeaux"
           style={{ width: 240, height: 300, objectFit: 'cover', borderRadius: 16, flexShrink: 0 }}
         />
         <div style={{ flex: 1, minWidth: 260 }}>
