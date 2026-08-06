@@ -16,15 +16,18 @@ export async function POST(req: NextRequest) {
   const formule = FORMULES[formule_nom];
   if (!formule) return NextResponse.json({ error: 'Formule inconnue' }, { status: 400 });
 
-  const session = await stripe.checkout.sessions.create({
-    mode: 'payment',
-    payment_method_types: ['card'],
-    line_items: [{ price: price_id, quantity: 1 }],
-    customer_email: user.email,
-    success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/?paiement=succes`,
-    cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/tarifs?paiement=annule`,
-    metadata: { user_id: user.id, formule_nom },
-  });
-
-  return NextResponse.json({ url: session.url });
+  try {
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      payment_method_types: ['card'],
+      line_items: [{ price: price_id, quantity: 1 }],
+      customer_email: user.email,
+      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/?paiement=succes`,
+      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/tarifs?paiement=annule`,
+      metadata: { user_id: user.id, formule_nom },
+    });
+    return NextResponse.json({ url: session.url });
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message ?? 'Erreur Stripe inconnue' }, { status: 500 });
+  }
 }
