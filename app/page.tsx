@@ -2,12 +2,12 @@ import { COULEURS, GRADIENT, GRADIENT_TEXTE, POLICE_DISPLAY, POLICE_CORPS } from
 import { FORMULES } from '@/lib/formules';
 
 const DISCIPLINES = [
-  { nom: 'Handstand', desc: "Équilibre sur les mains, du gainage aux figures libres." },
-  { nom: 'Calisthenics', desc: 'Force au poids de corps : tractions, dips, éléments statiques.' },
-  { nom: 'Mobilité', desc: 'Amplitude articulaire et contrôle, pour bouger sans limite.' },
-  { nom: 'Locomotion', desc: 'Déplacements au sol, quadrupédie, transitions fluides.' },
-  { nom: 'Arm Balance', desc: 'Équilibres sur les bras, entre force et précision.' },
-  { nom: 'Altinha', desc: 'Jonglerie au pied façon futevôlei, coordination et jeu.' },
+  { nom: 'Handstand', icone: '/disciplines/handstand.png', desc: "Équilibre sur les mains, du gainage aux figures libres." },
+  { nom: 'Calisthenics', icone: '/disciplines/calisthenics.png', desc: 'Force au poids de corps : tractions, dips, éléments statiques.' },
+  { nom: 'Mobilité', icone: '/disciplines/mobilite.png', desc: 'Amplitude articulaire et contrôle, pour bouger sans limite.' },
+  { nom: 'Locomotion', icone: '/disciplines/locomotion.png', desc: 'Déplacements au sol, quadrupédie, transitions fluides.' },
+  { nom: 'Arm Balance', icone: '/disciplines/arm-balance.png', desc: 'Équilibres sur les bras, entre force et précision.' },
+  { nom: 'Altinha', icone: '/disciplines/altinha.png', desc: 'Jonglerie au pied façon futevôlei, coordination et jeu.' },
 ];
 
 const FORMULES_TEASER = ['cours_decouverte', 'illimite', 'mensuel_8', 'mensuel_4', 'carnet_10', 'carnet_5'];
@@ -93,7 +93,8 @@ export default function AccueilPage() {
       <section style={{ maxWidth: 960, margin: '0 auto', padding: '0 20px 64px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
           {DISCIPLINES.map((d) => (
-            <div key={d.nom} style={{ border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surface, borderRadius: 14, padding: 20 }}>
+            <div key={d.nom} style={{ border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surface, borderRadius: 14, padding: 20, textAlign: 'center' }}>
+              <img src={d.icone} alt={d.nom} style={{ width: 72, height: 72, borderRadius: '50%', marginBottom: 12 }} />
               <h3 style={{ fontFamily: POLICE_DISPLAY, fontSize: 20, letterSpacing: 0.5, margin: '0 0 8px' }}>{d.nom.toUpperCase()}</h3>
               <p style={{ fontSize: 14, color: COULEURS.texteAtt, margin: 0, lineHeight: 1.5 }}>{d.desc}</p>
             </div>
