@@ -7,6 +7,12 @@ export const metadata = {
   description:
     'Mentorat Mouvement à Bordeaux : contenu et accompagnement pour comprendre, organiser et transmettre une pratique de calisthenics, handstand et mobilité.',
   keywords: ['mentorat mouvement', 'mentorship', 'movement practice', 'Bordeaux', 'calisthenics', 'handstand', 'locomotion', 'mobilité'],
+  openGraph: {
+    title: 'Mentorship — Mentorat Mouvement',
+    description: 'Un mentorat pour comprendre et organiser sa pratique du Mouvement, avec Sylvain Noury à Bordeaux.',
+    url: '/pro',
+    images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'Movement Practice Bordeaux' }],
+  },
 };
 
 const OBJECTIFS = [

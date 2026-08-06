@@ -3,9 +3,25 @@ import { COULEURS, FONTS_IMPORT_URL, POLICE_CORPS } from '@/lib/theme';
 import ChatWidget from './components/ChatWidget';
 
 export const metadata = {
+  metadataBase: new URL('https://www.movementpracticebordeaux.com'),
   title: 'Movement Practice Bordeaux — Calisthenics, Handstand, Locomotion & Mobilité',
   description: 'Coaching, cours et ateliers au poids de corps à Bordeaux : calisthenics, handstand, locomotion, mobilité.',
   keywords: ['calisthenics', 'handstand', 'locomotion', 'mobilité', 'Bordeaux', 'coaching sportif', 'mouvement'],
+  openGraph: {
+    title: 'Movement Practice Bordeaux',
+    description: 'Coaching, cours et ateliers au poids de corps à Bordeaux : calisthenics, handstand, locomotion, mobilité.',
+    url: 'https://www.movementpracticebordeaux.com',
+    siteName: 'Movement Practice Bordeaux',
+    images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'Movement Practice Bordeaux' }],
+    locale: 'fr_FR',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Movement Practice Bordeaux',
+    description: 'Coaching, cours et ateliers au poids de corps à Bordeaux : calisthenics, handstand, locomotion, mobilité.',
+    images: ['/og-image.jpg'],
+  },
 };
 
 const LIENS = [

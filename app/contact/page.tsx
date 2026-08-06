@@ -4,6 +4,12 @@ export const metadata = {
   title: 'Contact — Movement Practice Bordeaux',
   description: 'Contacte Movement Practice Bordeaux : coach calisthenics, handstand et mobilité à Bordeaux. Adresse, horaires et réseaux sociaux.',
   keywords: ['contact', 'Movement Practice Bordeaux', 'Bordeaux', 'calisthenics', 'handstand', 'mobilité'],
+  openGraph: {
+    title: 'Contact — Movement Practice Bordeaux',
+    description: 'Adresse, horaires, téléphone et réseaux sociaux de Movement Practice Bordeaux.',
+    url: '/contact',
+    images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'Movement Practice Bordeaux' }],
+  },
 };
 
 export default function ContactPage() {

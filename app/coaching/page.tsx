@@ -7,6 +7,12 @@ export const metadata = {
   description:
     'Coaching calisthenics, handstand et mobilité à Bordeaux, en présentiel ou en ligne. Programmes personnalisés et progression tous niveaux avec Sylvain Noury.',
   keywords: ['coaching calisthenics', 'coaching handstand', 'coaching mobilité', 'Bordeaux', 'coaching en ligne', 'locomotion'],
+  openGraph: {
+    title: 'Coaching calisthenics, handstand & mobilité à Bordeaux',
+    description: 'Coaching présentiel à Bordeaux ou en ligne, où que tu sois. Programmes personnalisés avec Sylvain Noury.',
+    url: '/coaching',
+    images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'Movement Practice Bordeaux' }],
+  },
 };
 
 const ATOUTS_PRESENTIEL = [
