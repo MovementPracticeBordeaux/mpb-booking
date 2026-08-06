@@ -1,48 +1,188 @@
-import { supabaseServer } from '@/lib/supabase-server';
+import { COULEURS, GRADIENT, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
 import { FORMULES } from '@/lib/formules';
-import { redirect } from 'next/navigation';
 
-export const dynamic = 'force-dynamic';
+export const metadata = {
+  title: 'Coaching calisthenics, handstand & mobilité à Bordeaux & en ligne | Movement Practice Bordeaux',
+  description:
+    'Coaching calisthenics, handstand et mobilité à Bordeaux, en présentiel ou en ligne. Programmes personnalisés et progression tous niveaux avec Sylvain Noury.',
+  keywords: ['coaching calisthenics', 'coaching handstand', 'coaching mobilité', 'Bordeaux', 'coaching en ligne', 'locomotion'],
+};
 
-export default async function CoachingPage() {
-  const supabase = supabaseServer();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
+const ATOUTS_PRESENTIEL = [
+  'Suivi individuel et attention complète',
+  'Corrections directes en temps réel',
+  'Ajustements technique, respiration, posture',
+  'Travail sur la force, mobilité, équilibre, coordination',
+  'Projet ciblé : handstand, locomotion, mobilité, renforcement',
+  'Options variées de carnet',
+];
 
-  const { data: profil } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-  const formule = profil?.formule_nom ? FORMULES[profil.formule_nom] : null;
-  const estCoaching = formule?.categorie === 'coaching';
+const ATOUTS_ONLINE = [
+  'Programme adapté à ton niveau, ton temps et tes objectifs',
+  'Entraînements progressifs et thématiques',
+  'Feedback individuel avec corrections techniques',
+  'Planification mensuelle claire',
+  'Validation des compétences (« mastering ») en fin de mois',
+  'Motivation, autonomie et progression durable',
+];
 
+const FAQ_COACHING = [
+  { q: "Est-ce adapté aux débutants ?", r: "Oui. Le coaching démarre à ton niveau actuel. Les séances permettent d'apprendre les bases calisthenics, handstand, mobilité et locomotion progressivement." },
+  { q: "Quelle est la durée d'un programme ?", r: "Le programme fonctionne mensuellement. Chaque mois, tu reçois un plan d'entraînement adapté, des corrections et des objectifs." },
+  { q: 'Que contient le coaching online ?', r: 'Un planning hebdomadaire, des tutos vidéo, des corrections techniques, un feedback par message ou vidéo, et une progression mensuelle avec des exercices individualisés.' },
+  { q: 'Comment réserver une séance ou un programme ?', r: 'En choisissant directement une formule sur la page Tarifs — le paiement se fait en ligne et tu es ensuite mis en relation avec Sylvain pour caler ton créneau.' },
+];
+
+const CLES_PRESENTIEL = ['coaching_unite', 'coaching_carnet_4h', 'coaching_carnet_3h'];
+
+export default function CoachingPage() {
   return (
-    <main style={{ maxWidth: 480, margin: '0 auto', padding: 20 }}>
-      <h1>Mon coaching</h1>
-      {!estCoaching || !profil?.abonnement_actif ? (
-        <p>
-          Tu n'as pas de formule coaching/mentorship active. Rends-toi sur{' '}
-          <a href="/tarifs" style={{ color: '#f0a' }}>la page tarifs</a> pour en choisir une.
+    <main>
+      {/* HERO */}
+      <section style={{ maxWidth: 720, margin: '0 auto', padding: '64px 20px 40px', textAlign: 'center' }}>
+        <p style={{ fontSize: 12, letterSpacing: 3, color: COULEURS.texteFaible, marginBottom: 16 }}>
+          COACHING INDIVIDUEL &amp; PROGRAMMES EN LIGNE
         </p>
-      ) : profil.gele ? (
-        <p>❄️ Ton pass est actuellement gelé. Contacte Sylvain pour le débloquer.</p>
-      ) : (
-        <div style={{ border: '1px solid #333', borderRadius: 8, padding: 16 }}>
-          <h3 style={{ margin: '0 0 4px' }}>{formule.nom}</h3>
-          <p style={{ fontSize: 13, opacity: 0.7 }}>
-            {formule.quota
-              ? `${profil.quota_restant} ${formule.unite}${profil.quota_restant > 1 ? 's' : ''} restantes sur ${profil.quota_total}`
-              : 'Accès illimité'}
-            {' · '}valable jusqu'au {profil.date_expiration}
+        <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 'clamp(28px, 7.5vw, 56px)', lineHeight: 1.08, letterSpacing: 0.5, margin: '0 0 20px' }}>
+          COACHING CALISTHENICS, HANDSTAND &amp; <span style={GRADIENT_TEXTE}>MOBILITÉ</span>
+        </h1>
+        <p style={{ fontSize: 18, color: COULEURS.texteAtt, maxWidth: 560, margin: '0 auto' }}>
+          Présentiel à Bordeaux ou online, où que tu sois : un accompagnement individuel pour progresser
+          en calisthenics, handstand, mobilité et locomotion, à ton rythme et selon ton objectif.
+        </p>
+      </section>
+
+      {/* COACHING PRÉSENTIEL */}
+      <section style={{ maxWidth: 860, margin: '0 auto', padding: '32px 20px 64px', display: 'flex', gap: 32, flexWrap: 'wrap', alignItems: 'center' }}>
+        <img
+          src="/sylvain-methode.jpg"
+          alt="Séance de coaching présentiel calisthenics et mobilité à Bordeaux"
+          style={{ width: 240, height: 300, objectFit: 'cover', borderRadius: 16, flexShrink: 0 }}
+        />
+        <div style={{ flex: 1, minWidth: 260 }}>
+          <p style={{ fontSize: 12, letterSpacing: 2, color: COULEURS.texteFaible, marginBottom: 10 }}>EN PRÉSENTIEL, À BORDEAUX</p>
+          <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 28, letterSpacing: 0.5, margin: '0 0 16px' }}>
+            Coaching présentiel
+          </h2>
+          <p style={{ color: COULEURS.texteAtt, lineHeight: 1.6, marginBottom: 12 }}>
+            Séances individuelles sur Bordeaux, adaptées à ton profil, ton niveau et ton objectif : remise
+            en forme, force, mobilité, handstand, locomotion, posture ou projet spécifique. Chaque séance
+            se déroule sur une heure dédiée, avec observation, corrections techniques et consignes
+            immédiates.
           </p>
-          <p style={{ marginTop: 16 }}>
-            Pour caler ton créneau, contacte directement Sylvain :
+          <p style={{ color: COULEURS.texteAtt, lineHeight: 1.6, marginBottom: 16 }}>
+            Le présentiel permet un retour instantané, un contrôle de la technique et une progression
+            accélérée — accessible à tous niveaux, il suffit d'une bonne motivation et d'un objectif clair.
           </p>
-          <a
-            href="mailto:contact@movementpracticebordeaux.com?subject=Caler%20mon%20créneau%20coaching"
-            style={{ display: 'inline-block', marginTop: 4, padding: '10px 16px', background: '#f0a', color: 'white', borderRadius: 6, textDecoration: 'none' }}
-          >
-            M'écrire pour caler un créneau
+          <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {ATOUTS_PRESENTIEL.map((a) => (
+              <li key={a} style={{ color: COULEURS.texteAtt, fontSize: 14, display: 'flex', gap: 8 }}>
+                <span style={GRADIENT_TEXTE}>✓</span> {a}
+              </li>
+            ))}
+          </ul>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {CLES_PRESENTIEL.map((cle) => {
+              const f = FORMULES[cle];
+              return (
+                <div key={cle} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${COULEURS.bordure}`, padding: '8px 0', fontSize: 14 }}>
+                  <span>{f.nom}</span>
+                  <span style={{ color: COULEURS.texteAtt }}>{f.prixIndicatif} €</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* COACHING ONLINE */}
+      <section style={{ maxWidth: 860, margin: '0 auto', padding: '0 20px 64px', display: 'flex', gap: 32, flexWrap: 'wrap-reverse', alignItems: 'center' }}>
+        <img
+          src="/sylvain-handstand-spot.png"
+          alt="Programme de coaching en ligne calisthenics et handstand Movement Practice Bordeaux"
+          style={{ width: 240, height: 300, objectFit: 'cover', borderRadius: 16, flexShrink: 0 }}
+        />
+        <div style={{ flex: 1, minWidth: 260 }}>
+          <p style={{ fontSize: 12, letterSpacing: 2, color: COULEURS.texteFaible, marginBottom: 10 }}>OÙ QUE TU SOIS</p>
+          <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 28, letterSpacing: 0.5, margin: '0 0 16px' }}>
+            Coaching Online
+          </h2>
+          <p style={{ color: COULEURS.texteAtt, lineHeight: 1.6, marginBottom: 12 }}>
+            Où que tu sois dans le monde et quel que soit ton niveau, un accompagnement à distance : chaque
+            mois, tu reçois un programme d'entraînement personnalisé selon ton objectif — remise en forme
+            générale, mobilité, renforcement fonctionnel, handstand, flexibilité ou locomotion.
+          </p>
+          <p style={{ color: COULEURS.texteAtt, lineHeight: 1.6, marginBottom: 16 }}>
+            Le travail se fait via une application dédiée, accessible sur smartphone et ordinateur, avec
+            des séances guidées par tutoriels vidéo et consignes techniques. Un feedback direct par
+            message et vidéo, ainsi qu'une validation régulière de ta progression, t'accompagnent tout au
+            long du mois.
+          </p>
+          <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {ATOUTS_ONLINE.map((a) => (
+              <li key={a} style={{ color: COULEURS.texteAtt, fontSize: 14, display: 'flex', gap: 8 }}>
+                <span style={GRADIENT_TEXTE}>✓</span> {a}
+              </li>
+            ))}
+          </ul>
+          <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${COULEURS.bordure}`, padding: '8px 0', fontSize: 14, maxWidth: 320 }}>
+            <span>{FORMULES.coaching_online.nom}</span>
+            <span style={{ color: COULEURS.texteAtt }}>{FORMULES.coaching_online.prixIndicatif} € / mois</span>
+          </div>
+        </div>
+      </section>
+
+      {/* TÉMOIGNAGE */}
+      <section style={{ maxWidth: 640, margin: '0 auto', padding: '0 20px 64px', textAlign: 'center' }}>
+        <p style={{ fontSize: 12, letterSpacing: 2, color: COULEURS.texteFaible, marginBottom: 10 }}>TÉMOIGNAGE</p>
+        <p style={{ fontWeight: 600, marginBottom: 4 }}>Stéphane, Toulouse</p>
+        <p style={{ color: '#FF8A00', letterSpacing: 2, marginBottom: 12, fontSize: 14 }}>★★★★★</p>
+        <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 22, lineHeight: 1.4, letterSpacing: 0.3 }}>
+          « J'ai beaucoup apprécié ces 6 mois de mouvement Online avec Sylvain. En quelques semaines j'ai
+          ressenti des progrès surtout en souplesse. L'accompagnement est vraiment parfait, sensible à
+          l'état de forme et disponible. »
+        </p>
+      </section>
+
+      {/* MENTORSHIP TEASER */}
+      <section style={{ maxWidth: 720, margin: '0 auto', padding: '0 20px 64px' }}>
+        <div style={{ border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surface, borderRadius: 16, padding: 28, textAlign: 'center' }}>
+          <p style={{ fontSize: 12, letterSpacing: 2, color: COULEURS.texteFaible, marginBottom: 10 }}>POUR ALLER PLUS LOIN</p>
+          <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 26, letterSpacing: 0.5, margin: '0 0 12px' }}>
+            Programme Mentorship
+          </h2>
+          <p style={{ color: COULEURS.texteAtt, lineHeight: 1.6, maxWidth: 520, margin: '0 auto 20px' }}>
+            Une formation pensée pour les passionnés et les professionnels qui veulent construire et
+            comprendre en profondeur une pratique du mouvement, dans une optique d'enseignement ou non.
+          </p>
+          <a href="/tarifs" style={{ display: 'inline-block', color: '#FF2D78', textDecoration: 'none', fontWeight: 600 }}>
+            Voir le programme Mentorship →
           </a>
         </div>
-      )}
+      </section>
+
+      {/* CTA */}
+      <section style={{ maxWidth: 720, margin: '0 auto', padding: '0 20px 64px', textAlign: 'center' }}>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <a href="/tarifs" style={{ background: GRADIENT, color: 'white', fontWeight: 600, padding: '13px 26px', borderRadius: 999, textDecoration: 'none' }}>
+            Voir tous les tarifs
+          </a>
+          <a href="/coaching/statut" style={{ border: `1px solid ${COULEURS.bordure}`, color: COULEURS.texte, fontWeight: 600, padding: '13px 26px', borderRadius: 999, textDecoration: 'none' }}>
+            Déjà élève ? Mon suivi coaching
+          </a>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section style={{ maxWidth: 720, margin: '0 auto', padding: '0 20px 64px' }}>
+        <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 28, letterSpacing: 0.5, margin: '0 0 16px' }}>FAQ Coaching</h2>
+        {FAQ_COACHING.map((item) => (
+          <details key={item.q} style={{ borderBottom: `1px solid ${COULEURS.bordure}`, padding: '14px 0' }}>
+            <summary style={{ fontWeight: 600, cursor: 'pointer' }}>{item.q}</summary>
+            <p style={{ color: COULEURS.texteAtt, marginTop: 8, lineHeight: 1.5 }}>{item.r}</p>
+          </details>
+        ))}
+      </section>
     </main>
   );
 }
