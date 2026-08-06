@@ -25,9 +25,9 @@ export const COURS_DETAILS: Record<string, CoursDetail> = {
   Mobilité: {
     nom: 'Mobilité',
     intensite: 3,
-    motsCles: ['amplitude articulaire', 'mobilité', 'contrôle', 'stretching actif'],
+    motsCles: ['mobilité', 'stretching actif', 'renforcement', 'squat', 'membres inférieurs', 'fessiers'],
     description:
-      "Un travail d'amplitude articulaire et de contrôle, pour bouger sans limite et préparer le corps aux efforts plus intenses — la base de toute progression durable.",
+      "Un entraînement tous niveaux dédié au développement de la masse musculaire et de la flexibilité du bas du corps, à travers un travail approfondi de squat et d'étirements actifs, au poids de corps ou avec charges additionnelles.",
   },
   Locomotion: {
     nom: 'Locomotion',
