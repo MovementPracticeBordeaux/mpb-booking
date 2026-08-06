@@ -167,11 +167,11 @@ export default async function AdminPage({ searchParams }: { searchParams: { erre
           Chiffre brut, pas ramené au nombre d'occurrences passées — à lire comme une tendance relative.
         </p>
         {coursAvecStats.map((c) => (
-          <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, fontSize: 12 }}>
+          <div key={c.id} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 8, fontSize: 12 }}>
             <span style={{ width: 178, flexShrink: 0 }}>
               <span style={{ color: COULEUR_SEMAINE[c.semaine as 'A' | 'B'] }}>●</span> {JOURS[c.jour_semaine].slice(0, 3)} {c.heure_debut.slice(0, 5)} — {c.discipline}
             </span>
-            <div style={{ flex: 1, background: '#222', borderRadius: 4, height: 14, overflow: 'hidden' }}>
+            <div style={{ flex: '1 1 100px', background: '#222', borderRadius: 4, height: 14, overflow: 'hidden' }}>
               <div style={{ width: `${(c.nbReservations / maxReservations) * 100}%`, height: '100%', background: '#f0a' }} />
             </div>
             <span style={{ width: 24, textAlign: 'right', flexShrink: 0 }}>{c.nbReservations}</span>
@@ -285,7 +285,7 @@ export default async function AdminPage({ searchParams }: { searchParams: { erre
               </summary>
 
               <div style={{ marginTop: 10 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, opacity: 0.8, marginBottom: 8 }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 8, fontSize: 13, opacity: 0.8, marginBottom: 8 }}>
                   <span>
                     {formule?.quota && `${e.quota_restant}/${e.quota_total} ${formule.unite}s`}
                     {e.date_expiration && ` · exp. ${e.date_expiration}`}
@@ -352,7 +352,7 @@ export default async function AdminPage({ searchParams }: { searchParams: { erre
               {new Date(p.created_at).toLocaleDateString('fr-FR')} · {p.profiles?.email} · {Number(p.montant).toFixed(2)} €
               {p.rembourse && ' · ↩️ remboursé'}
             </summary>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, marginTop: 8 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 8, fontSize: 13, marginTop: 8 }}>
               <span>
                 {FORMULES[p.formule_nom]?.nom ?? p.formule_nom}
                 {' · '}{p.origine === 'manuel' ? 'manuel' : 'Stripe'}

@@ -60,7 +60,7 @@ function CarteCours({ c, connecte, reserverCours, dateISO }: {
             <input type="hidden" name="date_seance" value={dateISO} />
             <button
               type="submit"
-              style={{ background: GRADIENT, color: 'white', border: 'none', borderRadius: 999, padding: '6px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+              style={{ background: GRADIENT, color: 'white', border: 'none', borderRadius: 999, padding: '9px 16px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
             >
               Réserver
             </button>
@@ -107,6 +107,12 @@ export default function PlanningVue({
 
   return (
     <div>
+      <style>{`
+        .grille-semaine { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+        @media (max-width: 480px) {
+          .grille-semaine { grid-template-columns: 1fr; }
+        }
+      `}</style>
       <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
         <button onClick={() => setVue('semaine')} style={boutonStyle(vue === 'semaine')}>Semaine</button>
         <button onClick={() => setVue('jour')} style={boutonStyle(vue === 'jour')}>Jour</button>
@@ -136,7 +142,7 @@ export default function PlanningVue({
             </button>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
+          <div className="grille-semaine">
             {semaineActuelle.map((j) => (
               <div key={j.dateISO} style={j.enVacances ? { opacity: 0.4 } : undefined}>
                 <p style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, color: COULEURS.texteFaible, marginBottom: 8 }}>
