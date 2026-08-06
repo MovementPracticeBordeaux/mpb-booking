@@ -249,5 +249,17 @@ export async function rembourserPaiement(formData: FormData) {
   const { error } = await admin.from('paiements').update({ rembourse: true }).eq('id', paiementId);
   if (error) echouer(error.message);
 
+  // Le remboursement n'annule pas automatiquement l'accès de l'élève tant
+  // qu'on ne le fait pas explicitement ici : si sa formule actuelle est
+  // justement celle qu'on vient de rembourser, on coupe l'accès.
+  const { data: profilEleve } = await admin
+    .from('profiles')
+    .select('formule_nom, abonnement_actif')
+    .eq('id', paiement.eleve_id)
+    .single();
+  if (profilEleve?.abonnement_actif && profilEleve.formule_nom === paiement.formule_nom) {
+    await admin.from('profiles').update({ abonnement_actif: false }).eq('id', paiement.eleve_id);
+  }
+
   revalidatePath('/admin');
 }
