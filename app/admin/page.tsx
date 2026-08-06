@@ -83,9 +83,18 @@ export default async function AdminPage({ searchParams }: { searchParams: { erre
     const mois = (p.created_at as string).slice(0, 7); // YYYY-MM
     revenusParMois.set(mois, (revenusParMois.get(mois) ?? 0) + Number(p.montant));
   }
-  const moisTries = [...revenusParMois.entries()].sort(([a], [b]) => a.localeCompare(b)).slice(-6);
+  const moisTries = [...revenusParMois.entries()].sort(([a], [b]) => a.localeCompare(b)).slice(-12);
   const maxRevenu = Math.max(1, ...moisTries.map(([, m]) => m));
   const NOMS_MOIS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+
+  // Coordonnées de la courbe SVG (viewBox fixe 600x160, mise à l'échelle en CSS).
+  const svgW = 600, svgH = 160, padG = 30, padD = 10, padH = 14, padB = 24;
+  const pointsCourbe = moisTries.map(([, montant], i) => {
+    const x = moisTries.length > 1 ? padG + (i / (moisTries.length - 1)) * (svgW - padG - padD) : svgW / 2;
+    const y = padH + (1 - montant / maxRevenu) * (svgH - padH - padB);
+    return { x, y, montant };
+  });
+  const chemin = pointsCourbe.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
 
   return (
     <main style={{ maxWidth: 640, margin: '0 auto', padding: 20 }}>
@@ -128,20 +137,28 @@ export default async function AdminPage({ searchParams }: { searchParams: { erre
           {eleveParFormule.size === 0 && <p style={{ fontSize: 12, opacity: 0.6 }}>Aucun abonnement actif pour le moment.</p>}
         </div>
 
-        <p style={{ fontSize: 13, fontWeight: 600, opacity: 0.8, marginBottom: 4 }}>Revenus mensuels (encaissé, hors remboursements)</p>
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 100, marginBottom: 20 }}>
-          {moisTries.length === 0 && <p style={{ fontSize: 12, opacity: 0.6 }}>Pas encore de paiement enregistré.</p>}
-          {moisTries.map(([mois, montant]) => {
-            const [annee, m] = mois.split('-');
-            return (
-              <div key={mois} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-                <p style={{ fontSize: 11, margin: '0 0 4px' }}>{montant.toFixed(0)}€</p>
-                <div style={{ width: '100%', maxWidth: 36, height: Math.max(4, (montant / maxRevenu) * 70), background: '#f0a', borderRadius: 4 }} />
-                <p style={{ fontSize: 10, opacity: 0.6, margin: '4px 0 0' }}>{NOMS_MOIS[Number(m) - 1]} {annee.slice(2)}</p>
-              </div>
-            );
-          })}
-        </div>
+        <p style={{ fontSize: 13, fontWeight: 600, opacity: 0.8, marginBottom: 4 }}>Évolution des revenus mensuels (encaissé, hors remboursements)</p>
+        {moisTries.length === 0 ? (
+          <p style={{ fontSize: 12, opacity: 0.6, marginBottom: 20 }}>Pas encore de paiement enregistré.</p>
+        ) : (
+          <div style={{ marginBottom: 20 }}>
+            <svg viewBox={`0 0 ${svgW} ${svgH}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
+              {/* ligne de base */}
+              <line x1={padG} y1={svgH - padB} x2={svgW - padD} y2={svgH - padB} stroke="#333" strokeWidth={1} />
+              {/* courbe */}
+              <path d={chemin} fill="none" stroke="#f0a" strokeWidth={2} />
+              {pointsCourbe.map((p, i) => (
+                <g key={i}>
+                  <circle cx={p.x} cy={p.y} r={3} fill="#f0a" />
+                  <text x={p.x} y={p.y - 8} fontSize={10} fill="#eee" textAnchor="middle">{p.montant.toFixed(0)}€</text>
+                  <text x={p.x} y={svgH - 6} fontSize={9} fill="#888" textAnchor="middle">
+                    {NOMS_MOIS[Number(moisTries[i][0].split('-')[1]) - 1]} {moisTries[i][0].split('-')[0].slice(2)}
+                  </text>
+                </g>
+              ))}
+            </svg>
+          </div>
+        )}
 
         <p style={{ fontSize: 13, fontWeight: 600, opacity: 0.8, marginBottom: 4 }}>
           Créneaux les plus / moins réservés (total réservations depuis toujours)
