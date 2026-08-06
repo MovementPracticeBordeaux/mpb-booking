@@ -41,7 +41,7 @@ export default function AccueilPage() {
           alt="Movement Practice Bordeaux"
           style={{ height: 64, margin: '0 auto 24px', display: 'block' }}
         />
-        <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 'clamp(32px, 9vw, 76px)', lineHeight: 1.02, letterSpacing: 0.5, margin: '0 0 20px', whiteSpace: 'nowrap' }}>
+        <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 'clamp(26px, 9vw, 76px)', lineHeight: 1.02, letterSpacing: 0.5, margin: '0 0 20px' }}>
           MOVEMENT <span style={GRADIENT_TEXTE}>PRACTICE</span>
         </h1>
         <p style={{ fontSize: 18, color: COULEURS.texteAtt, maxWidth: 520, margin: '0 auto 32px' }}>
