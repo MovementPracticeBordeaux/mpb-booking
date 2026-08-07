@@ -74,7 +74,7 @@ export default async function PlanningPage({ searchParams }: { searchParams: { e
 
   return (
     <main style={{ maxWidth: 900, margin: '0 auto', padding: '32px 20px' }}>
-      <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 40, letterSpacing: 1, margin: '0 0 20px' }}>
+      <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 'clamp(30px, 8vw, 40px)', letterSpacing: 1, margin: '0 0 20px' }}>
         PLANNING
       </h1>
       {searchParams.erreur && (

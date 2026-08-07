@@ -61,7 +61,7 @@ function CarteCours({ c, connecte, reserverCours, annulerReservation, dateISO }:
               <input type="hidden" name="date_seance" value={dateISO} />
               <button
                 type="submit"
-                style={{ background: 'none', border: 'none', color: COULEURS.texteFaible, fontSize: 12, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}
+                style={{ background: 'none', border: 'none', color: COULEURS.texteFaible, fontSize: 12, textDecoration: 'underline', cursor: 'pointer', padding: '6px 0' }}
               >
                 Annuler
               </button>
