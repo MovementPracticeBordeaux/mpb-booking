@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { supabaseAdmin } from '@/lib/supabase-server';
 import { FORMULES } from '@/lib/formules';
+import { envoyerEmail } from '@/lib/resend';
 import Stripe from 'stripe';
 
 export async function POST(req: NextRequest) {
@@ -70,6 +71,35 @@ export async function POST(req: NextRequest) {
       // erreur, juste la sécurité anti-doublon qui a fonctionné.
       if (erreurInsert && erreurInsert.code !== '23505') {
         console.error('Erreur insertion paiement:', erreurInsert.message);
+      }
+
+      // Email de confirmation d'achat — seulement lors du tout premier
+      // traitement réussi de ce paiement (pas en cas de doublon détecté
+      // ci-dessus). Ne doit jamais faire échouer le webhook si Resend est
+      // indisponible, d'où le try/catch silencieux.
+      if (!erreurInsert) {
+        try {
+          const email = session.customer_details?.email ?? session.customer_email;
+          if (email) {
+            await envoyerEmail(
+              email,
+              `Confirmation de ton achat : ${formule.nom}`,
+              `<p>Merci pour ton achat !</p>
+               <p>Ta formule <strong>${formule.nom}</strong> est maintenant active
+               ${formule.quota ? ` (${formule.quota} ${formule.unite}${formule.quota > 1 ? 's' : ''})` : ' (accès illimité)'},
+               valable jusqu'au ${expiration.toLocaleDateString('fr-FR')}.</p>
+               <p>Montant réglé : ${((session.amount_total ?? 0) / 100).toFixed(2)} €.</p>
+               ${formule.categorie === 'coaching'
+                 ? '<p>Sylvain va te contacter pour caler ton créneau.</p>'
+                 : '<p>Tu peux dès maintenant réserver tes cours depuis le planning.</p>'}
+               <p>Tu retrouveras cette facture à tout moment dans ton espace personnel.</p>`
+            );
+          }
+        } catch {
+          // Email de confirmation non critique : le paiement et l'accès
+          // sont déjà enregistrés à ce stade, on ne fait pas échouer le
+          // webhook pour un email qui ne part pas.
+        }
       }
     }
   }

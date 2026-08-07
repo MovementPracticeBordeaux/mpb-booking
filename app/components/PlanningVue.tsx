@@ -28,6 +28,15 @@ function formaterDate(dateISO: string) {
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 }
 
+function minutesDe(heure: string) {
+  const [h, m] = heure.split(':').map(Number);
+  return h * 60 + m;
+}
+
+// Hauteur d'une heure dans la grille (px). 1px = 1min pour un calcul simple.
+const HAUTEUR_HEURE = 60;
+
+// Carte détaillée utilisée dans la vue "Jour" (confort de lecture + réservation).
 function CarteCours({ c, connecte, reserverCours, annulerReservation, dateISO }: {
   c: CoursJour;
   connecte: boolean;
@@ -84,6 +93,99 @@ function CarteCours({ c, connecte, reserverCours, annulerReservation, dateISO }:
   );
 }
 
+// Bloc de cours positionné dans la grille horaire (vue "Semaine").
+function BlocGrille({ c, top, hauteur, connecte, reserverCours, annulerReservation, dateISO }: {
+  c: CoursJour;
+  top: number;
+  hauteur: number;
+  connecte: boolean;
+  reserverCours: (formData: FormData) => void;
+  annulerReservation: (formData: FormData) => void;
+  dateISO: string;
+}) {
+  const bookable = connecte && !c.dejaReserve;
+  const fondBloc = c.dejaReserve ? 'rgba(80,200,120,0.14)' : COULEURS.surfaceForte;
+  const accent = c.dejaReserve ? '#4caf7d' : '#FF8A00';
+
+  const contenu = (
+    <>
+      <strong
+        style={{
+          fontFamily: POLICE_DISPLAY,
+          fontSize: 13,
+          letterSpacing: 0.4,
+          lineHeight: 1.1,
+          display: 'block',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}
+      >
+        {c.discipline.toUpperCase()}
+      </strong>
+      <span style={{ fontSize: 11, color: COULEURS.texteAtt, whiteSpace: 'nowrap' }}>
+        {c.heureDebut}–{c.heureFin}
+      </span>
+      {c.dejaReserve && (
+        <span style={{ display: 'block', fontSize: 10, color: '#9ef29e', fontWeight: 600 }}>Réservé ✓</span>
+      )}
+    </>
+  );
+
+  const styleBloc: React.CSSProperties = {
+    position: 'absolute',
+    top,
+    height: Math.max(hauteur, 34),
+    left: 3,
+    right: 3,
+    background: fondBloc,
+    borderRadius: 8,
+    borderLeft: `3px solid ${accent}`,
+    padding: '5px 7px',
+    overflow: 'hidden',
+    textAlign: 'left',
+  };
+
+  // Réservable : tout le bloc est un bouton de réservation.
+  if (bookable) {
+    return (
+      <form action={reserverCours} style={{ position: 'absolute', top, height: Math.max(hauteur, 34), left: 3, right: 3 }}>
+        <input type="hidden" name="cours_id" value={c.id} />
+        <input type="hidden" name="date_seance" value={dateISO} />
+        <button
+          type="submit"
+          title={`Réserver ${c.discipline} (${c.heureDebut}–${c.heureFin})`}
+          style={{ ...styleBloc, top: 0, height: '100%', left: 0, right: 0, width: '100%', border: 'none', borderLeft: `3px solid ${accent}`, color: COULEURS.texte, cursor: 'pointer' }}
+        >
+          {contenu}
+        </button>
+      </form>
+    );
+  }
+
+  // Déjà réservé : bloc + petit lien "Annuler".
+  if (connecte && c.dejaReserve) {
+    return (
+      <div style={styleBloc}>
+        {contenu}
+        <form action={annulerReservation}>
+          <input type="hidden" name="cours_id" value={c.id} />
+          <input type="hidden" name="date_seance" value={dateISO} />
+          <button
+            type="submit"
+            style={{ background: 'none', border: 'none', color: COULEURS.texteFaible, fontSize: 10, textDecoration: 'underline', cursor: 'pointer', padding: 0, marginTop: 2 }}
+          >
+            Annuler
+          </button>
+        </form>
+      </div>
+    );
+  }
+
+  // Non connecté : simple affichage.
+  return <div style={styleBloc}>{contenu}</div>;
+}
+
 export default function PlanningVue({
   jours,
   connecte,
@@ -110,6 +212,18 @@ export default function PlanningVue({
 
   const semaineActuelle = semaines[offsetSemaine] ?? [];
   const jourActuel = jours[offsetJour];
+  const todayISO = jours[indexAujourdhui]?.dateISO;
+
+  // Bornes de l'axe horaire de la semaine affichée (arrondies à l'heure pleine).
+  const coursSemaine = semaineActuelle.flatMap((j) => j.cours);
+  const hasCours = coursSemaine.length > 0;
+  const minStart = hasCours ? Math.min(...coursSemaine.map((c) => minutesDe(c.heureDebut))) : 9 * 60;
+  const maxEnd = hasCours ? Math.max(...coursSemaine.map((c) => minutesDe(c.heureFin))) : 21 * 60;
+  const axisStart = Math.floor(minStart / 60) * 60;
+  const axisEnd = Math.ceil(maxEnd / 60) * 60;
+  const hauteurGrille = (axisEnd - axisStart) * (HAUTEUR_HEURE / 60);
+  const heures: number[] = [];
+  for (let h = axisStart / 60; h <= axisEnd / 60; h++) heures.push(h);
 
   const boutonStyle = (actif: boolean) => ({
     background: actif ? GRADIENT : 'none',
@@ -124,12 +238,6 @@ export default function PlanningVue({
 
   return (
     <div>
-      <style>{`
-        .grille-semaine { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
-        @media (max-width: 480px) {
-          .grille-semaine { grid-template-columns: 1fr; }
-        }
-      `}</style>
       <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
         <button onClick={() => setVue('semaine')} style={boutonStyle(vue === 'semaine')}>Semaine</button>
         <button onClick={() => setVue('jour')} style={boutonStyle(vue === 'jour')}>Jour</button>
@@ -159,27 +267,89 @@ export default function PlanningVue({
             </button>
           </div>
 
-          <div className="grille-semaine">
-            {semaineActuelle.map((j) => {
-              const sansCours = !j.enVacances && j.cours.length === 0;
-              return (
-                <div key={j.dateISO} style={(j.enVacances || sansCours) ? { opacity: 0.7 } : undefined}>
-                  <p style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, color: COULEURS.texteFaible, marginBottom: 8 }}>
-                    {NOMS_JOURS_COURTS[j.jourSemaine]} {formaterDate(j.dateISO)}
-                  </p>
-                  {j.enVacances ? (
-                    <p style={{ fontSize: 12, color: COULEURS.texteFaible }}>🏝️ Vacances</p>
-                  ) : sansCours ? (
-                    <p style={{ fontSize: 12, color: COULEURS.texteFaible }}>Pas de cours</p>
-                  ) : (
-                    j.cours.map((c) => (
-                      <CarteCours key={c.id} c={c} connecte={connecte} reserverCours={reserverCours} annulerReservation={annulerReservation} dateISO={j.dateISO} />
-                    ))
-                  )}
+          {!hasCours ? (
+            <p style={{ fontSize: 13, color: COULEURS.texteFaible }}>Aucun cours cette semaine.</p>
+          ) : (
+            <div style={{ overflowX: 'auto', paddingBottom: 4 }}>
+              <div style={{ minWidth: 720, display: 'grid', gridTemplateColumns: `44px repeat(7, minmax(96px, 1fr))` }}>
+                {/* Ligne d'en-tête : gouttière vide + noms de jours */}
+                <div />
+                {semaineActuelle.map((j) => {
+                  const estAujourdhui = j.dateISO === todayISO;
+                  const sansCours = !j.enVacances && j.cours.length === 0;
+                  return (
+                    <div
+                      key={`h-${j.dateISO}`}
+                      style={{
+                        textAlign: 'center',
+                        padding: '0 2px 8px',
+                        fontSize: 11,
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.5,
+                        color: estAujourdhui ? COULEURS.texte : COULEURS.texteFaible,
+                        fontWeight: estAujourdhui ? 700 : 400,
+                        opacity: (j.enVacances || sansCours) ? 0.7 : 1,
+                      }}
+                    >
+                      {NOMS_JOURS_COURTS[j.jourSemaine]}
+                      <br />
+                      {formaterDate(j.dateISO)}
+                    </div>
+                  );
+                })}
+
+                {/* Ligne du corps : gouttière des heures + colonnes des jours */}
+                <div style={{ position: 'relative', height: hauteurGrille }}>
+                  {heures.map((h) => (
+                    <div
+                      key={h}
+                      style={{
+                        position: 'absolute',
+                        top: (h * 60 - axisStart) * (HAUTEUR_HEURE / 60) - 6,
+                        right: 6,
+                        fontSize: 10,
+                        color: COULEURS.texteFaible,
+                      }}
+                    >
+                      {String(h).padStart(2, '0')}h
+                    </div>
+                  ))}
                 </div>
-              );
-            })}
-          </div>
+
+                {semaineActuelle.map((j) => {
+                  const estAujourdhui = j.dateISO === todayISO;
+                  const sansCours = !j.enVacances && j.cours.length === 0;
+                  return (
+                    <div
+                      key={`c-${j.dateISO}`}
+                      style={{
+                        position: 'relative',
+                        height: hauteurGrille,
+                        borderLeft: `1px solid ${COULEURS.bordure}`,
+                        background: estAujourdhui ? 'rgba(255,138,0,0.05)' : undefined,
+                        opacity: (j.enVacances || sansCours) ? 0.7 : 1,
+                        // Lignes horaires en fond.
+                        backgroundImage: `repeating-linear-gradient(to bottom, ${COULEURS.bordure} 0, ${COULEURS.bordure} 1px, transparent 1px, transparent ${HAUTEUR_HEURE}px)`,
+                      }}
+                    >
+                      {j.cours.map((c) => (
+                        <BlocGrille
+                          key={c.id}
+                          c={c}
+                          top={(minutesDe(c.heureDebut) - axisStart) * (HAUTEUR_HEURE / 60)}
+                          hauteur={(minutesDe(c.heureFin) - minutesDe(c.heureDebut)) * (HAUTEUR_HEURE / 60)}
+                          connecte={connecte}
+                          reserverCours={reserverCours}
+                          annulerReservation={annulerReservation}
+                          dateISO={j.dateISO}
+                        />
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div>
