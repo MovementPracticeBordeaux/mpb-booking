@@ -28,10 +28,11 @@ function formaterDate(dateISO: string) {
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 }
 
-function CarteCours({ c, connecte, reserverCours, dateISO }: {
+function CarteCours({ c, connecte, reserverCours, annulerReservation, dateISO }: {
   c: CoursJour;
   connecte: boolean;
   reserverCours: (formData: FormData) => void;
+  annulerReservation: (formData: FormData) => void;
   dateISO: string;
 }) {
   return (
@@ -53,7 +54,19 @@ function CarteCours({ c, connecte, reserverCours, dateISO }: {
       </div>
       {connecte && (
         c.dejaReserve ? (
-          <span style={{ color: '#9ef29e', fontSize: 12, fontWeight: 600 }}>Réservé ✓</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ color: '#9ef29e', fontSize: 12, fontWeight: 600 }}>Réservé ✓</span>
+            <form action={annulerReservation}>
+              <input type="hidden" name="cours_id" value={c.id} />
+              <input type="hidden" name="date_seance" value={dateISO} />
+              <button
+                type="submit"
+                style={{ background: 'none', border: 'none', color: COULEURS.texteFaible, fontSize: 12, textDecoration: 'underline', cursor: 'pointer', padding: 0 }}
+              >
+                Annuler
+              </button>
+            </form>
+          </div>
         ) : (
           <form action={reserverCours}>
             <input type="hidden" name="cours_id" value={c.id} />
@@ -75,10 +88,12 @@ export default function PlanningVue({
   jours,
   connecte,
   reserverCours,
+  annulerReservation,
 }: {
   jours: JourPlanning[];
   connecte: boolean;
   reserverCours: (formData: FormData) => void;
+  annulerReservation: (formData: FormData) => void;
 }) {
   const [vue, setVue] = useState<'semaine' | 'jour'>('semaine');
   const [offsetSemaine, setOffsetSemaine] = useState(0);
@@ -154,7 +169,7 @@ export default function PlanningVue({
                   <p style={{ fontSize: 12, color: COULEURS.texteFaible, opacity: 0.6 }}>—</p>
                 ) : (
                   j.cours.map((c) => (
-                    <CarteCours key={c.id} c={c} connecte={connecte} reserverCours={reserverCours} dateISO={j.dateISO} />
+                    <CarteCours key={c.id} c={c} connecte={connecte} reserverCours={reserverCours} annulerReservation={annulerReservation} dateISO={j.dateISO} />
                   ))
                 )}
               </div>
@@ -191,7 +206,7 @@ export default function PlanningVue({
             <p style={{ color: COULEURS.texteFaible }}>Aucun cours ce jour-là.</p>
           ) : (
             jourActuel?.cours.map((c) => (
-              <CarteCours key={c.id} c={c} connecte={connecte} reserverCours={reserverCours} dateISO={jourActuel.dateISO} />
+              <CarteCours key={c.id} c={c} connecte={connecte} reserverCours={reserverCours} annulerReservation={annulerReservation} dateISO={jourActuel.dateISO} />
             ))
           )}
         </div>

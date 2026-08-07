@@ -1,6 +1,6 @@
 import { supabaseServer } from '@/lib/supabase-server';
 import { calculerSemaine } from '@/lib/semaine';
-import { reserverCours } from '../booking/actions';
+import { annulerReservation, reserverCours } from '../booking/actions';
 import { COULEURS, POLICE_DISPLAY } from '@/lib/theme';
 import PlanningVue, { JourPlanning } from '../components/PlanningVue';
 
@@ -89,7 +89,14 @@ export default async function PlanningPage({ searchParams }: { searchParams: { e
           🏝️ Sylvain est actuellement en vacances{vacFin ? ` jusqu'au ${new Date(vacFin + 'T00:00:00').toLocaleDateString('fr-FR')}` : ''}, pas de cours pour le moment — les jours concernés sont grisés ci-dessous.
         </p>
       )}
-      {ref && <PlanningVue jours={jours} connecte={!!user} reserverCours={reserverCours} />}
+      {ref && (
+        <PlanningVue
+          jours={jours}
+          connecte={!!user}
+          reserverCours={reserverCours}
+          annulerReservation={annulerReservation}
+        />
+      )}
     </main>
   );
 }
