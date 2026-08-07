@@ -24,9 +24,9 @@ export type Formule = {
 export const FORMULES: Record<string, Formule> = {
   // --- Cours collectifs ---
   illimite: { nom: 'Illimité', categorie: 'planning', unite: null, quota: null, validiteMois: 1, prixIndicatif: 89 },
-  mensuel_8: { nom: '8 cours / mois', categorie: 'planning', unite: 'séance', quota: 8, validiteMois: 1, prixIndicatif: 69 },
-  mensuel_4: { nom: '4 cours / mois', categorie: 'planning', unite: 'séance', quota: 4, validiteMois: 1, prixIndicatif: 39 },
-  carnet_10: { nom: 'Carnet 10 cours', categorie: 'planning', unite: 'séance', quota: 10, validiteMois: 6, prixIndicatif: 150 },
+  mensuel_8: { nom: '8 cours / mois', categorie: 'planning', unite: 'séance', quota: 8, validiteMois: 1, prixIndicatif: 79 },
+  mensuel_4: { nom: '4 cours / mois', categorie: 'planning', unite: 'séance', quota: 4, validiteMois: 1, prixIndicatif: 49 },
+  carnet_10: { nom: 'Carnet 10 cours', categorie: 'planning', unite: 'séance', quota: 10, validiteMois: 6, prixIndicatif: 149 },
   carnet_5: { nom: 'Carnet 5 cours', categorie: 'planning', unite: 'séance', quota: 5, validiteMois: 3, prixIndicatif: 85 },
   cours_decouverte: { nom: 'Cours découverte', categorie: 'planning', unite: 'séance', quota: 1, validiteMois: 1, prixIndicatif: 10 },
 
