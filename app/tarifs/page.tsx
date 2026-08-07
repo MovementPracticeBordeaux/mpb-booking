@@ -54,14 +54,108 @@ const GROUPES = [
   { titre: 'Mentorship', cles: ['mentorship', 'post_mentorship'] },
 ];
 
+// Formules mises en avant (badge). Clé -> libellé du badge.
+const MIS_EN_AVANT: Record<string, string> = {
+  illimite: 'Le + populaire',
+  mentorship: 'Programme phare',
+};
+
+// Prix à l'unité, pour comparer les formules d'un même groupe.
+function prixParUnite(f: (typeof FORMULES)[string]): string | null {
+  if (!f.quota || f.quota <= 1 || !f.unite) return null;
+  return `≈ ${Math.round(f.prixIndicatif / f.quota)} €/${f.unite}`;
+}
+
+function ligneQuota(f: (typeof FORMULES)[string]): string {
+  return f.quota ? `${f.quota} ${f.unite}${f.quota > 1 ? 's' : ''}` : 'Accès illimité';
+}
+
+function CarteFormule({ cle, onAcheter }: { cle: string; onAcheter: () => void }) {
+  const f = FORMULES[cle];
+  const badge = MIS_EN_AVANT[cle];
+  const parUnite = prixParUnite(f);
+
+  return (
+    <div
+      id={cle}
+      style={{
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        border: badge ? '1px solid #FF2D78' : `1px solid ${COULEURS.bordure}`,
+        boxShadow: badge ? '0 0 0 1px rgba(255,45,120,0.35)' : undefined,
+        background: badge ? COULEURS.surfaceForte : COULEURS.surface,
+        borderRadius: 14,
+        padding: 20,
+        scrollMarginTop: 20,
+      }}
+    >
+      {badge && (
+        <span
+          style={{
+            position: 'absolute',
+            top: -11,
+            left: 16,
+            background: GRADIENT,
+            color: 'white',
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: 0.8,
+            textTransform: 'uppercase',
+            padding: '3px 10px',
+            borderRadius: 999,
+          }}
+        >
+          {badge}
+        </span>
+      )}
+
+      <h3 style={{ fontFamily: POLICE_DISPLAY, letterSpacing: 0.3, fontSize: 21, margin: '0 0 10px' }}>{f.nom}</h3>
+
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 2 }}>
+        <span style={{ fontFamily: POLICE_DISPLAY, fontSize: 38, lineHeight: 1, ...GRADIENT_TEXTE }}>{f.prixIndicatif} €</span>
+        {parUnite && <span style={{ fontSize: 12, color: COULEURS.texteFaible }}>{parUnite}</span>}
+      </div>
+
+      <div style={{ height: 1, background: COULEURS.bordure, margin: '14px 0' }} />
+
+      <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 16px', fontSize: 13, color: COULEURS.texteAtt, display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <li>✓ {ligneQuota(f)}</li>
+        <li>✓ Valable {f.validiteMois} mois</li>
+        {f.categorie === 'coaching' && <li>✓ Mise en relation après achat</li>}
+      </ul>
+
+      <button
+        onClick={onAcheter}
+        style={{
+          marginTop: 'auto',
+          background: badge ? GRADIENT : 'transparent',
+          color: 'white',
+          border: badge ? 'none' : `1px solid ${COULEURS.bordure}`,
+          borderRadius: 999,
+          padding: '11px 20px',
+          fontWeight: 600,
+          fontSize: 14,
+          cursor: 'pointer',
+        }}
+      >
+        Acheter
+      </button>
+    </div>
+  );
+}
+
 export default function TarifsPage({ searchParams }: { searchParams: { erreur?: string } }) {
   const [erreur, setErreur] = useState<Erreur | null>(null);
 
   return (
-    <main style={{ maxWidth: 480, margin: '0 auto', padding: 20 }}>
-      <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 'clamp(28px, 8vw, 36px)', letterSpacing: 0.5, margin: '0 0 20px' }}>
+    <main style={{ maxWidth: 960, margin: '0 auto', padding: '32px 20px' }}>
+      <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 'clamp(28px, 8vw, 36px)', letterSpacing: 0.5, margin: '0 0 8px' }}>
         TARIFS &amp; <span style={GRADIENT_TEXTE}>FORMULES</span>
       </h1>
+      <p style={{ color: COULEURS.texteFaible, fontSize: 13, margin: '0 0 24px' }}>
+        Paiement sécurisé par Stripe. Sans engagement, sans abonnement caché.
+      </p>
       {searchParams.erreur && (
         <p style={{ background: '#5a1a1a', color: '#ffb4b4', padding: 12, borderRadius: 8 }}>
           ⚠️ {searchParams.erreur}
@@ -78,28 +172,15 @@ export default function TarifsPage({ searchParams }: { searchParams: { erreur?: 
         </div>
       )}
       {GROUPES.map((groupe) => (
-        <section key={groupe.titre} style={{ marginBottom: 28 }}>
-          <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 20, letterSpacing: 1, margin: '0 0 12px', ...GRADIENT_TEXTE }}>
+        <section key={groupe.titre} style={{ marginBottom: 36 }}>
+          <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 20, letterSpacing: 1, margin: '0 0 16px', ...GRADIENT_TEXTE }}>
             {groupe.titre.toUpperCase()}
           </h2>
-          {groupe.cles.map((cle) => {
-            const f = FORMULES[cle];
-            return (
-              <div key={cle} id={cle} style={{ border: `1px solid ${COULEURS.bordure}`, borderRadius: 8, padding: 16, marginBottom: 12, scrollMarginTop: 20 }}>
-                <h3 style={{ fontFamily: POLICE_DISPLAY, letterSpacing: 0.3, fontSize: 20, margin: '0 0 4px' }}>{f.nom}</h3>
-                <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: '0 0 12px' }}>
-                  {f.quota ? `${f.quota} ${f.unite}${f.quota > 1 ? 's' : ''}` : 'Illimité'} · valable {f.validiteMois} mois
-                  {f.categorie === 'coaching' && ' · mise en relation après achat'}
-                </p>
-                <button
-                  onClick={() => acheter(PRICE_IDS[cle], cle, setErreur)}
-                  style={{ background: GRADIENT, color: 'white', border: 'none', borderRadius: 999, padding: '10px 20px', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}
-                >
-                  Acheter
-                </button>
-              </div>
-            );
-          })}
+          <div style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
+            {groupe.cles.map((cle) => (
+              <CarteFormule key={cle} cle={cle} onAcheter={() => acheter(PRICE_IDS[cle], cle, setErreur)} />
+            ))}
+          </div>
         </section>
       ))}
     </main>
