@@ -9,6 +9,7 @@ type Erreur = { message: string; connexionRequise: boolean };
 async function acheter(
   priceId: string,
   formuleNom: string,
+  dateDebut: string,
   setErreur: (e: Erreur | null) => void
 ) {
   setErreur(null);
@@ -16,7 +17,7 @@ async function acheter(
     const res = await fetch('/api/stripe/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ price_id: priceId, formule_nom: formuleNom }),
+      body: JSON.stringify({ price_id: priceId, formule_nom: formuleNom, date_debut: dateDebut }),
     });
     const data = await res.json();
     if (data.url) {
@@ -147,15 +148,30 @@ function CarteFormule({ cle, onAcheter }: { cle: string; onAcheter: () => void }
 
 export default function TarifsPage({ searchParams }: { searchParams: { erreur?: string } }) {
   const [erreur, setErreur] = useState<Erreur | null>(null);
+  const aujourdhui = new Date().toISOString().slice(0, 10);
+  const [dateDebut, setDateDebut] = useState(aujourdhui);
 
   return (
     <main style={{ maxWidth: 960, margin: '0 auto', padding: '32px 20px' }}>
       <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 'clamp(28px, 8vw, 36px)', letterSpacing: 0.5, margin: '0 0 8px' }}>
         TARIFS &amp; <span style={GRADIENT_TEXTE}>FORMULES</span>
       </h1>
-      <p style={{ color: COULEURS.texteFaible, fontSize: 13, margin: '0 0 24px' }}>
+      <p style={{ color: COULEURS.texteFaible, fontSize: 13, margin: '0 0 16px' }}>
         Paiement sécurisé par Stripe. Sans engagement, sans abonnement caché.
       </p>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: `1px solid ${COULEURS.bordure}`, borderRadius: 999, padding: '5px 6px 5px 14px', marginBottom: 24, width: 'fit-content' }}>
+        <label htmlFor="date-debut" style={{ fontSize: 12, color: COULEURS.texteFaible }}>Faire démarrer ma formule le :</label>
+        <input
+          id="date-debut"
+          type="date"
+          min={aujourdhui}
+          value={dateDebut}
+          onChange={(e) => setDateDebut(e.target.value)}
+          style={{ background: COULEURS.surfaceForte, border: 'none', borderRadius: 999, padding: '5px 10px', color: COULEURS.texte, fontSize: 13, fontFamily: 'inherit', colorScheme: 'dark' }}
+        />
+      </div>
+
       {searchParams.erreur && (
         <p style={{ background: '#5a1a1a', color: '#ffb4b4', padding: 12, borderRadius: 8 }}>
           ⚠️ {searchParams.erreur}
@@ -178,7 +194,7 @@ export default function TarifsPage({ searchParams }: { searchParams: { erreur?: 
           </h2>
           <div style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
             {groupe.cles.map((cle) => (
-              <CarteFormule key={cle} cle={cle} onAcheter={() => acheter(PRICE_IDS[cle], cle, setErreur)} />
+              <CarteFormule key={cle} cle={cle} onAcheter={() => acheter(PRICE_IDS[cle], cle, dateDebut, setErreur)} />
             ))}
           </div>
         </section>

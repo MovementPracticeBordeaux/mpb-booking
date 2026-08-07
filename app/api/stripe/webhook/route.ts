@@ -38,7 +38,15 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ received: true, deja_traite: true });
       }
 
-      const expiration = new Date();
+      // La date de début choisie par l'élève sur /tarifs sert de point de
+      // départ pour la validité (au lieu de toujours partir du jour du
+      // paiement) — utile pour démarrer un pass au retour de vacances, etc.
+      const dateDebutMetadata = session.metadata?.date_debut;
+      const dateDebut = dateDebutMetadata && /^\d{4}-\d{2}-\d{2}$/.test(dateDebutMetadata)
+        ? new Date(dateDebutMetadata + 'T00:00:00')
+        : new Date();
+
+      const expiration = new Date(dateDebut);
       expiration.setMonth(expiration.getMonth() + formule.validiteMois);
 
       await admin.from('profiles').update({
