@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-server';
 import { envoyerEmail } from '@/lib/resend';
+import { degelerProfil } from '@/app/admin/actions';
 
 // Prévient Sylvain par email si l'envoi des rappels a rencontré un souci
 // (variable ADMIN_ALERT_EMAIL à définir dans Vercel > Settings >
@@ -27,6 +28,23 @@ export async function GET(req: NextRequest) {
 
   try {
     const admin = supabaseAdmin();
+
+    // Dégel automatique des pass dont la date de reprise prévue est atteinte
+    // (planifiée depuis l'admin lors du gel). Fait en premier, avant les
+    // rappels, pour rester indépendant en cas d'échec des rappels eux-mêmes.
+    const aujourdhui = new Date().toISOString().slice(0, 10);
+    const { data: aDegeler } = await admin
+      .from('profiles')
+      .select('id')
+      .eq('gele', true)
+      .not('date_fin_gel_prevue', 'is', null)
+      .lte('date_fin_gel_prevue', aujourdhui);
+
+    let degeles = 0;
+    for (const profil of aDegeler ?? []) {
+      const resultat = await degelerProfil(profil.id);
+      if (resultat.ok) degeles++;
+    }
 
     const demain = new Date();
     demain.setDate(demain.getDate() + 1);
@@ -75,7 +93,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({ envoyes, echecs, total: (reservations ?? []).length });
+    return NextResponse.json({ envoyes, echecs, total: (reservations ?? []).length, degeles });
   } catch (e: any) {
     await alerterAdmin(
       'Le cron des rappels a planté',

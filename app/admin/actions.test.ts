@@ -120,6 +120,7 @@ describe('degelerPass', () => {
     expect(updateChain.update).toHaveBeenCalledWith({
       gele: false,
       date_gel_debut: null,
+      date_fin_gel_prevue: null,
       date_expiration: '2026-08-25', // +5 jours
     });
   });

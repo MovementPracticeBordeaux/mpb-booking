@@ -126,8 +126,66 @@ export async function attribuerFormule(formData: FormData) {
   revalidatePath('/admin');
 }
 
-// Coaching/mentorship n'a pas de réservation de créneau automatique : quand
-// une séance de coaching a lieu, l'admin décompte lui-même le nombre
+// Importe un abonné venant de l'ancien site (Wix) : recrée exactement son
+// état réel (formule, quota déjà consommé, vraie date de fin, éventuellement
+// déjà en pause) plutôt que de repartir d'un quota plein et d'aujourd'hui
+// comme le fait attribuerFormule. Crée le compte automatiquement si
+// l'élève ne s'est encore jamais connecté sur le nouveau site.
+export async function importerAbonneWix(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+
+  const email = (formData.get('email') as string)?.trim().toLowerCase();
+  const nom = ((formData.get('nom') as string) || '').trim() || null;
+  const formuleNom = formData.get('formule_nom') as string;
+  const quotaRestantSaisi = formData.get('quota_restant') as string;
+  const dateExpiration = formData.get('date_expiration') as string;
+  const gele = formData.get('gele') === 'on';
+  const dateGelDebut = (formData.get('date_gel_debut') as string) || null;
+  const dateFinGelPrevue = (formData.get('date_fin_gel_prevue') as string) || null;
+
+  if (!email) echouer('Email requis.');
+  const formule = FORMULES[formuleNom];
+  if (!formule) echouer('Formule inconnue.');
+  if (!dateExpiration) echouer("Date d'expiration requise (\"Date de fin\" sur Wix).");
+
+  // Retrouve le compte existant par email, ou en crée un nouveau — l'élève
+  // n'a peut-être jamais encore mis les pieds sur le nouveau site.
+  let eleveId: string;
+  const { data: profilExistant } = await admin.from('profiles').select('id').eq('email', email).maybeSingle();
+  if (profilExistant) {
+    eleveId = profilExistant.id;
+  } else {
+    const { data: nouvelUtilisateur, error: erreurCreation } = await admin.auth.admin.createUser({
+      email,
+      email_confirm: true,
+    });
+    if (erreurCreation || !nouvelUtilisateur.user) {
+      echouer(`Impossible de créer le compte pour ${email} : ${erreurCreation?.message ?? 'erreur inconnue'}`);
+      return;
+    }
+    eleveId = nouvelUtilisateur.user.id;
+  }
+
+  const { error } = await admin.from('profiles').update({
+    nom,
+    formule_nom: formuleNom,
+    quota_total: formule.quota,
+    quota_restant: formule.quota ? Number(quotaRestantSaisi || formule.quota) : null,
+    date_expiration: dateExpiration,
+    abonnement_actif: true,
+    origine: 'manuel',
+    paye: true,
+    gele,
+    date_gel_debut: gele ? (dateGelDebut || new Date().toISOString().slice(0, 10)) : null,
+    date_fin_gel_prevue: gele ? dateFinGelPrevue : null,
+  }).eq('id', eleveId);
+  if (error) echouer(error.message);
+
+  revalidatePath('/admin');
+}
+
+
 // d'heures (ou l'unité) consommées sur le pass de l'élève.
 export async function decompterCoaching(formData: FormData) {
   await verifierAdmin();
@@ -187,9 +245,14 @@ export async function gelerPass(formData: FormData) {
   await verifierAdmin();
   const admin = supabaseAdmin();
   const eleveId = formData.get('eleve_id') as string;
+  const dateFinGelPrevue = (formData.get('date_fin_gel_prevue') as string) || null;
   const { error } = await admin.from('profiles').update({
     gele: true,
     date_gel_debut: new Date().toISOString().slice(0, 10),
+    // Optionnel : si une date de reprise est indiquée, le cron quotidien
+    // dégèlera automatiquement le pass ce jour-là (voir
+    // app/api/cron/rappels/route.ts) — sinon dégel manuel comme avant.
+    date_fin_gel_prevue: dateFinGelPrevue,
   }).eq('id', eleveId);
   if (error) echouer(error.message);
   revalidatePath('/admin');
@@ -197,16 +260,16 @@ export async function gelerPass(formData: FormData) {
 
 // Dégel : prolonge automatiquement la date de validité du nombre de jours
 // pendant lesquels le pass est resté gelé (comme sur le site actuel).
-export async function degelerPass(formData: FormData) {
-  await verifierAdmin();
+// Factorisée pour être réutilisée par le dégel manuel (bouton admin) et par
+// le dégel automatique planifié (cron quotidien, voir api/cron/rappels).
+export async function degelerProfil(eleveId: string): Promise<{ ok: boolean; erreur?: string }> {
   const admin = supabaseAdmin();
-  const eleveId = formData.get('eleve_id') as string;
 
   const { data: profil } = await admin.from('profiles')
     .select('date_gel_debut, date_expiration')
     .eq('id', eleveId)
     .single();
-  if (!profil?.date_gel_debut) echouer("Ce pass n'est pas gelé.");
+  if (!profil?.date_gel_debut) return { ok: false, erreur: "Ce pass n'est pas gelé." };
 
   const debutGel = new Date(profil.date_gel_debut);
   const joursGeles = Math.max(0, Math.round((Date.now() - debutGel.getTime()) / (1000 * 60 * 60 * 24)));
@@ -217,10 +280,18 @@ export async function degelerPass(formData: FormData) {
   const { error } = await admin.from('profiles').update({
     gele: false,
     date_gel_debut: null,
+    date_fin_gel_prevue: null,
     date_expiration: nouvelleExpiration.toISOString().slice(0, 10),
   }).eq('id', eleveId);
-  if (error) echouer(error.message);
 
+  return error ? { ok: false, erreur: error.message } : { ok: true };
+}
+
+export async function degelerPass(formData: FormData) {
+  await verifierAdmin();
+  const eleveId = formData.get('eleve_id') as string;
+  const resultat = await degelerProfil(eleveId);
+  if (!resultat.ok) echouer(resultat.erreur ?? 'Erreur inconnue.');
   revalidatePath('/admin');
 }
 

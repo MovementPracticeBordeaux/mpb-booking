@@ -1,6 +1,6 @@
 import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
-import { ajouterCours, desactiverCours, definirSemaineReference, definirVacances, attribuerFormule, suspendreAcces, decompterCoaching, modifierQuotaRestant, modifierExpiration, gelerPass, degelerPass, rembourserPaiement } from './actions';
+import { ajouterCours, desactiverCours, definirSemaineReference, definirVacances, attribuerFormule, importerAbonneWix, suspendreAcces, decompterCoaching, modifierQuotaRestant, modifierExpiration, gelerPass, degelerPass, rembourserPaiement } from './actions';
 import { FORMULES } from '@/lib/formules';
 import {
   REVENUS_MENSUELS_WIX,
@@ -345,6 +345,47 @@ export default async function AdminPage({ searchParams }: { searchParams: { erre
       </section>
 
       <section style={{ marginBottom: 32 }}>
+        <h2>Importer un abonné de l'ancien site (Wix)</h2>
+        <p style={{ fontSize: 13, opacity: 0.7 }}>
+          Pour recréer exactement l'état réel d'un abonnement Wix : crée le compte automatiquement si
+          l'élève ne s'est jamais connecté sur le nouveau site, avec le quota déjà consommé, la vraie
+          date de fin, et éventuellement déjà en pause.
+        </p>
+        <form action={importerAbonneWix} style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 320 }}>
+          <input name="email" type="email" placeholder="Email de l'élève" required />
+          <input name="nom" placeholder="Nom (optionnel)" />
+          <select name="formule_nom" required defaultValue="illimite">
+            <optgroup label="Cours collectifs">
+              {Object.entries(FORMULES).filter(([, f]) => f.categorie === 'planning').map(([cle, f]) => (
+                <option key={cle} value={cle}>{f.nom}</option>
+              ))}
+            </optgroup>
+            <optgroup label="Coaching & Mentorship">
+              {Object.entries(FORMULES).filter(([, f]) => f.categorie === 'coaching').map(([cle, f]) => (
+                <option key={cle} value={cle}>{f.nom}</option>
+              ))}
+            </optgroup>
+          </select>
+          <label style={{ fontSize: 13 }}>Séances restantes (laisser vide si illimité)
+            <input type="number" name="quota_restant" min="0" style={{ display: 'block', width: '100%' }} />
+          </label>
+          <label style={{ fontSize: 13 }}>Date de fin (« Date de fin » sur Wix)
+            <input type="date" name="date_expiration" required style={{ display: 'block', width: '100%' }} />
+          </label>
+          <label style={{ fontSize: 13 }}>
+            <input type="checkbox" name="gele" /> Déjà en pause sur Wix
+          </label>
+          <label style={{ fontSize: 13 }}>Date de mise en pause (si coché ci-dessus)
+            <input type="date" name="date_gel_debut" style={{ display: 'block', width: '100%' }} />
+          </label>
+          <label style={{ fontSize: 13 }}>Date de reprise prévue (optionnel, dégèle automatiquement ce jour-là)
+            <input type="date" name="date_fin_gel_prevue" style={{ display: 'block', width: '100%' }} />
+          </label>
+          <button type="submit">Importer</button>
+        </form>
+      </section>
+
+      <section style={{ marginBottom: 32 }}>
         <h2>Élèves</h2>
         {(eleves ?? []).map((e) => {
           const formule = e.formule_nom ? FORMULES[e.formule_nom] : null;
@@ -360,6 +401,7 @@ export default async function AdminPage({ searchParams }: { searchParams: { erre
                   <span>
                     {formule?.quota && `${e.quota_restant}/${e.quota_total} ${formule.unite}s`}
                     {e.date_expiration && ` · exp. ${e.date_expiration}`}
+                    {e.gele && e.date_fin_gel_prevue && ` · reprise prévue le ${e.date_fin_gel_prevue}`}
                     {' · '}{e.origine === 'manuel' ? 'manuel' : 'Stripe'}
                     {!e.paye && ' · offert'}
                   </span>
@@ -391,8 +433,12 @@ export default async function AdminPage({ searchParams }: { searchParams: { erre
                         <button type="submit">Dégeler (prolonge auto)</button>
                       </form>
                     ) : (
-                      <form action={gelerPass}>
+                      <form action={gelerPass} style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                         <input type="hidden" name="eleve_id" value={e.id} />
+                        <label style={{ fontSize: 11, opacity: 0.7 }}>
+                          Reprise le
+                          <input type="date" name="date_fin_gel_prevue" style={{ marginLeft: 4 }} />
+                        </label>
                         <button type="submit">❄️ Geler (blessure, vacances...)</button>
                       </form>
                     )}
