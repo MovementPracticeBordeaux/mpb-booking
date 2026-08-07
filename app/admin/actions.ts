@@ -60,24 +60,32 @@ export async function definirSemaineReference(formData: FormData) {
   revalidatePath('/planning');
 }
 
-// Période de vacances : tant que la date du jour est dans cet intervalle, le
-// planning public affiche un message "en vacances" au lieu des cours.
-// Champs vides -> null -> pas de période active.
-export async function definirVacances(formData: FormData) {
+// Périodes de vacances : tant que la date du jour est dans l'une de ces
+// périodes, le planning public affiche un message "en vacances" au lieu des
+// cours pour ce jour-là. Plusieurs périodes distinctes peuvent coexister
+// dans l'année (Toussaint, Noël, été...), chacune ajoutable/supprimable
+// individuellement.
+export async function ajouterVacances(formData: FormData) {
   await verifierAdmin();
   const admin = supabaseAdmin();
-  const debut = (formData.get('vacances_debut') as string) || null;
-  const fin = (formData.get('vacances_fin') as string) || null;
+  const debut = formData.get('date_debut') as string;
+  const fin = formData.get('date_fin') as string;
 
-  const { data: existant } = await admin.from('semaine_reference').select('id').eq('id', 1).single();
-  if (!existant) {
-    echouer("Configure d'abord la semaine de référence ci-dessus avant de définir une période de vacances.");
-  }
+  if (!debut || !fin) echouer('Indique une date de début et une date de fin.');
+  if (fin < debut) echouer('La date de fin doit être après la date de début.');
 
-  const { error } = await admin.from('semaine_reference').update({
-    vacances_debut: debut,
-    vacances_fin: fin,
-  }).eq('id', 1);
+  const { error } = await admin.from('vacances').insert({ date_debut: debut, date_fin: fin });
+  if (error) echouer(error.message);
+  revalidatePath('/admin');
+  revalidatePath('/planning');
+}
+
+export async function supprimerVacances(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+  const id = formData.get('id') as string;
+
+  const { error } = await admin.from('vacances').delete().eq('id', id);
   if (error) echouer(error.message);
   revalidatePath('/admin');
   revalidatePath('/planning');

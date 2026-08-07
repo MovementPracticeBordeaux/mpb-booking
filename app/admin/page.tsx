@@ -1,6 +1,6 @@
 import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
-import { ajouterCours, desactiverCours, definirSemaineReference, definirVacances, attribuerFormule, importerAbonneWix, suspendreAcces, decompterCoaching, modifierQuotaRestant, modifierExpiration, gelerPass, degelerPass, rembourserPaiement } from './actions';
+import { ajouterCours, desactiverCours, definirSemaineReference, ajouterVacances, supprimerVacances, attribuerFormule, importerAbonneWix, suspendreAcces, decompterCoaching, modifierQuotaRestant, modifierExpiration, gelerPass, degelerPass, rembourserPaiement } from './actions';
 import { FORMULES } from '@/lib/formules';
 import {
   REVENUS_MENSUELS_WIX,
@@ -32,6 +32,7 @@ export default async function AdminPage({ searchParams }: { searchParams: { erre
   const admin = supabaseAdmin();
 
   const { data: ref } = await admin.from('semaine_reference').select('*').eq('id', 1).single();
+  const { data: periodesVacances } = await admin.from('vacances').select('*').order('date_debut');
   const { data: coursListe } = await admin
     .from('cours')
     .select('*')
@@ -271,19 +272,34 @@ export default async function AdminPage({ searchParams }: { searchParams: { erre
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2>Période de vacances</h2>
+        <h2>Périodes de vacances</h2>
         <p style={{ fontSize: 13, opacity: 0.7 }}>
-          Pendant cette période, le planning public affiche un message "en vacances" et les jours
-          concernés sont grisés (non réservables). Laisse les deux champs vides pour désactiver.
+          Pendant ces périodes, le planning public affiche un message "en vacances" et les jours
+          concernés sont grisés (non réservables). Tu peux en ajouter plusieurs dans l'année.
         </p>
-        <form action={definirVacances} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+
+        {(periodesVacances ?? []).length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            {periodesVacances!.map((v) => (
+              <div key={v.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, fontSize: 13, padding: '6px 0', borderBottom: '1px solid #333' }}>
+                <span>Du {v.date_debut} au {v.date_fin}</span>
+                <form action={supprimerVacances}>
+                  <input type="hidden" name="id" value={v.id} />
+                  <button type="submit" style={{ fontSize: 12 }}>Supprimer</button>
+                </form>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <form action={ajouterVacances} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           <label style={{ fontSize: 13 }}>Du
-            <input type="date" name="vacances_debut" defaultValue={ref?.vacances_debut ?? ''} style={{ marginLeft: 4 }} />
+            <input type="date" name="date_debut" required style={{ marginLeft: 4 }} />
           </label>
           <label style={{ fontSize: 13 }}>Au
-            <input type="date" name="vacances_fin" defaultValue={ref?.vacances_fin ?? ''} style={{ marginLeft: 4 }} />
+            <input type="date" name="date_fin" required style={{ marginLeft: 4 }} />
           </label>
-          <button type="submit">Enregistrer</button>
+          <button type="submit">Ajouter</button>
         </form>
       </section>
 

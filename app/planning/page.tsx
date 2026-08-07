@@ -24,6 +24,8 @@ export default async function PlanningPage({ searchParams }: { searchParams: { e
     .order('jour_semaine')
     .order('heure_debut');
 
+  const { data: periodesVacances } = await supabase.from('vacances').select('date_debut, date_fin');
+
   let mesReservations: { cours_id: string; date_seance: string }[] = [];
   if (user) {
     const { data } = await supabase
@@ -37,8 +39,6 @@ export default async function PlanningPage({ searchParams }: { searchParams: { e
   // On calcule une fenêtre glissante de jours : 7 jours avant aujourd'hui
   // (pour pouvoir consulter les cours passés en scrollant vers la gauche)
   // et 35 jours après (pour réserver à l'avance).
-  const vacDebut = ref?.vacances_debut as string | null | undefined;
-  const vacFin = ref?.vacances_fin as string | null | undefined;
   const JOURS_PASSES = 7;
   const JOURS_FUTURS = 35;
 
@@ -50,7 +50,7 @@ export default async function PlanningPage({ searchParams }: { searchParams: { e
       const d = new Date();
       d.setDate(d.getDate() + i);
       const dateStr = d.toISOString().slice(0, 10);
-      const enVacances = !!(vacDebut && vacFin && dateStr >= vacDebut && dateStr <= vacFin);
+      const enVacances = (periodesVacances ?? []).some((v) => dateStr >= v.date_debut && dateStr <= v.date_fin);
       const semaine = calculerSemaine(d, lundiRef, ref.semaine_ce_lundi);
       const coursDuJour = enVacances ? [] : (coursListe ?? [])
         .filter((c) => c.jour_semaine === d.getDay() && c.semaine === semaine)
@@ -88,9 +88,17 @@ export default async function PlanningPage({ searchParams }: { searchParams: { e
           Le planning est en cours de mise à jour, reviens très bientôt !
         </p>
       )}
-      {jours[0]?.enVacances && (
+      {jours[JOURS_PASSES]?.enVacances && (
         <p style={{ color: COULEURS.texteAtt, marginBottom: 20 }}>
-          🏝️ Sylvain est actuellement en vacances{vacFin ? ` jusqu'au ${new Date(vacFin + 'T00:00:00').toLocaleDateString('fr-FR')}` : ''}, pas de cours pour le moment — les jours concernés sont grisés ci-dessous.
+          🏝️ Sylvain est actuellement en vacances
+          {(() => {
+            const periodeEnCours = (periodesVacances ?? []).find(
+              (v) => jours[JOURS_PASSES].dateISO >= v.date_debut && jours[JOURS_PASSES].dateISO <= v.date_fin
+            );
+            return periodeEnCours
+              ? ` jusqu'au ${new Date(periodeEnCours.date_fin + 'T00:00:00').toLocaleDateString('fr-FR')}`
+              : '';
+          })()}, pas de cours pour le moment — les jours concernés sont grisés ci-dessous.
         </p>
       )}
       {ref && (
