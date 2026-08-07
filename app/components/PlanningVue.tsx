@@ -276,6 +276,7 @@ export default function PlanningVue({
                 <div />
                 {semaineActuelle.map((j) => {
                   const estAujourdhui = j.dateISO === todayISO;
+                  const sansCours = !j.enVacances && j.cours.length === 0;
                   return (
                     <div
                       key={`h-${j.dateISO}`}
@@ -287,7 +288,7 @@ export default function PlanningVue({
                         letterSpacing: 0.5,
                         color: estAujourdhui ? COULEURS.texte : COULEURS.texteFaible,
                         fontWeight: estAujourdhui ? 700 : 400,
-                        opacity: j.enVacances ? 0.5 : 1,
+                        opacity: (j.enVacances || sansCours) ? 0.7 : 1,
                       }}
                     >
                       {NOMS_JOURS_COURTS[j.jourSemaine]}
@@ -317,6 +318,7 @@ export default function PlanningVue({
 
                 {semaineActuelle.map((j) => {
                   const estAujourdhui = j.dateISO === todayISO;
+                  const sansCours = !j.enVacances && j.cours.length === 0;
                   return (
                     <div
                       key={`c-${j.dateISO}`}
@@ -325,7 +327,7 @@ export default function PlanningVue({
                         height: hauteurGrille,
                         borderLeft: `1px solid ${COULEURS.bordure}`,
                         background: estAujourdhui ? 'rgba(255,138,0,0.05)' : undefined,
-                        opacity: j.enVacances ? 0.5 : 1,
+                        opacity: (j.enVacances || sansCours) ? 0.7 : 1,
                         // Lignes horaires en fond.
                         backgroundImage: `repeating-linear-gradient(to bottom, ${COULEURS.bordure} 0, ${COULEURS.bordure} 1px, transparent 1px, transparent ${HAUTEUR_HEURE}px)`,
                       }}
