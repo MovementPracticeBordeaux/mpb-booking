@@ -47,7 +47,7 @@ const GROUPES = [
 export default function TarifsPage({ searchParams }: { searchParams: { erreur?: string } }) {
   return (
     <main style={{ maxWidth: 480, margin: '0 auto', padding: 20 }}>
-      <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 36, letterSpacing: 0.5, margin: '0 0 20px' }}>
+      <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 'clamp(28px, 8vw, 36px)', letterSpacing: 0.5, margin: '0 0 20px' }}>
         TARIFS &amp; <span style={GRADIENT_TEXTE}>FORMULES</span>
       </h1>
       {searchParams.erreur && (
