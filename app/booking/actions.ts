@@ -15,59 +15,46 @@ export async function reserverCours(formData: FormData) {
   const echouer = (message: string) => redirect(`/planning?erreur=${encodeURIComponent(message)}`);
   const versLesTarifs = (message: string) => redirect(`/tarifs?erreur=${encodeURIComponent(message)}`);
 
-  const { data: profil } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
-
-  if (!profil || !profil.abonnement_actif || !profil.formule_nom) {
-    versLesTarifs("Tu n'as pas encore de pass actif — choisis une formule ci-dessous pour pouvoir réserver.");
-    return;
-  }
-
-  if (profil.gele) {
-    echouer('Ton pass est actuellement gelé (contacte Sylvain pour le débloquer).');
-    return;
-  }
-
-  if (profil.date_expiration && new Date(profil.date_expiration) < new Date()) {
-    versLesTarifs('Ton pass a expiré — renouvelle-le ci-dessous pour continuer à réserver.');
-    return;
-  }
-
-  // 'illimite' : pas de décompte. Toutes les autres formules ont un quota.
-  if (profil.formule_nom !== 'illimite') {
-    if (profil.quota_restant <= 0) {
-      versLesTarifs('Ton pass est épuisé — choisis une nouvelle formule ci-dessous.');
-      return;
-    }
-    // Écriture via le client admin, pas la session de l'élève : voir le
-    // commentaire équivalent dans annulerReservation plus bas dans ce même
-    // fichier — la policy RLS profil_update_own autorise à modifier
-    // n'importe quelle colonne de sa propre fiche, donc toute écriture
-    // sensible dans 'profiles' passe par le client admin qui, lui, ignore
-    // RLS et n'exécute que ce que ce code précis autorise.
-    const admin = supabaseAdmin();
-    const { error: errUpdate } = await admin
-      .from('profiles')
-      .update({ quota_restant: profil.quota_restant - 1 })
-      .eq('id', user.id);
-    if (errUpdate) {
-      echouer(errUpdate.message);
-      return;
-    }
-  }
-
-  const { error } = await supabase.from('reservations').insert({
-    eleve_id: user.id,
-    cours_id: coursId,
-    date_seance: dateSeance,
+  // Toute la logique (vérifs + réservation + décompte du quota) tourne dans
+  // une seule fonction SQL atomique côté base de données (voir
+  // supabase/migration_reservation_atomique.sql) : ça protège à la fois
+  // contre un double-clic/double-onglet qui ferait consommer moins de
+  // crédits que de séances réellement réservées, et — comme pour les autres
+  // écritures dans 'profiles' — ça évite de s'appuyer sur la session de
+  // l'élève pour modifier son propre quota.
+  const admin = supabaseAdmin();
+  const { data: resultat, error } = await admin.rpc('reserver_creneau', {
+    p_eleve_id: user.id,
+    p_cours_id: coursId,
+    p_date_seance: dateSeance,
   });
 
   if (error) {
     echouer(error.message);
     return;
+  }
+
+  switch (resultat) {
+    case 'ok':
+      break;
+    case 'pas_abonne':
+      versLesTarifs("Tu n'as pas encore de pass actif — choisis une formule ci-dessous pour pouvoir réserver.");
+      return;
+    case 'gele':
+      echouer('Ton pass est actuellement gelé (contacte Sylvain pour le débloquer).');
+      return;
+    case 'expire':
+      versLesTarifs('Ton pass a expiré — renouvelle-le ci-dessous pour continuer à réserver.');
+      return;
+    case 'quota_epuise':
+      versLesTarifs('Ton pass est épuisé — choisis une nouvelle formule ci-dessous.');
+      return;
+    case 'deja_reserve':
+      echouer('Tu as déjà réservé cette séance.');
+      return;
+    default:
+      echouer('Une erreur est survenue, réessaie.');
+      return;
   }
 
   revalidatePath('/planning');

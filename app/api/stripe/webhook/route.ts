@@ -24,6 +24,19 @@ export async function POST(req: NextRequest) {
     const formule = formuleNom ? FORMULES[formuleNom] : null;
 
     if (userId && formule) {
+      // Idempotence : si ce paiement Stripe a déjà été traité (webhook
+      // parfois notifié plusieurs fois pour le même événement), on ne le
+      // retraite pas une deuxième fois.
+      const { data: dejaTraite } = await admin
+        .from('paiements')
+        .select('id')
+        .eq('stripe_session_id', session.id)
+        .maybeSingle();
+
+      if (dejaTraite) {
+        return NextResponse.json({ received: true, deja_traite: true });
+      }
+
       const expiration = new Date();
       expiration.setMonth(expiration.getMonth() + formule.validiteMois);
 
@@ -38,8 +51,12 @@ export async function POST(req: NextRequest) {
         stripe_customer_id: session.customer as string,
       }).eq('id', userId);
 
-      // Historise le paiement pour que l'élève puisse générer sa facture
-      await admin.from('paiements').insert({
+      // Historise le paiement pour que l'élève puisse générer sa facture.
+      // stripe_session_id a une contrainte unique en base (voir
+      // supabase/migration_idempotence_webhook.sql) : si malgré la
+      // vérification ci-dessus deux webhooks arrivaient en même temps, cet
+      // insert échouerait proprement au lieu de dupliquer la ligne.
+      const { error: erreurInsert } = await admin.from('paiements').insert({
         eleve_id: userId,
         formule_nom: formuleNom,
         montant: (session.amount_total ?? 0) / 100, // Stripe donne le montant en centimes
@@ -47,6 +64,13 @@ export async function POST(req: NextRequest) {
         paye: true,
         stripe_session_id: session.id,
       });
+
+      // Code 23505 = violation de contrainte unique : un autre appel du
+      // webhook a inséré la ligne entre-temps, ce n'est pas une vraie
+      // erreur, juste la sécurité anti-doublon qui a fonctionné.
+      if (erreurInsert && erreurInsert.code !== '23505') {
+        console.error('Erreur insertion paiement:', erreurInsert.message);
+      }
     }
   }
 

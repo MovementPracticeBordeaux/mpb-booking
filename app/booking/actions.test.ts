@@ -52,6 +52,12 @@ beforeEach(() => {
 });
 
 describe('reserverCours', () => {
+  function mockAdminRpc(resultat: { data?: any; error?: any }) {
+    const admin = { rpc: vi.fn(async () => resultat) };
+    vi.mocked(supabaseAdmin).mockReturnValue(admin as any);
+    return admin;
+  }
+
   it("redirige vers /login si l'utilisateur n'est pas connecté", async () => {
     vi.mocked(supabaseServer).mockReturnValue(mockClient({ user: null, fromResults: [] }) as any);
 
@@ -60,13 +66,23 @@ describe('reserverCours', () => {
     );
   });
 
-  it("redirige vers /tarifs si l'élève n'a pas de pass actif", async () => {
-    vi.mocked(supabaseServer).mockReturnValue(
-      mockClient({
-        user: USER,
-        fromResults: [{ data: { abonnement_actif: false, formule_nom: null }, error: null }],
-      }) as any
-    );
+  it('appelle la fonction SQL atomique reserver_creneau avec les bons paramètres', async () => {
+    vi.mocked(supabaseServer).mockReturnValue(mockClient({ user: USER, fromResults: [] }) as any);
+    const admin = mockAdminRpc({ data: 'ok', error: null });
+
+    await reserverCours(formData({ cours_id: 'c1', date_seance: '2026-08-10' }));
+
+    expect(admin.rpc).toHaveBeenCalledWith('reserver_creneau', {
+      p_eleve_id: 'user-1',
+      p_cours_id: 'c1',
+      p_date_seance: '2026-08-10',
+    });
+    expect(revalidatePath).toHaveBeenCalledWith('/planning');
+  });
+
+  it("redirige vers /tarifs si l'élève n'a pas de pass actif (pas_abonne)", async () => {
+    vi.mocked(supabaseServer).mockReturnValue(mockClient({ user: USER, fromResults: [] }) as any);
+    mockAdminRpc({ data: 'pas_abonne', error: null });
 
     await expect(reserverCours(formData({ cours_id: 'c1', date_seance: '2026-08-10' }))).rejects.toThrow(
       /REDIRECT:\/tarifs/
@@ -74,12 +90,8 @@ describe('reserverCours', () => {
   });
 
   it('redirige vers /planning si le pass est gelé', async () => {
-    vi.mocked(supabaseServer).mockReturnValue(
-      mockClient({
-        user: USER,
-        fromResults: [{ data: { abonnement_actif: true, formule_nom: 'illimite', gele: true }, error: null }],
-      }) as any
-    );
+    vi.mocked(supabaseServer).mockReturnValue(mockClient({ user: USER, fromResults: [] }) as any);
+    mockAdminRpc({ data: 'gele', error: null });
 
     await expect(reserverCours(formData({ cours_id: 'c1', date_seance: '2026-08-10' }))).rejects.toThrow(
       /REDIRECT:\/planning/
@@ -87,102 +99,39 @@ describe('reserverCours', () => {
   });
 
   it('redirige vers /tarifs si le pass est expiré', async () => {
-    vi.mocked(supabaseServer).mockReturnValue(
-      mockClient({
-        user: USER,
-        fromResults: [
-          {
-            data: { abonnement_actif: true, formule_nom: 'illimite', gele: false, date_expiration: '2020-01-01' },
-            error: null,
-          },
-        ],
-      }) as any
-    );
+    vi.mocked(supabaseServer).mockReturnValue(mockClient({ user: USER, fromResults: [] }) as any);
+    mockAdminRpc({ data: 'expire', error: null });
 
     await expect(reserverCours(formData({ cours_id: 'c1', date_seance: '2026-08-10' }))).rejects.toThrow(
       /REDIRECT:\/tarifs/
     );
   });
 
-  it('redirige vers /tarifs si le quota est épuisé (formule non illimitée)', async () => {
-    vi.mocked(supabaseServer).mockReturnValue(
-      mockClient({
-        user: USER,
-        fromResults: [
-          {
-            data: {
-              abonnement_actif: true,
-              formule_nom: 'mensuel_4',
-              gele: false,
-              date_expiration: '2099-01-01',
-              quota_restant: 0,
-            },
-            error: null,
-          },
-        ],
-      }) as any
-    );
+  it('redirige vers /tarifs si le quota est épuisé', async () => {
+    vi.mocked(supabaseServer).mockReturnValue(mockClient({ user: USER, fromResults: [] }) as any);
+    mockAdminRpc({ data: 'quota_epuise', error: null });
 
     await expect(reserverCours(formData({ cours_id: 'c1', date_seance: '2026-08-10' }))).rejects.toThrow(
       /REDIRECT:\/tarifs/
     );
   });
 
-  it('décompte le quota puis crée la réservation pour une formule non illimitée', async () => {
-    const client = mockClient({
-      user: USER,
-      fromResults: [
-        {
-          data: {
-            abonnement_actif: true,
-            formule_nom: 'mensuel_4',
-            gele: false,
-            date_expiration: '2099-01-01',
-            quota_restant: 3,
-          },
-          error: null,
-        },
-        { error: null }, // insert reservation
-      ],
-    });
-    vi.mocked(supabaseServer).mockReturnValue(client as any);
+  it('redirige vers /planning si la séance est déjà réservée (double-clic / double-onglet)', async () => {
+    vi.mocked(supabaseServer).mockReturnValue(mockClient({ user: USER, fromResults: [] }) as any);
+    mockAdminRpc({ data: 'deja_reserve', error: null });
 
-    // Le décompte du quota passe par le client admin, pas la session de
-    // l'élève — voir le commentaire dans actions.ts.
-    const adminClient = { from: vi.fn(() => makeChainable({ error: null })) };
-    vi.mocked(supabaseAdmin).mockReturnValue(adminClient as any);
-
-    await reserverCours(formData({ cours_id: 'c1', date_seance: '2026-08-10' }));
-
-    const updateChain = adminClient.from.mock.results[0].value;
-    expect(updateChain.update).toHaveBeenCalledWith({ quota_restant: 2 });
-    const insertChain = client.from.mock.results[1].value;
-    expect(insertChain.insert).toHaveBeenCalledWith({
-      eleve_id: 'user-1',
-      cours_id: 'c1',
-      date_seance: '2026-08-10',
-    });
-    expect(revalidatePath).toHaveBeenCalledWith('/planning');
-    expect(redirect).not.toHaveBeenCalled();
+    await expect(reserverCours(formData({ cours_id: 'c1', date_seance: '2026-08-10' }))).rejects.toThrow(
+      /REDIRECT:\/planning/
+    );
   });
 
-  it('ne décompte pas le quota pour la formule illimitée', async () => {
-    const client = mockClient({
-      user: USER,
-      fromResults: [
-        {
-          data: { abonnement_actif: true, formule_nom: 'illimite', gele: false, date_expiration: '2099-01-01' },
-          error: null,
-        },
-        { error: null }, // insert reservation
-      ],
-    });
-    vi.mocked(supabaseServer).mockReturnValue(client as any);
+  it("propage une erreur inattendue de la fonction SQL vers /planning", async () => {
+    vi.mocked(supabaseServer).mockReturnValue(mockClient({ user: USER, fromResults: [] }) as any);
+    mockAdminRpc({ data: null, error: { message: 'boom' } });
 
-    await reserverCours(formData({ cours_id: 'c1', date_seance: '2026-08-10' }));
-
-    expect(client.from).toHaveBeenCalledTimes(2); // pas d'appel update entre les deux
-    expect(revalidatePath).toHaveBeenCalledWith('/planning');
+    await expect(reserverCours(formData({ cours_id: 'c1', date_seance: '2026-08-10' }))).rejects.toThrow(
+      /REDIRECT:\/planning/
+    );
   });
 });
 
