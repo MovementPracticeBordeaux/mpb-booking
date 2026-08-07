@@ -89,15 +89,17 @@ export default function PlanningVue({
   connecte,
   reserverCours,
   annulerReservation,
+  indexAujourdhui = 0,
 }: {
   jours: JourPlanning[];
   connecte: boolean;
   reserverCours: (formData: FormData) => void;
   annulerReservation: (formData: FormData) => void;
+  indexAujourdhui?: number;
 }) {
   const [vue, setVue] = useState<'semaine' | 'jour'>('semaine');
   const [offsetSemaine, setOffsetSemaine] = useState(0);
-  const [offsetJour, setOffsetJour] = useState(0);
+  const [offsetJour, setOffsetJour] = useState(indexAujourdhui);
 
   // Regroupe les jours par semaine (blocs de 7 à partir du premier jour reçu,
   // qui est toujours "aujourd'hui").
@@ -158,22 +160,25 @@ export default function PlanningVue({
           </div>
 
           <div className="grille-semaine">
-            {semaineActuelle.map((j) => (
-              <div key={j.dateISO} style={j.enVacances ? { opacity: 0.4 } : undefined}>
-                <p style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, color: COULEURS.texteFaible, marginBottom: 8 }}>
-                  {NOMS_JOURS_COURTS[j.jourSemaine]} {formaterDate(j.dateISO)}
-                </p>
-                {j.enVacances ? (
-                  <p style={{ fontSize: 12, color: COULEURS.texteFaible }}>🏝️ Vacances</p>
-                ) : j.cours.length === 0 ? (
-                  <p style={{ fontSize: 12, color: COULEURS.texteFaible, opacity: 0.6 }}>—</p>
-                ) : (
-                  j.cours.map((c) => (
-                    <CarteCours key={c.id} c={c} connecte={connecte} reserverCours={reserverCours} annulerReservation={annulerReservation} dateISO={j.dateISO} />
-                  ))
-                )}
-              </div>
-            ))}
+            {semaineActuelle.map((j) => {
+              const sansCours = !j.enVacances && j.cours.length === 0;
+              return (
+                <div key={j.dateISO} style={(j.enVacances || sansCours) ? { opacity: 0.4 } : undefined}>
+                  <p style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, color: COULEURS.texteFaible, marginBottom: 8 }}>
+                    {NOMS_JOURS_COURTS[j.jourSemaine]} {formaterDate(j.dateISO)}
+                  </p>
+                  {j.enVacances ? (
+                    <p style={{ fontSize: 12, color: COULEURS.texteFaible }}>🏝️ Vacances</p>
+                  ) : sansCours ? (
+                    <p style={{ fontSize: 12, color: COULEURS.texteFaible }}>Pas de cours</p>
+                  ) : (
+                    j.cours.map((c) => (
+                      <CarteCours key={c.id} c={c} connecte={connecte} reserverCours={reserverCours} annulerReservation={annulerReservation} dateISO={j.dateISO} />
+                    ))
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       ) : (
