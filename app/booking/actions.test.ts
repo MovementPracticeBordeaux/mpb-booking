@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
+import { envoyerEmail } from '@/lib/resend';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { annulerReservation, reserverCours } from './actions';
@@ -17,6 +18,10 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
+}));
+
+vi.mock('@/lib/resend', () => ({
+  envoyerEmail: vi.fn(async () => {}),
 }));
 
 // Construit un client Supabase mocké qui répond aux appels .from(...) dans
@@ -45,7 +50,7 @@ function formData(entries: Record<string, string>) {
   return fd;
 }
 
-const USER = { id: 'user-1' };
+const USER = { id: 'user-1', email: 'eleve@example.com' };
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -66,9 +71,13 @@ describe('reserverCours', () => {
     );
   });
 
-  it('appelle la fonction SQL atomique reserver_creneau avec les bons paramètres', async () => {
+  it('appelle la fonction SQL atomique reserver_creneau avec les bons paramètres, puis envoie un email de confirmation', async () => {
     vi.mocked(supabaseServer).mockReturnValue(mockClient({ user: USER, fromResults: [] }) as any);
-    const admin = mockAdminRpc({ data: 'ok', error: null });
+    const admin = mockAdminRpc({ data: 'ok', error: null }) as any;
+    admin.from = vi.fn(() => makeChainable({
+      data: { discipline: 'Handstand', heure_debut: '18:00:00', heure_fin: '19:00:00', lieu: 'Darwin' },
+      error: null,
+    }));
 
     await reserverCours(formData({ cours_id: 'c1', date_seance: '2026-08-10' }));
 
@@ -78,6 +87,11 @@ describe('reserverCours', () => {
       p_date_seance: '2026-08-10',
     });
     expect(revalidatePath).toHaveBeenCalledWith('/planning');
+    expect(envoyerEmail).toHaveBeenCalledWith(
+      'eleve@example.com',
+      expect.stringContaining('Handstand'),
+      expect.stringContaining('Handstand')
+    );
   });
 
   it("redirige vers /tarifs si l'élève n'a pas de pass actif (pas_abonne)", async () => {
