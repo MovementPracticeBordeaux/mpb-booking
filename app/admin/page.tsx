@@ -2,6 +2,8 @@ import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
 import { ajouterCours, desactiverCours, definirSemaineReference, ajouterVacances, supprimerVacances, attribuerFormule, importerAbonneWix, suspendreAcces, decompterCoaching, modifierQuotaRestant, modifierExpiration, gelerPass, degelerPass, rembourserPaiement } from './actions';
 import { FORMULES } from '@/lib/formules';
+import ListeElevesRepliable from './ListeElevesRepliable';
+import ListePaiementsRepliable from './ListePaiementsRepliable';
 import {
   REVENUS_MENSUELS_WIX,
   TOTAL_ENCAISSE_WIX,
@@ -402,103 +404,29 @@ export default async function AdminPage({ searchParams }: { searchParams: { erre
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2>Élèves</h2>
-        {(eleves ?? []).map((e) => {
-          const formule = e.formule_nom ? FORMULES[e.formule_nom] : null;
-          const statut = e.gele ? '❄️ gelé' : e.abonnement_actif ? '✅ actif' : '⛔ inactif';
-          return (
-            <details key={e.id} style={{ borderBottom: '1px solid #333', padding: 8 }}>
-              <summary style={{ fontSize: 14, cursor: 'pointer' }}>
-                {e.nom ?? e.email} — {formule?.nom ?? 'aucune formule'} · {statut}
-              </summary>
-
-              <div style={{ marginTop: 10 }}>
-                <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 8, fontSize: 13, opacity: 0.8, marginBottom: 8 }}>
-                  <span>
-                    {formule?.quota && `${e.quota_restant}/${e.quota_total} ${formule.unite}s`}
-                    {e.date_expiration && ` · exp. ${e.date_expiration}`}
-                    {e.gele && e.date_fin_gel_prevue && ` · reprise prévue le ${e.date_fin_gel_prevue}`}
-                    {' · '}{e.origine === 'manuel' ? 'manuel' : 'Stripe'}
-                    {!e.paye && ' · offert'}
-                  </span>
-                  {e.abonnement_actif && (
-                    <form action={suspendreAcces}>
-                      <input type="hidden" name="eleve_id" value={e.id} />
-                      <button type="submit">Suspendre</button>
-                    </form>
-                  )}
-                </div>
-
-                {e.formule_nom && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, fontSize: 12 }}>
-                    {formule?.quota && (
-                      <form action={modifierQuotaRestant} style={{ display: 'flex', gap: 4 }}>
-                        <input type="hidden" name="eleve_id" value={e.id} />
-                        <input type="number" name="quota_restant" defaultValue={e.quota_restant ?? 0} style={{ width: 50 }} />
-                        <button type="submit">Corriger quota</button>
-                      </form>
-                    )}
-                    <form action={modifierExpiration} style={{ display: 'flex', gap: 4 }}>
-                      <input type="hidden" name="eleve_id" value={e.id} />
-                      <input type="date" name="date_expiration" defaultValue={e.date_expiration ?? ''} />
-                      <button type="submit">Corriger date</button>
-                    </form>
-                    {e.gele ? (
-                      <form action={degelerPass}>
-                        <input type="hidden" name="eleve_id" value={e.id} />
-                        <button type="submit">Dégeler (prolonge auto)</button>
-                      </form>
-                    ) : (
-                      <form action={gelerPass} style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                        <input type="hidden" name="eleve_id" value={e.id} />
-                        <label style={{ fontSize: 11, opacity: 0.7 }}>
-                          Reprise le
-                          <input type="date" name="date_fin_gel_prevue" style={{ marginLeft: 4 }} />
-                        </label>
-                        <button type="submit">❄️ Geler (blessure, vacances...)</button>
-                      </form>
-                    )}
-                  </div>
-                )}
-                {formule?.categorie === 'coaching' && formule.quota && e.abonnement_actif && (
-                  <form action={decompterCoaching} style={{ display: 'flex', gap: 6, marginTop: 6 }}>
-                    <input type="hidden" name="eleve_id" value={e.id} />
-                    <input
-                      type="number" name="quantite" min="1" step="1" defaultValue="1"
-                      style={{ width: 60 }}
-                      aria-label={`${formule.unite}s consommées`}
-                    />
-                    <button type="submit">Décompter ({formule.unite}s consommées après séance)</button>
-                  </form>
-                )}
-              </div>
-            </details>
-          );
-        })}
+        <ListeElevesRepliable
+          eleves={(eleves ?? []).map((e) => ({
+            ...e,
+            formuleAffichage: e.formule_nom ? FORMULES[e.formule_nom] ?? null : null,
+          }))}
+          suspendreAcces={suspendreAcces}
+          modifierQuotaRestant={modifierQuotaRestant}
+          modifierExpiration={modifierExpiration}
+          gelerPass={gelerPass}
+          degelerPass={degelerPass}
+          decompterCoaching={decompterCoaching}
+        />
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2>Paiements récents</h2>
-        {(paiements ?? []).map((p: any) => (
-          <details key={p.id} style={{ borderBottom: '1px solid #333', padding: 8 }}>
-            <summary style={{ fontSize: 13, cursor: 'pointer' }}>
-              {new Date(p.created_at).toLocaleDateString('fr-FR')} · {p.profiles?.email} · {Number(p.montant).toFixed(2)} €
-              {p.rembourse && ' · ↩️ remboursé'}
-            </summary>
-            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 8, fontSize: 13, marginTop: 8 }}>
-              <span>
-                {FORMULES[p.formule_nom]?.nom ?? p.formule_nom}
-                {' · '}{p.origine === 'manuel' ? 'manuel' : 'Stripe'}
-              </span>
-              {p.origine === 'stripe' && !p.rembourse && Number(p.montant) > 0 && (
-                <form action={rembourserPaiement}>
-                  <input type="hidden" name="paiement_id" value={p.id} />
-                  <button type="submit">Rembourser</button>
-                </form>
-              )}
-            </div>
-          </details>
-        ))}
+        <ListePaiementsRepliable
+          paiements={(paiements ?? []).map((p: any) => ({
+            ...p,
+            email: p.profiles?.email ?? null,
+            formuleNom: FORMULES[p.formule_nom]?.nom ?? p.formule_nom,
+          }))}
+          rembourserPaiement={rembourserPaiement}
+        />
       </section>
 
       <section>
