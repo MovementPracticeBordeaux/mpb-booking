@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { COULEURS } from '@/lib/theme';
 
 type Lien = { href: string; label: string };
@@ -15,9 +15,26 @@ export default function NavBar({
   userEmail: string | null;
 }) {
   const [ouvert, setOuvert] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (!ouvert) return;
+    function surClicExterieur(e: MouseEvent | TouchEvent) {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) {
+        setOuvert(false);
+      }
+    }
+    document.addEventListener('mousedown', surClicExterieur);
+    document.addEventListener('touchstart', surClicExterieur);
+    return () => {
+      document.removeEventListener('mousedown', surClicExterieur);
+      document.removeEventListener('touchstart', surClicExterieur);
+    };
+  }, [ouvert]);
 
   return (
     <nav
+      ref={navRef}
       style={{
         borderBottom: `1px solid ${COULEURS.bordure}`,
         position: 'sticky',
