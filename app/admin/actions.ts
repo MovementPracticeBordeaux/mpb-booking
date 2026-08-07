@@ -134,65 +134,6 @@ export async function attribuerFormule(formData: FormData) {
   revalidatePath('/admin');
 }
 
-// Importe un abonné venant de l'ancien site (Wix) : recrée exactement son
-// état réel (formule, quota déjà consommé, vraie date de fin, éventuellement
-// déjà en pause) plutôt que de repartir d'un quota plein et d'aujourd'hui
-// comme le fait attribuerFormule. Crée le compte automatiquement si
-// l'élève ne s'est encore jamais connecté sur le nouveau site.
-export async function importerAbonneWix(formData: FormData) {
-  await verifierAdmin();
-  const admin = supabaseAdmin();
-
-  const email = (formData.get('email') as string)?.trim().toLowerCase();
-  const nom = ((formData.get('nom') as string) || '').trim() || null;
-  const formuleNom = formData.get('formule_nom') as string;
-  const quotaRestantSaisi = formData.get('quota_restant') as string;
-  const dateExpiration = formData.get('date_expiration') as string;
-  const gele = formData.get('gele') === 'on';
-  const dateGelDebut = (formData.get('date_gel_debut') as string) || null;
-  const dateFinGelPrevue = (formData.get('date_fin_gel_prevue') as string) || null;
-
-  if (!email) echouer('Email requis.');
-  const formule = FORMULES[formuleNom];
-  if (!formule) echouer('Formule inconnue.');
-  if (!dateExpiration) echouer("Date d'expiration requise (\"Date de fin\" sur Wix).");
-
-  // Retrouve le compte existant par email, ou en crée un nouveau — l'élève
-  // n'a peut-être jamais encore mis les pieds sur le nouveau site.
-  let eleveId: string;
-  const { data: profilExistant } = await admin.from('profiles').select('id').eq('email', email).maybeSingle();
-  if (profilExistant) {
-    eleveId = profilExistant.id;
-  } else {
-    const { data: nouvelUtilisateur, error: erreurCreation } = await admin.auth.admin.createUser({
-      email,
-      email_confirm: true,
-    });
-    if (erreurCreation || !nouvelUtilisateur.user) {
-      echouer(`Impossible de créer le compte pour ${email} : ${erreurCreation?.message ?? 'erreur inconnue'}`);
-      return;
-    }
-    eleveId = nouvelUtilisateur.user.id;
-  }
-
-  const { error } = await admin.from('profiles').update({
-    nom,
-    formule_nom: formuleNom,
-    quota_total: formule.quota,
-    quota_restant: formule.quota ? Number(quotaRestantSaisi || formule.quota) : null,
-    date_expiration: dateExpiration,
-    abonnement_actif: true,
-    origine: 'manuel',
-    paye: true,
-    gele,
-    date_gel_debut: gele ? (dateGelDebut || new Date().toISOString().slice(0, 10)) : null,
-    date_fin_gel_prevue: gele ? dateFinGelPrevue : null,
-  }).eq('id', eleveId);
-  if (error) echouer(error.message);
-
-  revalidatePath('/admin');
-}
-
 
 // d'heures (ou l'unité) consommées sur le pass de l'élève.
 export async function decompterCoaching(formData: FormData) {
