@@ -52,13 +52,13 @@ export default function CGVPage() {
         <ul style={{ paddingLeft: 20, margin: 0 }}>
           <li style={style.li}>La réservation d'un créneau est obligatoire pour participer à un cours collectif.</li>
           <li style={style.li}>
-            Une réservation peut être annulée librement depuis l'espace personnel, tant que le cours n'a
-            pas commencé. La séance est alors recréditée automatiquement sur le pass (sauf formule
+            Une réservation peut être annulée librement depuis l'espace personnel, jusqu'à 1h30 avant le
+            début du cours. La séance est alors recréditée automatiquement sur le pass (sauf formule
             illimitée, qui ne décompte pas de séances).
           </li>
           <li style={style.li}>
-            Passé l'heure de début du cours, l'annulation n'est plus possible depuis le site — contacter
-            directement Sylvain pour un cas particulier.
+            Passé ce délai de 1h30, l'annulation n'est plus possible depuis le site et la séance est due —
+            contacter directement Sylvain pour un cas particulier.
           </li>
         </ul>
       </section>

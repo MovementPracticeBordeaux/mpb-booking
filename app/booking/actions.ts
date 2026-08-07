@@ -76,7 +76,7 @@ export async function reserverCours(formData: FormData) {
         `<p>C'est confirmé !</p>
          <p>Tu es inscrit·e au cours de <strong>${cours.discipline}</strong>, le <strong>${dateAffichee}</strong>,
          de ${cours.heure_debut.slice(0, 5)} à ${cours.heure_fin.slice(0, 5)}${cours.lieu ? ` (${cours.lieu})` : ''}.</p>
-         <p>Tu peux annuler cette réservation depuis ton espace sur le site, tant que le cours n'a pas commencé.</p>
+         <p>Tu peux annuler cette réservation depuis ton espace sur le site, jusqu'à 1h30 avant le début du cours.</p>
          <p>À bientôt !</p>`
       );
     }
@@ -89,8 +89,9 @@ export async function reserverCours(formData: FormData) {
 }
 
 // Annule une réservation existante et restitue le crédit consommé (sauf pour
-// les formules illimitées, qui n'en décomptent pas). Impossible d'annuler un
-// cours déjà commencé — pour ce cas particulier, l'élève doit écrire à Sylvain.
+// les formules illimitées, qui n'en décomptent pas). Impossible d'annuler
+// moins de 1h30 avant le début du cours — pour ce cas particulier, l'élève
+// doit écrire à Sylvain.
 export async function annulerReservation(formData: FormData) {
   const supabase = supabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
@@ -101,11 +102,14 @@ export async function annulerReservation(formData: FormData) {
 
   const echouer = (message: string) => redirect(`/planning?erreur=${encodeURIComponent(message)}`);
 
+  const DELAI_ANNULATION_MIN = 90; // 1h30 avant le début du cours
+
   const { data: cours } = await supabase.from('cours').select('heure_debut').eq('id', coursId).single();
   if (cours) {
     const debut = new Date(`${dateSeance}T${cours.heure_debut}`);
-    if (debut.getTime() <= Date.now()) {
-      echouer('Ce cours a déjà commencé — contacte directement Sylvain pour ce cas particulier.');
+    const minutesAvantDebut = (debut.getTime() - Date.now()) / 60000;
+    if (minutesAvantDebut < DELAI_ANNULATION_MIN) {
+      echouer('Ce cours ne peut plus être annulé (moins de 1h30 avant le début) — contacte directement Sylvain pour ce cas particulier.');
       return;
     }
   }

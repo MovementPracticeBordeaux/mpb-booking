@@ -179,6 +179,44 @@ describe('annulerReservation', () => {
     ).rejects.toThrow(/REDIRECT:\/planning\?erreur=/);
   });
 
+  it('refuse si le cours commence dans moins de 1h30', async () => {
+    const dansUneHeure = new Date(Date.now() + 60 * 60000); // 1h avant le cours, sous le délai de 1h30
+    const dateSeance = `${dansUneHeure.getFullYear()}-${String(dansUneHeure.getMonth() + 1).padStart(2, '0')}-${String(dansUneHeure.getDate()).padStart(2, '0')}`;
+    const heureDebut = `${String(dansUneHeure.getHours()).padStart(2, '0')}:${String(dansUneHeure.getMinutes()).padStart(2, '0')}:00`;
+
+    vi.mocked(supabaseServer).mockReturnValue(
+      mockClient({
+        user: USER,
+        fromResults: [{ data: { heure_debut: heureDebut }, error: null }],
+      }) as any
+    );
+
+    await expect(
+      annulerReservation(formData({ cours_id: 'c1', date_seance: dateSeance }))
+    ).rejects.toThrow(/REDIRECT:\/planning\?erreur=/);
+  });
+
+  it('autorise l\'annulation si le cours commence dans plus de 1h30', async () => {
+    const dansDeuxHeures = new Date(Date.now() + 120 * 60000);
+    const dateSeance = `${dansDeuxHeures.getFullYear()}-${String(dansDeuxHeures.getMonth() + 1).padStart(2, '0')}-${String(dansDeuxHeures.getDate()).padStart(2, '0')}`;
+    const heureDebut = `${String(dansDeuxHeures.getHours()).padStart(2, '0')}:${String(dansDeuxHeures.getMinutes()).padStart(2, '0')}:00`;
+
+    const client = mockClient({
+      user: USER,
+      fromResults: [
+        { data: { heure_debut: heureDebut }, error: null }, // cours dans 2h, annulable
+        { data: { id: 'r1' }, error: null }, // réservation trouvée
+        { error: null }, // update statut annulee
+        { data: { formule_nom: 'illimite', quota_restant: null }, error: null }, // profil
+      ],
+    });
+    vi.mocked(supabaseServer).mockReturnValue(client as any);
+
+    await annulerReservation(formData({ cours_id: 'c1', date_seance: dateSeance }));
+
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
   it('refuse si la réservation est introuvable', async () => {
     vi.mocked(supabaseServer).mockReturnValue(
       mockClient({

@@ -47,7 +47,7 @@ const FAQ_GENERALE: ChatFAQ[] = [
   },
   {
     question: 'Puis-je annuler ou reporter une réservation ?',
-    reponse: "Oui, tu peux gérer tes réservations depuis ton espace, avant le début du cours. Pour un cas particulier, écris directement à Sylvain.",
+    reponse: "Oui, tu peux gérer tes réservations depuis ton espace, jusqu'à 1h30 avant le début du cours. Passé ce délai, la séance est due. Pour un cas particulier, écris directement à Sylvain.",
     motsCles: ['annuler', 'annulation', 'reporter', 'modifier', 'changer'],
   },
 ];
