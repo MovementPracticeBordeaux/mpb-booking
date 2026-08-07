@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { COULEURS, GRADIENT, POLICE_DISPLAY } from '@/lib/theme';
+import { useEffect, useRef } from 'react';
+import { COULEURS, GRADIENT, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
 
 export type CoursJour = {
   id: string;
@@ -20,7 +20,6 @@ export type JourPlanning = {
   enVacances?: boolean;
 };
 
-const NOMS_JOURS = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
 const NOMS_JOURS_COURTS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 
 function formaterDate(dateISO: string) {
@@ -28,15 +27,6 @@ function formaterDate(dateISO: string) {
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 }
 
-function minutesDe(heure: string) {
-  const [h, m] = heure.split(':').map(Number);
-  return h * 60 + m;
-}
-
-// Hauteur d'une heure dans la grille (px). 1px = 1min pour un calcul simple.
-const HAUTEUR_HEURE = 40;
-
-// Carte détaillée utilisée dans la vue "Jour" (confort de lecture + réservation).
 function CarteCours({ c, connecte, reserverCours, annulerReservation, dateISO }: {
   c: CoursJour;
   connecte: boolean;
@@ -47,30 +37,30 @@ function CarteCours({ c, connecte, reserverCours, annulerReservation, dateISO }:
   return (
     <div
       style={{
-        border: `1px solid ${COULEURS.bordure}`,
-        background: COULEURS.surface,
-        borderRadius: 10,
-        padding: '10px 12px',
+        border: c.dejaReserve ? '1px solid rgba(80,200,120,0.4)' : `1px solid ${COULEURS.bordure}`,
+        background: c.dejaReserve ? 'rgba(80,200,120,0.1)' : 'rgba(255,255,255,0.05)',
+        borderRadius: 8,
+        padding: '8px 10px',
         marginBottom: 8,
       }}
     >
-      <strong style={{ fontFamily: POLICE_DISPLAY, fontSize: 16, letterSpacing: 0.5, display: 'block' }}>
+      <strong style={{ fontFamily: POLICE_DISPLAY, fontSize: 15, letterSpacing: 0.4, display: 'block' }}>
         {c.discipline.toUpperCase()}
       </strong>
-      <div style={{ fontSize: 12, color: COULEURS.texteAtt, marginBottom: 8 }}>
-        {c.heureDebut} - {c.heureFin}
+      <div style={{ fontSize: 11, color: COULEURS.texteAtt, marginBottom: 6 }}>
+        {c.heureDebut} – {c.heureFin}
         {c.lieu ? ` · ${c.lieu}` : ''}
       </div>
       {connecte && (
         c.dejaReserve ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ color: '#9ef29e', fontSize: 12, fontWeight: 600 }}>Réservé ✓</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ color: '#9ef29e', fontSize: 11, fontWeight: 600 }}>Réservé ✓</span>
             <form action={annulerReservation}>
               <input type="hidden" name="cours_id" value={c.id} />
               <input type="hidden" name="date_seance" value={dateISO} />
               <button
                 type="submit"
-                style={{ background: 'none', border: 'none', color: COULEURS.texteFaible, fontSize: 12, textDecoration: 'underline', cursor: 'pointer', padding: '6px 0' }}
+                style={{ background: 'none', border: 'none', color: COULEURS.texteFaible, fontSize: 11, textDecoration: 'underline', cursor: 'pointer', padding: '4px 0' }}
               >
                 Annuler
               </button>
@@ -82,7 +72,7 @@ function CarteCours({ c, connecte, reserverCours, annulerReservation, dateISO }:
             <input type="hidden" name="date_seance" value={dateISO} />
             <button
               type="submit"
-              style={{ background: GRADIENT, color: 'white', border: 'none', borderRadius: 999, padding: '9px 16px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+              style={{ background: GRADIENT, color: 'white', border: 'none', borderRadius: 999, padding: '7px 14px', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}
             >
               Réserver
             </button>
@@ -91,99 +81,6 @@ function CarteCours({ c, connecte, reserverCours, annulerReservation, dateISO }:
       )}
     </div>
   );
-}
-
-// Bloc de cours positionné dans la grille horaire (vue "Semaine").
-function BlocGrille({ c, top, hauteur, connecte, reserverCours, annulerReservation, dateISO }: {
-  c: CoursJour;
-  top: number;
-  hauteur: number;
-  connecte: boolean;
-  reserverCours: (formData: FormData) => void;
-  annulerReservation: (formData: FormData) => void;
-  dateISO: string;
-}) {
-  const bookable = connecte && !c.dejaReserve;
-  const fondBloc = c.dejaReserve ? 'rgba(80,200,120,0.14)' : COULEURS.surfaceForte;
-  const accent = c.dejaReserve ? '#4caf7d' : '#FF8A00';
-
-  const contenu = (
-    <>
-      <strong
-        style={{
-          fontFamily: POLICE_DISPLAY,
-          fontSize: 13,
-          letterSpacing: 0.4,
-          lineHeight: 1.1,
-          display: 'block',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-        }}
-      >
-        {c.discipline.toUpperCase()}
-      </strong>
-      <span style={{ fontSize: 11, color: COULEURS.texteAtt, whiteSpace: 'nowrap' }}>
-        {c.heureDebut}–{c.heureFin}
-      </span>
-      {c.dejaReserve && (
-        <span style={{ display: 'block', fontSize: 10, color: '#9ef29e', fontWeight: 600 }}>Réservé ✓</span>
-      )}
-    </>
-  );
-
-  const styleBloc: React.CSSProperties = {
-    position: 'absolute',
-    top,
-    height: Math.max(hauteur, 34),
-    left: 3,
-    right: 3,
-    background: fondBloc,
-    borderRadius: 8,
-    borderLeft: `3px solid ${accent}`,
-    padding: '5px 7px',
-    overflow: 'hidden',
-    textAlign: 'left',
-  };
-
-  // Réservable : tout le bloc est un bouton de réservation.
-  if (bookable) {
-    return (
-      <form action={reserverCours} style={{ position: 'absolute', top, height: Math.max(hauteur, 34), left: 3, right: 3 }}>
-        <input type="hidden" name="cours_id" value={c.id} />
-        <input type="hidden" name="date_seance" value={dateISO} />
-        <button
-          type="submit"
-          title={`Réserver ${c.discipline} (${c.heureDebut}–${c.heureFin})`}
-          style={{ ...styleBloc, top: 0, height: '100%', left: 0, right: 0, width: '100%', border: 'none', borderLeft: `3px solid ${accent}`, color: COULEURS.texte, cursor: 'pointer' }}
-        >
-          {contenu}
-        </button>
-      </form>
-    );
-  }
-
-  // Déjà réservé : bloc + petit lien "Annuler".
-  if (connecte && c.dejaReserve) {
-    return (
-      <div style={styleBloc}>
-        {contenu}
-        <form action={annulerReservation}>
-          <input type="hidden" name="cours_id" value={c.id} />
-          <input type="hidden" name="date_seance" value={dateISO} />
-          <button
-            type="submit"
-            style={{ background: 'none', border: 'none', color: COULEURS.texteFaible, fontSize: 10, textDecoration: 'underline', cursor: 'pointer', padding: 0, marginTop: 2 }}
-          >
-            Annuler
-          </button>
-        </form>
-      </div>
-    );
-  }
-
-  // Non connecté : simple affichage.
-  return <div style={styleBloc}>{contenu}</div>;
 }
 
 export default function PlanningVue({
@@ -199,227 +96,140 @@ export default function PlanningVue({
   annulerReservation: (formData: FormData) => void;
   indexAujourdhui?: number;
 }) {
-  const [vue, setVue] = useState<'semaine' | 'jour'>('semaine');
-  const [offsetSemaine, setOffsetSemaine] = useState(0);
-  const [offsetJour, setOffsetJour] = useState(indexAujourdhui);
-
-  // Regroupe les jours par semaine (blocs de 7 à partir du premier jour reçu,
-  // qui est toujours "aujourd'hui").
-  const semaines: JourPlanning[][] = [];
-  for (let i = 0; i < jours.length; i += 7) {
-    semaines.push(jours.slice(i, i + 7));
-  }
-
-  const semaineActuelle = semaines[offsetSemaine] ?? [];
-  const jourActuel = jours[offsetJour];
+  const carrouselRef = useRef<HTMLDivElement>(null);
+  const dateInputRef = useRef<HTMLInputElement>(null);
   const todayISO = jours[indexAujourdhui]?.dateISO;
 
-  // Bornes de l'axe horaire de la semaine affichée (arrondies à l'heure pleine).
-  const coursSemaine = semaineActuelle.flatMap((j) => j.cours);
-  const hasCours = coursSemaine.length > 0;
-  const minStart = hasCours ? Math.min(...coursSemaine.map((c) => minutesDe(c.heureDebut))) : 9 * 60;
-  const maxEnd = hasCours ? Math.max(...coursSemaine.map((c) => minutesDe(c.heureFin))) : 21 * 60;
-  const axisStart = Math.floor(minStart / 60) * 60;
-  const axisEnd = Math.ceil(maxEnd / 60) * 60;
-  const hauteurGrille = (axisEnd - axisStart) * (HAUTEUR_HEURE / 60);
-  const heures: number[] = [];
-  for (let h = axisStart / 60; h <= axisEnd / 60; h++) heures.push(h);
+  function centrerSur(index: number) {
+    const conteneur = carrouselRef.current;
+    const carte = conteneur?.children[index] as HTMLElement | undefined;
+    if (!conteneur || !carte) return;
+    conteneur.scrollTo({
+      left: carte.offsetLeft - (conteneur.offsetWidth - carte.offsetWidth) / 2,
+      behavior: 'smooth',
+    });
+  }
 
-  const boutonStyle = (actif: boolean) => ({
-    background: actif ? GRADIENT : 'none',
-    color: actif ? 'white' : COULEURS.texteAtt,
-    border: actif ? 'none' : `1px solid ${COULEURS.bordure}`,
+  // Centre sur aujourd'hui au premier chargement (sans animation).
+  useEffect(() => {
+    const conteneur = carrouselRef.current;
+    const carte = conteneur?.children[indexAujourdhui] as HTMLElement | undefined;
+    if (!conteneur || !carte) return;
+    conteneur.scrollLeft = carte.offsetLeft - (conteneur.offsetWidth - carte.offsetWidth) / 2;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function allerADate(dateISO: string) {
+    const index = jours.findIndex((j) => j.dateISO === dateISO);
+    if (index !== -1) centrerSur(index);
+  }
+
+  const boutonStyle: React.CSSProperties = {
     borderRadius: 999,
     padding: '7px 16px',
     fontSize: 13,
     fontWeight: 600,
+    border: `1px solid ${COULEURS.bordure}`,
+    background: 'none',
+    color: COULEURS.texteAtt,
     cursor: 'pointer',
-  });
+    fontFamily: 'inherit',
+  };
 
   return (
     <div style={{ marginBottom: 40 }}>
       <style>{`
-        .vue-grille-desktop { display: none; }
-        .vue-liste-mobile { display: block; }
-        @media (min-width: 640px) {
-          .vue-grille-desktop { display: block; }
-          .vue-liste-mobile { display: none; }
+        .carrousel-planning {
+          display: flex;
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+          gap: 12px;
+          padding: 4px 4px 12px;
+          -webkit-overflow-scrolling: touch;
         }
+        .carrousel-planning::-webkit-scrollbar { height: 5px; }
+        .carrousel-planning::-webkit-scrollbar-thumb { background: ${COULEURS.bordure}; border-radius: 4px; }
+        .jour-carte-planning {
+          scroll-snap-align: center;
+          flex: 0 0 82%;
+          max-width: 320px;
+        }
+        @media (min-width: 640px) {
+          .jour-carte-planning { flex-basis: 260px; }
+        }
+        input[type="date"].champ-date { color-scheme: dark; }
       `}</style>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-        <button onClick={() => setVue('semaine')} style={boutonStyle(vue === 'semaine')}>Semaine</button>
-        <button onClick={() => setVue('jour')} style={boutonStyle(vue === 'jour')}>Jour</button>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 20 }}>
+        <button onClick={() => centrerSur(indexAujourdhui)} style={boutonStyle}>
+          Aujourd&rsquo;hui
+        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: `1px solid ${COULEURS.bordure}`, borderRadius: 999, padding: '5px 6px 5px 14px' }}>
+          <label htmlFor="aller-a-date" style={{ fontSize: 12, color: COULEURS.texteFaible }}>Aller au :</label>
+          <input
+            ref={dateInputRef}
+            id="aller-a-date"
+            type="date"
+            className="champ-date"
+            min={jours[0]?.dateISO}
+            max={jours[jours.length - 1]?.dateISO}
+            defaultValue={todayISO}
+            onChange={(e) => allerADate(e.target.value)}
+            style={{ background: COULEURS.surfaceForte, border: 'none', borderRadius: 999, padding: '5px 10px', color: COULEURS.texte, fontSize: 13, fontFamily: 'inherit' }}
+          />
+        </div>
       </div>
 
-      {vue === 'semaine' ? (
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <button
-              onClick={() => setOffsetSemaine((o) => Math.max(0, o - 1))}
-              disabled={offsetSemaine === 0}
-              style={{ background: 'none', border: 'none', color: offsetSemaine === 0 ? COULEURS.texteFaible : COULEURS.texte, fontSize: 20, cursor: offsetSemaine === 0 ? 'default' : 'pointer' }}
-              aria-label="Semaine précédente"
+      <div className="carrousel-planning" ref={carrouselRef}>
+        {jours.map((j, i) => {
+          const estAujourdhui = j.dateISO === todayISO;
+          const estPasse = i < indexAujourdhui;
+          const sansCours = !j.enVacances && j.cours.length === 0;
+
+          return (
+            <div
+              key={j.dateISO}
+              className="jour-carte-planning"
+              style={{
+                border: estAujourdhui ? '1px solid #FF2D78' : `1px solid ${COULEURS.bordure}`,
+                boxShadow: estAujourdhui ? '0 0 0 1px rgba(255,45,120,0.35), 0 8px 30px rgba(255,45,120,0.15)' : undefined,
+                background: estAujourdhui ? COULEURS.surfaceForte : COULEURS.surface,
+                borderRadius: 16,
+                padding: 16,
+                opacity: estAujourdhui ? 1 : estPasse ? 0.45 : (j.enVacances || sansCours) ? 0.7 : 0.85,
+              }}
             >
-              ‹
-            </button>
-            <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: 0 }}>
-              {semaineActuelle[0] && formaterDate(semaineActuelle[0].dateISO)} — {semaineActuelle[6] && formaterDate(semaineActuelle[6].dateISO)}
-            </p>
-            <button
-              onClick={() => setOffsetSemaine((o) => Math.min(semaines.length - 1, o + 1))}
-              disabled={offsetSemaine >= semaines.length - 1}
-              style={{ background: 'none', border: 'none', color: offsetSemaine >= semaines.length - 1 ? COULEURS.texteFaible : COULEURS.texte, fontSize: 20, cursor: offsetSemaine >= semaines.length - 1 ? 'default' : 'pointer' }}
-              aria-label="Semaine suivante"
-            >
-              ›
-            </button>
-          </div>
-
-          {!hasCours ? (
-            <p style={{ fontSize: 13, color: COULEURS.texteFaible }}>Aucun cours cette semaine.</p>
-          ) : (
-            <>
-              {/* Grille horaire : à partir de 640px, assez de place pour l'afficher confortablement. */}
-              <div className="vue-grille-desktop" style={{ overflowX: 'auto', paddingBottom: 4 }}>
-                <div style={{ minWidth: 620, display: 'grid', gridTemplateColumns: `36px repeat(7, minmax(80px, 1fr))` }}>
-                  {/* Ligne d'en-tête : gouttière vide + noms de jours */}
-                  <div />
-                  {semaineActuelle.map((j) => {
-                    const estAujourdhui = j.dateISO === todayISO;
-                    const sansCours = !j.enVacances && j.cours.length === 0;
-                    return (
-                      <div
-                        key={`h-${j.dateISO}`}
-                        style={{
-                          textAlign: 'center',
-                          padding: '0 2px 8px',
-                          fontSize: 11,
-                          textTransform: 'uppercase',
-                          letterSpacing: 0.5,
-                          color: estAujourdhui ? COULEURS.texte : COULEURS.texteFaible,
-                          fontWeight: estAujourdhui ? 700 : 400,
-                          opacity: (j.enVacances || sansCours) ? 0.7 : 1,
-                        }}
-                      >
-                        {NOMS_JOURS_COURTS[j.jourSemaine]}
-                        <br />
-                        {formaterDate(j.dateISO)}
-                      </div>
-                    );
-                  })}
-
-                  {/* Ligne du corps : gouttière des heures + colonnes des jours */}
-                  <div style={{ position: 'relative', height: hauteurGrille }}>
-                    {heures.map((h) => (
-                      <div
-                        key={h}
-                        style={{
-                          position: 'absolute',
-                          top: (h * 60 - axisStart) * (HAUTEUR_HEURE / 60) - 6,
-                          right: 6,
-                          fontSize: 9,
-                          color: COULEURS.texteFaible,
-                        }}
-                      >
-                        {String(h).padStart(2, '0')}h
-                      </div>
-                    ))}
-                  </div>
-
-                  {semaineActuelle.map((j) => {
-                    const estAujourdhui = j.dateISO === todayISO;
-                    const sansCours = !j.enVacances && j.cours.length === 0;
-                    return (
-                      <div
-                        key={`c-${j.dateISO}`}
-                        style={{
-                          position: 'relative',
-                          height: hauteurGrille,
-                          borderLeft: `1px solid ${COULEURS.bordure}`,
-                          background: estAujourdhui ? 'rgba(255,138,0,0.05)' : undefined,
-                          opacity: (j.enVacances || sansCours) ? 0.7 : 1,
-                          // Lignes horaires en fond.
-                          backgroundImage: `repeating-linear-gradient(to bottom, ${COULEURS.bordure} 0, ${COULEURS.bordure} 1px, transparent 1px, transparent ${HAUTEUR_HEURE}px)`,
-                        }}
-                      >
-                        {j.cours.map((c) => (
-                          <BlocGrille
-                            key={c.id}
-                            c={c}
-                            top={(minutesDe(c.heureDebut) - axisStart) * (HAUTEUR_HEURE / 60)}
-                            hauteur={(minutesDe(c.heureFin) - minutesDe(c.heureDebut)) * (HAUTEUR_HEURE / 60)}
-                            connecte={connecte}
-                            reserverCours={reserverCours}
-                            annulerReservation={annulerReservation}
-                            dateISO={j.dateISO}
-                          />
-                        ))}
-                      </div>
-                    );
-                  })}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
+                <div>
+                  <span style={{ fontFamily: POLICE_DISPLAY, fontSize: 20, letterSpacing: 0.5, ...(estAujourdhui ? GRADIENT_TEXTE : {}) }}>
+                    {NOMS_JOURS_COURTS[j.jourSemaine]}
+                  </span>
+                  <br />
+                  <span style={{ fontSize: 12, color: COULEURS.texteFaible }}>{formaterDate(j.dateISO)}</span>
                 </div>
+                {estAujourdhui && (
+                  <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, color: '#FF2D78', fontWeight: 700 }}>
+                    Aujourd&rsquo;hui
+                  </span>
+                )}
               </div>
 
-              {/* Liste compacte par jour : sous 640px, plus confortable qu'une grille tassée avec double scroll. */}
-              <div className="vue-liste-mobile">
-                {semaineActuelle.map((j) => {
-                  const sansCours = !j.enVacances && j.cours.length === 0;
-                  return (
-                    <div key={j.dateISO} style={{ marginBottom: 14, opacity: (j.enVacances || sansCours) ? 0.7 : 1 }}>
-                      <p style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, color: COULEURS.texteFaible, marginBottom: 6 }}>
-                        {NOMS_JOURS_COURTS[j.jourSemaine]} {formaterDate(j.dateISO)}
-                      </p>
-                      {j.enVacances ? (
-                        <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: 0 }}>🏝️ Vacances</p>
-                      ) : sansCours ? (
-                        <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: 0 }}>Pas de cours</p>
-                      ) : (
-                        j.cours.map((c) => (
-                          <CarteCours key={c.id} c={c} connecte={connecte} reserverCours={reserverCours} annulerReservation={annulerReservation} dateISO={j.dateISO} />
-                        ))
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </>
-          )}
-        </div>
-      ) : (
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <button
-              onClick={() => setOffsetJour((o) => Math.max(0, o - 1))}
-              disabled={offsetJour === 0}
-              style={{ background: 'none', border: 'none', color: offsetJour === 0 ? COULEURS.texteFaible : COULEURS.texte, fontSize: 20, cursor: offsetJour === 0 ? 'default' : 'pointer' }}
-              aria-label="Jour précédent"
-            >
-              ‹
-            </button>
-            <p style={{ fontSize: 14, color: COULEURS.texte, margin: 0, fontWeight: 600 }}>
-              {jourActuel && `${NOMS_JOURS[jourActuel.jourSemaine]} ${formaterDate(jourActuel.dateISO)} · semaine ${jourActuel.semaine}`}
-            </p>
-            <button
-              onClick={() => setOffsetJour((o) => Math.min(jours.length - 1, o + 1))}
-              disabled={offsetJour >= jours.length - 1}
-              style={{ background: 'none', border: 'none', color: offsetJour >= jours.length - 1 ? COULEURS.texteFaible : COULEURS.texte, fontSize: 20, cursor: offsetJour >= jours.length - 1 ? 'default' : 'pointer' }}
-              aria-label="Jour suivant"
-            >
-              ›
-            </button>
-          </div>
-
-          {jourActuel?.enVacances ? (
-            <p style={{ color: COULEURS.texteFaible }}>🏝️ Vacances, pas de cours ce jour-là.</p>
-          ) : jourActuel && jourActuel.cours.length === 0 ? (
-            <p style={{ color: COULEURS.texteFaible }}>Aucun cours ce jour-là.</p>
-          ) : (
-            jourActuel?.cours.map((c) => (
-              <CarteCours key={c.id} c={c} connecte={connecte} reserverCours={reserverCours} annulerReservation={annulerReservation} dateISO={jourActuel.dateISO} />
-            ))
-          )}
-        </div>
-      )}
+              {j.enVacances ? (
+                <p style={{ fontSize: 12, color: COULEURS.texteFaible, textAlign: 'center', padding: '20px 0', margin: 0 }}>🏝️ Vacances</p>
+              ) : sansCours ? (
+                <p style={{ fontSize: 12, color: COULEURS.texteFaible, textAlign: 'center', padding: '20px 0', margin: 0 }}>Pas de cours</p>
+              ) : (
+                j.cours.map((c) => (
+                  <CarteCours key={c.id} c={c} connecte={connecte} reserverCours={reserverCours} annulerReservation={annulerReservation} dateISO={j.dateISO} />
+                ))
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <p style={{ textAlign: 'center', fontSize: 11, color: COULEURS.texteFaible, margin: '6px 0 0' }}>
+        ← swipe ou scroll pour changer de jour →
+      </p>
     </div>
   );
 }

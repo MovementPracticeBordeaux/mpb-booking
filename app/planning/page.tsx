@@ -34,25 +34,21 @@ export default async function PlanningPage({ searchParams }: { searchParams: { e
     mesReservations = data ?? [];
   }
 
-  // On calcule 5 semaines glissantes (35 jours), alignées du lundi au
-  // dimanche pour que la vue "Semaine" affiche toujours une semaine
-  // complète et lisible (et pas "les 7 prochains jours à partir d'ajourd'hui").
+  // On calcule une fenêtre glissante de jours : 7 jours avant aujourd'hui
+  // (pour pouvoir consulter les cours passés en scrollant vers la gauche)
+  // et 35 jours après (pour réserver à l'avance).
   const vacDebut = ref?.vacances_debut as string | null | undefined;
   const vacFin = ref?.vacances_fin as string | null | undefined;
+  const JOURS_PASSES = 7;
+  const JOURS_FUTURS = 35;
 
   const jours: JourPlanning[] = [];
   if (ref) {
     const lundiRef = new Date(ref.date_lundi_reference);
 
-    // Trouve le lundi de la semaine en cours (getDay() : 0 = dimanche).
-    const aujourdhui = new Date();
-    const decalage = aujourdhui.getDay() === 0 ? -6 : 1 - aujourdhui.getDay();
-    const lundiCourant = new Date(aujourdhui);
-    lundiCourant.setDate(aujourdhui.getDate() + decalage);
-
-    for (let i = 0; i < 35; i++) {
-      const d = new Date(lundiCourant);
-      d.setDate(lundiCourant.getDate() + i);
+    for (let i = -JOURS_PASSES; i < JOURS_FUTURS; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() + i);
       const dateStr = d.toISOString().slice(0, 10);
       const enVacances = !!(vacDebut && vacFin && dateStr >= vacDebut && dateStr <= vacFin);
       const semaine = calculerSemaine(d, lundiRef, ref.semaine_ce_lundi);
@@ -103,7 +99,7 @@ export default async function PlanningPage({ searchParams }: { searchParams: { e
           connecte={!!user}
           reserverCours={reserverCours}
           annulerReservation={annulerReservation}
-          indexAujourdhui={new Date().getDay() === 0 ? 6 : new Date().getDay() - 1}
+          indexAujourdhui={JOURS_PASSES}
         />
       )}
     </main>
