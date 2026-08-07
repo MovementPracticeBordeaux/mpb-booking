@@ -2,6 +2,14 @@ import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
 import { ajouterCours, desactiverCours, definirSemaineReference, definirVacances, attribuerFormule, suspendreAcces, decompterCoaching, modifierQuotaRestant, modifierExpiration, gelerPass, degelerPass, rembourserPaiement } from './actions';
 import { FORMULES } from '@/lib/formules';
+import {
+  REVENUS_MENSUELS_WIX,
+  TOTAL_ENCAISSE_WIX,
+  FREQUENTATION_DISCIPLINES_WIX,
+  FORMULES_VENDUES_WIX,
+  MEILLEURS_CRENEAUX_WIX,
+  TRAFIC_WIX,
+} from '@/lib/historique-wix';
 
 export const dynamic = 'force-dynamic';
 
@@ -78,23 +86,27 @@ export default async function AdminPage({ searchParams }: { searchParams: { erre
   const maxReservations = Math.max(1, ...coursAvecStats.map((c) => c.nbReservations));
 
   const revenusParMois = new Map<string, number>();
+  // Historique Wix (figé, avant la bascule) + revenus Stripe reels (a partir
+  // du lancement du nouveau site) fusionnes dans une seule courbe continue.
+  for (const [mois, montant] of Object.entries(REVENUS_MENSUELS_WIX)) {
+    revenusParMois.set(mois, montant);
+  }
   for (const p of paiementsTous ?? []) {
     if (!p.paye || p.rembourse) continue;
     const mois = (p.created_at as string).slice(0, 7); // YYYY-MM
     revenusParMois.set(mois, (revenusParMois.get(mois) ?? 0) + Number(p.montant));
   }
-  const moisTries = [...revenusParMois.entries()].sort(([a], [b]) => a.localeCompare(b)).slice(-12);
+  const moisTries = [...revenusParMois.entries()].sort(([a], [b]) => a.localeCompare(b)).slice(-13);
   const maxRevenu = Math.max(1, ...moisTries.map(([, m]) => m));
   const NOMS_MOIS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
 
   // Coordonnées de la courbe SVG (viewBox fixe 600x160, mise à l'échelle en CSS).
   const svgW = 600, svgH = 160, padG = 30, padD = 10, padH = 14, padB = 24;
-  const pointsCourbe = moisTries.map(([, montant], i) => {
+  const pointsCourbe = moisTries.map(([mois, montant], i) => {
     const x = moisTries.length > 1 ? padG + (i / (moisTries.length - 1)) * (svgW - padG - padD) : svgW / 2;
     const y = padH + (1 - montant / maxRevenu) * (svgH - padH - padB);
-    return { x, y, montant };
+    return { x, y, montant, estWix: mois in REVENUS_MENSUELS_WIX };
   });
-  const chemin = pointsCourbe.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
 
   return (
     <main style={{ maxWidth: 640, margin: '0 auto', padding: 20 }}>
@@ -141,15 +153,27 @@ export default async function AdminPage({ searchParams }: { searchParams: { erre
         {moisTries.length === 0 ? (
           <p style={{ fontSize: 12, opacity: 0.6, marginBottom: 20 }}>Pas encore de paiement enregistré.</p>
         ) : (
-          <div style={{ marginBottom: 20 }}>
+          <div style={{ marginBottom: 12 }}>
             <svg viewBox={`0 0 ${svgW} ${svgH}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
               {/* ligne de base */}
               <line x1={padG} y1={svgH - padB} x2={svgW - padD} y2={svgH - padB} stroke="#333" strokeWidth={1} />
-              {/* courbe */}
-              <path d={chemin} fill="none" stroke="#f0a" strokeWidth={2} />
+              {/* courbe en deux segments : gris pour l'historique Wix, rose pour le nouveau site */}
+              {pointsCourbe.slice(0, -1).map((p, i) => {
+                const suivant = pointsCourbe[i + 1];
+                const segmentWix = p.estWix && suivant.estWix;
+                return (
+                  <line
+                    key={i}
+                    x1={p.x} y1={p.y} x2={suivant.x} y2={suivant.y}
+                    stroke={segmentWix ? '#888' : '#f0a'}
+                    strokeWidth={2}
+                    strokeDasharray={segmentWix ? '4 3' : undefined}
+                  />
+                );
+              })}
               {pointsCourbe.map((p, i) => (
                 <g key={i}>
-                  <circle cx={p.x} cy={p.y} r={3} fill="#f0a" />
+                  <circle cx={p.x} cy={p.y} r={3} fill={p.estWix ? '#888' : '#f0a'} />
                   <text x={p.x} y={p.y - 8} fontSize={10} fill="#eee" textAnchor="middle">{p.montant.toFixed(0)}€</text>
                   <text x={p.x} y={svgH - 6} fontSize={9} fill="#888" textAnchor="middle">
                     {NOMS_MOIS[Number(moisTries[i][0].split('-')[1]) - 1]} {moisTries[i][0].split('-')[0].slice(2)}
@@ -157,6 +181,10 @@ export default async function AdminPage({ searchParams }: { searchParams: { erre
                 </g>
               ))}
             </svg>
+            <div style={{ display: 'flex', gap: 14, fontSize: 11, opacity: 0.7, marginTop: 4 }}>
+              <span><span style={{ color: '#888' }}>●</span> Ancien site (Wix)</span>
+              <span><span style={{ color: '#f0a' }}>●</span> Nouveau site</span>
+            </div>
           </div>
         )}
 
@@ -177,6 +205,49 @@ export default async function AdminPage({ searchParams }: { searchParams: { erre
             <span style={{ width: 24, textAlign: 'right', flexShrink: 0 }}>{c.nbReservations}</span>
           </div>
         ))}
+
+        <details style={{ marginTop: 20, border: '1px solid #333', borderRadius: 8, padding: '10px 14px' }}>
+          <summary style={{ cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+            📦 Historique Wix (12 mois avant la bascule) — {TOTAL_ENCAISSE_WIX.toLocaleString('fr-FR')} € encaissés au total
+          </summary>
+
+          <div style={{ marginTop: 16 }}>
+            <p style={{ fontSize: 12, fontWeight: 600, opacity: 0.8, marginBottom: 6 }}>Fréquentation par discipline</p>
+            {FREQUENTATION_DISCIPLINES_WIX.map((d) => {
+              const max = FREQUENTATION_DISCIPLINES_WIX[0].reservations;
+              return (
+                <div key={d.nom} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, fontSize: 12 }}>
+                  <span style={{ width: 90, flexShrink: 0 }}>{d.nom}</span>
+                  <div style={{ flex: 1, background: '#222', borderRadius: 4, height: 12, overflow: 'hidden' }}>
+                    <div style={{ width: `${(d.reservations / max) * 100}%`, height: '100%', background: '#888' }} />
+                  </div>
+                  <span style={{ width: 32, textAlign: 'right', flexShrink: 0 }}>{d.reservations}</span>
+                </div>
+              );
+            })}
+
+            <p style={{ fontSize: 12, fontWeight: 600, opacity: 0.8, margin: '16px 0 6px' }}>Formules les plus vendues</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {FORMULES_VENDUES_WIX.map((f) => (
+                <span key={f.nom} style={{ border: '1px solid #333', borderRadius: 999, padding: '4px 10px', fontSize: 12 }}>
+                  {f.nom} · {f.ventes} ventes · {f.montant.toLocaleString('fr-FR')} €
+                </span>
+              ))}
+            </div>
+
+            <p style={{ fontSize: 12, fontWeight: 600, opacity: 0.8, margin: '16px 0 6px' }}>Meilleurs créneaux (jour + heure)</p>
+            {MEILLEURS_CRENEAUX_WIX.map((cr) => (
+              <div key={cr.jour + cr.heure} style={{ fontSize: 12, opacity: 0.85, marginBottom: 3 }}>
+                {cr.jour} {cr.heure} — {cr.places} places réservées (taux de remplissage {cr.taux})
+              </div>
+            ))}
+
+            <p style={{ fontSize: 11, opacity: 0.6, marginTop: 16 }}>
+              Trafic du site sur la période : {TRAFIC_WIX.vuesDePage.toLocaleString('fr-FR')} vues de page,{' '}
+              {TRAFIC_WIX.visiteursUniques.toLocaleString('fr-FR')} visiteurs uniques ({TRAFIC_WIX.jours} jours de données).
+            </p>
+          </div>
+        </details>
       </section>
 
       <section style={{ marginBottom: 32 }}>
