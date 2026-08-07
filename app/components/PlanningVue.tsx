@@ -153,9 +153,14 @@ export default function PlanningVue({
           scroll-snap-align: center;
           flex: 0 0 82%;
           max-width: 320px;
+          padding: 16px;
+          box-sizing: border-box;
         }
         @media (min-width: 640px) {
           .jour-carte-planning { flex-basis: 260px; }
+        }
+        @media (min-width: 1024px) {
+          .jour-carte-planning { flex-basis: 175px; max-width: 175px; padding: 12px; }
         }
         input[type="date"].champ-date { color-scheme: dark; }
       `}</style>
@@ -195,7 +200,6 @@ export default function PlanningVue({
                 boxShadow: estAujourdhui ? '0 0 0 1px rgba(255,45,120,0.35), 0 8px 30px rgba(255,45,120,0.15)' : undefined,
                 background: estAujourdhui ? COULEURS.surfaceForte : COULEURS.surface,
                 borderRadius: 16,
-                padding: 16,
                 opacity: estAujourdhui ? 1 : estPasse ? 0.45 : (j.enVacances || sansCours) ? 0.7 : 0.85,
               }}
             >
