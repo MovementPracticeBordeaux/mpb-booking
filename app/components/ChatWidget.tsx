@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { COULEURS, GRADIENT, POLICE_DISPLAY } from '@/lib/theme';
-import { CHAT_FAQ } from '@/lib/chat-faq';
+import { trouverMeilleureReponse } from '@/lib/chat-faq';
 
 type Message = { auteur: 'moi' | 'bot'; texte: string; proposerEmail?: boolean };
 
@@ -12,18 +12,9 @@ const MESSAGE_ACCUEIL: Message = {
 };
 
 function trouverReponse(question: string): Message {
-  const q = question.toLowerCase();
-  let meilleur: { score: number; reponse: string } | null = null;
-
-  for (const item of CHAT_FAQ) {
-    const score = item.motsCles.filter((mot) => q.includes(mot)).length;
-    if (score > 0 && (!meilleur || score > meilleur.score)) {
-      meilleur = { score, reponse: item.reponse };
-    }
-  }
-
-  if (meilleur) {
-    return { auteur: 'bot', texte: meilleur.reponse };
+  const resultat = trouverMeilleureReponse(question);
+  if (resultat.trouve) {
+    return { auteur: 'bot', texte: resultat.reponse };
   }
   return {
     auteur: 'bot',

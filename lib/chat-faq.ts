@@ -62,3 +62,24 @@ const FAQ_DISCIPLINES: ChatFAQ[] = Object.values(COURS_DETAILS).map((c) => ({
 }));
 
 export const CHAT_FAQ: ChatFAQ[] = [...FAQ_GENERALE, ...FAQ_DISCIPLINES];
+
+// Trouve la réponse dont les mots-clés matchent le mieux la question posée
+// (score = nombre de mots-clés présents dans la question). En cas d'égalité,
+// la première entrée avec le meilleur score l'emporte.
+export function trouverMeilleureReponse(
+  question: string,
+  faq: ChatFAQ[] = CHAT_FAQ
+): { reponse: string; trouve: true } | { trouve: false } {
+  const q = question.toLowerCase();
+  let meilleur: { score: number; reponse: string } | null = null;
+
+  for (const item of faq) {
+    const score = item.motsCles.filter((mot) => q.includes(mot)).length;
+    if (score > 0 && (!meilleur || score > meilleur.score)) {
+      meilleur = { score, reponse: item.reponse };
+    }
+  }
+
+  if (meilleur) return { trouve: true, reponse: meilleur.reponse };
+  return { trouve: false };
+}
