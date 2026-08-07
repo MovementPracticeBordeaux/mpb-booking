@@ -1,9 +1,17 @@
 'use client';
 
+import { useState } from 'react';
 import { FORMULES } from '@/lib/formules';
 import { COULEURS, GRADIENT, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
 
-async function acheter(priceId: string, formuleNom: string) {
+type Erreur = { message: string; connexionRequise: boolean };
+
+async function acheter(
+  priceId: string,
+  formuleNom: string,
+  setErreur: (e: Erreur | null) => void
+) {
+  setErreur(null);
   try {
     const res = await fetch('/api/stripe/checkout', {
       method: 'POST',
@@ -13,11 +21,13 @@ async function acheter(priceId: string, formuleNom: string) {
     const data = await res.json();
     if (data.url) {
       window.location.href = data.url;
+    } else if (res.status === 401) {
+      setErreur({ message: "Connecte-toi pour pouvoir acheter cette formule.", connexionRequise: true });
     } else {
-      alert('Erreur : ' + (data.error ?? 'réponse inattendue du serveur'));
+      setErreur({ message: data.error ?? 'Une erreur est survenue, réessaie.', connexionRequise: false });
     }
   } catch (e: any) {
-    alert('Erreur réseau : ' + e.message);
+    setErreur({ message: 'Erreur réseau, vérifie ta connexion et réessaie.', connexionRequise: false });
   }
 }
 
@@ -45,6 +55,8 @@ const GROUPES = [
 ];
 
 export default function TarifsPage({ searchParams }: { searchParams: { erreur?: string } }) {
+  const [erreur, setErreur] = useState<Erreur | null>(null);
+
   return (
     <main style={{ maxWidth: 480, margin: '0 auto', padding: 20 }}>
       <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 'clamp(28px, 8vw, 36px)', letterSpacing: 0.5, margin: '0 0 20px' }}>
@@ -54,6 +66,16 @@ export default function TarifsPage({ searchParams }: { searchParams: { erreur?: 
         <p style={{ background: '#5a1a1a', color: '#ffb4b4', padding: 12, borderRadius: 8 }}>
           ⚠️ {searchParams.erreur}
         </p>
+      )}
+      {erreur && (
+        <div style={{ background: '#5a1a1a', color: '#ffb4b4', padding: 12, borderRadius: 8, marginBottom: 16 }}>
+          <p style={{ margin: 0 }}>⚠️ {erreur.message}</p>
+          {erreur.connexionRequise && (
+            <a href="/login" style={{ display: 'inline-block', marginTop: 8, color: '#FF2D78', fontWeight: 600 }}>
+              Se connecter →
+            </a>
+          )}
+        </div>
       )}
       {GROUPES.map((groupe) => (
         <section key={groupe.titre} style={{ marginBottom: 28 }}>
@@ -70,7 +92,7 @@ export default function TarifsPage({ searchParams }: { searchParams: { erreur?: 
                   {f.categorie === 'coaching' && ' · mise en relation après achat'}
                 </p>
                 <button
-                  onClick={() => acheter(PRICE_IDS[cle], cle)}
+                  onClick={() => acheter(PRICE_IDS[cle], cle, setErreur)}
                   style={{ background: GRADIENT, color: 'white', border: 'none', borderRadius: 999, padding: '10px 20px', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}
                 >
                   Acheter
