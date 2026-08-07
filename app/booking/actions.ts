@@ -42,7 +42,14 @@ export async function reserverCours(formData: FormData) {
       versLesTarifs('Ton pass est épuisé — choisis une nouvelle formule ci-dessous.');
       return;
     }
-    const { error: errUpdate } = await supabase
+    // Écriture via le client admin, pas la session de l'élève : voir le
+    // commentaire équivalent dans annulerReservation plus bas dans ce même
+    // fichier — la policy RLS profil_update_own autorise à modifier
+    // n'importe quelle colonne de sa propre fiche, donc toute écriture
+    // sensible dans 'profiles' passe par le client admin qui, lui, ignore
+    // RLS et n'exécute que ce que ce code précis autorise.
+    const admin = supabaseAdmin();
+    const { error: errUpdate } = await admin
       .from('profiles')
       .update({ quota_restant: profil.quota_restant - 1 })
       .eq('id', user.id);

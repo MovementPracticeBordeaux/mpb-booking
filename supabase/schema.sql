@@ -123,9 +123,12 @@ alter table cours enable row level security;
 alter table reservations enable row level security;
 alter table semaine_reference enable row level security;
 
--- Un élève voit et modifie seulement son propre profil
+-- Un élève voit seulement son propre profil. Aucune policy d'update côté
+-- élève : toute écriture dans 'profiles' (abonnement, quota, formule...)
+-- passe volontairement par le client admin (service role), jamais par la
+-- session de l'élève elle-même — voir supabase/migration_verrouille_profils.sql
+-- pour le détail du raisonnement de sécurité.
 create policy "profil_select_own" on profiles for select using (auth.uid() = id);
-create policy "profil_update_own" on profiles for update using (auth.uid() = id);
 
 -- Tout le monde connecté peut lire le planning
 create policy "cours_select_all" on cours for select using (true);

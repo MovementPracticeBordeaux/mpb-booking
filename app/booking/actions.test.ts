@@ -142,17 +142,21 @@ describe('reserverCours', () => {
           },
           error: null,
         },
-        { error: null }, // update quota_restant
         { error: null }, // insert reservation
       ],
     });
     vi.mocked(supabaseServer).mockReturnValue(client as any);
 
+    // Le décompte du quota passe par le client admin, pas la session de
+    // l'élève — voir le commentaire dans actions.ts.
+    const adminClient = { from: vi.fn(() => makeChainable({ error: null })) };
+    vi.mocked(supabaseAdmin).mockReturnValue(adminClient as any);
+
     await reserverCours(formData({ cours_id: 'c1', date_seance: '2026-08-10' }));
 
-    const updateChain = client.from.mock.results[1].value;
+    const updateChain = adminClient.from.mock.results[0].value;
     expect(updateChain.update).toHaveBeenCalledWith({ quota_restant: 2 });
-    const insertChain = client.from.mock.results[2].value;
+    const insertChain = client.from.mock.results[1].value;
     expect(insertChain.insert).toHaveBeenCalledWith({
       eleve_id: 'user-1',
       cours_id: 'c1',

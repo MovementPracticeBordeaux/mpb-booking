@@ -1,0 +1,22 @@
+-- Verrouille l'écriture directe des élèves sur leur propre fiche 'profiles'.
+--
+-- Contexte : la policy "profil_update_own" autorisait un élève connecté à
+-- modifier N'IMPORTE QUELLE colonne de sa propre fiche (abonnement_actif,
+-- formule_nom, quota_restant, date_expiration...), puisqu'elle ne vérifiait
+-- que "est-ce bien ma fiche ?" sans restreindre les colonnes. Un élève un
+-- peu bidouilleur aurait pu s'auto-attribuer un abonnement gratuit en
+-- modifiant sa fiche directement depuis le navigateur (devtools + son
+-- propre token de session), sans jamais passer par Stripe.
+--
+-- Toutes les écritures légitimes dans 'profiles' passent désormais par le
+-- client admin (service role, qui ignore RLS) : espace /admin, webhook
+-- Stripe, réservation (reserverCours) et annulation (annulerReservation).
+-- Plus rien ne s'appuie sur une écriture via la session de l'élève, donc on
+-- peut fermer cette porte pour de bon.
+--
+-- Sans danger pour les fonctionnalités existantes : ne touche à aucune
+-- donnée, retire seulement le droit d'écriture direct des élèves sur cette
+-- table (la lecture de leur propre fiche via "profil_select_own" reste
+-- inchangée). À exécuter une seule fois dans le SQL Editor de Supabase.
+
+drop policy if exists "profil_update_own" on profiles;
