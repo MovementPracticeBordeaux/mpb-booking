@@ -163,7 +163,7 @@ export default function PlanningVue({
             {semaineActuelle.map((j) => {
               const sansCours = !j.enVacances && j.cours.length === 0;
               return (
-                <div key={j.dateISO} style={(j.enVacances || sansCours) ? { opacity: 0.4 } : undefined}>
+                <div key={j.dateISO} style={(j.enVacances || sansCours) ? { opacity: 0.7 } : undefined}>
                   <p style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, color: COULEURS.texteFaible, marginBottom: 8 }}>
                     {NOMS_JOURS_COURTS[j.jourSemaine]} {formaterDate(j.dateISO)}
                   </p>

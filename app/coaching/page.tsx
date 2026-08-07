@@ -40,7 +40,7 @@ const FAQ_COACHING = [
   { q: 'Comment réserver une séance ou un programme ?', r: 'En choisissant directement une formule sur la page Tarifs — le paiement se fait en ligne et tu es ensuite mis en relation avec Sylvain pour caler ton créneau.' },
 ];
 
-const CLES_PRESENTIEL = ['coaching_unite', 'coaching_carnet_4h', 'coaching_carnet_3h'];
+const CLES_PRESENTIEL = ['coaching_unite', 'coaching_carnet_3h', 'coaching_carnet_4h'];
 
 const TEMOIGNAGES_COACHING: Temoignage[] = [
   {
