@@ -34,7 +34,7 @@ function minutesDe(heure: string) {
 }
 
 // Hauteur d'une heure dans la grille (px). 1px = 1min pour un calcul simple.
-const HAUTEUR_HEURE = 60;
+const HAUTEUR_HEURE = 40;
 
 // Carte détaillée utilisée dans la vue "Jour" (confort de lecture + réservation).
 function CarteCours({ c, connecte, reserverCours, annulerReservation, dateISO }: {
@@ -237,7 +237,15 @@ export default function PlanningVue({
   });
 
   return (
-    <div>
+    <div style={{ marginBottom: 40 }}>
+      <style>{`
+        .vue-grille-desktop { display: none; }
+        .vue-liste-mobile { display: block; }
+        @media (min-width: 640px) {
+          .vue-grille-desktop { display: block; }
+          .vue-liste-mobile { display: none; }
+        }
+      `}</style>
       <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
         <button onClick={() => setVue('semaine')} style={boutonStyle(vue === 'semaine')}>Semaine</button>
         <button onClick={() => setVue('jour')} style={boutonStyle(vue === 'jour')}>Jour</button>
@@ -270,85 +278,111 @@ export default function PlanningVue({
           {!hasCours ? (
             <p style={{ fontSize: 13, color: COULEURS.texteFaible }}>Aucun cours cette semaine.</p>
           ) : (
-            <div style={{ overflowX: 'auto', paddingBottom: 4 }}>
-              <div style={{ minWidth: 720, display: 'grid', gridTemplateColumns: `44px repeat(7, minmax(96px, 1fr))` }}>
-                {/* Ligne d'en-tête : gouttière vide + noms de jours */}
-                <div />
-                {semaineActuelle.map((j) => {
-                  const estAujourdhui = j.dateISO === todayISO;
-                  const sansCours = !j.enVacances && j.cours.length === 0;
-                  return (
-                    <div
-                      key={`h-${j.dateISO}`}
-                      style={{
-                        textAlign: 'center',
-                        padding: '0 2px 8px',
-                        fontSize: 11,
-                        textTransform: 'uppercase',
-                        letterSpacing: 0.5,
-                        color: estAujourdhui ? COULEURS.texte : COULEURS.texteFaible,
-                        fontWeight: estAujourdhui ? 700 : 400,
-                        opacity: (j.enVacances || sansCours) ? 0.7 : 1,
-                      }}
-                    >
-                      {NOMS_JOURS_COURTS[j.jourSemaine]}
-                      <br />
-                      {formaterDate(j.dateISO)}
-                    </div>
-                  );
-                })}
+            <>
+              {/* Grille horaire : à partir de 640px, assez de place pour l'afficher confortablement. */}
+              <div className="vue-grille-desktop" style={{ overflowX: 'auto', paddingBottom: 4 }}>
+                <div style={{ minWidth: 620, display: 'grid', gridTemplateColumns: `36px repeat(7, minmax(80px, 1fr))` }}>
+                  {/* Ligne d'en-tête : gouttière vide + noms de jours */}
+                  <div />
+                  {semaineActuelle.map((j) => {
+                    const estAujourdhui = j.dateISO === todayISO;
+                    const sansCours = !j.enVacances && j.cours.length === 0;
+                    return (
+                      <div
+                        key={`h-${j.dateISO}`}
+                        style={{
+                          textAlign: 'center',
+                          padding: '0 2px 8px',
+                          fontSize: 11,
+                          textTransform: 'uppercase',
+                          letterSpacing: 0.5,
+                          color: estAujourdhui ? COULEURS.texte : COULEURS.texteFaible,
+                          fontWeight: estAujourdhui ? 700 : 400,
+                          opacity: (j.enVacances || sansCours) ? 0.7 : 1,
+                        }}
+                      >
+                        {NOMS_JOURS_COURTS[j.jourSemaine]}
+                        <br />
+                        {formaterDate(j.dateISO)}
+                      </div>
+                    );
+                  })}
 
-                {/* Ligne du corps : gouttière des heures + colonnes des jours */}
-                <div style={{ position: 'relative', height: hauteurGrille }}>
-                  {heures.map((h) => (
-                    <div
-                      key={h}
-                      style={{
-                        position: 'absolute',
-                        top: (h * 60 - axisStart) * (HAUTEUR_HEURE / 60) - 6,
-                        right: 6,
-                        fontSize: 10,
-                        color: COULEURS.texteFaible,
-                      }}
-                    >
-                      {String(h).padStart(2, '0')}h
-                    </div>
-                  ))}
+                  {/* Ligne du corps : gouttière des heures + colonnes des jours */}
+                  <div style={{ position: 'relative', height: hauteurGrille }}>
+                    {heures.map((h) => (
+                      <div
+                        key={h}
+                        style={{
+                          position: 'absolute',
+                          top: (h * 60 - axisStart) * (HAUTEUR_HEURE / 60) - 6,
+                          right: 6,
+                          fontSize: 9,
+                          color: COULEURS.texteFaible,
+                        }}
+                      >
+                        {String(h).padStart(2, '0')}h
+                      </div>
+                    ))}
+                  </div>
+
+                  {semaineActuelle.map((j) => {
+                    const estAujourdhui = j.dateISO === todayISO;
+                    const sansCours = !j.enVacances && j.cours.length === 0;
+                    return (
+                      <div
+                        key={`c-${j.dateISO}`}
+                        style={{
+                          position: 'relative',
+                          height: hauteurGrille,
+                          borderLeft: `1px solid ${COULEURS.bordure}`,
+                          background: estAujourdhui ? 'rgba(255,138,0,0.05)' : undefined,
+                          opacity: (j.enVacances || sansCours) ? 0.7 : 1,
+                          // Lignes horaires en fond.
+                          backgroundImage: `repeating-linear-gradient(to bottom, ${COULEURS.bordure} 0, ${COULEURS.bordure} 1px, transparent 1px, transparent ${HAUTEUR_HEURE}px)`,
+                        }}
+                      >
+                        {j.cours.map((c) => (
+                          <BlocGrille
+                            key={c.id}
+                            c={c}
+                            top={(minutesDe(c.heureDebut) - axisStart) * (HAUTEUR_HEURE / 60)}
+                            hauteur={(minutesDe(c.heureFin) - minutesDe(c.heureDebut)) * (HAUTEUR_HEURE / 60)}
+                            connecte={connecte}
+                            reserverCours={reserverCours}
+                            annulerReservation={annulerReservation}
+                            dateISO={j.dateISO}
+                          />
+                        ))}
+                      </div>
+                    );
+                  })}
                 </div>
+              </div>
 
+              {/* Liste compacte par jour : sous 640px, plus confortable qu'une grille tassée avec double scroll. */}
+              <div className="vue-liste-mobile">
                 {semaineActuelle.map((j) => {
-                  const estAujourdhui = j.dateISO === todayISO;
                   const sansCours = !j.enVacances && j.cours.length === 0;
                   return (
-                    <div
-                      key={`c-${j.dateISO}`}
-                      style={{
-                        position: 'relative',
-                        height: hauteurGrille,
-                        borderLeft: `1px solid ${COULEURS.bordure}`,
-                        background: estAujourdhui ? 'rgba(255,138,0,0.05)' : undefined,
-                        opacity: (j.enVacances || sansCours) ? 0.7 : 1,
-                        // Lignes horaires en fond.
-                        backgroundImage: `repeating-linear-gradient(to bottom, ${COULEURS.bordure} 0, ${COULEURS.bordure} 1px, transparent 1px, transparent ${HAUTEUR_HEURE}px)`,
-                      }}
-                    >
-                      {j.cours.map((c) => (
-                        <BlocGrille
-                          key={c.id}
-                          c={c}
-                          top={(minutesDe(c.heureDebut) - axisStart) * (HAUTEUR_HEURE / 60)}
-                          hauteur={(minutesDe(c.heureFin) - minutesDe(c.heureDebut)) * (HAUTEUR_HEURE / 60)}
-                          connecte={connecte}
-                          reserverCours={reserverCours}
-                          annulerReservation={annulerReservation}
-                          dateISO={j.dateISO}
-                        />
-                      ))}
+                    <div key={j.dateISO} style={{ marginBottom: 14, opacity: (j.enVacances || sansCours) ? 0.7 : 1 }}>
+                      <p style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, color: COULEURS.texteFaible, marginBottom: 6 }}>
+                        {NOMS_JOURS_COURTS[j.jourSemaine]} {formaterDate(j.dateISO)}
+                      </p>
+                      {j.enVacances ? (
+                        <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: 0 }}>🏝️ Vacances</p>
+                      ) : sansCours ? (
+                        <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: 0 }}>Pas de cours</p>
+                      ) : (
+                        j.cours.map((c) => (
+                          <CarteCours key={c.id} c={c} connecte={connecte} reserverCours={reserverCours} annulerReservation={annulerReservation} dateISO={j.dateISO} />
+                        ))
+                      )}
                     </div>
                   );
                 })}
               </div>
-            </div>
+            </>
           )}
         </div>
       ) : (
