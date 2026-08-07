@@ -139,6 +139,15 @@ describe('reserverCours', () => {
     );
   });
 
+  it('redirige vers /planning si la réservation arrive trop tard (moins de 1h30 avant le cours)', async () => {
+    vi.mocked(supabaseServer).mockReturnValue(mockClient({ user: USER, fromResults: [] }) as any);
+    mockAdminRpc({ data: 'trop_tard', error: null });
+
+    await expect(reserverCours(formData({ cours_id: 'c1', date_seance: '2026-08-10' }))).rejects.toThrow(
+      /REDIRECT:\/planning/
+    );
+  });
+
   it("propage une erreur inattendue de la fonction SQL vers /planning", async () => {
     vi.mocked(supabaseServer).mockReturnValue(mockClient({ user: USER, fromResults: [] }) as any);
     mockAdminRpc({ data: null, error: { message: 'boom' } });

@@ -50,7 +50,10 @@ export default function CGVPage() {
       <section style={style.section}>
         <h2 style={style.h2}>4. Réservation et annulation des cours collectifs</h2>
         <ul style={{ paddingLeft: 20, margin: 0 }}>
-          <li style={style.li}>La réservation d'un créneau est obligatoire pour participer à un cours collectif.</li>
+          <li style={style.li}>
+            La réservation d'un créneau est obligatoire pour participer à un cours collectif, et doit se
+            faire au moins 1h30 avant le début du cours.
+          </li>
           <li style={style.li}>
             Une réservation peut être annulée librement depuis l'espace personnel, jusqu'à 1h30 avant le
             début du cours. La séance est alors recréditée automatiquement sur le pass (sauf formule

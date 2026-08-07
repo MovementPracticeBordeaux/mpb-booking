@@ -17,7 +17,7 @@ const FAQ_GENERALE: ChatFAQ[] = [
   },
   {
     question: 'Comment réserver une place ?',
-    reponse: "Directement depuis la page Planning : choisis ta formule, ton créneau, tu réserves, c'est instantané.",
+    reponse: "Directement depuis la page Planning : choisis ta formule, ton créneau, tu réserves, c'est instantané. Il faut réserver au moins 1h30 avant le début du cours.",
     motsCles: ['réserver', 'réservation', 'book', 'inscrire', 'inscription', 'place'],
   },
   {

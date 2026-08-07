@@ -53,6 +53,9 @@ export async function reserverCours(formData: FormData) {
     case 'deja_reserve':
       echouer('Tu as déjà réservé cette séance.');
       return;
+    case 'trop_tard':
+      echouer('Trop tard pour réserver cette séance (moins de 1h30 avant le début) — contacte directement Sylvain pour ce cas particulier.');
+      return;
     default:
       echouer('Une erreur est survenue, réessaie.');
       return;

@@ -34,6 +34,7 @@ language plpgsql
 as $$
 declare
   v_profil profiles%rowtype;
+  v_cours cours%rowtype;
 begin
   -- Verrouille la ligne du profil le temps de la transaction : une
   -- deuxième réservation simultanée pour le même élève attend que
@@ -54,6 +55,13 @@ begin
 
   if v_profil.formule_nom <> 'illimite' and coalesce(v_profil.quota_restant, 0) <= 0 then
     return 'quota_epuise';
+  end if;
+
+  -- Pas de réservation de dernière minute : il faut au moins 1h30 avant le
+  -- début du cours (même délai que pour l'annulation, pour la symétrie).
+  select * into v_cours from cours where id = p_cours_id;
+  if found and (p_date_seance + v_cours.heure_debut)::timestamp - (now() at time zone 'utc') < interval '90 minutes' then
+    return 'trop_tard';
   end if;
 
   begin
