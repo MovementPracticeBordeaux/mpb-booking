@@ -25,7 +25,7 @@ export default function MentionsLegalesPage() {
           (auto-entrepreneur), exerçant sous le nom commercial Movement Practice Bordeaux.
         </p>
         <p style={style.p}>Adresse : 36 rue Édouard Mayaudon, Bordeaux, France</p>
-        <p style={style.p}>SIRET : [à compléter]</p>
+        <p style={style.p}>SIRET : 849 014 196 00018</p>
         <p style={style.p}>Email : contact@movementpracticebordeaux.com</p>
         <p style={style.p}>Téléphone : 06 20 47 70 64</p>
       </section>
