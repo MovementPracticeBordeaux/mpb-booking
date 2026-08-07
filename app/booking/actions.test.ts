@@ -1,11 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { supabaseServer } from '@/lib/supabase-server';
+import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { annulerReservation, reserverCours } from './actions';
 
 vi.mock('@/lib/supabase-server', () => ({
   supabaseServer: vi.fn(),
+  supabaseAdmin: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -235,16 +236,21 @@ describe('annulerReservation', () => {
         { data: { id: 'r1' }, error: null }, // réservation trouvée
         { error: null }, // update statut annulee
         { data: { formule_nom: 'mensuel_4', quota_restant: 2 }, error: null }, // profil
-        { error: null }, // update quota_restant
       ],
     });
     vi.mocked(supabaseServer).mockReturnValue(client as any);
+
+    // La restitution du crédit passe volontairement par le client admin
+    // (bypass RLS), pas par la session de l'élève — voir le commentaire dans
+    // actions.ts. On mocke donc un second client dédié à cet appel.
+    const adminClient = { from: vi.fn(() => makeChainable({ error: null })) };
+    vi.mocked(supabaseAdmin).mockReturnValue(adminClient as any);
 
     await annulerReservation(formData({ cours_id: 'c1', date_seance: '2099-01-01' }));
 
     const annulationChain = client.from.mock.results[2].value;
     expect(annulationChain.update).toHaveBeenCalledWith({ statut: 'annulee' });
-    const quotaChain = client.from.mock.results[4].value;
+    const quotaChain = adminClient.from.mock.results[0].value;
     expect(quotaChain.update).toHaveBeenCalledWith({ quota_restant: 3 });
     expect(revalidatePath).toHaveBeenCalledWith('/planning');
     expect(revalidatePath).toHaveBeenCalledWith('/profil');

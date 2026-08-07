@@ -1,6 +1,6 @@
 'use server';
 
-import { supabaseServer } from '@/lib/supabase-server';
+import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
@@ -119,7 +119,16 @@ export async function annulerReservation(formData: FormData) {
     .single();
 
   if (profil && profil.formule_nom !== 'illimite' && profil.quota_restant != null) {
-    await supabase
+    // Écriture volontairement faite avec le client admin plutôt que la
+    // session de l'élève : la policy RLS "profil_update_own" autorise à
+    // modifier N'IMPORTE QUELLE colonne de sa propre fiche (pas seulement
+    // quota_restant). En écrivant via la session utilisateur ici, on
+    // s'appuierait sur cette policy trop permissive pour une opération
+    // sensible — un élève pourrait sinon s'auto-attribuer un abonnement en
+    // modifiant sa fiche directement depuis le navigateur. Le client admin
+    // ignore RLS et ne fait que ce que ce code précis autorise.
+    const admin = supabaseAdmin();
+    await admin
       .from('profiles')
       .update({ quota_restant: profil.quota_restant + 1 })
       .eq('id', user.id);
