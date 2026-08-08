@@ -76,7 +76,9 @@ export default function CoachingPage() {
           COACHING INDIVIDUEL &amp; PROGRAMMES EN LIGNE
         </p>
         <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 'clamp(28px, 7.5vw, 56px)', lineHeight: 1.08, letterSpacing: 0.5, margin: '0 0 20px' }}>
-          COACHING CALISTHENICS, HANDSTAND &amp; <span style={GRADIENT_TEXTE}>MOBILITÉ</span>
+          CALISTHÉNIE, HANDSTAND &amp; MOBILITÉ
+          <br />
+          <span style={GRADIENT_TEXTE}>COACHING</span>
         </h1>
         <p style={{ fontSize: 18, color: COULEURS.texteAtt, maxWidth: 560, margin: '0 auto' }}>
           Présentiel à Bordeaux ou online, où que tu sois : un accompagnement individuel pour progresser
