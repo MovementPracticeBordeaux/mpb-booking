@@ -282,16 +282,30 @@ export default async function AdminPage({ searchParams }: { searchParams: { erre
 
         {(periodesVacances ?? []).length > 0 && (
           <div style={{ marginBottom: 16 }}>
-            {periodesVacances!.map((v) => (
-              <div key={v.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, fontSize: 13, padding: '6px 0', borderBottom: '1px solid #333' }}>
-                <span>Du {v.date_debut} au {v.date_fin}</span>
-                <form action={supprimerVacances}>
-                  <input type="hidden" name="id" value={v.id} />
-                  <button type="submit" style={{ fontSize: 12 }}>Supprimer</button>
-                </form>
-              </div>
-            ))}
+            {periodesVacances!.map((v) => {
+              const aujourdhui = new Date().toISOString().slice(0, 10);
+              const statut = aujourdhui > v.date_fin ? 'passée' : aujourdhui >= v.date_debut ? 'en cours' : 'à venir';
+              const couleurStatut = statut === 'en cours' ? '#f0a' : statut === 'à venir' ? '#4caf7d' : '#666';
+              const debutAffiche = new Date(v.date_debut + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+              const finAffiche = new Date(v.date_fin + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+              const nbJours = Math.round((new Date(v.date_fin).getTime() - new Date(v.date_debut).getTime()) / 86400000) + 1;
+              return (
+                <div key={v.id} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 8, fontSize: 13, padding: '8px 0', borderBottom: '1px solid #333' }}>
+                  <span>
+                    <span style={{ color: couleurStatut, fontWeight: 600, textTransform: 'uppercase', fontSize: 11, letterSpacing: 0.5 }}>{statut}</span>
+                    {' — '}Du {debutAffiche} au {finAffiche} ({nbJours} jour{nbJours > 1 ? 's' : ''})
+                  </span>
+                  <form action={supprimerVacances}>
+                    <input type="hidden" name="id" value={v.id} />
+                    <button type="submit" style={{ fontSize: 12 }}>Supprimer</button>
+                  </form>
+                </div>
+              );
+            })}
           </div>
+        )}
+        {(periodesVacances ?? []).length === 0 && (
+          <p style={{ fontSize: 13, opacity: 0.5, marginBottom: 16 }}>Aucune période de vacances définie pour le moment.</p>
         )}
 
         <form action={ajouterVacances} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
