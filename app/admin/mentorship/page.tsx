@@ -1,6 +1,6 @@
 import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
-import { MODULES_MENTORSHIP } from '@/lib/mentorship-modules';
+import { ARBRE_COMPETENCES, DOMAINE_LABELS } from '@/lib/mentorship-modules';
 import { COULEURS, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
 import { validerSoumission, refuserSoumission } from './actions';
 
@@ -24,7 +24,7 @@ export default async function AdminMentorshipPage({ searchParams }: { searchPara
     .eq('statut', 'en_attente')
     .order('submitted_at', { ascending: true });
 
-  const moduleParId = Object.fromEntries(MODULES_MENTORSHIP.map((m) => [m.id, m]));
+  const noeudParId = Object.fromEntries(ARBRE_COMPETENCES.map((n) => [n.id, n]));
 
   return (
     <main style={{ maxWidth: 720, margin: '0 auto', padding: 20 }}>
@@ -43,7 +43,7 @@ export default async function AdminMentorshipPage({ searchParams }: { searchPara
         <p style={{ color: COULEURS.texteAtt }}>Aucune soumission en attente pour le moment.</p>
       ) : (
         (soumissions ?? []).map((s: any) => {
-          const module = moduleParId[s.module_id];
+          const noeud = noeudParId[s.module_id];
           const eleve = s.profiles;
           return (
             <section
@@ -51,10 +51,11 @@ export default async function AdminMentorshipPage({ searchParams }: { searchPara
               style={{ border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: 20, marginBottom: 16 }}
             >
               <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: 0 }}>
-                {eleve?.prenom ?? ''} {eleve?.nom ?? eleve?.email ?? s.eleve_id} — étape {module?.ordre}/{MODULES_MENTORSHIP.length}
+                {eleve?.prenom ?? ''} {eleve?.nom ?? eleve?.email ?? s.eleve_id}
+                {noeud ? ` — ${DOMAINE_LABELS[noeud.domaine]} niveau ${noeud.niveau}` : ''}
               </p>
               <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 22, letterSpacing: 0.3, margin: '2px 0 10px' }}>
-                {module?.titre ?? s.module_id}
+                {noeud?.titre ?? s.module_id}
               </h2>
 
               <a
