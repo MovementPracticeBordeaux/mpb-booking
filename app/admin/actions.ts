@@ -4,6 +4,7 @@ import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { FORMULES } from '@/lib/formules';
+import { joursVacancesDansPeriode, ajouterJours } from '@/lib/vacances';
 import { stripe } from '@/lib/stripe';
 
 // Toute erreur dans une action admin redirige vers /admin avec un message
@@ -76,6 +77,33 @@ export async function ajouterVacances(formData: FormData) {
 
   const { error } = await admin.from('vacances').insert({ date_debut: debut, date_fin: fin });
   if (error) echouer(error.message);
+
+  // Prolonge automatiquement les formules actives qui chevauchent cette
+  // nouvelle période de vacances, pour que l'élève garde un mois (ou la
+  // durée de sa formule) effectivement utilisable. Exemple : formule du 15
+  // juillet au 15 août, vacances du 1er au 15 août -> nouvelle date de fin
+  // le 30 août. Ne concerne pas les pass déjà gelés manuellement (leur
+  // propre mécanisme de dégel gère déjà leur prolongation), ni les profils
+  // sans date de début connue (élèves déjà migrés depuis Wix, entre autres).
+  const { data: profilsActifs } = await admin
+    .from('profiles')
+    .select('id, date_debut_formule, date_expiration')
+    .eq('abonnement_actif', true)
+    .eq('gele', false)
+    .not('date_debut_formule', 'is', null)
+    .not('date_expiration', 'is', null)
+    .lte('date_debut_formule', fin)
+    .gte('date_expiration', debut);
+
+  for (const p of profilsActifs ?? []) {
+    const jours = joursVacancesDansPeriode(p.date_debut_formule, p.date_expiration, [{ date_debut: debut, date_fin: fin }]);
+    if (jours > 0) {
+      await admin.from('profiles')
+        .update({ date_expiration: ajouterJours(p.date_expiration, jours) })
+        .eq('id', p.id);
+    }
+  }
+
   revalidatePath('/admin');
   revalidatePath('/planning');
 }
@@ -109,11 +137,13 @@ export async function attribuerFormule(formData: FormData) {
 
   const expiration = new Date();
   expiration.setMonth(expiration.getMonth() + formule.validiteMois);
+  const aujourdhui = new Date().toISOString().slice(0, 10);
 
   const { error } = await admin.from('profiles').update({
     formule_nom: formuleNom,
     quota_total: formule.quota,
     quota_restant: formule.quota,
+    date_debut_formule: aujourdhui,
     date_expiration: expiration.toISOString().slice(0, 10),
     abonnement_actif: true,
     origine: 'manuel',

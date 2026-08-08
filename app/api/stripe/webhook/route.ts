@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
         formule_nom: formuleNom,
         quota_total: formule.quota,
         quota_restant: formule.quota,
+        date_debut_formule: dateDebut.toISOString().slice(0, 10),
         date_expiration: expiration.toISOString().slice(0, 10),
         abonnement_actif: true,
         origine: 'stripe',
