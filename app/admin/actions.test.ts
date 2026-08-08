@@ -3,7 +3,7 @@ import { supabaseAdmin, supabaseServer } from '@/lib/supabase-server';
 import { stripe } from '@/lib/stripe';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import { decompterCoaching, degelerPass, rembourserPaiement, suspendreAcces } from './actions';
+import { ajouterVacances, decompterCoaching, degelerPass, rembourserPaiement, suspendreAcces } from './actions';
 
 vi.mock('@/lib/supabase-server', () => ({
   supabaseServer: vi.fn(),
@@ -31,7 +31,7 @@ function makeChainable(result: { data?: any; error?: any }) {
   const chainable: any = {
     then: (resolve: any) => resolve(result),
   };
-  for (const methode of ['select', 'eq', 'update', 'insert', 'upsert', 'single', 'order']) {
+  for (const methode of ['select', 'eq', 'update', 'insert', 'upsert', 'single', 'order', 'in', 'not', 'lte', 'gte']) {
     chainable[methode] = vi.fn(() => chainable);
   }
   return chainable;
@@ -181,5 +181,24 @@ describe('rembourserPaiement', () => {
     await rembourserPaiement(formData({ paiement_id: 'p1' }));
 
     expect(admin.from).toHaveBeenCalledTimes(3); // pas d'appel de coupure supplémentaire
+  });
+});
+
+describe('ajouterVacances', () => {
+  it("ne cible que les formules mensuelles (4/8 cours et illimité), pas les carnets — et prolonge selon l'exemple de Louis (15 jours -> 30 août)", async () => {
+    const admin = mockAdminClient([
+      { error: null }, // insertion de la période de vacances
+      { data: [{ id: 'e1', date_debut_formule: '2026-07-15', date_expiration: '2026-08-15' }], error: null }, // profils actifs concernés
+      { error: null }, // mise à jour de la date d'expiration de e1
+    ]);
+    vi.mocked(supabaseAdmin).mockReturnValue(admin as any);
+
+    await ajouterVacances(formData({ date_debut: '2026-08-01', date_fin: '2026-08-15' }));
+
+    const chaineSelect = admin.from.mock.results[1].value;
+    expect(chaineSelect.in).toHaveBeenCalledWith('formule_nom', ['mensuel_4', 'mensuel_8', 'illimite']);
+
+    const chaineUpdate = admin.from.mock.results[2].value;
+    expect(chaineUpdate.update).toHaveBeenCalledWith({ date_expiration: '2026-08-30' });
   });
 });

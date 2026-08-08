@@ -82,14 +82,20 @@ export async function ajouterVacances(formData: FormData) {
   // nouvelle période de vacances, pour que l'élève garde un mois (ou la
   // durée de sa formule) effectivement utilisable. Exemple : formule du 15
   // juillet au 15 août, vacances du 1er au 15 août -> nouvelle date de fin
-  // le 30 août. Ne concerne pas les pass déjà gelés manuellement (leur
-  // propre mécanisme de dégel gère déjà leur prolongation), ni les profils
-  // sans date de début connue (élèves déjà migrés depuis Wix, entre autres).
+  // le 30 août. Ne concerne QUE les formules mensuelles récurrentes (4
+  // cours/mois, 8 cours/mois, illimité) — pas les carnets (5/10 cours),
+  // dont la validité (3/6 mois) est pensée pour être consommée à son
+  // rythme, indépendamment des périodes de fermeture. Ne concerne pas non
+  // plus les pass déjà gelés manuellement (leur propre mécanisme de dégel
+  // gère déjà leur prolongation), ni les profils sans date de début connue
+  // (élèves déjà migrés depuis Wix, entre autres).
+  const FORMULES_CONCERNEES_PAR_LES_VACANCES = ['mensuel_4', 'mensuel_8', 'illimite'];
   const { data: profilsActifs } = await admin
     .from('profiles')
     .select('id, date_debut_formule, date_expiration')
     .eq('abonnement_actif', true)
     .eq('gele', false)
+    .in('formule_nom', FORMULES_CONCERNEES_PAR_LES_VACANCES)
     .not('date_debut_formule', 'is', null)
     .not('date_expiration', 'is', null)
     .lte('date_debut_formule', fin)
