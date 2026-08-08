@@ -74,7 +74,7 @@ describe('decompterCoaching', () => {
 
     await expect(
       decompterCoaching(formData({ eleve_id: 'e1', quantite: '3' }))
-    ).rejects.toThrow(/REDIRECT:\/admin\?erreur=/);
+    ).rejects.toThrow(/REDIRECT:\/admin\/eleves\?erreur=/);
   });
 
   it('décompte correctement le quota restant', async () => {
@@ -88,7 +88,7 @@ describe('decompterCoaching', () => {
 
     const updateChain = admin.from.mock.results[1].value;
     expect(updateChain.update).toHaveBeenCalledWith({ quota_restant: 3 });
-    expect(revalidatePath).toHaveBeenCalledWith('/admin');
+    expect(revalidatePath).toHaveBeenCalledWith('/admin/eleves');
   });
 });
 
@@ -101,7 +101,7 @@ describe('suspendreAcces', () => {
 
     const updateChain = admin.from.mock.results[0].value;
     expect(updateChain.update).toHaveBeenCalledWith({ abonnement_actif: false });
-    expect(revalidatePath).toHaveBeenCalledWith('/admin');
+    expect(revalidatePath).toHaveBeenCalledWith('/admin/eleves');
   });
 });
 
@@ -130,7 +130,7 @@ describe('degelerPass', () => {
       mockAdminClient([{ data: { date_gel_debut: null, date_expiration: '2026-08-20' }, error: null }]) as any
     );
 
-    await expect(degelerPass(formData({ eleve_id: 'e1' }))).rejects.toThrow(/REDIRECT:\/admin\?erreur=/);
+    await expect(degelerPass(formData({ eleve_id: 'e1' }))).rejects.toThrow(/REDIRECT:\/admin\/eleves\?erreur=/);
   });
 });
 
@@ -148,7 +148,7 @@ describe('rembourserPaiement', () => {
     );
 
     await expect(rembourserPaiement(formData({ paiement_id: 'p1' }))).rejects.toThrow(
-      /REDIRECT:\/admin\?erreur=/
+      /REDIRECT:\/admin\/eleves\?erreur=/
     );
   });
 

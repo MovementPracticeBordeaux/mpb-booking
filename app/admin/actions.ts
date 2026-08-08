@@ -7,10 +7,11 @@ import { FORMULES } from '@/lib/formules';
 import { joursVacancesDansPeriode, ajouterJours } from '@/lib/vacances';
 import { stripe } from '@/lib/stripe';
 
-// Toute erreur dans une action admin redirige vers /admin avec un message
-// clair, au lieu de crasher (Next.js masque les throw en production).
-function echouer(message: string): never {
-  redirect(`/admin?erreur=${encodeURIComponent(message)}`);
+// Toute erreur dans une action admin redirige vers la page d'où elle vient
+// (avec un message clair), au lieu de crasher (Next.js masque les throw en
+// production) ou de renvoyer ailleurs dans l'admin.
+function echouer(chemin: string, message: string): never {
+  redirect(`${chemin}?erreur=${encodeURIComponent(message)}`);
 }
 
 async function verifierAdmin() {
@@ -18,9 +19,11 @@ async function verifierAdmin() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
   const { data: profil } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-  if (!profil || profil.role !== 'admin') echouer('Accès refusé.');
+  if (!profil || profil.role !== 'admin') echouer('/admin', 'Accès refusé.');
   return user;
 }
+
+// --- Planning collectif -----------------------------------------------
 
 export async function ajouterCours(formData: FormData) {
   await verifierAdmin();
@@ -33,8 +36,8 @@ export async function ajouterCours(formData: FormData) {
     heure_fin: formData.get('heure_fin') as string,
     lieu: formData.get('lieu') as string,
   });
-  if (error) echouer(error.message);
-  revalidatePath('/admin');
+  if (error) echouer('/admin/planning', error.message);
+  revalidatePath('/admin/planning');
   revalidatePath('/planning');
 }
 
@@ -43,8 +46,8 @@ export async function desactiverCours(formData: FormData) {
   const admin = supabaseAdmin();
   const id = formData.get('id') as string;
   const { error } = await admin.from('cours').update({ actif: false }).eq('id', id);
-  if (error) echouer(error.message);
-  revalidatePath('/admin');
+  if (error) echouer('/admin/planning', error.message);
+  revalidatePath('/admin/planning');
   revalidatePath('/planning');
 }
 
@@ -56,8 +59,8 @@ export async function definirSemaineReference(formData: FormData) {
     date_lundi_reference: formData.get('date_lundi_reference') as string,
     semaine_ce_lundi: formData.get('semaine_ce_lundi') as string,
   });
-  if (error) echouer(error.message);
-  revalidatePath('/admin');
+  if (error) echouer('/admin/planning', error.message);
+  revalidatePath('/admin/planning');
   revalidatePath('/planning');
 }
 
@@ -72,11 +75,11 @@ export async function ajouterVacances(formData: FormData) {
   const debut = formData.get('date_debut') as string;
   const fin = formData.get('date_fin') as string;
 
-  if (!debut || !fin) echouer('Indique une date de début et une date de fin.');
-  if (fin < debut) echouer('La date de fin doit être après la date de début.');
+  if (!debut || !fin) echouer('/admin/planning', 'Indique une date de début et une date de fin.');
+  if (fin < debut) echouer('/admin/planning', 'La date de fin doit être après la date de début.');
 
   const { error } = await admin.from('vacances').insert({ date_debut: debut, date_fin: fin });
-  if (error) echouer(error.message);
+  if (error) echouer('/admin/planning', error.message);
 
   // Prolonge automatiquement les formules actives qui chevauchent cette
   // nouvelle période de vacances, pour que l'élève garde un mois (ou la
@@ -110,7 +113,7 @@ export async function ajouterVacances(formData: FormData) {
     }
   }
 
-  revalidatePath('/admin');
+  revalidatePath('/admin/planning');
   revalidatePath('/planning');
 }
 
@@ -120,10 +123,12 @@ export async function supprimerVacances(formData: FormData) {
   const id = formData.get('id') as string;
 
   const { error } = await admin.from('vacances').delete().eq('id', id);
-  if (error) echouer(error.message);
-  revalidatePath('/admin');
+  if (error) echouer('/admin/planning', error.message);
+  revalidatePath('/admin/planning');
   revalidatePath('/planning');
 }
+
+// --- Élèves & paiements -------------------------------------------------
 
 // Permet à l'admin d'octroyer une formule à un élève sans passer par Stripe
 // (offert gratuitement, payé en liquide/virement, geste commercial, etc.)
@@ -136,10 +141,10 @@ export async function attribuerFormule(formData: FormData) {
   const paye = formData.get('paye') === 'on';
   const montant = Number(formData.get('montant') ?? 0);
 
-  if (!eleveId) echouer('Choisis un élève.');
+  if (!eleveId) echouer('/admin/eleves', 'Choisis un élève.');
 
   const formule = FORMULES[formuleNom];
-  if (!formule) echouer('Formule inconnue.');
+  if (!formule) echouer('/admin/eleves', 'Formule inconnue.');
 
   const expiration = new Date();
   expiration.setMonth(expiration.getMonth() + formule.validiteMois);
@@ -155,7 +160,7 @@ export async function attribuerFormule(formData: FormData) {
     origine: 'manuel',
     paye,
   }).eq('id', eleveId);
-  if (error) echouer(error.message);
+  if (error) echouer('/admin/eleves', error.message);
 
   // Historise le paiement (ou le don) pour que l'élève puisse générer sa facture
   const { error: errPaiement } = await admin.from('paiements').insert({
@@ -165,9 +170,9 @@ export async function attribuerFormule(formData: FormData) {
     origine: 'manuel',
     paye,
   });
-  if (errPaiement) echouer(errPaiement.message);
+  if (errPaiement) echouer('/admin/eleves', errPaiement.message);
 
-  revalidatePath('/admin');
+  revalidatePath('/admin/eleves');
 }
 
 
@@ -179,15 +184,15 @@ export async function decompterCoaching(formData: FormData) {
   const quantite = Number(formData.get('quantite'));
 
   const { data: profil } = await admin.from('profiles').select('quota_restant').eq('id', eleveId).single();
-  if (!profil || profil.quota_restant == null) echouer('Pas de quota à décompter pour cet élève.');
-  if (profil.quota_restant < quantite) echouer('Quantité supérieure au quota restant.');
+  if (!profil || profil.quota_restant == null) echouer('/admin/eleves', 'Pas de quota à décompter pour cet élève.');
+  if (profil.quota_restant < quantite) echouer('/admin/eleves', 'Quantité supérieure au quota restant.');
 
   const { error } = await admin.from('profiles')
     .update({ quota_restant: profil.quota_restant - quantite })
     .eq('id', eleveId);
-  if (error) echouer(error.message);
+  if (error) echouer('/admin/eleves', error.message);
 
-  revalidatePath('/admin');
+  revalidatePath('/admin/eleves');
 }
 
 // Coupe l'accès d'un élève de façon définitive (résiliation, formule terminée)
@@ -196,8 +201,8 @@ export async function suspendreAcces(formData: FormData) {
   const admin = supabaseAdmin();
   const eleveId = formData.get('eleve_id') as string;
   const { error } = await admin.from('profiles').update({ abonnement_actif: false }).eq('id', eleveId);
-  if (error) echouer(error.message);
-  revalidatePath('/admin');
+  if (error) echouer('/admin/eleves', error.message);
+  revalidatePath('/admin/eleves');
 }
 
 // Corrige directement le nombre de séances/heures restantes (erreur, geste
@@ -209,8 +214,8 @@ export async function modifierQuotaRestant(formData: FormData) {
   const eleveId = formData.get('eleve_id') as string;
   const nouveauQuota = Number(formData.get('quota_restant'));
   const { error } = await admin.from('profiles').update({ quota_restant: nouveauQuota }).eq('id', eleveId);
-  if (error) echouer(error.message);
-  revalidatePath('/admin');
+  if (error) echouer('/admin/eleves', error.message);
+  revalidatePath('/admin/eleves');
 }
 
 // Corrige directement la date de validité du pass
@@ -220,8 +225,8 @@ export async function modifierExpiration(formData: FormData) {
   const eleveId = formData.get('eleve_id') as string;
   const nouvelleDate = formData.get('date_expiration') as string;
   const { error } = await admin.from('profiles').update({ date_expiration: nouvelleDate }).eq('id', eleveId);
-  if (error) echouer(error.message);
-  revalidatePath('/admin');
+  if (error) echouer('/admin/eleves', error.message);
+  revalidatePath('/admin/eleves');
 }
 
 // Gel temporaire (blessure, vacances...) : le pass reste attribué mais
@@ -239,8 +244,8 @@ export async function gelerPass(formData: FormData) {
     // app/api/cron/rappels/route.ts) — sinon dégel manuel comme avant.
     date_fin_gel_prevue: dateFinGelPrevue,
   }).eq('id', eleveId);
-  if (error) echouer(error.message);
-  revalidatePath('/admin');
+  if (error) echouer('/admin/eleves', error.message);
+  revalidatePath('/admin/eleves');
 }
 
 // Dégel : prolonge automatiquement la date de validité du nombre de jours
@@ -276,8 +281,8 @@ export async function degelerPass(formData: FormData) {
   await verifierAdmin();
   const eleveId = formData.get('eleve_id') as string;
   const resultat = await degelerProfil(eleveId);
-  if (!resultat.ok) echouer(resultat.erreur ?? 'Erreur inconnue.');
-  revalidatePath('/admin');
+  if (!resultat.ok) echouer('/admin/eleves', resultat.erreur ?? 'Erreur inconnue.');
+  revalidatePath('/admin/eleves');
 }
 
 // Rembourse un paiement passé par Stripe directement depuis l'admin
@@ -288,22 +293,22 @@ export async function rembourserPaiement(formData: FormData) {
   const paiementId = formData.get('paiement_id') as string;
 
   const { data: paiement } = await admin.from('paiements').select('*').eq('id', paiementId).single();
-  if (!paiement) echouer('Paiement introuvable.');
-  if (paiement.rembourse) echouer('Déjà remboursé.');
+  if (!paiement) echouer('/admin/eleves', 'Paiement introuvable.');
+  if (paiement.rembourse) echouer('/admin/eleves', 'Déjà remboursé.');
   if (!paiement.stripe_session_id) {
-    echouer("Ce paiement n'est pas passé par Stripe (manuel/offert) — rien à rembourser automatiquement.");
+    echouer('/admin/eleves', "Ce paiement n'est pas passé par Stripe (manuel/offert) — rien à rembourser automatiquement.");
   }
 
   try {
     const session = await stripe.checkout.sessions.retrieve(paiement.stripe_session_id);
-    if (!session.payment_intent) echouer('Aucun paiement Stripe associé à cette session.');
+    if (!session.payment_intent) echouer('/admin/eleves', 'Aucun paiement Stripe associé à cette session.');
     await stripe.refunds.create({ payment_intent: session.payment_intent as string });
   } catch (e: any) {
-    echouer('Erreur Stripe : ' + e.message);
+    echouer('/admin/eleves', 'Erreur Stripe : ' + e.message);
   }
 
   const { error } = await admin.from('paiements').update({ rembourse: true }).eq('id', paiementId);
-  if (error) echouer(error.message);
+  if (error) echouer('/admin/eleves', error.message);
 
   // Le remboursement n'annule pas automatiquement l'accès de l'élève tant
   // qu'on ne le fait pas explicitement ici : si sa formule actuelle est
@@ -317,5 +322,5 @@ export async function rembourserPaiement(formData: FormData) {
     await admin.from('profiles').update({ abonnement_actif: false }).eq('id', paiement.eleve_id);
   }
 
-  revalidatePath('/admin');
+  revalidatePath('/admin/eleves');
 }
