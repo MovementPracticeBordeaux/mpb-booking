@@ -3,16 +3,16 @@
 import { supabaseServer } from '@/lib/supabase-server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { ARBRE_COMPETENCES, estNoeudDeverrouille } from '@/lib/mentorship-modules';
+import { ARBRE_COMPETENCES, TRONC_ARMURE_ORGANIQUE, estNoeudDeverrouille, troncDeverrouille } from '@/lib/mentorship-modules';
 
 function echouer(message: string): never {
   redirect(`/mentorship?erreur=${encodeURIComponent(message)}`);
 }
 
-// L'élève soumet le lien de sa vidéo pour un nœud de compétence (première
-// soumission, ou re-soumission après un refus). Ne rend jamais le nœud
-// "acquis" directement — ça reste soumis à la validation de Sylvain dans
-// /admin/mentorship.
+// L'élève soumet le lien de sa vidéo pour un nœud (tronc ou branche) —
+// première soumission, ou re-soumission après un refus. Ne rend jamais le
+// nœud "acquis" directement : ça reste soumis à la validation de Sylvain
+// dans /admin/mentorship.
 export async function soumettreVideo(formData: FormData) {
   const supabase = supabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
@@ -24,8 +24,9 @@ export async function soumettreVideo(formData: FormData) {
 
   if (!videoUrl) echouer('Merci de coller le lien de ta vidéo.');
 
-  const noeud = ARBRE_COMPETENCES.find((n) => n.id === noeudId);
-  if (!noeud) echouer('Compétence introuvable.');
+  const noeudTronc = TRONC_ARMURE_ORGANIQUE.find((n) => n.id === noeudId);
+  const noeudBranche = ARBRE_COMPETENCES.find((n) => n.id === noeudId);
+  if (!noeudTronc && !noeudBranche) echouer('Compétence introuvable.');
 
   const { data: acquisData } = await supabase
     .from('mentorship_progression')
@@ -34,7 +35,11 @@ export async function soumettreVideo(formData: FormData) {
     .eq('statut', 'acquis');
   const idsAcquis = new Set((acquisData ?? []).map((d) => d.module_id));
 
-  if (!estNoeudDeverrouille(noeud, idsAcquis)) {
+  const deverrouille = noeudTronc
+    ? troncDeverrouille(noeudTronc, idsAcquis)
+    : estNoeudDeverrouille(noeudBranche!, idsAcquis);
+
+  if (!deverrouille) {
     echouer('Les prérequis de cette compétence ne sont pas encore tous acquis.');
   }
 

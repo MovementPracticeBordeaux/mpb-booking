@@ -43,9 +43,10 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
         PROGRAMME <span style={GRADIENT_TEXTE}>MENTORSHIP</span>
       </h1>
       <p style={{ color: COULEURS.texteFaible, fontSize: 13, marginBottom: 20 }}>
-        Un tronc commun — l'Armure Organique — et cinq branches qui progressent en parallèle.
-        Certaines compétences se débloquent en croisant plusieurs branches : un niveau de force donné
-        correspond à un niveau de figure donné, par exemple.
+        Le tronc — l'Armure Organique — se gravit en 3 niveaux, et porte les cinq branches qui progressent
+        en parallèle. Un niveau de branche ne se débloque que si le niveau correspondant du tronc est acquis,
+        et certaines compétences croisent plusieurs branches : un niveau de force donné correspond à un
+        niveau de figure donné, par exemple.
       </p>
 
       {searchParams.erreur && (

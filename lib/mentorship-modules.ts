@@ -2,18 +2,18 @@
 //
 // Programme Mentorship — structure en arbre (08/2026).
 //
-// Un tronc commun (l'Armure Organique : routines quotidiennes, toujours
-// accessibles, sans progression fermée) d'où partent 5 branches parallèles
-// correspondant aux 5 domaines de la modélisation du mouvement :
-// Force, Flexibilité, Locomotion, Connexion, Figures.
+// Un TRONC en 3 niveaux (l'Armure Organique — le socle de compétences
+// générales) d'où partent 5 BRANCHES parallèles, elles-mêmes en 3 niveaux
+// chacune : Force, Flexibilité, Locomotion, Connexion, Figures.
 //
-// Chaque branche progresse par niveaux (1, 2, 3...). Un niveau se débloque
-// quand le niveau précédent DE LA MÊME branche est acquis, ET quand les
-// prérequis dans d'AUTRES branches (le champ "prerequis") sont acquis —
-// c'est ce qui matérialise la pédagogie de Sylvain : un niveau de force
-// donné correspond à un niveau de figure donné, etc. Les Figures, en
-// particulier, sont un point de convergence : elles demandent à la fois
-// de la force, de la flexibilité et de la connexion.
+// Règle de déverrouillage :
+// - Le tronc niveau N+1 se débloque quand le tronc niveau N est acquis.
+// - Une branche niveau N se débloque quand : le TRONC niveau N est acquis
+//   (le socle général doit être là avant d'aller chercher la spécialisation),
+//   ET le niveau N-1 de LA MÊME branche est acquis (s'il existe),
+//   ET tous les prérequis inter-branches du nœud sont acquis (ce qui
+//   matérialise les correspondances entre domaines : un niveau de force
+//   donné correspond à un niveau de figure donné, etc.)
 //
 // La théorie de chaque nœud n'est pas un résumé décoratif : c'est le
 // support philosophique que l'élève doit s'approprier avant/pendant la
@@ -55,7 +55,7 @@ export type FragmentTheorie = {
 export type NoeudCompetence = {
   id: string; // slug stable, sert de clé de progression — ne pas changer une fois publié
   domaine: Domaine;
-  niveau: number; // position dans la branche (1, 2, 3...)
+  niveau: 1 | 2 | 3;
   titre: string;
   resume: string;
   objectifPedagogique: string;
@@ -63,42 +63,93 @@ export type NoeudCompetence = {
   objectifs: ObjectifMentorship[];
   jeuxSuggeres?: string[];
   theorie: FragmentTheorie[];
-  // Prérequis dans D'AUTRES branches (en plus du niveau précédent de la
-  // même branche, vérifié automatiquement). C'est ici que se matérialisent
-  // les correspondances entre domaines.
+  // Prérequis dans D'AUTRES branches (en plus du tronc de même niveau et du
+  // niveau précédent de la même branche, vérifiés automatiquement). C'est
+  // ici que se matérialisent les correspondances entre domaines.
   prerequis?: { domaine: Domaine; niveauMin: number }[];
 };
 
-// --- Le tronc : Armure Organique ----------------------------------------
-// Toujours accessible, jamais verrouillé. C'est la base quotidienne sur
-// laquelle les 5 branches s'appuient.
-
-export const TRONC_ARMURE_ORGANIQUE = {
-  id: 'armure-organique',
-  titre: 'Armure Organique',
-  resume: 'Les routines quotidiennes — la base sur laquelle tout le reste se construit.',
-  groupesOutils: ['CV', 'EP', 'SC', 'AB', 'MI', 'BC', 'HC'] as ToolGroup[],
-  theorie: [
-    {
-      titre: 'Pourquoi le Mouvement ?',
-      texte: "Le Mouvement est une quête, une démarche de recherche et de développement personnel, un point de vue et une stratégie à la fois physique et mentale, axée sur l'apprentissage et l'acquisition d'expérience. Il n'existe pas de bon ou de mauvais mouvement dans l'absolu — seulement des mouvements que l'on est prêt à réaliser, et d'autres non. Le corps humain a été façonné par plusieurs millions d'années d'évolution en pleine nature, contre seulement quelques milliers d'années de vie sédentaire : il a conservé en mémoire l'ensemble de ses capacités originelles. La pratique du Mouvement freine notre inévitable dégénérescence, à condition d'être menée avec intelligence, dans une logique d'harmonie et de santé sur le long terme — ce qui n'est pas contradictoire avec la performance. Au contraire : sous ces conditions, la performance peut être mise au service de la santé.",
-    },
-    {
-      titre: "L'armure organique",
-      texte: "Dans la quête de maîtrise et d'excellence en matière de mouvement, l'« armure organique » émerge comme une métaphore puissante et significative. Elle symbolise l'ensemble des outils et routines articulaires et musculaires utiles dans un but donné. Le terme « armure » évoque une protection, un équipement défensif conçu pour sauvegarder le corps ; « organique » fait référence à ce qui est vivant, en contraste avec l'inerte. L'armure organique n'est donc pas une simple protection statique, mais un système dynamique, en constante évolution et adaptation — forgée non pas de métal, mais de muscles, d'os, de tendons, et d'une conscience aiguë du corps. Le travail de fond qui la construit est subjectif : il s'adapte aux besoins et capacités individuelles de chacun, comme le travail minutieux du forgeron qui façonne la matière avec précision et régularité. Ces routines quotidiennes ont vocation à ouvrir des portes vers les compétences plus avancées des cinq branches — elles ne se réduisent jamais à un simple échauffement.",
-    },
-    {
-      titre: "La Mouvolution : posture d'apprentissage",
-      texte: "Avant l'entraînement, il convient de structurer sa progression et d'adopter une méthode capable d'assurer un progrès sur le long terme. La démarche d'apprentissage — la « Mouvolution » — se divise en trois phases : la phase de l'étudiant, qui étudie et pratique chaque secteur du Mouvement de manière isolée pour en comprendre les fondamentaux ; la phase du chercheur, qui établit des liens entre les domaines étudiés et explore leurs intersections ; puis la phase de l'artisan, qui entremêle complètement les compétences, pratique la transversalité et exprime sa créativité à travers le Mouvement. Réalisée avec conscience et analyse, la répétition permet d'améliorer progressivement la qualité recherchée dans l'exécution d'une tâche — c'est la matière première de tout apprentissage.",
-    },
-  ] as FragmentTheorie[],
+export type NoeudTronc = {
+  id: string;
+  niveau: 1 | 2 | 3;
+  titre: string;
+  resume: string;
+  objectifPedagogique: string;
+  groupesOutils: ToolGroup[];
+  theorie: FragmentTheorie[];
 };
 
-// --- Branche FORCE --------------------------------------------------------
+// --- Le tronc : Armure Organique, en 3 niveaux ---------------------------
+// Le socle général. Tant que le niveau N du tronc n'est pas acquis, aucune
+// branche n'a de niveau N accessible : pas d'intérêt à se spécialiser sans
+// les fondations générales correspondantes.
+
+export const TRONC_ARMURE_ORGANIQUE: NoeudTronc[] = [
+  {
+    id: 'armure-1',
+    niveau: 1,
+    titre: 'Fondations',
+    resume: 'Mobilité articulaire de base, respiration, conscience corporelle — le point de départ commun à tout le reste.',
+    objectifPedagogique: "Préparer le corps et poser la posture d'apprentissage avant toute spécialisation.",
+    groupesOutils: ['CV', 'EP', 'SC', 'AB', 'MI'],
+    theorie: [
+      {
+        titre: 'Pourquoi le Mouvement ?',
+        texte: "Le Mouvement est une quête, une démarche de recherche et de développement personnel, un point de vue et une stratégie à la fois physique et mentale, axée sur l'apprentissage et l'acquisition d'expérience. Il n'existe pas de bon ou de mauvais mouvement dans l'absolu — seulement des mouvements que l'on est prêt à réaliser, et d'autres non. Le corps humain a été façonné par plusieurs millions d'années d'évolution en pleine nature, contre seulement quelques milliers d'années de vie sédentaire : il a conservé en mémoire l'ensemble de ses capacités originelles. La pratique du Mouvement freine notre inévitable dégénérescence, à condition d'être menée avec intelligence, dans une logique d'harmonie et de santé sur le long terme — ce qui n'est pas contradictoire avec la performance. Au contraire : sous ces conditions, la performance peut être mise au service de la santé.",
+      },
+      {
+        titre: "L'armure organique",
+        texte: "Dans la quête de maîtrise et d'excellence en matière de mouvement, l'« armure organique » émerge comme une métaphore puissante. Elle symbolise l'ensemble des outils et routines articulaires et musculaires utiles dans un but donné. Le terme « armure » évoque une protection, un équipement défensif conçu pour sauvegarder le corps ; « organique » fait référence à ce qui est vivant, en contraste avec l'inerte. L'armure organique n'est donc pas une simple protection statique, mais un système dynamique, en constante évolution — forgée non pas de métal, mais de muscles, d'os, de tendons, et d'une conscience aiguë du corps. Ce premier niveau pose les toutes premières pièces de cette armure : la mobilité de base et la capacité à sentir son corps.",
+      },
+      {
+        titre: "La Mouvolution, phase de l'étudiant",
+        texte: "Avant l'entraînement, il convient de structurer sa progression. La démarche d'apprentissage — la « Mouvolution » — se divise en trois phases. Ce premier niveau du tronc correspond à la phase de l'étudiant : étudier et pratiquer chaque secteur du Mouvement de manière isolée pour en comprendre les fondamentaux, en adoptant l'état d'esprit du débutant (le soshin), ouvert et avide d'expériences. Réalisée avec conscience et analyse, la répétition permet d'améliorer progressivement la qualité recherchée dans l'exécution d'une tâche — c'est la matière première de tout apprentissage.",
+      },
+    ],
+  },
+  {
+    id: 'armure-2',
+    niveau: 2,
+    titre: 'Consolidation',
+    resume: "Le travail de fond devient méthodique : le cycle d'apprentissage structure la progression.",
+    objectifPedagogique: 'Passer du subjectif (ce qui me convient) vers l\'objectif (ce qui est mesurable et progressif).',
+    groupesOutils: ['BC', 'HC'],
+    theorie: [
+      {
+        titre: 'Le travail de fond : du subjectif vers l\'objectif',
+        texte: "L'importance du travail de fond dans une pratique de mouvement est capitale pour construire l'armure organique, visant la santé et la protection physique sur le long terme. Ce travail est d'abord subjectif, s'adaptant aux besoins et capacités individuelles de chacun — comparable à l'œuvre qui se transforme sous les mains du forgeron, au travail minutieux qui façonne la matière avec précision et régularité. Par la suite, un travail plus objectif prend place, orienté vers des objectifs cibles personnels : le pratiquant commence à explorer le mouvement dans toute sa diversité, en fonction de ses projets. Cette étape est cruciale pour l'épanouissement personnel et la découverte de sa propre voie.",
+      },
+      {
+        titre: "Le cycle d'apprentissage",
+        texte: "Avant de mettre en place un nouvel apprentissage, il convient de définir précisément ses objectifs. Le cycle se déroule en quatre temps : Fragmenter, c'est-à-dire diviser un mouvement en fragments, chacun représentant une qualité sollicitée par son exécution, pour un travail isolé et ciblé. Assembler, c'est recréer des liens entre ces fragments, de la plus simple à la plus complexe combinaison — comme on passe de la note à l'accord en musique. Injecter, c'est intégrer une compétence acquise dans la Locomotion, l'environnement mouvant et créatif où elle devient réellement utilisable. Amplifier, enfin, c'est ajouter un cran de complexité par le jeu ou l'augmentation du niveau d'exigence. Ce cycle repart ensuite avec un nouvel objectif, cohérent avec les acquis précédents : chaque compétence devient une porte vers la suivante.",
+      },
+    ],
+  },
+  {
+    id: 'armure-3',
+    niveau: 3,
+    titre: 'Intégration',
+    resume: "L'armure organique devient un système vivant : chaque compétence se relie aux autres.",
+    objectifPedagogique: 'Entrer dans la phase de l\'artisan : relier les domaines plutôt que les juxtaposer.',
+    groupesOutils: ['CV', 'EP', 'SC', 'AB', 'MI', 'BC', 'HC'],
+    theorie: [
+      {
+        titre: 'La Mouvolution, phase du chercheur puis de l\'artisan',
+        texte: "Dans la phase du chercheur, la démarche évolue : on établit des liens et des connexions entre chacun des domaines étudiés précédemment, en cherchant à comprendre comment ils s'influencent mutuellement. Puis vient la phase de l'artisan, qui entremêle complètement les compétences et les secteurs, en pratiquant pleinement la transversalité. L'artisan peut introduire une dimension plus libre et artistique dans sa pratique, en exprimant sa créativité à travers le Mouvement. Cette phase vise une maîtrise globale, où le pratiquant est capable d'interagir de manière fluide avec son corps et son environnement, tout en exprimant librement sa propre identité artistique.",
+      },
+      {
+        titre: 'La fabrique du multivers',
+        texte: "À ce stade, l'armure organique s'inscrit dans une perspective globale où chaque compétence acquise devient une brique dans la construction d'un multivers de mouvements. Ce point de vue favorise la création de liens entre différents mouvements et domaines, encourageant le dépassement de soi, le transfert de compétences, la créativité et l'expression individuelle. C'est ce niveau d'intégration qui rend accessibles les compétences les plus exigeantes de chaque branche — celles qui demandent de mobiliser plusieurs domaines à la fois.",
+      },
+    ],
+  },
+];
+
+// --- Branche FORCE ----------------------------------------------------------
 
 const FORCE: NoeudCompetence[] = [
   {
-    id: 'force-alignement',
+    id: 'force-1',
     domaine: 'force',
     niveau: 1,
     titre: "Force dans l'alignement",
@@ -121,7 +172,7 @@ const FORCE: NoeudCompetence[] = [
     ],
   },
   {
-    id: 'force-tirage',
+    id: 'force-2',
     domaine: 'force',
     niveau: 2,
     titre: 'Tirage & chaîne postérieure',
@@ -139,7 +190,7 @@ const FORCE: NoeudCompetence[] = [
     ],
   },
   {
-    id: 'force-organique',
+    id: 'force-3',
     domaine: 'force',
     niveau: 3,
     titre: 'Force organique & Strength Project',
@@ -160,11 +211,11 @@ const FORCE: NoeudCompetence[] = [
   },
 ];
 
-// --- Branche FLEXIBILITÉ ---------------------------------------------------
+// --- Branche FLEXIBILITÉ -----------------------------------------------------
 
 const FLEXIBILITE: NoeudCompetence[] = [
   {
-    id: 'flexibilite-passive',
+    id: 'flexibilite-1',
     domaine: 'flexibilite',
     niveau: 1,
     titre: 'Flexibilité passive & mobilité de base',
@@ -184,7 +235,7 @@ const FLEXIBILITE: NoeudCompetence[] = [
     ],
   },
   {
-    id: 'flexibilite-ouverture',
+    id: 'flexibilite-2',
     domaine: 'flexibilite',
     niveau: 2,
     titre: 'Ouverture & pont bas',
@@ -203,7 +254,7 @@ const FLEXIBILITE: NoeudCompetence[] = [
     ],
   },
   {
-    id: 'flexibilite-inversion',
+    id: 'flexibilite-3',
     domaine: 'flexibilite',
     niveau: 3,
     titre: 'Pont haut & inversion',
@@ -211,7 +262,6 @@ const FLEXIBILITE: NoeudCompetence[] = [
     objectifPedagogique: "Gagner en confort en renversement et préparer le travail d'inversion complète.",
     groupesOutils: ['CV', 'EP'],
     objectifs: [],
-    prerequis: [{ domaine: 'flexibilite', niveauMin: 2 }],
     theorie: [
       {
         titre: 'Inversion et station debout, perspectives complémentaires',
@@ -221,11 +271,11 @@ const FLEXIBILITE: NoeudCompetence[] = [
   },
 ];
 
-// --- Branche LOCOMOTION -----------------------------------------------------
+// --- Branche LOCOMOTION -------------------------------------------------------
 
 const LOCOMOTION: NoeudCompetence[] = [
   {
-    id: 'locomotion-floorwork-bipedie',
+    id: 'locomotion-1',
     domaine: 'locomotion',
     niveau: 1,
     titre: 'Floor work & Bipédie',
@@ -249,7 +299,7 @@ const LOCOMOTION: NoeudCompetence[] = [
     ],
   },
   {
-    id: 'locomotion-quadrupedie',
+    id: 'locomotion-2',
     domaine: 'locomotion',
     niveau: 2,
     titre: 'Quadrupédie',
@@ -268,13 +318,13 @@ const LOCOMOTION: NoeudCompetence[] = [
     ],
   },
   {
-    id: 'locomotion-brachiation-reptation',
+    id: 'locomotion-3',
     domaine: 'locomotion',
     niveau: 3,
-    titre: 'Brachiation & Reptation',
-    resume: "L'univers le plus riche de la locomotion : le déplacement par les bras, et l'agilité du reptile.",
-    objectifPedagogique: "Entrer dans l'univers sur les mains et développer un gainage exigeant en bras fléchis.",
-    groupesOutils: ['HC', 'EP'],
+    titre: 'Brachiation, Reptation & pratique environnementale',
+    resume: "L'univers le plus riche de la locomotion : le déplacement par les bras, l'agilité du reptile, et le terrain comme partenaire.",
+    objectifPedagogique: "Entrer dans l'univers sur les mains, développer un gainage exigeant en bras fléchis, et utiliser l'environnement comme terrain de jeu.",
+    groupesOutils: ['HC', 'EP', 'AB'],
     objectifs: [
       { code: 'LC4', titre: 'Brachiation', cible: 'Mémoriser, réaliser et jouer avec les différents éléments de brachiation.' },
       { code: 'LC5', titre: 'Reptation', cible: 'Mémoriser, réaliser et jouer avec les différents éléments de reptation.' },
@@ -290,32 +340,19 @@ const LOCOMOTION: NoeudCompetence[] = [
         titre: "La Reptation, l'agilité du reptile",
         texte: "La reptation, ou déplacement reptilien, implique de se mouvoir au ras du sol sans que le corps ne touche vraiment sa surface. Ce style de mouvement développe une force considérable en poussée et a l'avantage d'entraîner aux mouvements utilisant les bras fléchis. Elle implique un gainage solide, une bonne flexion d'épaule ainsi que le renforcement des pectoraux et des rotateurs internes de l'épaule. La reptation a la particularité de générer, à la manière d'un lézard, un mouvement vertébral ondulatoire sur le plan coronal pour pouvoir avancer. C'est une pratique très exigeante et assez spécifique au Mouvement, popularisée par la méthode Ido Portal.",
       },
-    ],
-  },
-  {
-    id: 'locomotion-environnementale',
-    domaine: 'locomotion',
-    niveau: 4,
-    titre: 'Pratique environnementale',
-    resume: "Utiliser son environnement — arbres, structures, hauteur — comme terrain de jeu.",
-    objectifPedagogique: "Compenser les effets musculosquelettiques des autres secteurs de la locomotion, et développer créativité et adaptation.",
-    groupesOutils: ['HC', 'AB'],
-    objectifs: [],
-    prerequis: [{ domaine: 'locomotion', niveauMin: 3 }],
-    theorie: [
       {
-        titre: 'Jeux en hauteur',
-        texte: "La pratique environnementale englobe des activités comme la brachiation en suspension, l'ascension d'arbres, de roche ou de structure urbaine, l'équilibre et les déplacements sur des surfaces en hauteur — en bref, utiliser sa créativité pour se déplacer à l'aide des éléments de son environnement. Cette pratique est particulièrement bénéfique pour contrecarrer les effets musculosquelettiques des autres secteurs de la locomotion, comme la quadrupédie et la brachiation (enroulement vertébral vers l'avant, flexion de hanches). Elle demande un fort engagement de la chaîne postérieure et constitue l'une des rares occasions de décompresser efficacement les poignets, les épaules et la colonne vertébrale, ou simplement de lutter contre le tassement gravitaire.",
+        titre: 'La pratique environnementale, jeux en hauteur',
+        texte: "La pratique environnementale englobe des activités comme la brachiation en suspension, l'ascension d'arbres, de roche ou de structure urbaine, l'équilibre et les déplacements sur des surfaces en hauteur — en bref, utiliser sa créativité pour se déplacer à l'aide des éléments de son environnement. Elle est particulièrement bénéfique pour contrecarrer les effets musculosquelettiques de la quadrupédie et de la brachiation (enroulement vertébral vers l'avant, flexion de hanches), en demandant un fort engagement de la chaîne postérieure. C'est l'une des rares occasions de décompresser efficacement les poignets, les épaules et la colonne vertébrale, ou simplement de lutter contre le tassement gravitaire.",
       },
     ],
   },
 ];
 
-// --- Branche CONNEXION -------------------------------------------------------
+// --- Branche CONNEXION ---------------------------------------------------------
 
 const CONNEXION: NoeudCompetence[] = [
   {
-    id: 'connexion-dribbles',
+    id: 'connexion-1',
     domaine: 'connexion',
     niveau: 1,
     titre: 'Connexion externe & interne',
@@ -334,7 +371,7 @@ const CONNEXION: NoeudCompetence[] = [
     ],
   },
   {
-    id: 'connexion-jeux-touches-contact',
+    id: 'connexion-2',
     domaine: 'connexion',
     niveau: 2,
     titre: 'Jeux de Touches & de Contact',
@@ -343,7 +380,6 @@ const CONNEXION: NoeudCompetence[] = [
     groupesOutils: ['MI', 'BC'],
     jeuxSuggeres: ['Jeu de Touches', 'Jeu de Contact'],
     objectifs: [],
-    prerequis: [{ domaine: 'connexion', niveauMin: 1 }],
     theorie: [
       {
         titre: 'Le Jeu de Touches',
@@ -356,7 +392,7 @@ const CONNEXION: NoeudCompetence[] = [
     ],
   },
   {
-    id: 'connexion-appuis-perturbation-absorption',
+    id: 'connexion-3',
     domaine: 'connexion',
     niveau: 3,
     titre: "Jeux d'Appuis, de Perturbation et d'Absorption",
@@ -365,7 +401,6 @@ const CONNEXION: NoeudCompetence[] = [
     groupesOutils: ['MI', 'CV'],
     jeuxSuggeres: ["Jeux d'Appuis", 'Jeux de Perturbation', "Jeux d'Absorption"],
     objectifs: [],
-    prerequis: [{ domaine: 'connexion', niveauMin: 2 }],
     theorie: [
       {
         titre: "Le Jeu d'Absorption",
@@ -379,11 +414,11 @@ const CONNEXION: NoeudCompetence[] = [
   },
 ];
 
-// --- Branche FIGURES (point de convergence) ---------------------------------
+// --- Branche FIGURES (point de convergence) -----------------------------------
 
 const FIGURES: NoeudCompetence[] = [
   {
-    id: 'figures-statiques-frog',
+    id: 'figures-1',
     domaine: 'figures',
     niveau: 1,
     titre: 'Frog Stand, première figure statique',
@@ -402,7 +437,7 @@ const FIGURES: NoeudCompetence[] = [
     ],
   },
   {
-    id: 'figures-fermeture-lsit-pont',
+    id: 'figures-2',
     domaine: 'figures',
     niveau: 2,
     titre: 'L-Sit & Pont bas',
@@ -421,7 +456,7 @@ const FIGURES: NoeudCompetence[] = [
     ],
   },
   {
-    id: 'figures-handstand',
+    id: 'figures-3',
     domaine: 'figures',
     niveau: 3,
     titre: 'Handstand & maîtrise du corps inversé',
@@ -445,11 +480,22 @@ export function noeudsDuDomaine(domaine: Domaine): NoeudCompetence[] {
   return ARBRE_COMPETENCES.filter((n) => n.domaine === domaine).sort((a, b) => a.niveau - b.niveau);
 }
 
-// Fonction pure (pas d'accès DB) : un nœud est déverrouillé si le niveau
-// précédent de la même branche est acquis (ou si c'est le niveau 1), ET si
-// tous ses prérequis dans d'autres branches sont acquis. Partagée entre
-// l'action de soumission et la page (qui a déjà chargé la progression).
+// --- Logique de déverrouillage (fonction pure, pas d'accès DB) ------------
+
+export function troncDeverrouille(noeud: NoeudTronc, idsAcquis: Set<string>): boolean {
+  if (noeud.niveau === 1) return true;
+  const precedent = TRONC_ARMURE_ORGANIQUE.find((t) => t.niveau === noeud.niveau - 1);
+  return precedent ? idsAcquis.has(precedent.id) : true;
+}
+
+// Un nœud de branche est déverrouillé si : le tronc du MÊME niveau est
+// acquis (le socle général doit être là), ET le niveau précédent de la
+// MÊME branche est acquis (s'il existe), ET tous les prérequis inter-
+// branches du nœud sont acquis.
 export function estNoeudDeverrouille(noeud: NoeudCompetence, idsAcquis: Set<string>): boolean {
+  const troncCorrespondant = TRONC_ARMURE_ORGANIQUE.find((t) => t.niveau === noeud.niveau);
+  if (troncCorrespondant && !idsAcquis.has(troncCorrespondant.id)) return false;
+
   if (noeud.niveau > 1) {
     const precedent = ARBRE_COMPETENCES.find((n) => n.domaine === noeud.domaine && n.niveau === noeud.niveau - 1);
     if (precedent && !idsAcquis.has(precedent.id)) return false;
