@@ -58,14 +58,9 @@ const GROUPES = [
 // Formules mises en avant (badge). Clé -> libellé du badge.
 const MIS_EN_AVANT: Record<string, string> = {
   illimite: 'Le + populaire',
+  coaching_online: 'Le + demandé',
   mentorship: 'Programme phare',
 };
-
-// Prix à l'unité, pour comparer les formules d'un même groupe.
-function prixParUnite(f: (typeof FORMULES)[string]): string | null {
-  if (!f.quota || f.quota <= 1 || !f.unite) return null;
-  return `≈ ${Math.round(f.prixIndicatif / f.quota)} €/${f.unite}`;
-}
 
 function ligneQuota(f: (typeof FORMULES)[string]): string {
   return f.quota ? `${f.quota} ${f.unite}${f.quota > 1 ? 's' : ''}` : 'Accès illimité';
@@ -74,7 +69,6 @@ function ligneQuota(f: (typeof FORMULES)[string]): string {
 function CarteFormule({ cle, onAcheter }: { cle: string; onAcheter: () => void }) {
   const f = FORMULES[cle];
   const badge = MIS_EN_AVANT[cle];
-  const parUnite = prixParUnite(f);
 
   return (
     <div
@@ -113,9 +107,9 @@ function CarteFormule({ cle, onAcheter }: { cle: string; onAcheter: () => void }
 
       <h3 style={{ fontFamily: POLICE_DISPLAY, letterSpacing: 0.3, fontSize: 21, margin: '0 0 10px' }}>{f.nom}</h3>
 
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 2 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 2 }}>
         <span style={{ fontFamily: POLICE_DISPLAY, fontSize: 38, lineHeight: 1, ...GRADIENT_TEXTE }}>{f.prixIndicatif} €</span>
-        {parUnite && <span style={{ fontSize: 12, color: COULEURS.texteFaible }}>{parUnite}</span>}
+        {cle === 'illimite' && <span style={{ fontSize: 13, color: COULEURS.texteFaible }}>/mois</span>}
       </div>
 
       <div style={{ height: 1, background: COULEURS.bordure, margin: '14px 0' }} />
