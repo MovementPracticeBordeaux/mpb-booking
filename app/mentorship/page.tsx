@@ -3,11 +3,14 @@ import { redirect } from 'next/navigation';
 import { MODULES_MENTORSHIP, STRUCTURE_SEANCE } from '@/lib/mentorship-modules';
 import { outilsDuGroupe, TOOL_GROUP_LABELS } from '@/lib/mentorship-tools';
 import { COULEURS, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
-import { basculerModuleVu } from './actions';
+import { soumettreVideo } from './actions';
 
 export const dynamic = 'force-dynamic';
 
-export default async function MentorshipPage() {
+type StatutSoumission = 'en_attente' | 'acquis' | 'refuse';
+type Progression = { module_id: string; statut: StatutSoumission; video_url: string | null; commentaire_coach: string | null };
+
+export default async function MentorshipPage({ searchParams }: { searchParams: { erreur?: string } }) {
   const supabase = supabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
@@ -31,15 +34,16 @@ export default async function MentorshipPage() {
 
   const { data: progressionData } = await supabase
     .from('mentorship_progression')
-    .select('module_id')
+    .select('module_id, statut, video_url, commentaire_coach')
     .eq('eleve_id', user.id);
-  const modulesAcquis = new Set((progressionData ?? []).map((p) => p.module_id));
+  const progressionParModule = new Map<string, Progression>((progressionData ?? []).map((p: Progression) => [p.module_id, p]));
 
   const modulesTries = [...MODULES_MENTORSHIP].sort((a, b) => a.ordre - b.ordre);
-  const nbAcquis = modulesTries.filter((m) => modulesAcquis.has(m.id)).length;
+  const nbAcquis = modulesTries.filter((m) => progressionParModule.get(m.id)?.statut === 'acquis').length;
 
   // Une étape est déverrouillée si c'est la première, ou si la précédente est acquise.
-  const estDeverrouille = (index: number) => index === 0 || modulesAcquis.has(modulesTries[index - 1].id);
+  const estDeverrouille = (index: number) =>
+    index === 0 || progressionParModule.get(modulesTries[index - 1].id)?.statut === 'acquis';
 
   return (
     <main style={{ maxWidth: 760, margin: '0 auto', padding: 20 }}>
@@ -47,8 +51,12 @@ export default async function MentorshipPage() {
         PROGRAMME <span style={GRADIENT_TEXTE}>MENTORSHIP</span>
       </h1>
       <p style={{ color: COULEURS.texteFaible, fontSize: 13, marginBottom: 8 }}>
-        {nbAcquis}/{modulesTries.length} étapes acquises — chaque étape se débloque quand la précédente est validée.
+        {nbAcquis}/{modulesTries.length} étapes acquises — chaque étape se débloque quand la précédente est validée par Sylvain.
       </p>
+
+      {searchParams.erreur && (
+        <p style={{ color: '#ff6b6b', fontSize: 13, marginBottom: 12 }}>{searchParams.erreur}</p>
+      )}
 
       {/* Barre de progression */}
       <div style={{ height: 6, borderRadius: 999, background: COULEURS.surface, marginBottom: 28, overflow: 'hidden' }}>
@@ -63,7 +71,8 @@ export default async function MentorshipPage() {
       </div>
 
       {modulesTries.map((m, index) => {
-        const acquis = modulesAcquis.has(m.id);
+        const progression = progressionParModule.get(m.id);
+        const statut = progression?.statut;
         const deverrouille = estDeverrouille(index);
         const outilsParGroupe = m.groupesOutils.map((g) => ({ groupe: g, outils: outilsDuGroupe(g) }));
 
@@ -71,7 +80,7 @@ export default async function MentorshipPage() {
           <section
             key={m.id}
             style={{
-              border: `1px solid ${acquis ? '#4caf7d55' : COULEURS.bordure}`,
+              border: `1px solid ${statut === 'acquis' ? '#4caf7d55' : COULEURS.bordure}`,
               borderRadius: 12,
               padding: 20,
               marginBottom: 16,
@@ -89,26 +98,20 @@ export default async function MentorshipPage() {
                 </h2>
               </div>
 
-              {deverrouille && (
-                <form action={basculerModuleVu}>
-                  <input type="hidden" name="module_id" value={m.id} />
-                  <input type="hidden" name="deja_vu" value={String(acquis)} />
-                  <button
-                    type="submit"
-                    style={{
-                      flexShrink: 0,
-                      fontSize: 12,
-                      padding: '5px 12px',
-                      borderRadius: 999,
-                      border: `1px solid ${acquis ? '#4caf7d' : COULEURS.bordure}`,
-                      background: acquis ? 'rgba(80,200,120,0.15)' : 'transparent',
-                      color: acquis ? '#9ef29e' : COULEURS.texteAtt,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {acquis ? '✓ Acquis' : 'Marquer comme acquis'}
-                  </button>
-                </form>
+              {statut === 'acquis' && (
+                <span style={{ flexShrink: 0, fontSize: 12, padding: '5px 12px', borderRadius: 999, border: '1px solid #4caf7d', background: 'rgba(80,200,120,0.15)', color: '#9ef29e' }}>
+                  ✓ Acquis
+                </span>
+              )}
+              {statut === 'en_attente' && (
+                <span style={{ flexShrink: 0, fontSize: 12, padding: '5px 12px', borderRadius: 999, border: `1px solid ${COULEURS.bordure}`, color: COULEURS.texteAtt }}>
+                  En attente de validation
+                </span>
+              )}
+              {statut === 'refuse' && (
+                <span style={{ flexShrink: 0, fontSize: 12, padding: '5px 12px', borderRadius: 999, border: '1px solid #ff6b6b', background: 'rgba(255,107,107,0.1)', color: '#ff6b6b' }}>
+                  À retravailler
+                </span>
               )}
             </div>
 
@@ -189,6 +192,59 @@ export default async function MentorshipPage() {
                     </div>
                   </div>
                 )}
+
+                {/* Zone de soumission / statut de validation */}
+                <div style={{ marginTop: 18, paddingTop: 16, borderTop: `1px solid ${COULEURS.bordure}` }}>
+                  {statut === 'acquis' && (
+                    <p style={{ fontSize: 13, color: '#9ef29e' }}>
+                      Étape validée par Sylvain — bravo, tu peux passer à la suivante.
+                    </p>
+                  )}
+
+                  {statut === 'en_attente' && (
+                    <p style={{ fontSize: 13, color: COULEURS.texteAtt }}>
+                      Ta vidéo a été envoyée, Sylvain la regarde bientôt.{' '}
+                      <a href={progression?.video_url ?? '#'} target="_blank" rel="noopener noreferrer" style={{ color: '#f0a' }}>
+                        Revoir ce que tu as envoyé
+                      </a>
+                    </p>
+                  )}
+
+                  {(statut === undefined || statut === 'refuse') && (
+                    <>
+                      {statut === 'refuse' && progression?.commentaire_coach && (
+                        <p style={{ fontSize: 13, color: '#ff6b6b', marginBottom: 10 }}>
+                          Retour de Sylvain : {progression.commentaire_coach}
+                        </p>
+                      )}
+                      <form action={soumettreVideo} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        <input type="hidden" name="module_id" value={m.id} />
+                        <input type="hidden" name="resoumission" value={String(statut === 'refuse')} />
+                        <input
+                          type="url"
+                          name="video_url"
+                          required
+                          placeholder="Lien de ta vidéo (YouTube non répertorié, Drive...)"
+                          style={{
+                            flexGrow: 1, minWidth: 220, fontSize: 13, padding: '9px 12px',
+                            borderRadius: 8, border: `1px solid ${COULEURS.bordure}`,
+                            background: COULEURS.surface, color: COULEURS.texte,
+                          }}
+                        />
+                        <button
+                          type="submit"
+                          style={{
+                            fontSize: 13, padding: '9px 16px', borderRadius: 999,
+                            border: '1px solid #f0a', background: 'rgba(255,0,170,0.1)',
+                            color: '#f0a', cursor: 'pointer',
+                          }}
+                        >
+                          {statut === 'refuse' ? 'Renvoyer une vidéo' : 'Soumettre pour validation'}
+                        </button>
+                      </form>
+                    </>
+                  )}
+                </div>
               </>
             )}
           </section>

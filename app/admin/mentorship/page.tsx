@@ -1,0 +1,121 @@
+import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
+import { redirect } from 'next/navigation';
+import { MODULES_MENTORSHIP } from '@/lib/mentorship-modules';
+import { COULEURS, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
+import { validerSoumission, refuserSoumission } from './actions';
+
+export const dynamic = 'force-dynamic';
+
+export default async function AdminMentorshipPage({ searchParams }: { searchParams: { erreur?: string } }) {
+  const supabase = supabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/login');
+
+  const { data: profil } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+  if (!profil || profil.role !== 'admin') {
+    return <main style={{ padding: 20 }}>Accès réservé à l'admin.</main>;
+  }
+
+  const admin = supabaseAdmin();
+
+  const { data: soumissions } = await admin
+    .from('mentorship_progression')
+    .select('*, profiles:eleve_id(email, prenom, nom)')
+    .eq('statut', 'en_attente')
+    .order('submitted_at', { ascending: true });
+
+  const moduleParId = Object.fromEntries(MODULES_MENTORSHIP.map((m) => [m.id, m]));
+
+  return (
+    <main style={{ maxWidth: 720, margin: '0 auto', padding: 20 }}>
+      <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 'clamp(28px, 7vw, 40px)', letterSpacing: 0.5, marginBottom: 4 }}>
+        VALIDATIONS <span style={GRADIENT_TEXTE}>MENTORSHIP</span>
+      </h1>
+      <p style={{ color: COULEURS.texteFaible, fontSize: 13, marginBottom: 24 }}>
+        {(soumissions ?? []).length} soumission{(soumissions ?? []).length > 1 ? 's' : ''} en attente de validation.
+      </p>
+
+      {searchParams.erreur && (
+        <p style={{ color: '#ff6b6b', fontSize: 13, marginBottom: 16 }}>{searchParams.erreur}</p>
+      )}
+
+      {(soumissions ?? []).length === 0 ? (
+        <p style={{ color: COULEURS.texteAtt }}>Aucune soumission en attente pour le moment.</p>
+      ) : (
+        (soumissions ?? []).map((s: any) => {
+          const module = moduleParId[s.module_id];
+          const eleve = s.profiles;
+          return (
+            <section
+              key={`${s.eleve_id}-${s.module_id}`}
+              style={{ border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: 20, marginBottom: 16 }}
+            >
+              <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: 0 }}>
+                {eleve?.prenom ?? ''} {eleve?.nom ?? eleve?.email ?? s.eleve_id} — étape {module?.ordre}/{MODULES_MENTORSHIP.length}
+              </p>
+              <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 22, letterSpacing: 0.3, margin: '2px 0 10px' }}>
+                {module?.titre ?? s.module_id}
+              </h2>
+
+              <a
+                href={s.video_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: 14, color: '#f0a', textDecoration: 'underline', wordBreak: 'break-all' }}
+              >
+                ▶ Voir la vidéo soumise
+              </a>
+
+              <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap' }}>
+                <form action={validerSoumission}>
+                  <input type="hidden" name="eleve_id" value={s.eleve_id} />
+                  <input type="hidden" name="module_id" value={s.module_id} />
+                  <button
+                    type="submit"
+                    style={{
+                      fontSize: 13, padding: '8px 16px', borderRadius: 999,
+                      border: '1px solid #4caf7d', background: 'rgba(80,200,120,0.15)',
+                      color: '#9ef29e', cursor: 'pointer',
+                    }}
+                  >
+                    ✓ Valider
+                  </button>
+                </form>
+
+                <details style={{ flexGrow: 1 }}>
+                  <summary style={{ fontSize: 13, color: COULEURS.texteAtt, cursor: 'pointer' }}>
+                    Refuser (avec commentaire)
+                  </summary>
+                  <form action={refuserSoumission} style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <input type="hidden" name="eleve_id" value={s.eleve_id} />
+                    <input type="hidden" name="module_id" value={s.module_id} />
+                    <input
+                      type="text"
+                      name="commentaire"
+                      placeholder="Ce qu'il faut retravailler..."
+                      style={{
+                        flexGrow: 1, minWidth: 200, fontSize: 13, padding: '8px 12px',
+                        borderRadius: 8, border: `1px solid ${COULEURS.bordure}`,
+                        background: COULEURS.surface, color: COULEURS.texte,
+                      }}
+                    />
+                    <button
+                      type="submit"
+                      style={{
+                        fontSize: 13, padding: '8px 16px', borderRadius: 999,
+                        border: '1px solid #ff6b6b', background: 'rgba(255,107,107,0.1)',
+                        color: '#ff6b6b', cursor: 'pointer',
+                      }}
+                    >
+                      Refuser
+                    </button>
+                  </form>
+                </details>
+              </div>
+            </section>
+          );
+        })
+      )}
+    </main>
+  );
+}

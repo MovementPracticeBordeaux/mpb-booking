@@ -111,9 +111,17 @@ export default async function AdminPage({ searchParams }: { searchParams: { erre
     return { x, y, montant, estWix: mois in REVENUS_MENSUELS_WIX };
   });
 
+  const { count: soumissionsMentorshipEnAttente } = await admin
+    .from('mentorship_progression')
+    .select('*', { count: 'exact', head: true })
+    .eq('statut', 'en_attente');
+
   return (
     <main style={{ maxWidth: 640, margin: '0 auto', padding: 20 }}>
       <h1>Admin - Planning</h1>
+      <a href="/admin/mentorship" style={{ display: 'inline-block', marginBottom: 16, fontSize: 14 }}>
+        📹 Validations Mentorship{soumissionsMentorshipEnAttente ? ` (${soumissionsMentorshipEnAttente})` : ''}
+      </a>
       {searchParams.erreur && (
         <p style={{ background: '#5a1a1a', color: '#ffb4b4', padding: 12, borderRadius: 8 }}>
           ⚠️ {searchParams.erreur}
