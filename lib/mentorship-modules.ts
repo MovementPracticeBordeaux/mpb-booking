@@ -41,6 +41,16 @@ export const DOMAINE_LABELS: Record<Domaine, string> = {
   figures: 'Figures',
 };
 
+// Courte accroche par branche, affichée sous l'icône en haut de chaque
+// colonne de l'arbre — donne un repère immédiat sur ce que couvre la branche.
+export const DOMAINE_ACCROCHES: Record<Domaine, string> = {
+  force: 'Puissance, gainage et contrôle',
+  flexibilite: 'Amplitude, souplesse et relâchement',
+  locomotion: 'Déplacement, flow et créativité',
+  connexion: 'Mobilité, conscience corporelle et contrôle',
+  figures: 'Maîtrise technique et équilibre',
+};
+
 // Palette dérivée du dégradé du site (lib/theme.ts : #FF3B30, #FF8A00,
 // #FF2D78, #8B5CF6) — une couleur par branche, cohérente avec le reste du
 // site plutôt qu'une palette arbitraire.

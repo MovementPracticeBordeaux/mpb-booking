@@ -5,6 +5,7 @@ import {
   ORDRE_DOMAINES,
   DOMAINE_LABELS,
   DOMAINE_COULEURS,
+  DOMAINE_ACCROCHES,
   COULEUR_TRONC,
   Domaine,
   DomaineOuTronc,
@@ -43,8 +44,7 @@ const TRUNK_LEVEL_Y: Record<1 | 2 | 3, number> = { 3: 64, 2: 80, 1: 96 };
 const TRUNK_X = 50;
 const BRANCH_X: Record<Domaine, number> = { connexion: 10, flexibilite: 30, force: 50, figures: 70, locomotion: 90 };
 
-const STATUT_META: Record<Exclude<StatutAffiche, 'unlocked'>, { label: string; fill: string; border: string; dash?: string }> = {
-  locked: { label: 'Verrouillé', fill: 'rgba(255,255,255,0.03)', border: COULEURS.bordure },
+const STATUT_META: Record<Exclude<StatutAffiche, 'unlocked' | 'locked'>, { label: string; fill: string; border: string; dash?: string }> = {
   qcm_reussi: { label: 'QCM validé — vidéo à envoyer', fill: COULEURS.surfaceForte, border: '#FF8A00' },
   en_attente: { label: 'Vidéo envoyée — en attente', fill: COULEURS.surfaceForte, border: '#FFC24B', dash: '3 3' },
   refuse: { label: 'À retravailler', fill: 'rgba(255,107,107,0.12)', border: '#ff6b6b' },
@@ -52,7 +52,7 @@ const STATUT_META: Record<Exclude<StatutAffiche, 'unlocked'>, { label: string; f
 };
 
 function metaPour(statut: StatutAffiche, couleurBranche: string) {
-  if (statut === 'locked') return STATUT_META.locked;
+  if (statut === 'locked') return { label: 'Verrouillé', fill: `${couleurBranche}14`, border: `${couleurBranche}55` };
   if (statut === 'unlocked') return { label: 'Débloqué', fill: 'transparent', border: couleurBranche };
   if (statut === 'acquis') return { label: 'Acquis', fill: couleurBranche, border: couleurBranche };
   return STATUT_META[statut];
@@ -270,6 +270,7 @@ export default function ArbreCompetences({
   }, [troncComplet]);
 
   const noeudSelectionne = selection ? [...tronc, ...branches].find((n) => n.id === selection) ?? null : null;
+  const ORDRE_VISUEL: Domaine[] = ['connexion', 'flexibilite', 'force', 'figures', 'locomotion'];
 
   return (
     <div style={{ fontFamily: POLICE_CORPS }}>
@@ -280,14 +281,20 @@ export default function ArbreCompetences({
 
       <EnTeteXP xpTotal={xpTotal} niveau={niveau} />
 
-      <DefisQuotidiens defis={defisDuJour} defisValidesAujourdhui={defisValidesAujourdhui} />
-
-      {/* Ta progression */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: '16px 18px', marginBottom: 16 }}>
-        <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 15, letterSpacing: 0.3, margin: '0 0 2px', color: COULEURS.texte }}>Ta progression</p>
-        <LigneProgression label="Armure Organique" pourcentage={pourcentageTronc} couleur={COULEUR_TRONC} domaine="tronc" entrees={bilan.filter((b) => b.domaine === 'tronc')} />
-        {ORDRE_DOMAINES.map((d) => (
-          <LigneProgression key={d} label={DOMAINE_LABELS[d]} pourcentage={pourcentageBranche(d)} couleur={DOMAINE_COULEURS[d]} domaine={d} entrees={bilan.filter((b) => b.domaine === d)} />
+      {/* En-têtes de branches — icône, nom, accroche, avant l'arbre lui-même */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 4, maxWidth: 640, marginInline: 'auto', marginBottom: 4 }}>
+        {ORDRE_VISUEL.map((d) => (
+          <div key={d} style={{ textAlign: 'center', padding: '0 2px' }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: '50%', marginInline: 'auto', marginBottom: 6,
+              border: `2px solid ${DOMAINE_COULEURS[d]}`, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: `0 0 10px ${DOMAINE_COULEURS[d]}55`, background: `${DOMAINE_COULEURS[d]}14`,
+            }}>
+              <Pictogramme domaine={d} taille={18} couleur={DOMAINE_COULEURS[d]} />
+            </div>
+            <p style={{ margin: 0, fontFamily: POLICE_DISPLAY, fontSize: 12, letterSpacing: '0.04em', textTransform: 'uppercase', color: DOMAINE_COULEURS[d] }}>{DOMAINE_LABELS[d]}</p>
+            <p style={{ margin: '2px 0 0', fontSize: 10, color: COULEURS.texteFaible, lineHeight: 1.3 }}>{DOMAINE_ACCROCHES[d]}</p>
+          </div>
         ))}
       </div>
 
@@ -300,16 +307,9 @@ export default function ArbreCompetences({
             </linearGradient>
           </defs>
           {lignes.map((l) => (
-            <line key={l.key} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke={l.active ? 'url(#gradient-lignes)' : COULEURS.bordure} strokeWidth={l.active ? 0.9 : 0.5} opacity={l.active ? 0.85 : 1} />
+            <line key={l.key} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke={l.active ? 'url(#gradient-lignes)' : COULEURS.bordure} strokeWidth={l.active ? 0.9 : 0.6} opacity={l.active ? 0.9 : 0.5} />
           ))}
         </svg>
-
-        {/* Étiquettes des branches */}
-        {ORDRE_DOMAINES.map((d) => (
-          <div key={`label-${d}`} style={{ position: 'absolute', left: `${BRANCH_X[d]}%`, top: `${BRANCH_LEVEL_Y[3] - 5}%`, transform: 'translate(-50%, -50%)', fontFamily: POLICE_DISPLAY, fontSize: 11, letterSpacing: '0.05em', textTransform: 'uppercase', color: COULEURS.texteFaible, whiteSpace: 'nowrap' }}>
-            {DOMAINE_LABELS[d]}
-          </div>
-        ))}
 
         {/* Nœuds des branches */}
         {ORDRE_DOMAINES.map((d) =>
@@ -359,6 +359,19 @@ export default function ArbreCompetences({
         </p>
       )}
 
+      {/* Ta progression + Défis quotidiens, côte à côte dès qu'il y a la place */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, marginTop: 24 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: '16px 18px' }}>
+          <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 15, letterSpacing: 0.3, margin: '0 0 2px', color: COULEURS.texte }}>Ta progression</p>
+          <LigneProgression label="Armure Organique" pourcentage={pourcentageTronc} couleur={COULEUR_TRONC} domaine="tronc" entrees={bilan.filter((b) => b.domaine === 'tronc')} />
+          {ORDRE_DOMAINES.map((d) => (
+            <LigneProgression key={d} label={DOMAINE_LABELS[d]} pourcentage={pourcentageBranche(d)} couleur={DOMAINE_COULEURS[d]} domaine={d} entrees={bilan.filter((b) => b.domaine === d)} />
+          ))}
+        </div>
+
+        <DefisQuotidiens defis={defisDuJour} defisValidesAujourdhui={defisValidesAujourdhui} />
+      </div>
+
       {/* Panneau détail nœud */}
       {noeudSelectionne && (
         <PanneauNoeud
@@ -386,23 +399,23 @@ function Noeud({ x, y, statut, couleur, domaine, onClick }: { x: number; y: numb
       aria-label={meta.label}
       style={{
         position: 'absolute', left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)',
-        width: 34, height: 34, borderRadius: '50%',
+        width: 46, height: 46, borderRadius: '50%',
         background: acquis ? `radial-gradient(circle at 35% 30%, ${couleur}, ${couleur}bb)` : meta.fill,
-        border: `2.5px ${meta.dash ? 'dashed' : 'solid'} ${meta.border}`,
+        border: `3px ${meta.dash ? 'dashed' : 'solid'} ${meta.border}`,
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, cursor: 'pointer',
         animation: pulse ? 'pulse-noeud 1.8s ease-in-out infinite' : acquis ? 'glow-acquis 2.4s ease-in-out infinite' : 'none',
         color: couleur,
-        boxShadow: acquis ? `0 0 14px ${couleur}88` : 'none',
+        boxShadow: acquis ? `0 0 16px ${couleur}99` : statut !== 'locked' ? `0 0 8px ${couleur}44` : 'none',
       }}
     >
       {statut === 'locked' ? (
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={COULEURS.texteFaible} strokeWidth={2}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={couleur} strokeWidth={2} opacity={0.75}>
           <rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V7a4 4 0 018 0v4" />
         </svg>
       ) : acquis ? (
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0b0b0d" strokeWidth={3}><path d="M5 13l4 4L19 7" /></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0b0b0d" strokeWidth={3}><path d="M5 13l4 4L19 7" /></svg>
       ) : (
-        <Pictogramme domaine={domaine} taille={13} couleur={statut === 'unlocked' ? couleur : meta.border} />
+        <Pictogramme domaine={domaine} taille={18} couleur={statut === 'unlocked' ? couleur : meta.border} />
       )}
     </button>
   );
@@ -416,8 +429,8 @@ function NoeudTroncPrincipal({ x, y, pourcentage, statut, onClick }: { x: number
   const acquis = statut === 'acquis';
   const pulse = statut === 'en_attente';
   return (
-    <button onClick={onClick} aria-label="Armure Organique — niveau 3" style={{ position: 'absolute', left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)', width: 46, height: 46, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
-      <svg width="46" height="46" viewBox="0 0 40 40" style={{ animation: pulse ? 'pulse-noeud 1.8s ease-in-out infinite' : 'none' }}>
+    <button onClick={onClick} aria-label="Armure Organique — niveau 3" style={{ position: 'absolute', left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)', width: 68, height: 68, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
+      <svg width="68" height="68" viewBox="0 0 40 40" style={{ animation: pulse ? 'pulse-noeud 1.8s ease-in-out infinite' : 'none' }}>
         <circle cx="20" cy="20" r={rayon} fill={acquis ? COULEUR_TRONC : 'rgba(255,255,255,0.04)'} opacity={acquis ? 1 : 1} />
         <circle cx="20" cy="20" r={rayon} fill="none" stroke={COULEURS.bordure} strokeWidth="2.5" />
         <circle
