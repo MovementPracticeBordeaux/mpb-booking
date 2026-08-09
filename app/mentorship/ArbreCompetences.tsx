@@ -38,7 +38,7 @@ type Niveau = { niveau: number; titre: string; xpDansPalier: number; xpProchainP
 // sommet et s'élèvent plus haut encore.
 const BRANCH_LEVEL_Y: Record<1 | 2 | 3, number> = { 3: 8, 2: 27, 1: 46 };
 const JUNCTION_Y = 54;
-const TRUNK_LEVEL_Y: Record<1 | 2 | 3, number> = { 3: 64, 2: 80, 1: 96 };
+const TRUNK_LEVEL_Y: Record<1 | 2 | 3, number> = { 3: 61, 2: 81, 1: 99 };
 const TRUNK_X = 50;
 const BRANCH_X: Record<Domaine, number> = { connexion: 10, flexibilite: 30, force: 50, figures: 70, locomotion: 90 };
 
@@ -104,16 +104,18 @@ function EnTeteXP({ xpTotal, niveau }: { xpTotal: number; niveau: Niveau }) {
 }
 
 // --- Courbe XP dans le temps ------------------------------------------------
+// Aperçu illustratif utilisé tant qu'il n'y a pas encore de vrais points sur
+// plusieurs jours différents — clairement marqué "Exemple" pour ne jamais
+// être confondu avec une vraie progression.
+const COURBE_EXEMPLE: { jour: string; xp: number }[] = [
+  { jour: '01', xp: 30 }, { jour: '03', xp: 100 }, { jour: '04', xp: 145 },
+  { jour: '07', xp: 210 }, { jour: '09', xp: 290 }, { jour: '10', xp: 310 },
+  { jour: '13', xp: 420 }, { jour: '14', xp: 510 },
+];
+
 function CourbeXP({ points }: { points: { jour: string; xp: number }[] }) {
-  if (points.length < 2) {
-    return (
-      <p style={{ fontSize: 13, color: COULEURS.texteFaible, lineHeight: 1.6 }}>
-        Ta courbe apparaîtra ici dès que tu auras gagné des points sur plusieurs jours différents —
-        reviens après ton prochain QCM réussi ou ta prochaine vidéo validée.
-      </p>
-    );
-  }
-  const recents = points.slice(-14);
+  const exemple = points.length < 2;
+  const recents = (exemple ? COURBE_EXEMPLE : points).slice(-14);
   const svgW = 600, svgH = 220, padG = 36, padD = 12, padH = 16, padB = 28;
   const maxXP = Math.max(...recents.map((p) => p.xp));
   const coords = recents.map((p, i) => ({
@@ -124,25 +126,39 @@ function CourbeXP({ points }: { points: { jour: string; xp: number }[] }) {
   const aire = `M ${coords[0].x} ${svgH - padB} ` + coords.map((c) => `L ${c.x} ${c.y}`).join(' ') + ` L ${coords[coords.length - 1].x} ${svgH - padB} Z`;
   const ligne = coords.map((c, i) => `${i === 0 ? 'M' : 'L'} ${c.x} ${c.y}`).join(' ');
   return (
-    <svg viewBox={`0 0 ${svgW} ${svgH}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
-      <defs>
-        <linearGradient id="aire-xp" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#ff00aa" stopOpacity="0.35" /><stop offset="100%" stopColor="#ff00aa" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <line x1={padG} y1={svgH - padB} x2={svgW - padD} y2={svgH - padB} stroke={COULEURS.bordure} strokeWidth={1} />
-      <path d={aire} fill="url(#aire-xp)" />
-      <path d={ligne} fill="none" stroke="#ff00aa" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
-      {coords.map((c, i) => (
-        <g key={i}>
-          <circle cx={c.x} cy={c.y} r={3.5} fill="#ff00aa" />
-          {(i === coords.length - 1 || i === 0) && <text x={c.x} y={c.y - 10} fontSize={12} fill={COULEURS.texte} textAnchor="middle">{c.xp} XP</text>}
-          <text x={c.x} y={svgH - 8} fontSize={10} fill={COULEURS.texteFaible} textAnchor="middle">
-            {new Date(c.jour + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-          </text>
-        </g>
-      ))}
-    </svg>
+    <div style={{ position: 'relative' }}>
+      {exemple && (
+        <span style={{ position: 'absolute', top: 0, right: 0, fontSize: 10, letterSpacing: 0.5, textTransform: 'uppercase', color: COULEURS.texteFaible, border: `1px solid ${COULEURS.bordure}`, borderRadius: 999, padding: '2px 8px' }}>
+          Exemple
+        </span>
+      )}
+      <svg viewBox={`0 0 ${svgW} ${svgH}`} style={{ width: '100%', height: 'auto', display: 'block', opacity: exemple ? 0.55 : 1 }}>
+        <defs>
+          <linearGradient id="aire-xp" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#ff00aa" stopOpacity="0.35" /><stop offset="100%" stopColor="#ff00aa" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <line x1={padG} y1={svgH - padB} x2={svgW - padD} y2={svgH - padB} stroke={COULEURS.bordure} strokeWidth={1} />
+        <path d={aire} fill="url(#aire-xp)" />
+        <path d={ligne} fill="none" stroke="#ff00aa" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" strokeDasharray={exemple ? '6 5' : undefined} />
+        {coords.map((c, i) => (
+          <g key={i}>
+            <circle cx={c.x} cy={c.y} r={3.5} fill="#ff00aa" />
+            {!exemple && (i === coords.length - 1 || i === 0) && <text x={c.x} y={c.y - 10} fontSize={12} fill={COULEURS.texte} textAnchor="middle">{c.xp} XP</text>}
+            {!exemple && (
+              <text x={c.x} y={svgH - 8} fontSize={10} fill={COULEURS.texteFaible} textAnchor="middle">
+                {new Date(c.jour + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+              </text>
+            )}
+          </g>
+        ))}
+      </svg>
+      {exemple && (
+        <p style={{ fontSize: 12, color: COULEURS.texteFaible, lineHeight: 1.6, marginTop: 8 }}>
+          Aperçu à quoi ressemblera ta courbe — la vraie apparaît dès que tu gagnes des points sur plusieurs jours différents (QCM réussi, vidéo validée, entraînement du jour coché).
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -285,14 +301,14 @@ export default function ArbreCompetences({
 
       {onglet === 'arbre' && (
         <>
-          {/* Tes compétences (prend la place disponible) + XP (compact, largeur fixe), comme sur le croquis */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 28 }}>
-            <div style={{ flex: '1 1 260px', background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: '16px 18px' }}>
-              <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 15, letterSpacing: 0.3, margin: '0 0 10px', color: COULEURS.texte }}>Tes compétences</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <LigneProgression label="Armure Organique" pourcentage={pourcentageTronc} couleur={COULEUR_TRONC} domaine="tronc" entrees={bilan.filter((b) => b.domaine === 'tronc')} />
+          {/* Tes compétences (vignette compacte) + XP (compact, largeur fixe), comme sur le croquis */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 28 }}>
+            <div style={{ flex: '0 1 260px', background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: '12px 14px' }}>
+              <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 13, letterSpacing: 0.3, margin: '0 0 8px', color: COULEURS.texte }}>Tes compétences</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <LigneProgression compact label="Armure Organique" pourcentage={pourcentageTronc} couleur={COULEUR_TRONC} domaine="tronc" entrees={bilan.filter((b) => b.domaine === 'tronc')} />
                 {ORDRE_DOMAINES.map((d) => (
-                  <LigneProgression key={d} label={DOMAINE_LABELS[d]} pourcentage={pourcentageBranche(d)} couleur={DOMAINE_COULEURS[d]} domaine={d} entrees={bilan.filter((b) => b.domaine === d)} />
+                  <LigneProgression compact key={d} label={DOMAINE_LABELS[d]} pourcentage={pourcentageBranche(d)} couleur={DOMAINE_COULEURS[d]} domaine={d} entrees={bilan.filter((b) => b.domaine === d)} />
                 ))}
               </div>
             </div>
@@ -368,13 +384,13 @@ export default function ArbreCompetences({
               statut={statutAffiche(tronc.find((n) => n.niveau === 3)!)}
               onClick={() => setSelection(tronc.find((n) => n.niveau === 3)!.id)}
             />
-            <div style={{ position: 'absolute', left: `${TRUNK_X}%`, top: `${TRUNK_LEVEL_Y[3] + 12}%`, transform: 'translate(-50%, -50%)', fontFamily: POLICE_DISPLAY, fontSize: 12, letterSpacing: '0.05em', textTransform: 'uppercase', color: '#ff00aa', whiteSpace: 'nowrap' }}>
-              Armure Organique
-            </div>
           </div>
+          <p style={{ textAlign: 'center', fontFamily: POLICE_DISPLAY, fontSize: 12, letterSpacing: '0.05em', textTransform: 'uppercase', color: '#ff00aa', marginTop: 8 }}>
+            Armure Organique
+          </p>
 
           {!troncComplet && (
-            <p style={{ textAlign: 'center', fontSize: 13, color: COULEURS.texteFaible, marginTop: 16, marginBottom: 8 }}>
+            <p style={{ textAlign: 'center', fontSize: 13, color: COULEURS.texteFaible, marginTop: 4, marginBottom: 8 }}>
               Les branches restent verrouillées tant que l'Armure Organique n'est pas validée en entier (niveau 3).
             </p>
           )}
@@ -533,19 +549,19 @@ export default function ArbreCompetences({
   );
 }
 
-function LigneProgression({ label, pourcentage, couleur, domaine, entrees }: { label: string; pourcentage: number; couleur: string; domaine: DomaineOuTronc; entrees: EntreeBilan[] }) {
+function LigneProgression({ label, pourcentage, couleur, domaine, entrees, compact }: { label: string; pourcentage: number; couleur: string; domaine: DomaineOuTronc; entrees: EntreeBilan[]; compact?: boolean }) {
   const [ouvert, setOuvert] = useState(false);
   return (
-    <div style={{ borderBottom: `1px solid ${COULEURS.bordure}`, paddingBottom: 10 }}>
+    <div style={{ borderBottom: compact ? 'none' : `1px solid ${COULEURS.bordure}`, paddingBottom: compact ? 0 : 10 }}>
       <button onClick={() => setOuvert((o) => !o)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', width: '100%', textAlign: 'left' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={COULEURS.texteFaible} strokeWidth={2.5} style={{ transform: ouvert ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: compact ? 2 : 4 }}>
+          <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke={COULEURS.texteFaible} strokeWidth={3} style={{ transform: ouvert ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }}>
             <path d="M6 9l6 6 6-6" />
           </svg>
-          <span style={{ fontFamily: POLICE_DISPLAY, fontSize: 13, letterSpacing: '0.05em', textTransform: 'uppercase', color: COULEURS.texte, flexGrow: 1 }}>{label}</span>
-          <span style={{ fontSize: 12, color: COULEURS.texteFaible }}>{pourcentage}%</span>
+          <span style={{ fontFamily: POLICE_DISPLAY, fontSize: compact ? 11 : 13, letterSpacing: '0.05em', textTransform: 'uppercase', color: COULEURS.texte, flexGrow: 1 }}>{label}</span>
+          <span style={{ fontSize: compact ? 10 : 12, color: COULEURS.texteFaible }}>{pourcentage}%</span>
         </div>
-        <div style={{ height: 6, borderRadius: 3, background: COULEURS.surfaceForte, overflow: 'hidden', marginLeft: 18 }}>
+        <div style={{ height: compact ? 4 : 6, borderRadius: 3, background: COULEURS.surfaceForte, overflow: 'hidden', marginLeft: 14 }}>
           <div style={{ height: '100%', width: `${pourcentage}%`, background: couleur, borderRadius: 3, transition: 'width 0.4s ease' }} />
         </div>
       </button>
@@ -613,8 +629,8 @@ function NoeudTroncPrincipal({ x, y, pourcentage, statut, onClick }: { x: number
   const locked = statut === 'locked';
   const pulse = statut === 'en_attente';
   return (
-    <button onClick={onClick} aria-label="Armure Organique — niveau 3" style={{ position: 'absolute', left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)', width: 76, height: 76, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
-      <svg width="76" height="76" viewBox="0 0 40 40" style={{ animation: pulse ? 'pulse-noeud 1.8s ease-in-out infinite' : 'none' }}>
+    <button onClick={onClick} aria-label="Armure Organique — niveau 3" style={{ position: 'absolute', left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)', width: 58, height: 58, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
+      <svg width="58" height="58" viewBox="0 0 40 40" style={{ animation: pulse ? 'pulse-noeud 1.8s ease-in-out infinite' : 'none' }}>
         <circle cx="20" cy="20" r={rayon} fill={acquis ? COULEUR_TRONC : locked ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.05)'} />
         <circle cx="20" cy="20" r={rayon} fill="none" stroke={locked ? `${COULEUR_TRONC}55` : COULEURS.bordure} strokeWidth="2.5" strokeDasharray={locked ? '2 2' : undefined} />
         {!locked && (
