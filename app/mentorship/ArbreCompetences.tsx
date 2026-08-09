@@ -38,7 +38,7 @@ type Niveau = { niveau: number; titre: string; xpDansPalier: number; xpProchainP
 // sommet et s'élèvent plus haut encore.
 const BRANCH_LEVEL_Y: Record<1 | 2 | 3, number> = { 3: 8, 2: 27, 1: 46 };
 const JUNCTION_Y = 54;
-const TRUNK_LEVEL_Y: Record<1 | 2 | 3, number> = { 3: 61, 2: 81, 1: 99 };
+const TRUNK_LEVEL_Y: Record<1 | 2 | 3, number> = { 3: 55, 2: 76, 1: 93 };
 const TRUNK_X = 50;
 const BRANCH_X: Record<Domaine, number> = { connexion: 10, flexibilite: 30, force: 50, figures: 70, locomotion: 90 };
 
@@ -200,7 +200,7 @@ function MenuOnglets({ actif, onChange }: { actif: Onglet; onChange: (o: Onglet)
 export default function ArbreCompetences({
   tronc,
   branches,
-  progression,
+  progression: progressionReelle,
   bilan,
   xpTotal,
   niveau,
@@ -223,6 +223,28 @@ export default function ArbreCompetences({
   const [selection, setSelection] = useState<string | null>(null);
   const [reponsesQCM, setReponsesQCM] = useState<Record<string, number>>({});
   const [onglet, setOnglet] = useState<Onglet>('arbre');
+  const [apercu, setApercu] = useState<'reel' | 'tronc-1' | 'tronc-complet' | 'branches-en-cours'>('reel');
+
+  const NOEUD_ACQUIS: Progression = { module_id: '', statut: 'acquis', quiz_reussi: true, quiz_score: 100, video_url: null, commentaire_coach: null };
+
+  // Aperçu (admin uniquement) : simule différents états d'avancement sans
+  // toucher aux vraies données, pour visualiser le rendu à chaque étape.
+  const progression = useMemo(() => {
+    if (apercu === 'reel') return progressionReelle;
+    const m = new Map<string, Progression>();
+    const marquer = (id: string) => m.set(id, { ...NOEUD_ACQUIS, module_id: id });
+    if (apercu === 'tronc-1') {
+      marquer(tronc.find((n) => n.niveau === 1)!.id);
+    } else if (apercu === 'tronc-complet' || apercu === 'branches-en-cours') {
+      tronc.forEach((n) => marquer(n.id));
+      if (apercu === 'branches-en-cours') {
+        branches.filter((n) => n.niveau === 1).forEach((n) => marquer(n.id));
+        branches.filter((n) => n.domaine === 'force' && n.niveau === 2).forEach((n) => marquer(n.id));
+      }
+    }
+    return m;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apercu, progressionReelle, tronc, branches]);
 
   const idsAcquis = new Set(
     [...progression.entries()].filter(([, p]) => p.statut === 'acquis').map(([id]) => id)
@@ -283,7 +305,6 @@ export default function ArbreCompetences({
       segs.push({ x1: BRANCH_X[d], y1: BRANCH_LEVEL_Y[1], x2: BRANCH_X[d], y2: JUNCTION_Y, active: troncComplet, key: `jonction-${d}` });
     });
     segs.push({ x1: BRANCH_X.connexion, y1: JUNCTION_Y, x2: BRANCH_X.locomotion, y2: JUNCTION_Y, active: troncComplet, key: 'barre-jonction' });
-    segs.push({ x1: TRUNK_X, y1: JUNCTION_Y, x2: TRUNK_X, y2: TRUNK_LEVEL_Y[1], active: true, key: 'tronc' });
     return segs;
   }, [troncComplet]);
 
@@ -298,6 +319,31 @@ export default function ArbreCompetences({
       `}</style>
 
       <MenuOnglets actif={onglet} onChange={setOnglet} />
+
+      {estAdmin && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 20, padding: '8px 12px', border: `1px dashed ${COULEURS.bordure}`, borderRadius: 8 }}>
+          <span style={{ fontSize: 11, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 0.5 }}>Aperçu (admin) :</span>
+          {([
+            ['reel', 'Réel'],
+            ['tronc-1', 'Tronc niveau 1'],
+            ['tronc-complet', 'Tronc complet'],
+            ['branches-en-cours', 'Branches en cours'],
+          ] as const).map(([id, label]) => (
+            <button
+              key={id}
+              onClick={() => setApercu(id)}
+              style={{
+                fontSize: 11, padding: '4px 10px', borderRadius: 999, cursor: 'pointer',
+                border: `1px solid ${apercu === id ? '#ff00aa' : COULEURS.bordure}`,
+                background: apercu === id ? 'rgba(255,0,170,0.12)' : 'transparent',
+                color: apercu === id ? '#ff00aa' : COULEURS.texteFaible,
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {onglet === 'arbre' && (
         <>
@@ -345,6 +391,9 @@ export default function ArbreCompetences({
               {lignes.map((l) => (
                 <line key={l.key} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke={l.active ? 'url(#gradient-lignes)' : COULEURS.bordure} strokeWidth={l.active ? 0.9 : 0.6} opacity={l.active ? 0.9 : 0.5} />
               ))}
+              {/* Ligne du tronc — couleur pleine dédiée (pas le gradient partagé),
+                  pour être toujours visible quel que soit l'état des branches */}
+              <line x1={TRUNK_X} y1={JUNCTION_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1]} stroke="#ff00aa" strokeWidth={1.3} opacity={0.9} />
             </svg>
 
             {/* Nœuds des branches */}
