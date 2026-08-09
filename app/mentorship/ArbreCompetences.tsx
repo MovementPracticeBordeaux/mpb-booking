@@ -1,422 +1,432 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
-  ARBRE_COMPETENCES,
-  TRONC_ARMURE_ORGANIQUE,
+  ORDRE_DOMAINES,
   DOMAINE_LABELS,
   DOMAINE_COULEURS,
-  estNoeudDeverrouille,
-  troncDeverrouille,
+  COULEUR_TRONC,
   Domaine,
-  NoeudCompetence,
-  NoeudTronc,
+  DomaineOuTronc,
+  NoeudMentorshipPublic,
 } from '@/lib/mentorship-modules';
-import { outilsDuGroupe, TOOL_GROUP_LABELS } from '@/lib/mentorship-tools';
-import { COULEURS, POLICE_DISPLAY } from '@/lib/theme';
-import { soumettreVideo } from './actions';
+import { COULEURS, POLICE_DISPLAY, POLICE_CORPS } from '@/lib/theme';
+import { soumettreVideo, repondreQCM } from './actions';
 
-type StatutSoumission = 'en_attente' | 'acquis' | 'refuse';
-type Progression = { module_id: string; statut: StatutSoumission; video_url: string | null; commentaire_coach: string | null };
+type Progression = {
+  module_id: string;
+  statut: 'en_attente' | 'acquis' | 'refuse' | null;
+  quiz_reussi: boolean;
+  quiz_score: number | null;
+  video_url: string | null;
+  commentaire_coach: string | null;
+};
+type StatutAffiche = 'locked' | 'unlocked' | 'qcm_reussi' | 'en_attente' | 'acquis' | 'refuse';
+type EntreeBilan = {
+  domaine: string;
+  exercice_ou_theme: string;
+  statut: 'acquis' | 'en_cours' | 'difficulte_recurrente';
+  commentaire: string | null;
+  updated_at: string;
+};
 
-// 6 colonnes : les 5 branches, avec le TRONC au centre (index 3) — pour que
-// chaque ligne (= un niveau) montre visuellement le socle du tronc portant
-// les branches à ce même niveau.
-const COLONNES: (Domaine | 'tronc')[] = ['force', 'flexibilite', 'locomotion', 'tronc', 'connexion', 'figures'];
-const COL_W = 145;
-const ROW_H = 150;
-const RADIUS = 30;
-const BASE_Y = 500; // ligne du niveau 1
-const SVG_W = COLONNES.length * COL_W;
-const SVG_H = BASE_Y + 90;
-const COULEUR_TRONC = '#4caf7d';
+// Coordonnées en pourcentage (0-100), façon "racine en bas, branches en
+// haut" : le tronc descend jusqu'à la base, les 5 branches partent de son
+// sommet et s'élèvent plus haut encore.
+const BRANCH_LEVEL_Y: Record<1 | 2 | 3, number> = { 3: 8, 2: 27, 1: 46 };
+const JUNCTION_Y = 54;
+const TRUNK_LEVEL_Y: Record<1 | 2 | 3, number> = { 3: 64, 2: 80, 1: 96 };
+const TRUNK_X = 50;
+const BRANCH_X: Record<Domaine, number> = { connexion: 10, flexibilite: 30, force: 50, figures: 70, locomotion: 90 };
 
-function positionColonne(cle: Domaine | 'tronc') {
-  return COLONNES.indexOf(cle) * COL_W + COL_W / 2;
-}
-function positionLigne(niveau: number) {
-  return BASE_Y - (niveau - 1) * ROW_H;
-}
+const STATUT_META: Record<Exclude<StatutAffiche, 'unlocked'>, { label: string; fill: string; border: string; dash?: string }> = {
+  locked: { label: 'Verrouillé', fill: 'rgba(255,255,255,0.03)', border: COULEURS.bordure },
+  qcm_reussi: { label: 'QCM validé — vidéo à envoyer', fill: COULEURS.surfaceForte, border: '#FF8A00' },
+  en_attente: { label: 'Vidéo envoyée — en attente', fill: COULEURS.surfaceForte, border: '#FFC24B', dash: '3 3' },
+  refuse: { label: 'À retravailler', fill: 'rgba(255,107,107,0.12)', border: '#ff6b6b' },
+  acquis: { label: 'Acquis', fill: '', border: '' }, // couleur de branche appliquée dynamiquement
+};
 
-function Avatar({ niveauxAcquis }: { niveauxAcquis: number }) {
-  const couleurPiece = (seuil: number) => (niveauxAcquis >= seuil ? COULEUR_TRONC : 'rgba(255,255,255,0.08)');
-  const traitPiece = (seuil: number) => (niveauxAcquis >= seuil ? COULEUR_TRONC : '#444');
-  return (
-    <svg viewBox="0 0 80 100" style={{ width: 56, height: 70, flexShrink: 0 }}>
-      {/* jambes — niveau 1 */}
-      <rect x={24} y={64} width={12} height={30} rx={5} fill={couleurPiece(1)} stroke={traitPiece(1)} strokeWidth={2} />
-      <rect x={44} y={64} width={12} height={30} rx={5} fill={couleurPiece(1)} stroke={traitPiece(1)} strokeWidth={2} />
-      {/* torse — niveau 2 */}
-      <rect x={20} y={32} width={40} height={34} rx={8} fill={couleurPiece(2)} stroke={traitPiece(2)} strokeWidth={2} />
-      {/* casque/tête — niveau 3 */}
-      <circle cx={40} cy={18} r={16} fill={couleurPiece(3)} stroke={traitPiece(3)} strokeWidth={2} />
-    </svg>
-  );
+function metaPour(statut: StatutAffiche, couleurBranche: string) {
+  if (statut === 'locked') return STATUT_META.locked;
+  if (statut === 'unlocked') return { label: 'Débloqué', fill: 'transparent', border: couleurBranche };
+  if (statut === 'acquis') return { label: 'Acquis', fill: couleurBranche, border: couleurBranche };
+  return STATUT_META[statut];
 }
 
 export default function ArbreCompetences({
+  tronc,
+  branches,
   progression,
+  bilan,
   estAdmin,
 }: {
+  tronc: NoeudMentorshipPublic[];
+  branches: NoeudMentorshipPublic[];
   progression: Map<string, Progression>;
+  bilan: EntreeBilan[];
   estAdmin?: boolean;
 }) {
-  const [selection, setSelection] = useState<string | null>(null);
+  const [selection, setSelection] = useState<{ type: 'noeud' | 'jauge'; id: string } | null>(null);
+  const [reponsesQCM, setReponsesQCM] = useState<Record<string, number>>({});
 
   const idsAcquis = new Set(
     [...progression.entries()].filter(([, p]) => p.statut === 'acquis').map(([id]) => id)
   );
+  const troncComplet = tronc.every((n) => idsAcquis.has(n.id));
 
-  const troncNiveauxAcquis = TRONC_ARMURE_ORGANIQUE.filter((t) => idsAcquis.has(t.id)).length;
-  const nbAcquisTotal = idsAcquis.size;
-  const totalNoeuds = ARBRE_COMPETENCES.length + TRONC_ARMURE_ORGANIQUE.length;
+  function estDeverrouille(noeud: NoeudMentorshipPublic): boolean {
+    if (noeud.domaine === 'tronc') {
+      if (noeud.niveau === 1) return true;
+      const precedent = tronc.find((n) => n.niveau === noeud.niveau - 1);
+      return precedent ? idsAcquis.has(precedent.id) : true;
+    }
+    if (!troncComplet) return false;
+    if (noeud.niveau === 1) return true;
+    const precedent = branches.find((n) => n.domaine === noeud.domaine && n.niveau === noeud.niveau - 1);
+    return precedent ? idsAcquis.has(precedent.id) : true;
+  }
 
-  const noeudTroncSelectionne = selection ? TRONC_ARMURE_ORGANIQUE.find((t) => t.id === selection) ?? null : null;
-  const noeudBrancheSelectionne = selection ? ARBRE_COMPETENCES.find((n) => n.id === selection) ?? null : null;
+  function statutAffiche(noeud: NoeudMentorshipPublic): StatutAffiche {
+    if (!estDeverrouille(noeud)) return 'locked';
+    const prog = progression.get(noeud.id);
+    if (!prog) return 'unlocked';
+    if (prog.statut === 'acquis') return 'acquis';
+    if (prog.statut === 'refuse') return 'refuse';
+    if (prog.statut === 'en_attente') return 'en_attente';
+    if (prog.quiz_reussi) return 'qcm_reussi';
+    return 'unlocked';
+  }
+
+  function pourcentageBranche(branche: DomaineOuTronc) {
+    const noeuds = branche === 'tronc' ? tronc : branches.filter((n) => n.domaine === branche);
+    const acquis = noeuds.filter((n) => idsAcquis.has(n.id)).length;
+    return Math.round((acquis / noeuds.length) * 100);
+  }
+
+  const lignes = useMemo(() => {
+    const segs: { x1: number; y1: number; x2: number; y2: number; active: boolean; key: string }[] = [];
+    ORDRE_DOMAINES.forEach((d) => {
+      segs.push({ x1: BRANCH_X[d], y1: BRANCH_LEVEL_Y[1], x2: BRANCH_X[d], y2: BRANCH_LEVEL_Y[3], active: troncComplet, key: `branche-${d}` });
+      segs.push({ x1: BRANCH_X[d], y1: BRANCH_LEVEL_Y[1], x2: BRANCH_X[d], y2: JUNCTION_Y, active: troncComplet, key: `jonction-${d}` });
+    });
+    segs.push({ x1: BRANCH_X.connexion, y1: JUNCTION_Y, x2: BRANCH_X.locomotion, y2: JUNCTION_Y, active: troncComplet, key: 'barre-jonction' });
+    segs.push({ x1: TRUNK_X, y1: JUNCTION_Y, x2: TRUNK_X, y2: TRUNK_LEVEL_Y[1], active: true, key: 'tronc' });
+    return segs;
+  }, [troncComplet]);
+
+  const noeudSelectionne = selection?.type === 'noeud'
+    ? [...tronc, ...branches].find((n) => n.id === selection.id) ?? null
+    : null;
+  const jaugeSelectionnee = selection?.type === 'jauge' ? (selection.id as DomaineOuTronc) : null;
 
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
-        <Avatar niveauxAcquis={troncNiveauxAcquis} />
-        <div>
-          <p style={{ fontSize: 13, color: COULEURS.texte, margin: 0 }}>
-            Ton armure : {troncNiveauxAcquis}/3 pièces gagnées
-          </p>
-          <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: '2px 0 0' }}>
-            {nbAcquisTotal}/{totalNoeuds} compétences acquises au total — touche un nœud pour voir son contenu.
-          </p>
-        </div>
-      </div>
+    <div style={{ fontFamily: POLICE_CORPS }}>
+      <style>{`@keyframes pulse-noeud { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
 
-      {/* Légende des domaines */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 16 }}>
-        <span style={{ fontSize: 12, color: COULEURS.texteAtt, display: 'flex', alignItems: 'center', gap: 5 }}>
-          <span style={{ width: 9, height: 9, borderRadius: '50%', background: COULEUR_TRONC, display: 'inline-block' }} />
-          Tronc (Armure Organique)
-        </span>
-        {(['force', 'flexibilite', 'locomotion', 'connexion', 'figures'] as Domaine[]).map((d) => (
-          <span key={d} style={{ fontSize: 12, color: COULEURS.texteAtt, display: 'flex', alignItems: 'center', gap: 5 }}>
-            <span style={{ width: 9, height: 9, borderRadius: '50%', background: DOMAINE_COULEURS[d], display: 'inline-block' }} />
-            {DOMAINE_LABELS[d]}
-          </span>
+      {/* Jauges */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: '16px 18px', marginBottom: 24 }}>
+        <Jauge label="Armure Organique (tronc)" pourcentage={pourcentageBranche('tronc')} couleur={COULEUR_TRONC} onClick={() => setSelection({ type: 'jauge', id: 'tronc' })} />
+        {ORDRE_DOMAINES.map((d) => (
+          <Jauge key={d} label={DOMAINE_LABELS[d]} pourcentage={pourcentageBranche(d)} couleur={DOMAINE_COULEURS[d]} onClick={() => setSelection({ type: 'jauge', id: d })} />
         ))}
       </div>
 
-      <div style={{ overflowX: 'auto', marginBottom: 8 }}>
-        <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} style={{ width: '100%', minWidth: 620, height: 'auto', display: 'block' }}>
-          {/* Tronc : ligne verticale continue reliant les 3 niveaux */}
-          <line
-            x1={positionColonne('tronc')} y1={positionLigne(1) + RADIUS}
-            x2={positionColonne('tronc')} y2={positionLigne(3) - RADIUS}
-            stroke={COULEUR_TRONC} strokeWidth={4}
-            opacity={troncNiveauxAcquis >= 2 ? 0.9 : 0.35}
-          />
+      {/* Arbre */}
+      <div style={{ position: 'relative', width: '100%', maxWidth: 640, marginInline: 'auto', aspectRatio: '4 / 5' }}>
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
+          {lignes.map((l) => (
+            <line key={l.key} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke={l.active ? COULEUR_TRONC : COULEURS.bordure} strokeWidth={0.5} />
+          ))}
+        </svg>
 
-          {/* Tronc niveau N -> chaque branche niveau N (le socle porte les branches) */}
-          {[1, 2, 3].map((niveau) =>
-            (['force', 'flexibilite', 'locomotion', 'connexion', 'figures'] as Domaine[]).map((d) => {
-              const troncAcquis = idsAcquis.has(TRONC_ARMURE_ORGANIQUE.find((t) => t.niveau === niveau)?.id ?? '');
-              return (
-                <line
-                  key={`tronc-${niveau}-${d}`}
-                  x1={positionColonne('tronc')} y1={positionLigne(niveau)}
-                  x2={positionColonne(d)} y2={positionLigne(niveau)}
-                  stroke={COULEUR_TRONC}
-                  strokeWidth={1.5}
-                  opacity={troncAcquis ? 0.35 : 0.15}
-                />
-              );
-            })
-          )}
+        {/* Étiquettes des branches */}
+        {ORDRE_DOMAINES.map((d) => (
+          <div key={`label-${d}`} style={{ position: 'absolute', left: `${BRANCH_X[d]}%`, top: `${BRANCH_LEVEL_Y[3] - 5}%`, transform: 'translate(-50%, -50%)', fontFamily: POLICE_DISPLAY, fontSize: 11, letterSpacing: '0.05em', textTransform: 'uppercase', color: COULEURS.texteFaible, whiteSpace: 'nowrap' }}>
+            {DOMAINE_LABELS[d]}
+          </div>
+        ))}
 
-          {/* Lignes verticales entre niveaux d'une même branche */}
-          {ARBRE_COMPETENCES.filter((n) => n.niveau > 1).map((n) => {
-            const precedent = ARBRE_COMPETENCES.find((p) => p.domaine === n.domaine && p.niveau === n.niveau - 1);
-            if (!precedent) return null;
-            const x = positionColonne(n.domaine);
-            const chemin = idsAcquis.has(precedent.id) && idsAcquis.has(n.id);
+        {/* Nœuds des branches */}
+        {ORDRE_DOMAINES.map((d) =>
+          ([1, 2, 3] as const).map((lvl) => {
+            const noeud = branches.find((n) => n.domaine === d && n.niveau === lvl);
+            if (!noeud) return null;
             return (
-              <line
-                key={`branche-${n.id}`}
-                x1={x} y1={positionLigne(precedent.niveau)}
-                x2={x} y2={positionLigne(n.niveau)}
-                stroke={DOMAINE_COULEURS[n.domaine]}
-                strokeWidth={chemin ? 3 : 2}
-                opacity={chemin ? 0.9 : 0.4}
+              <NoeudRond
+                key={noeud.id}
+                x={BRANCH_X[d]} y={BRANCH_LEVEL_Y[lvl]}
+                statut={statutAffiche(noeud)}
+                couleur={DOMAINE_COULEURS[d]}
+                onClick={() => setSelection({ type: 'noeud', id: noeud.id })}
               />
             );
-          })}
+          })
+        )}
 
-          {/* Lignes en pointillés pour les prérequis inter-branches (convergences) */}
-          {ARBRE_COMPETENCES.flatMap((n) =>
-            (n.prerequis ?? []).flatMap((prereq) => {
-              const sources = ARBRE_COMPETENCES.filter((s) => s.domaine === prereq.domaine && s.niveau === prereq.niveauMin);
-              return sources.map((s) => (
-                <line
-                  key={`prereq-${n.id}-${s.id}`}
-                  x1={positionColonne(s.domaine)} y1={positionLigne(s.niveau)}
-                  x2={positionColonne(n.domaine)} y2={positionLigne(n.niveau)}
-                  stroke={DOMAINE_COULEURS[s.domaine]}
-                  strokeWidth={1.5}
-                  strokeDasharray="3 4"
-                  opacity={0.4}
-                />
-              ));
-            })
-          )}
-
-          {/* Nœuds du tronc */}
-          {TRONC_ARMURE_ORGANIQUE.map((t) => {
-            const x = positionColonne('tronc');
-            const y = positionLigne(t.niveau);
-            const deverrouille = troncDeverrouille(t, idsAcquis);
-            const statut = progression.get(t.id)?.statut;
-            const estSelectionne = selection === t.id;
-            let fill = 'rgba(255,255,255,0.06)';
-            let strokeDasharray: string | undefined;
-            if (deverrouille) {
-              if (statut === 'acquis') fill = COULEUR_TRONC;
-              else if (statut === 'en_attente') { fill = 'rgba(255,255,255,0.1)'; strokeDasharray = '4 3'; }
-              else if (statut === 'refuse') fill = 'rgba(255,107,107,0.15)';
-            }
-            const estFrontiere = deverrouille && statut !== 'acquis';
-            return (
-              <g key={t.id} onClick={() => setSelection(t.id)} style={{ cursor: 'pointer' }}>
-                {estFrontiere && <circle cx={x} cy={y} r={RADIUS + 6} fill="none" stroke={COULEUR_TRONC} strokeWidth={1.5} strokeDasharray="2 3" opacity={0.6} />}
-                <circle cx={x} cy={y} r={RADIUS} fill={fill} stroke={statut === 'refuse' ? '#ff6b6b' : COULEUR_TRONC} strokeWidth={estSelectionne ? 3.5 : 2.5} strokeDasharray={strokeDasharray} opacity={deverrouille ? 1 : 0.45} />
-                {statut === 'acquis' && <text x={x} y={y + 5} textAnchor="middle" fontSize={16} fill="#04140a">✓</text>}
-                {!deverrouille && <text x={x} y={y + 5} textAnchor="middle" fontSize={13}>🔒</text>}
-                <text x={x} y={y + RADIUS + 16} textAnchor="middle" fontSize={10.5} fill={COULEURS.texteAtt}>Niveau {t.niveau}</text>
-              </g>
-            );
-          })}
-
-          {/* Nœuds de compétence des branches */}
-          {ARBRE_COMPETENCES.map((n) => {
-            const x = positionColonne(n.domaine);
-            const y = positionLigne(n.niveau);
-            const deverrouille = estNoeudDeverrouille(n, idsAcquis);
-            const statut = progression.get(n.id)?.statut;
-            const couleur = DOMAINE_COULEURS[n.domaine];
-            const estSelectionne = selection === n.id;
-
-            let fill = 'rgba(255,255,255,0.06)';
-            let stroke = '#333';
-            let strokeDasharray: string | undefined;
-            if (deverrouille) {
-              stroke = couleur;
-              if (statut === 'acquis') fill = couleur;
-              else if (statut === 'en_attente') { fill = 'rgba(255,255,255,0.08)'; strokeDasharray = '4 3'; }
-              else if (statut === 'refuse') { stroke = '#ff6b6b'; fill = 'rgba(255,107,107,0.12)'; }
-            }
-            if (estSelectionne) stroke = '#fff';
-            const estFrontiere = deverrouille && statut !== 'acquis';
-
-            return (
-              <g key={n.id} onClick={() => setSelection(n.id)} style={{ cursor: 'pointer' }}>
-                {estFrontiere && <circle cx={x} cy={y} r={RADIUS + 6} fill="none" stroke={couleur} strokeWidth={1.5} strokeDasharray="2 3" opacity={0.6} />}
-                <circle cx={x} cy={y} r={RADIUS} fill={fill} stroke={stroke} strokeWidth={estSelectionne ? 3 : 2} strokeDasharray={strokeDasharray} opacity={deverrouille ? 1 : 0.45} />
-                {statut === 'acquis' && <text x={x} y={y + 5} textAnchor="middle" fontSize={16} fill="#04140a">✓</text>}
-                {!deverrouille && <text x={x} y={y + 5} textAnchor="middle" fontSize={13}>🔒</text>}
-                <text x={x} y={y + RADIUS + 16} textAnchor="middle" fontSize={10.5} fill={COULEURS.texteAtt}>
-                  {n.titre.length > 18 ? n.titre.slice(0, 16) + '…' : n.titre}
-                </text>
-              </g>
-            );
-          })}
-        </svg>
+        {/* Nœuds du tronc */}
+        {tronc.map((noeud) => (
+          <NoeudTronc
+            key={noeud.id}
+            x={TRUNK_X} y={TRUNK_LEVEL_Y[noeud.niveau]}
+            statut={statutAffiche(noeud)}
+            onClick={() => setSelection({ type: 'noeud', id: noeud.id })}
+          />
+        ))}
+        <div style={{ position: 'absolute', left: `${TRUNK_X}%`, top: `${TRUNK_LEVEL_Y[1] + 6}%`, transform: 'translate(-50%, -50%)', fontFamily: POLICE_DISPLAY, fontSize: 11, letterSpacing: '0.05em', textTransform: 'uppercase', color: COULEURS.texteFaible, whiteSpace: 'nowrap' }}>
+          Armure Organique
+        </div>
       </div>
 
-      {/* Panneau de détail d'un nœud du tronc */}
-      {noeudTroncSelectionne && (() => {
-        const t = noeudTroncSelectionne;
-        const deverrouille = troncDeverrouille(t, idsAcquis);
-        const prog = progression.get(t.id);
-        const statut = prog?.statut;
-        const outilsParGroupe = t.groupesOutils.map((g) => ({ groupe: g, outils: outilsDuGroupe(g) }));
+      {!troncComplet && (
+        <p style={{ textAlign: 'center', fontSize: 13, color: COULEURS.texteFaible, marginTop: 12 }}>
+          Les branches restent verrouillées tant que l'Armure Organique n'est pas validée en entier (niveau 3).
+        </p>
+      )}
 
-        return (
-          <section style={{ border: `1px solid ${COULEUR_TRONC}55`, borderRadius: 12, padding: 20, marginTop: 16 }}>
-            <span style={{ fontSize: 11, color: COULEUR_TRONC, letterSpacing: 1, fontWeight: 600 }}>TRONC · NIVEAU {t.niveau}</span>
-            <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 22, letterSpacing: 0.3, margin: '2px 0 4px' }}>{t.titre}</h2>
+      {/* Panneau détail nœud */}
+      {noeudSelectionne && (
+        <PanneauNoeud
+          noeud={noeudSelectionne}
+          statut={statutAffiche(noeudSelectionne)}
+          progression={progression.get(noeudSelectionne.id)}
+          couleur={noeudSelectionne.domaine === 'tronc' ? COULEUR_TRONC : DOMAINE_COULEURS[noeudSelectionne.domaine as Domaine]}
+          reponsesQCM={reponsesQCM}
+          setReponsesQCM={setReponsesQCM}
+          estAdmin={estAdmin}
+          onFermer={() => setSelection(null)}
+        />
+      )}
 
-            {!deverrouille ? (
-              <p style={{ color: COULEURS.texteFaible, fontSize: 13, marginTop: 8 }}>🔒 Termine le niveau précédent du tronc pour débloquer celui-ci.</p>
-            ) : (
-              <>
-                <p style={{ color: COULEURS.texteAtt, fontSize: 14, lineHeight: 1.6, marginTop: 8 }}>{t.resume}</p>
-                <p style={{ color: COULEURS.texteFaible, fontSize: 13, fontStyle: 'italic', marginTop: 4 }}>Objectif : {t.objectifPedagogique}</p>
+      {/* Panneau bilan (jauge) */}
+      {jaugeSelectionnee && (
+        <PanneauBilan
+          branche={jaugeSelectionnee}
+          entrees={bilan.filter((b) => b.domaine === jaugeSelectionnee)}
+          couleur={jaugeSelectionnee === 'tronc' ? COULEUR_TRONC : DOMAINE_COULEURS[jaugeSelectionnee as Domaine]}
+          onFermer={() => setSelection(null)}
+        />
+      )}
+    </div>
+  );
+}
 
-                {t.theorie.map((th) => (
-                  <div key={th.titre} style={{ marginTop: 14, borderLeft: `2px solid ${COULEUR_TRONC}`, paddingLeft: 14 }}>
-                    <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>{th.titre}</p>
-                    <p style={{ fontSize: 13, color: COULEURS.texteAtt, lineHeight: 1.7, margin: '4px 0 0' }}>{th.texte}</p>
-                  </div>
-                ))}
+function Jauge({ label, pourcentage, couleur, onClick }: { label: string; pourcentage: number; couleur: string; onClick: () => void }) {
+  return (
+    <button onClick={onClick} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', width: '100%', textAlign: 'left' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+        <span style={{ fontFamily: POLICE_DISPLAY, fontSize: 13, letterSpacing: '0.05em', textTransform: 'uppercase', color: COULEURS.texte }}>{label}</span>
+        <span style={{ fontSize: 12, color: COULEURS.texteFaible }}>{pourcentage}%</span>
+      </div>
+      <div style={{ height: 6, borderRadius: 3, background: COULEURS.surfaceForte, overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${pourcentage}%`, background: couleur, borderRadius: 3, transition: 'width 0.4s ease' }} />
+      </div>
+    </button>
+  );
+}
 
-                <details style={{ marginTop: 16 }}>
-                  <summary style={{ fontSize: 13, color: '#f0a', cursor: 'pointer' }}>
-                    Voir les outils recommandés ({outilsParGroupe.reduce((s, g) => s + g.outils.length, 0)})
-                  </summary>
-                  {outilsParGroupe.map(({ groupe, outils }) => (
-                    <div key={groupe} style={{ marginTop: 10 }}>
-                      <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 4 }}>{TOOL_GROUP_LABELS[groupe]}</p>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                        {outils.map((outil) => (
-                          <a key={outil.code} href={`https://www.youtube.com/watch?v=${outil.videoYoutubeId}`} target="_blank" rel="noopener noreferrer"
-                            style={{ fontSize: 12, color: COULEURS.texteAtt, border: `1px solid ${COULEURS.bordure}`, borderRadius: 999, padding: '4px 10px', textDecoration: 'none' }}>
-                            ▶ {outil.nom}
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </details>
+function NoeudRond({ x, y, statut, couleur, onClick }: { x: number; y: number; statut: string; couleur: string; onClick: () => void }) {
+  const meta = metaPour(statut as any, couleur);
+  const pulse = statut === 'en_attente';
+  return (
+    <button
+      onClick={onClick}
+      aria-label={meta.label}
+      style={{
+        position: 'absolute', left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)',
+        width: 26, height: 26, borderRadius: '50%',
+        background: meta.fill, border: `2.5px ${meta.dash ? 'dashed' : 'solid'} ${meta.border}`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, cursor: 'pointer',
+        animation: pulse ? 'pulse-noeud 1.8s ease-in-out infinite' : 'none',
+        boxShadow: statut === 'acquis' ? `0 0 10px ${couleur}66` : 'none',
+      }}
+    >
+      {statut === 'acquis' && <span style={{ color: '#0b0b0d', fontSize: 13, lineHeight: 1 }}>✓</span>}
+      {statut === 'qcm_reussi' && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#FF8A00' }} />}
+      {statut === 'locked' && <span style={{ fontSize: 10 }}>🔒</span>}
+    </button>
+  );
+}
 
-                {!estAdmin && (
-                  <div style={{ marginTop: 18, paddingTop: 16, borderTop: `1px solid ${COULEURS.bordure}` }}>
-                    {statut === 'acquis' && <p style={{ fontSize: 13, color: '#9ef29e' }}>Niveau validé par Sylvain — la suite est débloquée.</p>}
-                    {statut === 'en_attente' && (
-                      <p style={{ fontSize: 13, color: COULEURS.texteAtt }}>
-                        Ta vidéo a été envoyée, Sylvain la regarde bientôt.{' '}
-                        <a href={prog?.video_url ?? '#'} target="_blank" rel="noopener noreferrer" style={{ color: '#f0a' }}>Revoir ce que tu as envoyé</a>
-                      </p>
-                    )}
-                    {(statut === undefined || statut === 'refuse') && (
-                      <>
-                        {statut === 'refuse' && prog?.commentaire_coach && (
-                          <p style={{ fontSize: 13, color: '#ff6b6b', marginBottom: 10 }}>Retour de Sylvain : {prog.commentaire_coach}</p>
-                        )}
-                        <form action={soumettreVideo} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                          <input type="hidden" name="noeud_id" value={t.id} />
-                          <input type="hidden" name="resoumission" value={String(statut === 'refuse')} />
-                          <input type="url" name="video_url" required placeholder="Lien de ta vidéo (YouTube non répertorié, Drive...)"
-                            style={{ flexGrow: 1, minWidth: 220, fontSize: 13, padding: '9px 12px', borderRadius: 8, border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surface, color: COULEURS.texte }} />
-                          <button type="submit" style={{ fontSize: 13, padding: '9px 16px', borderRadius: 999, border: '1px solid #f0a', background: 'rgba(255,0,170,0.1)', color: '#f0a', cursor: 'pointer' }}>
-                            {statut === 'refuse' ? 'Renvoyer une vidéo' : 'Soumettre pour validation'}
-                          </button>
-                        </form>
-                      </>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
-          </section>
-        );
-      })()}
+function NoeudTronc({ x, y, statut, onClick }: { x: number; y: number; statut: string; onClick: () => void }) {
+  const meta = metaPour(statut as any, COULEUR_TRONC);
+  const pulse = statut === 'en_attente';
+  return (
+    <button
+      onClick={onClick}
+      aria-label={meta.label}
+      style={{
+        position: 'absolute', left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)',
+        width: 30, height: 30,
+        clipPath: 'polygon(50% 0%, 95% 25%, 95% 75%, 50% 100%, 5% 75%, 5% 25%)',
+        background: meta.fill, border: `2.5px ${meta.dash ? 'dashed' : 'solid'} ${meta.border}`, boxSizing: 'border-box',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, cursor: 'pointer',
+        animation: pulse ? 'pulse-noeud 1.8s ease-in-out infinite' : 'none',
+        boxShadow: statut === 'acquis' ? `0 0 12px ${COULEUR_TRONC}77` : 'none',
+      }}
+    >
+      {statut === 'acquis' && <span style={{ color: '#0b0b0d', fontSize: 14, lineHeight: 1 }}>✓</span>}
+      {statut === 'qcm_reussi' && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#FF8A00' }} />}
+      {statut === 'locked' && <span style={{ fontSize: 10 }}>🔒</span>}
+    </button>
+  );
+}
 
-      {/* Panneau de détail d'un nœud de branche */}
-      {noeudBrancheSelectionne && (() => {
-        const n = noeudBrancheSelectionne;
-        const deverrouille = estNoeudDeverrouille(n, idsAcquis);
-        const prog = progression.get(n.id);
-        const statut = prog?.statut;
-        const couleur = DOMAINE_COULEURS[n.domaine];
-        const outilsParGroupe = n.groupesOutils.map((g) => ({ groupe: g, outils: outilsDuGroupe(g) }));
+function FeuilleModale({ onFermer, children }: { onFermer: () => void; children: React.ReactNode }) {
+  return (
+    <div onClick={onFermer} style={{ position: 'fixed', inset: 0, background: '#00000088', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 30 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: '#161618', border: `1px solid ${COULEURS.bordure}`, borderRadius: '16px 16px 0 0', padding: '20px 22px 32px', width: '100%', maxWidth: 640, maxHeight: '85vh', overflowY: 'auto' }}>
+        <div style={{ width: 36, height: 4, borderRadius: 2, background: COULEURS.bordure, marginInline: 'auto', marginBottom: 16 }} />
+        {children}
+      </div>
+    </div>
+  );
+}
 
-        return (
-          <section style={{ border: `1px solid ${couleur}55`, borderRadius: 12, padding: 20, marginTop: 16 }}>
-            <span style={{ fontSize: 11, color: couleur, letterSpacing: 1, fontWeight: 600 }}>
-              {DOMAINE_LABELS[n.domaine].toUpperCase()} · NIVEAU {n.niveau}
-            </span>
-            <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 22, letterSpacing: 0.3, margin: '2px 0 4px' }}>{n.titre}</h2>
+function PanneauNoeud({
+  noeud, statut, progression, couleur, reponsesQCM, setReponsesQCM, estAdmin, onFermer,
+}: {
+  noeud: NoeudMentorshipPublic;
+  statut: string;
+  progression?: Progression;
+  couleur: string;
+  reponsesQCM: Record<string, number>;
+  setReponsesQCM: (fn: (r: Record<string, number>) => Record<string, number>) => void;
+  estAdmin?: boolean;
+  onFermer: () => void;
+}) {
+  const label = noeud.domaine === 'tronc' ? 'Armure Organique' : DOMAINE_LABELS[noeud.domaine as Domaine];
+  const toutesReponduesQCM = noeud.qcm.every((q) => reponsesQCM[q.id] !== undefined);
 
-            {!deverrouille ? (
-              <p style={{ color: COULEURS.texteFaible, fontSize: 13, marginTop: 8 }}>
-                🔒 Les prérequis de cette compétence (tronc et/ou autres branches) ne sont pas encore tous acquis.
-              </p>
-            ) : (
-              <>
-                <p style={{ color: COULEURS.texteAtt, fontSize: 14, lineHeight: 1.6, marginTop: 8 }}>{n.resume}</p>
-                <p style={{ color: COULEURS.texteFaible, fontSize: 13, fontStyle: 'italic', marginTop: 4 }}>Objectif : {n.objectifPedagogique}</p>
+  return (
+    <FeuilleModale onFermer={onFermer}>
+      <span style={{ fontSize: 11, color: couleur, letterSpacing: 1, fontWeight: 600 }}>{label.toUpperCase()} · NIVEAU {noeud.niveau}</span>
+      <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 22, letterSpacing: 0.3, margin: '2px 0 4px', color: COULEURS.texte }}>{noeud.titre}</h2>
 
-                {n.objectifs.length > 0 && (
-                  <div style={{ marginTop: 16 }}>
-                    {n.objectifs.map((o) => (
-                      <div key={o.code} style={{ background: COULEURS.surface, borderRadius: 8, padding: '10px 14px', marginBottom: 8 }}>
-                        <span style={{ fontSize: 12, color: COULEURS.texteFaible }}>{o.code} — {o.titre}</span>
-                        <p style={{ fontSize: 14, margin: '2px 0 0' }}>{o.cible}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
+      {statut === 'locked' ? (
+        <p style={{ color: COULEURS.texteFaible, fontSize: 13, marginTop: 8 }}>🔒 Ce niveau est encore verrouillé.</p>
+      ) : !noeud.contenuDefini ? (
+        <p style={{ color: COULEURS.texteAtt, fontSize: 13, marginTop: 8, lineHeight: 1.6 }}>
+          Ce niveau n'a pas encore de contenu détaillé — théorie, programmation et QCM restent à définir avec Sylvain.
+        </p>
+      ) : (
+        <>
+          <p style={{ color: COULEURS.texteAtt, fontSize: 14, lineHeight: 1.6, marginTop: 8 }}>{noeud.resume}</p>
+          <p style={{ color: COULEURS.texteFaible, fontSize: 13, fontStyle: 'italic', marginTop: 4 }}>Objectif : {noeud.objectifPedagogique}</p>
 
-                {n.theorie.length > 0 && (
-                  <div style={{ marginTop: 16 }}>
-                    {n.theorie.map((t) => (
-                      <div key={t.titre} style={{ marginBottom: 14, borderLeft: `2px solid ${couleur}`, paddingLeft: 14 }}>
-                        <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>{t.titre}</p>
-                        <p style={{ fontSize: 13, color: COULEURS.texteAtt, lineHeight: 1.7, margin: '4px 0 0' }}>{t.texte}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
+          {noeud.theorie.map((t) => (
+            <div key={t.titre} style={{ marginTop: 14, borderLeft: `2px solid ${couleur}`, paddingLeft: 14 }}>
+              <p style={{ fontSize: 13, fontWeight: 600, margin: 0, color: COULEURS.texte }}>{t.titre}</p>
+              <p style={{ fontSize: 13, color: COULEURS.texteAtt, lineHeight: 1.7, margin: '4px 0 0' }}>{t.texte}</p>
+            </div>
+          ))}
 
-                {outilsParGroupe.length > 0 && (
-                  <details style={{ marginTop: 16 }}>
-                    <summary style={{ fontSize: 13, color: '#f0a', cursor: 'pointer' }}>
-                      Voir les outils recommandés ({outilsParGroupe.reduce((s, g) => s + g.outils.length, 0)})
-                    </summary>
-                    {outilsParGroupe.map(({ groupe, outils }) => (
-                      <div key={groupe} style={{ marginTop: 10 }}>
-                        <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 4 }}>{TOOL_GROUP_LABELS[groupe]}</p>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                          {outils.map((outil) => (
-                            <a key={outil.code} href={`https://www.youtube.com/watch?v=${outil.videoYoutubeId}`} target="_blank" rel="noopener noreferrer"
-                              style={{ fontSize: 12, color: COULEURS.texteAtt, border: `1px solid ${COULEURS.bordure}`, borderRadius: 999, padding: '4px 10px', textDecoration: 'none' }}>
-                              ▶ {outil.nom}
-                            </a>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </details>
-                )}
+          {noeud.programmation.length > 0 && (
+            <div style={{ marginTop: 16 }}>
+              <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>Programmation</p>
+              {noeud.programmation.map((p, i) => (
+                <div key={i} style={{ background: COULEURS.surface, borderRadius: 8, padding: '10px 14px', marginBottom: 8, fontSize: 13, lineHeight: 1.6 }}>
+                  <p style={{ margin: 0 }}><strong>Cible :</strong> {p.cible}</p>
+                  <p style={{ margin: '4px 0 0', color: COULEURS.texteAtt }}><strong>Régression :</strong> {p.regression}</p>
+                  <p style={{ margin: '4px 0 0', color: COULEURS.texteAtt }}><strong>Progression :</strong> {p.progression}</p>
+                </div>
+              ))}
+            </div>
+          )}
 
-                {n.jeuxSuggeres && n.jeuxSuggeres.length > 0 && (
-                  <div style={{ marginTop: 12 }}>
-                    <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 4 }}>Jeux associés</p>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                      {n.jeuxSuggeres.map((jeu) => (
-                        <span key={jeu} style={{ fontSize: 12, color: COULEURS.texteAtt, border: `1px solid ${COULEURS.bordure}`, borderRadius: 999, padding: '4px 10px' }}>🎲 {jeu}</span>
+          {!estAdmin && (
+            <div style={{ marginTop: 18, paddingTop: 16, borderTop: `1px solid ${COULEURS.bordure}` }}>
+              {statut === 'acquis' && <p style={{ fontSize: 13, color: '#9ef29e' }}>Niveau validé par Sylvain — bravo, la suite est débloquée.</p>}
+
+              {statut === 'en_attente' && (
+                <p style={{ fontSize: 13, color: COULEURS.texteAtt }}>
+                  Ta vidéo a été envoyée, Sylvain la regarde bientôt.{' '}
+                  <a href={progression?.video_url ?? '#'} target="_blank" rel="noopener noreferrer" style={{ color: '#f0a' }}>Revoir ce que tu as envoyé</a>
+                </p>
+              )}
+
+              {(statut === 'qcm_reussi' || statut === 'refuse') && (
+                <>
+                  {statut === 'refuse' && progression?.commentaire_coach && (
+                    <p style={{ fontSize: 13, color: '#ff6b6b', marginBottom: 10 }}>Retour de Sylvain : {progression.commentaire_coach}</p>
+                  )}
+                  {statut === 'qcm_reussi' && (
+                    <p style={{ fontSize: 13, color: '#9ef29e', marginBottom: 10 }}>QCM réussi ({progression?.quiz_score}%) — envoie ta vidéo pour validation.</p>
+                  )}
+                  <form action={soumettreVideo} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <input type="hidden" name="noeud_id" value={noeud.id} />
+                    <input type="url" name="video_url" required placeholder="Lien de ta vidéo (YouTube non répertorié, Drive...)"
+                      style={{ flexGrow: 1, minWidth: 200, fontSize: 13, padding: '9px 12px', borderRadius: 8, border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surface, color: COULEURS.texte }} />
+                    <button type="submit" style={{ fontSize: 13, padding: '9px 16px', borderRadius: 999, border: '1px solid #f0a', background: 'rgba(255,0,170,0.1)', color: '#f0a', cursor: 'pointer' }}>
+                      {statut === 'refuse' ? 'Renvoyer une vidéo' : 'Soumettre pour validation'}
+                    </button>
+                  </form>
+                </>
+              )}
+
+              {statut === 'unlocked' && noeud.qcm.length > 0 && (
+                <form action={repondreQCM}>
+                  <input type="hidden" name="noeud_id" value={noeud.id} />
+                  <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    QCM — réussis-le pour débloquer l'envoi de ta vidéo
+                  </p>
+                  {noeud.qcm.map((q, i) => (
+                    <div key={q.id} style={{ marginBottom: 14 }}>
+                      <p style={{ fontSize: 13, marginBottom: 6, color: COULEURS.texte }}>{i + 1}. {q.question}</p>
+                      {q.choix.map((choix, idx) => (
+                        <label key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: COULEURS.texteAtt, marginBottom: 4, cursor: 'pointer' }}>
+                          <input
+                            type="radio" name={`reponse-${q.id}`} value={idx} required
+                            onChange={() => setReponsesQCM((r) => ({ ...r, [q.id]: idx }))}
+                          />
+                          {choix}
+                        </label>
                       ))}
                     </div>
-                  </div>
-                )}
+                  ))}
+                  <button type="submit" style={{ fontSize: 13, padding: '9px 16px', borderRadius: 999, border: '1px solid #f0a', background: 'rgba(255,0,170,0.1)', color: '#f0a', cursor: 'pointer' }}>
+                    Valider mes réponses
+                  </button>
+                </form>
+              )}
 
-                {!estAdmin && (
-                  <div style={{ marginTop: 18, paddingTop: 16, borderTop: `1px solid ${COULEURS.bordure}` }}>
-                    {statut === 'acquis' && <p style={{ fontSize: 13, color: '#9ef29e' }}>Compétence validée par Sylvain — bravo, la suite est débloquée.</p>}
-                    {statut === 'en_attente' && (
-                      <p style={{ fontSize: 13, color: COULEURS.texteAtt }}>
-                        Ta vidéo a été envoyée, Sylvain la regarde bientôt.{' '}
-                        <a href={prog?.video_url ?? '#'} target="_blank" rel="noopener noreferrer" style={{ color: '#f0a' }}>Revoir ce que tu as envoyé</a>
-                      </p>
-                    )}
-                    {(statut === undefined || statut === 'refuse') && (
-                      <>
-                        {statut === 'refuse' && prog?.commentaire_coach && (
-                          <p style={{ fontSize: 13, color: '#ff6b6b', marginBottom: 10 }}>Retour de Sylvain : {prog.commentaire_coach}</p>
-                        )}
-                        <form action={soumettreVideo} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                          <input type="hidden" name="noeud_id" value={n.id} />
-                          <input type="hidden" name="resoumission" value={String(statut === 'refuse')} />
-                          <input type="url" name="video_url" required placeholder="Lien de ta vidéo (YouTube non répertorié, Drive...)"
-                            style={{ flexGrow: 1, minWidth: 220, fontSize: 13, padding: '9px 12px', borderRadius: 8, border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surface, color: COULEURS.texte }} />
-                          <button type="submit" style={{ fontSize: 13, padding: '9px 16px', borderRadius: 999, border: '1px solid #f0a', background: 'rgba(255,0,170,0.1)', color: '#f0a', cursor: 'pointer' }}>
-                            {statut === 'refuse' ? 'Renvoyer une vidéo' : 'Soumettre pour validation'}
-                          </button>
-                        </form>
-                      </>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
-          </section>
-        );
-      })()}
-    </div>
+              {statut === 'unlocked' && noeud.qcm.length === 0 && (
+                <p style={{ fontSize: 13, color: COULEURS.texteFaible }}>Pas encore de QCM pour ce niveau — contenu à venir.</p>
+              )}
+            </div>
+          )}
+        </>
+      )}
+    </FeuilleModale>
+  );
+}
+
+function PanneauBilan({ branche, entrees, couleur, onFermer }: { branche: DomaineOuTronc; entrees: EntreeBilan[]; couleur: string; onFermer: () => void }) {
+  const label = branche === 'tronc' ? 'Armure Organique' : DOMAINE_LABELS[branche as Domaine];
+  const META_STATUT: Record<EntreeBilan['statut'], { label: string; couleur: string }> = {
+    acquis: { label: 'Acquis', couleur: '#9ef29e' },
+    en_cours: { label: 'En cours', couleur: '#FFC24B' },
+    difficulte_recurrente: { label: 'Difficulté récurrente', couleur: '#ff6b6b' },
+  };
+  return (
+    <FeuilleModale onFermer={onFermer}>
+      <span style={{ fontSize: 11, color: couleur, letterSpacing: 1, fontWeight: 600 }}>{label.toUpperCase()}</span>
+      <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 22, letterSpacing: 0.3, margin: '2px 0 12px', color: COULEURS.texte }}>Bilan de compétences</h2>
+      {entrees.length === 0 ? (
+        <p style={{ fontSize: 13, color: COULEURS.texteFaible, lineHeight: 1.6 }}>
+          Sylvain n'a pas encore renseigné de bilan détaillé sur cette branche — ça viendra au fil de vos échanges vidéo.
+        </p>
+      ) : (
+        entrees.map((e, i) => (
+          <div key={i} style={{ borderBottom: `1px solid ${COULEURS.bordure}`, padding: '10px 0' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+              <span style={{ fontSize: 13, color: COULEURS.texte }}>{e.exercice_ou_theme}</span>
+              <span style={{ fontSize: 12, color: META_STATUT[e.statut].couleur, flexShrink: 0 }}>{META_STATUT[e.statut].label}</span>
+            </div>
+            {e.commentaire && <p style={{ fontSize: 12, color: COULEURS.texteAtt, margin: '4px 0 0' }}>{e.commentaire}</p>}
+          </div>
+        ))
+      )}
+    </FeuilleModale>
   );
 }

@@ -1,6 +1,6 @@
 import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
-import { ARBRE_COMPETENCES, TRONC_ARMURE_ORGANIQUE, DOMAINE_LABELS } from '@/lib/mentorship-modules';
+import { BRANCHES, TRONC, DOMAINE_LABELS, Domaine } from '@/lib/mentorship-modules';
 import { COULEURS, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
 import { validerSoumission, refuserSoumission } from './actions';
 
@@ -24,8 +24,8 @@ export default async function AdminMentorshipPage({ searchParams }: { searchPara
     .eq('statut', 'en_attente')
     .order('submitted_at', { ascending: true });
 
-  const noeudParId = Object.fromEntries(ARBRE_COMPETENCES.map((n) => [n.id, { titre: n.titre, sousTitre: `${DOMAINE_LABELS[n.domaine]} niveau ${n.niveau}` }]));
-  const troncParId = Object.fromEntries(TRONC_ARMURE_ORGANIQUE.map((t) => [t.id, { titre: t.titre, sousTitre: `Tronc niveau ${t.niveau}` }]));
+  const noeudParId = Object.fromEntries(BRANCHES.map((n) => [n.id, { titre: n.titre, sousTitre: `${DOMAINE_LABELS[n.domaine as Domaine]} niveau ${n.niveau}` }]));
+  const troncParId = Object.fromEntries(TRONC.map((t) => [t.id, { titre: t.titre, sousTitre: `Tronc niveau ${t.niveau}` }]));
   const infosNoeud: Record<string, { titre: string; sousTitre: string }> = { ...noeudParId, ...troncParId };
 
   return (
@@ -70,9 +70,19 @@ export default async function AdminMentorshipPage({ searchParams }: { searchPara
               </a>
 
               <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap' }}>
-                <form action={validerSoumission}>
+                <form action={validerSoumission} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', flexGrow: 1 }}>
                   <input type="hidden" name="eleve_id" value={s.eleve_id} />
                   <input type="hidden" name="module_id" value={s.module_id} />
+                  <input
+                    type="text"
+                    name="theme"
+                    placeholder="Thème observé (optionnel, pour le bilan de l'élève)"
+                    style={{
+                      flexGrow: 1, minWidth: 200, fontSize: 13, padding: '8px 12px',
+                      borderRadius: 8, border: `1px solid ${COULEURS.bordure}`,
+                      background: COULEURS.surface, color: COULEURS.texte,
+                    }}
+                  />
                   <button
                     type="submit"
                     style={{
@@ -85,13 +95,23 @@ export default async function AdminMentorshipPage({ searchParams }: { searchPara
                   </button>
                 </form>
 
-                <details style={{ flexGrow: 1 }}>
+                <details style={{ flexGrow: 1, width: '100%' }}>
                   <summary style={{ fontSize: 13, color: COULEURS.texteAtt, cursor: 'pointer' }}>
                     Refuser (avec commentaire)
                   </summary>
                   <form action={refuserSoumission} style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <input type="hidden" name="eleve_id" value={s.eleve_id} />
                     <input type="hidden" name="module_id" value={s.module_id} />
+                    <input
+                      type="text"
+                      name="theme"
+                      placeholder="Thème qui coince (optionnel)"
+                      style={{
+                        flexGrow: 1, minWidth: 160, fontSize: 13, padding: '8px 12px',
+                        borderRadius: 8, border: `1px solid ${COULEURS.bordure}`,
+                        background: COULEURS.surface, color: COULEURS.texte,
+                      }}
+                    />
                     <input
                       type="text"
                       name="commentaire"
