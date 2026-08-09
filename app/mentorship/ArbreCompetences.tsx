@@ -146,12 +146,13 @@ function CourbeXP({ points }: { points: { jour: string; xp: number }[] }) {
   );
 }
 
-// --- Petit menu d'onglets ----------------------------------------------------
-type Onglet = 'arbre' | 'progression' | 'defis' | 'seances';
+// --- Petit menu d'onglets — pour du contenu qui n'est PAS déjà sur le
+// dashboard (le dashboard lui-même reste tout sur un seul écran) ----------
+type Onglet = 'arbre' | 'theorie' | 'validation' | 'seances';
 const ONGLETS: { id: Onglet; label: string; icone: (c: string) => React.ReactNode }[] = [
-  { id: 'arbre', label: 'Arbre', icone: (c) => <path d="M12 2l3 6h-2l3 6h-2l3 6H7l3-6H8l3-6H9l3-6z" stroke={c} strokeWidth={1.6} fill="none" strokeLinejoin="round" /> },
-  { id: 'progression', label: 'Progression', icone: (c) => <path d="M4 19V9m6 10V5m6 14v-7m6 7V3" stroke={c} strokeWidth={2} fill="none" strokeLinecap="round" /> },
-  { id: 'defis', label: 'Entraînement', icone: (c) => <><rect x="4" y="4" width="16" height="16" rx="2" stroke={c} strokeWidth={2} fill="none" /><path d="M8 12l2.5 2.5L16 9" stroke={c} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" /></> },
+  { id: 'arbre', label: 'Tableau de bord', icone: (c) => <path d="M12 2l3 6h-2l3 6h-2l3 6H7l3-6H8l3-6H9l3-6z" stroke={c} strokeWidth={1.6} fill="none" strokeLinejoin="round" /> },
+  { id: 'theorie', label: 'Théorie', icone: (c) => <><path d="M4 5a2 2 0 012-2h9v18H6a2 2 0 01-2-2V5z" stroke={c} strokeWidth={2} fill="none" /><path d="M9 8h6M9 12h6" stroke={c} strokeWidth={1.6} strokeLinecap="round" /></> },
+  { id: 'validation', label: 'Validation', icone: (c) => <><rect x="3" y="6" width="18" height="13" rx="2" stroke={c} strokeWidth={2} fill="none" /><path d="M3 8l9 6 9-6" stroke={c} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" /></> },
   { id: 'seances', label: 'Séances', icone: (c) => <><rect x="4" y="5" width="16" height="15" rx="2" stroke={c} strokeWidth={2} fill="none" /><path d="M4 9h16M8 3v4M16 3v4" stroke={c} strokeWidth={2} strokeLinecap="round" /></> },
 ];
 
@@ -284,9 +285,9 @@ export default function ArbreCompetences({
 
       {onglet === 'arbre' && (
         <>
-          {/* Tes compétences (compact) + XP, côte à côte comme sur le croquis */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 28 }}>
-            <div style={{ background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: '16px 18px' }}>
+          {/* Tes compétences (prend la place disponible) + XP (compact, largeur fixe), comme sur le croquis */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 28 }}>
+            <div style={{ flex: '1 1 260px', background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: '16px 18px' }}>
               <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 15, letterSpacing: 0.3, margin: '0 0 10px', color: COULEURS.texte }}>Tes compétences</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <LigneProgression label="Armure Organique" pourcentage={pourcentageTronc} couleur={COULEUR_TRONC} domaine="tronc" entrees={bilan.filter((b) => b.domaine === 'tronc')} />
@@ -295,7 +296,9 @@ export default function ArbreCompetences({
                 ))}
               </div>
             </div>
-            <EnTeteXP xpTotal={xpTotal} niveau={niveau} />
+            <div style={{ flex: '0 1 190px' }}>
+              <EnTeteXP xpTotal={xpTotal} niveau={niveau} />
+            </div>
           </div>
 
           {/* En-têtes de branches — icône, nom, accroche, avant l'arbre lui-même */}
@@ -371,60 +374,133 @@ export default function ArbreCompetences({
           </div>
 
           {!troncComplet && (
-            <p style={{ textAlign: 'center', fontSize: 13, color: COULEURS.texteFaible, marginTop: 16 }}>
+            <p style={{ textAlign: 'center', fontSize: 13, color: COULEURS.texteFaible, marginTop: 16, marginBottom: 8 }}>
               Les branches restent verrouillées tant que l'Armure Organique n'est pas validée en entier (niveau 3).
             </p>
           )}
+
+          {/* Ta progression (courbe) + Entraînement du jour, comme sur le croquis */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, marginTop: 24 }}>
+            <div style={{ background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: '16px 18px' }}>
+              <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 15, letterSpacing: 0.3, margin: '0 0 4px', color: COULEURS.texte }}>Ta progression</p>
+              <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 12px' }}>Points Mouvement gagnés au fil des jours.</p>
+              <CourbeXP points={courbeXP} />
+            </div>
+
+            <div style={{ background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: '16px 18px' }}>
+              <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 15, letterSpacing: 0.3, margin: '0 0 4px', color: COULEURS.texte }}>Entraînement du jour</p>
+              <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 4px' }}>Le travail à faire aujourd'hui ou en prévision.</p>
+              {defisDuJour.length === 0 ? (
+                <p style={{ fontSize: 13, color: COULEURS.texteFaible, marginTop: 10 }}>
+                  Rien de débloqué pour l'instant — ça se remplira dès que tu auras une compétence en cours.
+                </p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {defisDuJour.map((d) => {
+                    const fait = defisValidesAujourdhui.has(d.id);
+                    return (
+                      <form key={d.id} action={validerDefiQuotidien} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderTop: `1px solid ${COULEURS.bordure}` }}>
+                        <input type="hidden" name="noeud_id" value={d.id} />
+                        <button
+                          type="submit"
+                          disabled={fait}
+                          aria-label={fait ? 'Fait aujourd\'hui' : 'Marquer comme fait'}
+                          style={{
+                            width: 22, height: 22, borderRadius: 6, flexShrink: 0, cursor: fait ? 'default' : 'pointer',
+                            border: `2px solid ${fait ? '#9ef29e' : d.couleur}`, background: fait ? '#9ef29e' : 'transparent',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+                          }}
+                        >
+                          {fait && <span style={{ color: '#0b0b0d', fontSize: 13, lineHeight: 1 }}>✓</span>}
+                        </button>
+                        <div style={{ flexGrow: 1 }}>
+                          <p style={{ margin: 0, fontSize: 13, color: COULEURS.texte }}>{d.cible}</p>
+                          <p style={{ margin: '1px 0 0', fontSize: 11, color: COULEURS.texteFaible }}>{d.titre}</p>
+                        </div>
+                        <span style={{ fontSize: 11, color: fait ? COULEURS.texteFaible : '#FF8A00', flexShrink: 0 }}>+{XP_BONUS_DEFI_QUOTIDIEN} XP</span>
+                      </form>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
         </>
       )}
 
-      {onglet === 'progression' && (
+      {onglet === 'theorie' && (
         <div style={{ background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: '24px 20px' }}>
-          <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 18, letterSpacing: 0.3, margin: '0 0 4px', color: COULEURS.texte }}>Ta progression</p>
-          <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: '0 0 20px' }}>Les points Mouvement gagnés au fil des jours.</p>
-          <CourbeXP points={courbeXP} />
+          <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 18, letterSpacing: 0.3, margin: '0 0 4px', color: COULEURS.texte }}>Théorie déjà débloquée</p>
+          <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: '0 0 20px' }}>
+            Tout le contenu théorique des niveaux que tu as atteints, à relire à volonté.
+          </p>
+          {(() => {
+            const noeudsAvecTheorie = [...tronc, ...branches].filter((n) => estDeverrouille(n) && n.theorie.length > 0);
+            if (noeudsAvecTheorie.length === 0) {
+              return <p style={{ fontSize: 13, color: COULEURS.texteFaible }}>Rien à lire pour l'instant — la théorie apparaît ici au fil de ta progression.</p>;
+            }
+            return noeudsAvecTheorie.map((n) => {
+              const couleur = n.domaine === 'tronc' ? COULEUR_TRONC : DOMAINE_COULEURS[n.domaine as Domaine];
+              const label = n.domaine === 'tronc' ? 'Armure Organique' : DOMAINE_LABELS[n.domaine as Domaine];
+              return (
+                <div key={n.id} style={{ marginBottom: 28 }}>
+                  <span style={{ fontSize: 11, color: couleur, letterSpacing: 1, fontWeight: 600 }}>{label.toUpperCase()} · NIVEAU {n.niveau}</span>
+                  <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 17, margin: '2px 0 10px', color: COULEURS.texte }}>{n.titre}</p>
+                  {n.theorie.map((t) => (
+                    <div key={t.titre} style={{ marginBottom: 12, borderLeft: `2px solid ${couleur}`, paddingLeft: 14 }}>
+                      <p style={{ fontSize: 13, fontWeight: 600, margin: 0, color: COULEURS.texte }}>{t.titre}</p>
+                      <p style={{ fontSize: 13, color: COULEURS.texteAtt, lineHeight: 1.7, margin: '4px 0 0' }}>{t.texte}</p>
+                    </div>
+                  ))}
+                </div>
+              );
+            });
+          })()}
         </div>
       )}
 
-      {onglet === 'defis' && (
+      {onglet === 'validation' && (
         <div style={{ background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: '24px 20px' }}>
-          <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 18, letterSpacing: 0.3, margin: '0 0 4px', color: COULEURS.texte }}>Entraînement du jour</p>
+          <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 18, letterSpacing: 0.3, margin: '0 0 4px', color: COULEURS.texte }}>Validation & échange avec Sylvain</p>
           <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: '0 0 20px' }}>
-            Un résumé du travail à faire aujourd'hui ou en prévision, tiré de la programmation de tes compétences en cours.
+            L'état de tes QCM et de tes vidéos envoyées, niveau par niveau.
           </p>
-          {defisDuJour.length === 0 ? (
-            <p style={{ fontSize: 13, color: COULEURS.texteFaible }}>
-              Rien de débloqué pour l'instant — ça se remplira dès que tu auras une compétence en cours.
-            </p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {defisDuJour.map((d) => {
-                const fait = defisValidesAujourdhui.has(d.id);
-                return (
-                  <form key={d.id} action={validerDefiQuotidien} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderTop: `1px solid ${COULEURS.bordure}` }}>
-                    <input type="hidden" name="noeud_id" value={d.id} />
-                    <button
-                      type="submit"
-                      disabled={fait}
-                      aria-label={fait ? 'Fait aujourd\'hui' : 'Marquer comme fait'}
-                      style={{
-                        width: 24, height: 24, borderRadius: 6, flexShrink: 0, cursor: fait ? 'default' : 'pointer',
-                        border: `2px solid ${fait ? '#9ef29e' : d.couleur}`, background: fait ? '#9ef29e' : 'transparent',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
-                      }}
-                    >
-                      {fait && <span style={{ color: '#0b0b0d', fontSize: 14, lineHeight: 1 }}>✓</span>}
-                    </button>
-                    <div style={{ flexGrow: 1 }}>
-                      <p style={{ margin: 0, fontSize: 14, color: COULEURS.texte }}>{d.cible}</p>
-                      <p style={{ margin: '2px 0 0', fontSize: 11, color: COULEURS.texteFaible }}>{d.titre}</p>
+          {(() => {
+            const noeudsActifs = [...tronc, ...branches].filter((n) => estDeverrouille(n) && statutAffiche(n) !== 'acquis');
+            if (noeudsActifs.length === 0) {
+              return <p style={{ fontSize: 13, color: COULEURS.texteFaible }}>Rien en attente — tout ce qui est débloqué est déjà validé.</p>;
+            }
+            return noeudsActifs.map((n) => {
+              const couleur = n.domaine === 'tronc' ? COULEUR_TRONC : DOMAINE_COULEURS[n.domaine as Domaine];
+              const label = n.domaine === 'tronc' ? 'Armure Organique' : DOMAINE_LABELS[n.domaine as Domaine];
+              const statut = statutAffiche(n);
+              const prog = progression.get(n.id);
+              return (
+                <button
+                  key={n.id}
+                  onClick={() => setSelection(n.id)}
+                  style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', borderTop: `1px solid ${COULEURS.bordure}`, padding: '14px 0', cursor: 'pointer' }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                    <div>
+                      <span style={{ fontSize: 11, color: couleur, letterSpacing: 1, fontWeight: 600 }}>{label.toUpperCase()} · NIVEAU {n.niveau}</span>
+                      <p style={{ margin: '2px 0 0', fontSize: 14, color: COULEURS.texte }}>{n.titre}</p>
                     </div>
-                    <span style={{ fontSize: 12, color: fait ? COULEURS.texteFaible : '#FF8A00', flexShrink: 0 }}>+{XP_BONUS_DEFI_QUOTIDIEN} XP</span>
-                  </form>
-                );
-              })}
-            </div>
-          )}
+                    <span style={{
+                      fontSize: 11, flexShrink: 0, padding: '4px 10px', borderRadius: 999,
+                      color: statut === 'en_attente' ? '#FFC24B' : statut === 'refuse' ? '#ff6b6b' : statut === 'qcm_reussi' ? '#FF8A00' : COULEURS.texteFaible,
+                      border: `1px solid ${statut === 'en_attente' ? '#FFC24B' : statut === 'refuse' ? '#ff6b6b' : statut === 'qcm_reussi' ? '#FF8A00' : COULEURS.bordure}`,
+                    }}>
+                      {statut === 'en_attente' ? 'Vidéo en attente' : statut === 'refuse' ? 'À retravailler' : statut === 'qcm_reussi' ? 'QCM réussi — vidéo à envoyer' : 'QCM à passer'}
+                    </span>
+                  </div>
+                  {statut === 'refuse' && prog?.commentaire_coach && (
+                    <p style={{ fontSize: 12, color: '#ff6b6b', margin: '6px 0 0' }}>Retour de Sylvain : {prog.commentaire_coach}</p>
+                  )}
+                </button>
+              );
+            });
+          })()}
         </div>
       )}
 
