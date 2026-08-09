@@ -100,6 +100,7 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
         defisValidesAujourdhui={defisValidesAujourdhui}
         courbeXP={courbeXP}
         structureSeance={STRUCTURE_SEANCE}
+        estAdmin={profil?.role === 'admin'}
       />
     </main>
   );
