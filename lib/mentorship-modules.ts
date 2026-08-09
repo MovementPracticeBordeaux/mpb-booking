@@ -61,7 +61,7 @@ export const DOMAINE_COULEURS: Record<Domaine, string> = {
   connexion: '#FF2D78',
   figures: '#8B5CF6',
 };
-export const COULEUR_TRONC = '#f0a'; // accent déjà utilisé pour les CTA du site
+export const COULEUR_TRONC = '#ff00aa'; // accent déjà utilisé pour les CTA du site
 
 export type FragmentTheorie = {
   titre: string;
@@ -347,6 +347,42 @@ export function niveauGlobal(xpTotal: number): { niveau: number; titre: string; 
   const titre = [...GRILLE_NIVEAUX].reverse().find((g) => xpTotal >= g.xpMin)?.titre ?? GRILLE_NIVEAUX[0].titre;
   const xpDansPalier = xpTotal % XP_PAR_PALIER_NIVEAU;
   return { niveau, titre, xpDansPalier, xpProchainPalier: XP_PAR_PALIER_NIVEAU };
+}
+
+// --- Courbe XP dans le temps -----------------------------------------------
+// Reconstitue un vrai historique jour par jour à partir des dates déjà
+// enregistrées (quiz_valide_le pour la part "partiellement acquis",
+// reviewed_at pour le complément une fois "acquis", jour des défis
+// quotidiens validés) — pas de données inventées.
+
+export type PointCourbeXP = { jour: string; xp: number };
+
+export function courbeXPParJour(
+  progressionRows: { module_id: string; statut: string | null; quiz_valide_le: string | null; reviewed_at: string | null }[],
+  defisRows: { jour: string }[]
+): PointCourbeXP[] {
+  const gainsParJour = new Map<string, number>();
+  const ajouter = (jourISO: string | null, montant: number) => {
+    if (!jourISO || montant <= 0) return;
+    const jour = jourISO.slice(0, 10);
+    gainsParJour.set(jour, (gainsParJour.get(jour) ?? 0) + montant);
+  };
+
+  for (const p of progressionRows) {
+    const noeud = TOUS_LES_NOEUDS.find((n) => n.id === p.module_id);
+    if (!noeud) continue;
+    const partiel = xpGagneParNoeud(noeud, 'partiellement_acquis');
+    if (p.quiz_valide_le) ajouter(p.quiz_valide_le, partiel);
+    if (p.statut === 'acquis' && p.reviewed_at) ajouter(p.reviewed_at, xpGagneParNoeud(noeud, 'acquis') - partiel);
+  }
+  for (const d of defisRows) ajouter(d.jour, XP_BONUS_DEFI_QUOTIDIEN);
+
+  const jours = [...gainsParJour.keys()].sort();
+  let cumule = 0;
+  return jours.map((jour) => {
+    cumule += gainsParJour.get(jour)!;
+    return { jour, xp: cumule };
+  });
 }
 
 // Déroulé de séance type (repris de "Cours collectif").

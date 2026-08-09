@@ -1,6 +1,6 @@
 import { supabaseServer } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
-import { TRONC, BRANCHES, TOUS_LES_NOEUDS, STRUCTURE_SEANCE, noeudSansReponses, statutXP, xpGagneParNoeud, niveauGlobal } from '@/lib/mentorship-modules';
+import { TRONC, BRANCHES, TOUS_LES_NOEUDS, STRUCTURE_SEANCE, noeudSansReponses, statutXP, xpGagneParNoeud, niveauGlobal, courbeXPParJour } from '@/lib/mentorship-modules';
 import { COULEURS, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
 import ArbreCompetences from './ArbreCompetences';
 
@@ -11,6 +11,8 @@ type Progression = {
   statut: 'en_attente' | 'acquis' | 'refuse' | null;
   quiz_reussi: boolean;
   quiz_score: number | null;
+  quiz_valide_le: string | null;
+  reviewed_at: string | null;
   video_url: string | null;
   commentaire_coach: string | null;
 };
@@ -37,10 +39,10 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
     );
   }
 
-  const [{ data: progressionData }, { data: suiviData }, { data: defisData }] = await Promise.all([
+  const [{ data: progressionData }, { data: suiviData }, { data: defisAujourdhuiData }, { data: defisHistoriqueData }] = await Promise.all([
     supabase
       .from('mentorship_progression')
-      .select('module_id, statut, quiz_reussi, quiz_score, video_url, commentaire_coach')
+      .select('module_id, statut, quiz_reussi, quiz_score, quiz_valide_le, reviewed_at, video_url, commentaire_coach')
       .eq('eleve_id', user.id),
     supabase
       .from('mentorship_suivi_competence')
@@ -51,6 +53,10 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
       .select('noeud_id')
       .eq('eleve_id', user.id)
       .eq('jour', new Date().toISOString().slice(0, 10)),
+    supabase
+      .from('mentorship_defi_valide')
+      .select('jour')
+      .eq('eleve_id', user.id),
   ]);
 
   const progression = new Map<string, Progression>((progressionData ?? []).map((p: Progression) => [p.module_id, p]));
@@ -63,18 +69,19 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
     xpTotal += xpGagneParNoeud(noeud, statutXP(p?.statut ?? null, p?.quiz_reussi ?? false));
   }
   const niveau = niveauGlobal(xpTotal);
+  const courbeXP = courbeXPParJour(progressionData ?? [], defisHistoriqueData ?? []);
 
   // Les nœuds envoyés au client n'ont jamais les bonnes réponses du QCM.
   const troncPublic = TRONC.map(noeudSansReponses);
   const branchesPublic = BRANCHES.map(noeudSansReponses);
-  const defisValidesAujourdhui = new Set((defisData ?? []).map((d) => d.noeud_id));
+  const defisValidesAujourdhui = new Set((defisAujourdhuiData ?? []).map((d) => d.noeud_id));
 
   return (
-    <main style={{ maxWidth: 860, margin: '0 auto', padding: 20 }}>
+    <main style={{ maxWidth: 900, margin: '0 auto', padding: 20 }}>
       <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 'clamp(28px, 7vw, 40px)', letterSpacing: 0.5, marginBottom: 4 }}>
         PROGRAMME <span style={GRADIENT_TEXTE}>MENTORSHIP</span>
       </h1>
-      <p style={{ color: COULEURS.texteFaible, fontSize: 13, marginBottom: 20 }}>
+      <p style={{ color: COULEURS.texteFaible, fontSize: 13, marginBottom: 24 }}>
         Le tronc — l'Armure Organique — se gravit seul, niveau après niveau. Une fois validé en entier,
         les cinq branches s'ouvrent et progressent chacune à son rythme.
       </p>
@@ -91,19 +98,9 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
         xpTotal={xpTotal}
         niveau={niveau}
         defisValidesAujourdhui={defisValidesAujourdhui}
+        courbeXP={courbeXP}
+        structureSeance={STRUCTURE_SEANCE}
       />
-
-      <details style={{ marginTop: 32, border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: 20 }}>
-        <summary style={{ fontFamily: POLICE_DISPLAY, fontSize: 18, letterSpacing: 0.3, cursor: 'pointer' }}>
-          Comment structurer une séance
-        </summary>
-        {STRUCTURE_SEANCE.map((etape, i) => (
-          <div key={etape.etape} style={{ marginTop: 12 }}>
-            <p style={{ fontSize: 14, margin: 0 }}>{i + 1}. {etape.etape}</p>
-            <p style={{ fontSize: 13, color: COULEURS.texteAtt, margin: '2px 0 0' }}>{etape.detail}</p>
-          </div>
-        ))}
-      </details>
     </main>
   );
 }
