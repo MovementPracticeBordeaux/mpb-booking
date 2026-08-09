@@ -302,7 +302,7 @@ export default function ArbreCompetences({
       {onglet === 'arbre' && (
         <>
           {/* Tes compétences (vignette compacte) + XP (compact, largeur fixe), comme sur le croquis */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 28 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12, marginBottom: 28 }}>
             <div style={{ flex: '0 1 260px', background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: '12px 14px' }}>
               <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 13, letterSpacing: 0.3, margin: '0 0 8px', color: COULEURS.texte }}>Tes compétences</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -318,15 +318,15 @@ export default function ArbreCompetences({
           </div>
 
           {/* En-têtes de branches — icône, nom, accroche, avant l'arbre lui-même */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 4, maxWidth: 680, marginInline: 'auto', marginBottom: 6 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 4, maxWidth: 460, marginInline: 'auto', marginBottom: 4 }}>
             {ORDRE_VISUEL.map((d) => (
               <div key={d} style={{ textAlign: 'center', padding: '0 2px' }}>
                 <div style={{
-                  width: 44, height: 44, borderRadius: '50%', marginInline: 'auto', marginBottom: 6,
+                  width: 36, height: 36, borderRadius: '50%', marginInline: 'auto', marginBottom: 6,
                   border: `2px solid ${DOMAINE_COULEURS[d]}`, display: 'flex', alignItems: 'center', justifyContent: 'center',
                   boxShadow: `0 0 10px ${DOMAINE_COULEURS[d]}55`, background: `${DOMAINE_COULEURS[d]}14`,
                 }}>
-                  <Pictogramme domaine={d} taille={20} couleur={DOMAINE_COULEURS[d]} />
+                  <Pictogramme domaine={d} taille={16} couleur={DOMAINE_COULEURS[d]} />
                 </div>
                 <p style={{ margin: 0, fontFamily: POLICE_DISPLAY, fontSize: 12, letterSpacing: '0.04em', textTransform: 'uppercase', color: DOMAINE_COULEURS[d] }}>{DOMAINE_LABELS[d]}</p>
                 <p style={{ margin: '2px 0 0', fontSize: 10, color: COULEURS.texteFaible, lineHeight: 1.3 }}>{DOMAINE_ACCROCHES[d]}</p>
@@ -335,7 +335,7 @@ export default function ArbreCompetences({
           </div>
 
           {/* Arbre — en vedette, section large */}
-          <div style={{ position: 'relative', width: '100%', maxWidth: 680, marginInline: 'auto', aspectRatio: '4 / 5' }}>
+          <div style={{ position: 'relative', width: '100%', maxWidth: 460, marginInline: 'auto', aspectRatio: '4 / 3.3' }}>
             <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
               <defs>
                 <linearGradient id="gradient-lignes" x1="0" y1="1" x2="0" y2="0">
