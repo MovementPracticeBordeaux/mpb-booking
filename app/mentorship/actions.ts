@@ -104,3 +104,25 @@ export async function soumettreVideo(formData: FormData) {
 
   revalidatePath('/mentorship');
 }
+
+// Cocher un défi quotidien = une petite pratique du jour (la programmation
+// d'une compétence en cours), pour le petit bonus d'XP motivant. Ne fait
+// PAS progresser la compétence elle-même (une seule fois par jour et par
+// compétence, grâce à la contrainte unique(eleve_id, noeud_id, jour)).
+export async function validerDefiQuotidien(formData: FormData) {
+  const supabase = supabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/login');
+
+  const noeudId = formData.get('noeud_id') as string;
+
+  const { error } = await supabase.from('mentorship_defi_valide').insert({
+    eleve_id: user.id,
+    noeud_id: noeudId,
+  });
+  // Une contrainte "déjà fait aujourd'hui" (code 23505) n'est pas une
+  // vraie erreur à afficher à l'élève — on l'ignore silencieusement.
+  if (error && error.code !== '23505') echouer(error.message);
+
+  revalidatePath('/mentorship');
+}

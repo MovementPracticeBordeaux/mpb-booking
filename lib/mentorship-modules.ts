@@ -286,6 +286,59 @@ export function estNoeudDeverrouille(noeud: NoeudMentorship, idsAcquis: Set<stri
   return precedent ? idsAcquis.has(precedent.id) : true;
 }
 
+// --- Points Mouvement (XP) et niveau global ------------------------------
+// Plus une compétence est haute dans l'arbre (niveau 3 > niveau 1), plus
+// elle vaut de points — et le tronc, socle de tout le reste, vaut un peu
+// plus que les branches à niveau égal. Une compétence "partiellement
+// acquise" (QCM réussi ou vidéo envoyée, mais pas encore validée par
+// Sylvain) rapporte une fraction des points ; "acquis" rapporte le total.
+
+const XP_PAR_NIVEAU: Record<1 | 2 | 3, number> = { 1: 100, 2: 150, 3: 220 };
+const MULTIPLICATEUR_TRONC = 1.5;
+const FRACTION_PARTIELLEMENT_ACQUIS = 0.3;
+
+export function xpMaxDuNoeud(noeud: NoeudMentorship | NoeudMentorshipPublic): number {
+  const base = XP_PAR_NIVEAU[noeud.niveau];
+  return Math.round(noeud.domaine === 'tronc' ? base * MULTIPLICATEUR_TRONC : base);
+}
+
+export type StatutProgressionXP = 'acquis' | 'partiellement_acquis' | 'non_acquis';
+
+export function statutXP(statutBrut: 'en_attente' | 'acquis' | 'refuse' | null | undefined, quizReussi: boolean): StatutProgressionXP {
+  if (statutBrut === 'acquis') return 'acquis';
+  if (quizReussi || statutBrut === 'en_attente') return 'partiellement_acquis';
+  return 'non_acquis';
+}
+
+export function xpGagneParNoeud(noeud: NoeudMentorship | NoeudMentorshipPublic, statut: StatutProgressionXP): number {
+  const max = xpMaxDuNoeud(noeud);
+  if (statut === 'acquis') return max;
+  if (statut === 'partiellement_acquis') return Math.round(max * FRACTION_PARTIELLEMENT_ACQUIS);
+  return 0;
+}
+
+export const XP_BONUS_DEFI_QUOTIDIEN = 10;
+
+// Grille de niveaux par défaut — les seuils et les titres sont volontairement
+// simples pour démarrer, à ajuster une fois que les vrais élèves progressent.
+export const GRILLE_NIVEAUX = [
+  { xpMin: 0, titre: 'Débutant' },
+  { xpMin: 300, titre: 'Pratiquant régulier' },
+  { xpMin: 900, titre: 'Pratiquant engagé' },
+  { xpMin: 1800, titre: 'Praticien confirmé' },
+  { xpMin: 3000, titre: 'Praticien avancé' },
+  { xpMin: 5000, titre: 'Maître du Mouvement' },
+] as const;
+
+const XP_PAR_PALIER_NIVEAU = 300; // 1 niveau tous les 300 XP, indépendamment des titres ci-dessus
+
+export function niveauGlobal(xpTotal: number): { niveau: number; titre: string; xpDansPalier: number; xpProchainPalier: number } {
+  const niveau = 1 + Math.floor(xpTotal / XP_PAR_PALIER_NIVEAU);
+  const titre = [...GRILLE_NIVEAUX].reverse().find((g) => xpTotal >= g.xpMin)?.titre ?? GRILLE_NIVEAUX[0].titre;
+  const xpDansPalier = xpTotal % XP_PAR_PALIER_NIVEAU;
+  return { niveau, titre, xpDansPalier, xpProchainPalier: XP_PAR_PALIER_NIVEAU };
+}
+
 // Déroulé de séance type (repris de "Cours collectif").
 export const STRUCTURE_SEANCE = [
   { etape: 'Accueil & intention du jour', detail: 'Fixer une intention claire, rappeler la logique de progression.' },
