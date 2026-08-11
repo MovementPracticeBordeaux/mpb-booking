@@ -2,12 +2,26 @@ import { supabaseServer } from '@/lib/supabase-server';
 import { COULEURS, FONTS_IMPORT_URL, POLICE_CORPS } from '@/lib/theme';
 import ChatWidget from './components/ChatWidget';
 import NavBar from './components/NavBar';
+import PwaRegister from './components/PwaRegister';
 
 export const metadata = {
   metadataBase: new URL('https://www.movementpracticebordeaux.com'),
   title: 'Movement Practice Bordeaux — Calisthenics, Handstand, Locomotion & Mobilité',
   description: 'Coaching, cours et ateliers au poids de corps à Bordeaux : calisthenics, handstand, locomotion, mobilité.',
   keywords: ['calisthenics', 'handstand', 'locomotion', 'mobilité', 'Bordeaux', 'coaching sportif', 'mouvement'],
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'MPB',
+  },
+  icons: {
+    icon: [
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+  },
   openGraph: {
     title: 'Movement Practice Bordeaux',
     description: 'Coaching, cours et ateliers au poids de corps à Bordeaux : calisthenics, handstand, locomotion, mobilité.',
@@ -23,6 +37,10 @@ export const metadata = {
     description: 'Coaching, cours et ateliers au poids de corps à Bordeaux : calisthenics, handstand, locomotion, mobilité.',
     images: ['/og-image.jpg'],
   },
+};
+
+export const viewport = {
+  themeColor: '#0b0b0d',
 };
 
 const LIENS = [
@@ -64,6 +82,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <NavBar liens={LIENS} estAdmin={estAdmin} userEmail={user?.email ?? null} />
         {children}
         <ChatWidget />
+        <PwaRegister />
       </body>
     </html>
   );
