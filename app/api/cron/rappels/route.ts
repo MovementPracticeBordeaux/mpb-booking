@@ -2,21 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-server';
 import { envoyerEmail } from '@/lib/resend';
 import { degelerProfil } from '@/app/admin/actions';
-
-// Prévient Sylvain par email si l'envoi des rappels a rencontré un souci
-// (variable ADMIN_ALERT_EMAIL à définir dans Vercel > Settings >
-// Environment Variables). Ne fait rien si la variable n'est pas définie,
-// pour ne jamais faire planter le cron à cause d'une alerte elle-même.
-async function alerterAdmin(sujet: string, message: string) {
-  const destinataire = process.env.ADMIN_ALERT_EMAIL;
-  if (!destinataire) return;
-  try {
-    await envoyerEmail(destinataire, `⚠️ MPB — ${sujet}`, `<p>${message}</p>`);
-  } catch {
-    // On ne fait rien de plus : si même l'alerte échoue, inutile de faire
-    // échouer le cron pour ça.
-  }
-}
+import { alerterAdmin } from '@/lib/alerte-admin';
 
 // Appelée automatiquement une fois par jour par Vercel Cron (voir vercel.json).
 // Envoie un email de rappel à chaque élève ayant un cours réservé le lendemain.

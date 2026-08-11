@@ -3,6 +3,7 @@ import { stripe } from '@/lib/stripe';
 import { supabaseAdmin } from '@/lib/supabase-server';
 import { FORMULES } from '@/lib/formules';
 import { envoyerEmail } from '@/lib/resend';
+import { alerterAdmin } from '@/lib/alerte-admin';
 import Stripe from 'stripe';
 
 export async function POST(req: NextRequest) {
@@ -110,6 +111,19 @@ export async function POST(req: NextRequest) {
           // webhook pour un email qui ne part pas.
         }
       }
+    } else {
+      // userId ou formule manquant/invalide (clé de formule renommée,
+      // metadata corrompue...) : sans cette alerte, un vrai paiement
+      // pourrait arriver sans jamais être crédité à l'élève, en silence
+      // total. On prévient Sylvain pour qu'il puisse corriger la formule
+      // manuellement depuis /admin/eleves en attendant.
+      await alerterAdmin(
+        'Paiement Stripe non crédité automatiquement',
+        `Un paiement (session ${session.id}, ${((session.amount_total ?? 0) / 100).toFixed(2)} €) a été reçu ` +
+        `mais n'a pas pu être crédité automatiquement : ${!userId ? "user_id manquant" : ''}` +
+        `${!userId && !formule ? ' et ' : ''}${!formule ? `formule "${formuleNom}" introuvable dans le catalogue` : ''}. ` +
+        `Vérifie la session dans le dashboard Stripe et attribue la formule manuellement depuis /admin/eleves si besoin.`
+      );
     }
   }
 
