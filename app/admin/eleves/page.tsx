@@ -1,5 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase-server';
-import { attribuerFormule, suspendreAcces, decompterCoaching, modifierQuotaRestant, modifierExpiration, gelerPass, degelerPass, rembourserPaiement } from '../actions';
+import { attribuerFormule, suspendreAcces, decompterCoaching, modifierQuotaRestant, modifierExpiration, gelerPass, degelerPass, definirDateReprise, rembourserPaiement } from '../actions';
 import { FORMULES } from '@/lib/formules';
 import ListeElevesRepliable from '../ListeElevesRepliable';
 import ListePaiementsRepliable from '../ListePaiementsRepliable';
@@ -73,6 +73,7 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
           modifierExpiration={modifierExpiration}
           gelerPass={gelerPass}
           degelerPass={degelerPass}
+          definirDateReprise={definirDateReprise}
           decompterCoaching={decompterCoaching}
         />
       </section>

@@ -248,6 +248,24 @@ export async function gelerPass(formData: FormData) {
   revalidatePath('/admin/eleves');
 }
 
+// Corrige/renseigne la date de reprise d'un pass déjà gelé, sans le
+// re-geler (contrairement à gelerPass qui réinitialiserait date_gel_debut
+// à aujourd'hui). Sert notamment pour les pass gelés importés de l'ancien
+// site, sans date de reprise connue au moment de l'import : une fois cette
+// date renseignée, l'élève peut réserver dès maintenant sur sa période de
+// réactivation (voir reserver_creneau), sans attendre le dégel automatique.
+export async function definirDateReprise(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+  const eleveId = formData.get('eleve_id') as string;
+  const dateFinGelPrevue = (formData.get('date_fin_gel_prevue') as string) || null;
+  const { error } = await admin.from('profiles').update({
+    date_fin_gel_prevue: dateFinGelPrevue,
+  }).eq('id', eleveId).eq('gele', true);
+  if (error) echouer('/admin/eleves', error.message);
+  revalidatePath('/admin/eleves');
+}
+
 // Dégel : prolonge automatiquement la date de validité du nombre de jours
 // pendant lesquels le pass est resté gelé (comme sur le site actuel).
 // Factorisée pour être réutilisée par le dégel manuel (bouton admin) et par

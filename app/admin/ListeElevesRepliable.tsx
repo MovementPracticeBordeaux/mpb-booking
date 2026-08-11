@@ -27,6 +27,7 @@ export default function ListeElevesRepliable({
   modifierExpiration,
   gelerPass,
   degelerPass,
+  definirDateReprise,
   decompterCoaching,
 }: {
   eleves: Eleve[];
@@ -35,6 +36,7 @@ export default function ListeElevesRepliable({
   modifierExpiration: (formData: FormData) => void;
   gelerPass: (formData: FormData) => void;
   degelerPass: (formData: FormData) => void;
+  definirDateReprise: (formData: FormData) => void;
   decompterCoaching: (formData: FormData) => void;
 }) {
   const [ouvert, setOuvert] = useState(false);
@@ -105,10 +107,20 @@ export default function ListeElevesRepliable({
                         <button type="submit">Corriger date</button>
                       </form>
                       {e.gele ? (
-                        <form action={degelerPass}>
-                          <input type="hidden" name="eleve_id" value={e.id} />
-                          <button type="submit">Dégeler (prolonge auto)</button>
-                        </form>
+                        <>
+                          <form action={degelerPass}>
+                            <input type="hidden" name="eleve_id" value={e.id} />
+                            <button type="submit">Dégeler (prolonge auto)</button>
+                          </form>
+                          <form action={definirDateReprise} style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                            <input type="hidden" name="eleve_id" value={e.id} />
+                            <label style={{ fontSize: 11, opacity: 0.7 }}>
+                              Corriger la date de reprise
+                              <input type="date" name="date_fin_gel_prevue" defaultValue={e.date_fin_gel_prevue ?? ''} style={{ marginLeft: 4 }} />
+                            </label>
+                            <button type="submit">Enregistrer</button>
+                          </form>
+                        </>
                       ) : (
                         <form action={gelerPass} style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                           <input type="hidden" name="eleve_id" value={e.id} />
