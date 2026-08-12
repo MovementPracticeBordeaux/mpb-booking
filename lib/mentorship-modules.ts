@@ -120,6 +120,10 @@ export type NoeudMentorship = {
   // suit encore l'ancien modèle à validation vidéo unique (tronc).
   exercices?: ExerciceMentorship[];
   progressionBonus?: ExerciceMentorship[];
+  // Pastille visuelle dédiée à ce nœud précis (chemin dans /public), en
+  // remplacement du pictogramme générique de la branche une fois le nœud
+  // déverrouillé. Optionnel — objectif à terme : une pastille par nœud.
+  image?: string;
 };
 
 // module_id composite utilisé dans `mentorship_progression` pour un exercice
@@ -301,6 +305,7 @@ const FORCE: NoeudMentorship[] = [
     titre: 'Force — niveau 2',
     resume: 'Travail aux anneaux de gymnastique : dips, tractions, transition et skin the cat.',
     objectifPedagogique: 'À définir ensemble (théorie/QCM à rédiger — exercices déjà calés).',
+    image: '/mentorship/force-2.png',
     theorie: [],
     programmation: [],
     qcm: [],
