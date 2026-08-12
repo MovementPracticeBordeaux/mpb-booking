@@ -757,9 +757,9 @@ function Noeud({ x, y, statut, couleur, domaine, flamme, image, onClick }: { x: 
       aria-label={meta.label}
       style={{
         position: 'absolute', left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)',
-        width: 46, height: 46, borderRadius: '50%',
+        width: 58, height: 58, borderRadius: '50%',
         background: aImage ? COULEURS.fond : acquis ? `radial-gradient(circle at 35% 30%, ${couleur}, ${couleur}bb)` : meta.fill,
-        border: `3px ${meta.dash ? 'dashed' : 'solid'} ${meta.border}`,
+        border: `1.5px ${meta.dash ? 'dashed' : 'solid'} ${meta.border}`,
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, cursor: 'pointer',
         animation: pulse ? 'pulse-noeud 1.8s ease-in-out infinite' : acquis ? 'glow-acquis 2.4s ease-in-out infinite' : 'none',
         color: couleur,
@@ -769,9 +769,10 @@ function Noeud({ x, y, statut, couleur, domaine, flamme, image, onClick }: { x: 
       {flamme && flamme !== 'aucune' && <IconeFlamme palier={flamme} />}
       {aImage ? (
         <>
-          {/* Pastille encore éteinte tant que verrouillée (silhouette
-              sombre, à peine visible) — s'éclaire progressivement au fil
-              du déblocage puis de la validation. */}
+          {/* Pastille encore éteinte tant que verrouillée : logo visible
+              mais assombri (pas de néon), pour donner envie sans dévoiler
+              pleinement — s'éclaire progressivement au fil du déblocage
+              puis de la validation. */}
           <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', overflow: 'hidden' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -779,28 +780,28 @@ function Noeud({ x, y, statut, couleur, domaine, flamme, image, onClick }: { x: 
               alt=""
               style={{
                 width: '100%', height: '100%', objectFit: 'cover',
-                opacity: acquis ? 1 : locked ? 0.16 : 0.55,
-                filter: acquis ? 'none' : locked ? 'grayscale(100%) brightness(0.4)' : 'grayscale(35%)',
+                opacity: acquis ? 1 : locked ? 0.55 : 0.9,
+                filter: locked ? 'brightness(0.5)' : 'none',
               }}
             />
           </div>
           {acquis && (
             <span style={{
-              position: 'absolute', bottom: -3, right: -3, width: 15, height: 15, borderRadius: '50%', zIndex: 2,
+              position: 'absolute', bottom: -3, right: -3, width: 17, height: 17, borderRadius: '50%', zIndex: 2,
               background: couleur, border: `2px solid ${COULEURS.fond}`, display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#0b0b0d" strokeWidth={4}><path d="M5 13l4 4L19 7" /></svg>
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#0b0b0d" strokeWidth={4}><path d="M5 13l4 4L19 7" /></svg>
             </span>
           )}
         </>
       ) : locked ? (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={couleur} strokeWidth={2} opacity={0.75}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={couleur} strokeWidth={2} opacity={0.75}>
           <rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V7a4 4 0 018 0v4" />
         </svg>
       ) : acquis ? (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0b0b0d" strokeWidth={3}><path d="M5 13l4 4L19 7" /></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0b0b0d" strokeWidth={3}><path d="M5 13l4 4L19 7" /></svg>
       ) : (
-        <Pictogramme domaine={domaine} taille={18} couleur={statut === 'unlocked' ? couleur : meta.border} />
+        <Pictogramme domaine={domaine} taille={22} couleur={statut === 'unlocked' ? couleur : meta.border} />
       )}
     </button>
   );
