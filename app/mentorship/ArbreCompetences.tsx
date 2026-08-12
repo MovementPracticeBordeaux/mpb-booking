@@ -51,15 +51,19 @@ const TRUNK_X = 50;
 const BRANCH_X: Record<Domaine, number> = { connexion: 10, flexibilite: 30, force: 50, figures: 70, locomotion: 90 };
 
 const STATUT_META: Record<Exclude<StatutAffiche, 'unlocked' | 'locked'>, { label: string; fill: string; border: string; dash?: string }> = {
-  qcm_reussi: { label: 'QCM validé — vidéo à envoyer', fill: COULEURS.surfaceForte, border: '#FF8A00' },
-  en_attente: { label: 'Vidéo envoyée — en attente', fill: COULEURS.surfaceForte, border: '#FFC24B', dash: '3 3' },
-  refuse: { label: 'À retravailler', fill: 'rgba(255,107,107,0.12)', border: '#ff6b6b' },
+  qcm_reussi: { label: 'QCM validé — vidéo à envoyer', fill: `linear-gradient(${COULEURS.surfaceForte}, ${COULEURS.surfaceForte}), ${COULEURS.fond}`, border: '#FF8A00' },
+  en_attente: { label: 'Vidéo envoyée — en attente', fill: `linear-gradient(${COULEURS.surfaceForte}, ${COULEURS.surfaceForte}), ${COULEURS.fond}`, border: '#FFC24B', dash: '3 3' },
+  refuse: { label: 'À retravailler', fill: `linear-gradient(rgba(255,107,107,0.12), rgba(255,107,107,0.12)), ${COULEURS.fond}`, border: '#ff6b6b' },
   acquis: { label: 'Acquis', fill: '', border: '' },
 };
 
+// Fond systématiquement OPAQUE (fond de page + teinte de branche en
+// surcouche) : les nœuds sont posés sur les traits de l'arbre (dessinés
+// dans le SVG juste en-dessous), un fond translucide les laisserait
+// traverser visuellement par le trait.
 function metaPour(statut: StatutAffiche, couleurBranche: string) {
-  if (statut === 'locked') return { label: 'Verrouillé', fill: `${couleurBranche}14`, border: `${couleurBranche}55` };
-  if (statut === 'unlocked') return { label: 'Débloqué', fill: 'transparent', border: couleurBranche };
+  if (statut === 'locked') return { label: 'Verrouillé', fill: `linear-gradient(${couleurBranche}14, ${couleurBranche}14), ${COULEURS.fond}`, border: `${couleurBranche}55` };
+  if (statut === 'unlocked') return { label: 'Débloqué', fill: COULEURS.fond, border: couleurBranche };
   if (statut === 'acquis') return { label: 'Acquis', fill: couleurBranche, border: couleurBranche };
   return STATUT_META[statut];
 }
@@ -485,7 +489,7 @@ export default function ArbreCompetences({
           <div style={{ position: 'relative', width: '100%', maxWidth: 460, marginInline: 'auto', aspectRatio: '3 / 4' }}>
             <svg viewBox="0 0 100 100" preserveAspectRatio="none" width="100%" height="100%" style={{ position: 'absolute', inset: 0, display: 'block' }}>
               <defs>
-                <linearGradient id="gradient-lignes" x1="0" y1="1" x2="0" y2="0">
+                <linearGradient id="gradient-lignes" gradientUnits="userSpaceOnUse" x1="0" y1="100" x2="0" y2="0">
                   <stop offset="0%" stopColor="#FF3B30" /><stop offset="35%" stopColor="#FF8A00" /><stop offset="70%" stopColor="#FF2D78" /><stop offset="100%" stopColor="#8B5CF6" />
                 </linearGradient>
               </defs>
@@ -784,7 +788,7 @@ function NoeudTroncPrincipal({ x, y, pourcentage, statut, onClick }: { x: number
   return (
     <button onClick={onClick} aria-label="Armure Organique — niveau 3" style={{ position: 'absolute', left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)', width: 58, height: 58, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
       <svg width="58" height="58" viewBox="0 0 40 40" style={{ animation: pulse ? 'pulse-noeud 1.8s ease-in-out infinite' : 'none' }}>
-        <circle cx="20" cy="20" r={rayon} fill={acquis ? COULEUR_TRONC : locked ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.05)'} />
+        <circle cx="20" cy="20" r={rayon} fill={acquis ? COULEUR_TRONC : locked ? '#131316' : '#17171b'} />
         <circle cx="20" cy="20" r={rayon} fill="none" stroke={locked ? `${COULEUR_TRONC}55` : COULEURS.bordure} strokeWidth="2.5" strokeDasharray={locked ? '2 2' : undefined} />
         {!locked && (
           <circle
