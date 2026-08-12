@@ -43,9 +43,9 @@ type Niveau = { niveau: number; titre: string; xpDansPalier: number; xpProchainP
 // Coordonnées en pourcentage (0-100), façon "racine en bas, branches en
 // haut" : le tronc descend jusqu'à la base, les 5 branches partent de son
 // sommet et s'élèvent plus haut encore.
-const BRANCH_LEVEL_Y: Record<1 | 2 | 3, number> = { 3: 8, 2: 27, 1: 46 };
-const JUNCTION_Y = 54;
-const TRUNK_LEVEL_Y: Record<1 | 2 | 3, number> = { 3: 55, 2: 76, 1: 93 };
+const BRANCH_LEVEL_Y: Record<1 | 2 | 3, number> = { 3: 5, 2: 21, 1: 38 };
+const JUNCTION_Y = 50;
+const TRUNK_LEVEL_Y: Record<1 | 2 | 3, number> = { 3: 62, 2: 80, 1: 97 };
 const TRUNK_X = 50;
 const BRANCH_X: Record<Domaine, number> = { connexion: 10, flexibilite: 30, force: 50, figures: 70, locomotion: 90 };
 
@@ -110,16 +110,35 @@ function IconeFlamme({ palier }: { palier: PalierFlamme }) {
       }}
     >
       <svg width="11" height="11" viewBox="0 0 24 24" fill={mythique ? '#fff' : couleur}>
-        <path d="M12 2c1 4-3 5-3 9a3 3 0 006 0c0-1-.5-2-1-3 2 1 3 3 3 5a5 5 0 01-10 0c0-5 4-6 5-11z" />
+        <path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z" />
       </svg>
     </span>
   );
 }
 
+// Cadre luminescent de la boîte XP, selon le badge de dépassement de
+// l'élève. 'normal'/'aucune' = pas d'effet (peu de nœuds acquis, rien à
+// mettre en avant) — l'effet monte en intensité avec le palier.
+const CADRE_BADGE: Record<PalierFlamme, { border: string; boxShadow: string; anime?: string }> = {
+  aucune: { border: '', boxShadow: '' },
+  normal: { border: '', boxShadow: '' },
+  epique: { border: '#8B5CF6', boxShadow: '0 0 14px #8B5CF680' },
+  legendaire: { border: '#FFD700', boxShadow: '0 0 16px #FFD70080' },
+  mythique: { border: '#FF2D78', boxShadow: '0 0 10px #FF3B30bb, 0 0 20px #FF2D78bb, 0 0 32px #8B5CF6aa', anime: 'glow-acquis 2.4s ease-in-out infinite' },
+};
+
 // --- En-tête XP / niveau — compact, avec titre du pratiquant et barre vers le niveau suivant --
 function EnTeteXP({ xpTotal, niveau, badge }: { xpTotal: number; niveau: Niveau; badge?: PalierFlamme }) {
+  const cadre = CADRE_BADGE[badge ?? 'aucune'];
+  const aCadre = cadre.border !== '';
   return (
-    <div style={{ background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: '14px 16px', minWidth: 150 }}>
+    <div style={{
+      background: COULEURS.surface, borderRadius: 12, padding: '14px 16px', minWidth: 150,
+      border: `1px solid ${aCadre ? cadre.border : COULEURS.bordure}`,
+      boxShadow: aCadre ? cadre.boxShadow : 'none',
+      animation: cadre.anime,
+      transition: 'box-shadow 0.6s ease, border-color 0.6s ease',
+    }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="url(#flamme)" style={{ flexShrink: 0 }}>
           <defs>
@@ -127,7 +146,7 @@ function EnTeteXP({ xpTotal, niveau, badge }: { xpTotal: number; niveau: Niveau;
               <stop offset="0%" stopColor="#FF3B30" /><stop offset="100%" stopColor="#FF8A00" />
             </linearGradient>
           </defs>
-          <path d="M12 2c1 3-2 4-2 7a3 3 0 003 3c2 0 3-1.5 3-3 2 2 3 4 3 6a6 6 0 11-12 0c0-4 2-6 5-13z" />
+          <path d="M8.5 15.5A3 3 0 0012 12.5c0-1.5-.6-2.4-1.2-3.6-1.3-2.6-.3-4.9 2.4-7.2.6 3 2.4 5.9 4.8 7.8 2.4 1.9 3.6 4.2 3.6 6.6a8.4 8.4 0 11-16.8 0c0-1.4.5-2.75 1.2-3.6a3 3 0 003 3z" />
         </svg>
         <p style={{ margin: 0, fontFamily: POLICE_DISPLAY, fontSize: 15, letterSpacing: 0.3, color: COULEURS.texte, whiteSpace: 'nowrap' }}>{xpTotal.toLocaleString('fr-FR')} XP</p>
       </div>
@@ -137,11 +156,10 @@ function EnTeteXP({ xpTotal, niveau, badge }: { xpTotal: number; niveau: Niveau;
         <div style={{ height: '100%', width: `${(niveau.xpDansPalier / niveau.xpProchainPalier) * 100}%`, background: 'linear-gradient(90deg,#FF3B30,#8B5CF6)', borderRadius: 3 }} />
       </div>
       <p style={{ margin: '4px 0 0', fontSize: 10, color: COULEURS.texteFaible }}>{niveau.xpDansPalier}/{niveau.xpProchainPalier} XP avant le niveau {niveau.niveau + 1}</p>
-      {badge && badge !== 'aucune' && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10, paddingTop: 10, borderTop: `1px solid ${COULEURS.bordure}` }}>
-          <span style={{ position: 'relative', width: 18, height: 18 }}><IconeFlamme palier={badge} /></span>
-          <span style={{ fontSize: 11, color: COULEURS.texteAtt }}>Dépassement : <strong style={{ color: COULEURS.texte }}>{PALIER_LABEL[badge]}</strong></span>
-        </div>
+      {aCadre && (
+        <p style={{ margin: '8px 0 0', fontSize: 10, color: cadre.border, textAlign: 'right', fontWeight: 600, letterSpacing: 0.3 }}>
+          Dépassement {PALIER_LABEL[badge!]}
+        </p>
       )}
     </div>
   );
@@ -451,7 +469,7 @@ export default function ArbreCompetences({
           </div>
 
           {/* Arbre — en vedette, section large */}
-          <div style={{ position: 'relative', width: '100%', maxWidth: 460, marginInline: 'auto', aspectRatio: '4 / 3.3' }}>
+          <div style={{ position: 'relative', width: '100%', maxWidth: 460, marginInline: 'auto', aspectRatio: '3 / 4' }}>
             <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
               <defs>
                 <linearGradient id="gradient-lignes" x1="0" y1="1" x2="0" y2="0">
