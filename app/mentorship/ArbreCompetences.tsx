@@ -785,14 +785,6 @@ function Noeud({ x, y, statut, couleur, domaine, flamme, image, onClick }: { x: 
               }}
             />
           </div>
-          {acquis && (
-            <span style={{
-              position: 'absolute', bottom: -3, right: -3, width: 17, height: 17, borderRadius: '50%', zIndex: 2,
-              background: couleur, border: `2px solid ${COULEURS.fond}`, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#0b0b0d" strokeWidth={4}><path d="M5 13l4 4L19 7" /></svg>
-            </span>
-          )}
         </>
       ) : locked ? (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={couleur} strokeWidth={2} opacity={0.75}>
