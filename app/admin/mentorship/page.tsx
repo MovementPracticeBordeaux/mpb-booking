@@ -1,6 +1,6 @@
 import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
-import { BRANCHES, TRONC, DOMAINE_LABELS, Domaine } from '@/lib/mentorship-modules';
+import { BRANCHES, TRONC, TOUS_LES_NOEUDS, DOMAINE_LABELS, Domaine } from '@/lib/mentorship-modules';
 import { COULEURS, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
 import { validerSoumission, refuserSoumission } from './actions';
 
@@ -28,6 +28,29 @@ export default async function AdminMentorshipPage({ searchParams }: { searchPara
   const troncParId = Object.fromEntries(TRONC.map((t) => [t.id, { titre: t.titre, sousTitre: `Tronc niveau ${t.niveau}` }]));
   const infosNoeud: Record<string, { titre: string; sousTitre: string }> = { ...noeudParId, ...troncParId };
 
+  // Nœuds à exercices indépendants : module_id composite `${noeudId}::${exerciceId}`.
+  // On retrouve le nom lisible de l'exercice (obligatoire ou progression
+  // bonus) et on précise le nœud d'où il vient, pour un affichage clair
+  // dans la file de validation.
+  function infosPourModuleId(moduleId: string): { titre: string; sousTitre: string } {
+    const direct = infosNoeud[moduleId];
+    if (direct) return direct;
+
+    const [noeudId, exerciceId] = moduleId.split('::');
+    const noeud = TOUS_LES_NOEUDS.find((n) => n.id === noeudId);
+    if (!noeud) return { titre: moduleId, sousTitre: '' };
+
+    const label = noeud.domaine === 'tronc' ? 'Armure Organique' : DOMAINE_LABELS[noeud.domaine as Domaine];
+    const exerciceBonus = noeud.progressionBonus?.find((e) => e.id === exerciceId);
+    const exercice = noeud.exercices?.find((e) => e.id === exerciceId) ?? exerciceBonus;
+
+    if (!exercice) return { titre: noeud.titre, sousTitre: `${label} niveau ${noeud.niveau}` };
+    return {
+      titre: exercice.nom,
+      sousTitre: `${label} niveau ${noeud.niveau} · ${noeud.titre}${exerciceBonus ? ' · Progression bonus 🔥' : ''}`,
+    };
+  }
+
   return (
     <main style={{ maxWidth: 720, margin: '0 auto', padding: 20 }}>
       <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 'clamp(28px, 7vw, 40px)', letterSpacing: 0.5, marginBottom: 4 }}>
@@ -45,7 +68,7 @@ export default async function AdminMentorshipPage({ searchParams }: { searchPara
         <p style={{ color: COULEURS.texteAtt }}>Aucune soumission en attente pour le moment.</p>
       ) : (
         (soumissions ?? []).map((s: any) => {
-          const info = infosNoeud[s.module_id];
+          const info = infosPourModuleId(s.module_id);
           const eleve = s.profiles;
           return (
             <section
@@ -54,10 +77,10 @@ export default async function AdminMentorshipPage({ searchParams }: { searchPara
             >
               <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: 0 }}>
                 {eleve?.prenom ?? ''} {eleve?.nom ?? eleve?.email ?? s.eleve_id}
-                {info ? ` — ${info.sousTitre}` : ''}
+                {info.sousTitre ? ` — ${info.sousTitre}` : ''}
               </p>
               <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 22, letterSpacing: 0.3, margin: '2px 0 10px' }}>
-                {info?.titre ?? s.module_id}
+                {info.titre}
               </h2>
 
               <a

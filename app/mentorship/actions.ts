@@ -3,7 +3,7 @@
 import { supabaseServer } from '@/lib/supabase-server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { TOUS_LES_NOEUDS, estNoeudDeverrouille } from '@/lib/mentorship-modules';
+import { TOUS_LES_NOEUDS, estNoeudDeverrouille, estNoeudAcquisDepuisProgression, moduleIdExercice } from '@/lib/mentorship-modules';
 
 function echouer(message: string): never {
   redirect(`/mentorship?erreur=${encodeURIComponent(message)}`);
@@ -100,6 +100,50 @@ export async function soumettreVideo(formData: FormData) {
     .update({ statut: 'en_attente', video_url: videoUrl, submitted_at: new Date().toISOString() })
     .eq('eleve_id', user.id).eq('module_id', noeudId);
 
+  if (error) echouer(error.message);
+
+  revalidatePath('/mentorship');
+}
+
+// Soumission vidéo pour un nœud à EXERCICES INDÉPENDANTS (modèle v4,
+// branches). Contrairement à `soumettreVideo` (ancien modèle tronc), il n'y
+// a pas de QCM à passer avant : chaque exercice (obligatoire ou progression
+// bonus) se soumet dès que le nœud est déverrouillé. Ne rend jamais
+// l'exercice "acquis" directement — ça reste soumis à la validation de
+// Sylvain dans /admin/mentorship, exactement comme l'ancien modèle.
+export async function soumettreVideoExercice(formData: FormData) {
+  const supabase = supabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/login');
+
+  const noeudId = formData.get('noeud_id') as string;
+  const exerciceId = formData.get('exercice_id') as string;
+  const videoUrl = (formData.get('video_url') as string)?.trim();
+  if (!videoUrl) echouer('Merci de coller le lien de ta vidéo.');
+
+  const noeud = TOUS_LES_NOEUDS.find((n) => n.id === noeudId);
+  if (!noeud) echouer('Compétence introuvable.');
+  const exercice = [...(noeud.exercices ?? []), ...(noeud.progressionBonus ?? [])].find((e) => e.id === exerciceId);
+  if (!exercice) echouer('Exercice introuvable.');
+
+  const { data: acquisData } = await supabase
+    .from('mentorship_progression')
+    .select('module_id')
+    .eq('eleve_id', user.id)
+    .eq('statut', 'acquis');
+  const idsModulesAcquis = new Set((acquisData ?? []).map((d) => d.module_id));
+  const estModuleAcquis = (id: string) => idsModulesAcquis.has(id);
+  const idsNoeudsAcquis = new Set(
+    TOUS_LES_NOEUDS.filter((n) => estNoeudAcquisDepuisProgression(n, estModuleAcquis)).map((n) => n.id)
+  );
+  if (!estNoeudDeverrouille(noeud, idsNoeudsAcquis)) echouer('Ce niveau est encore verrouillé.');
+
+  const moduleId = moduleIdExercice(noeud, exercice);
+  const { error } = await supabase.from('mentorship_progression')
+    .upsert(
+      { eleve_id: user.id, module_id: moduleId, statut: 'en_attente', video_url: videoUrl, submitted_at: new Date().toISOString() },
+      { onConflict: 'eleve_id,module_id' }
+    );
   if (error) echouer(error.message);
 
   revalidatePath('/mentorship');

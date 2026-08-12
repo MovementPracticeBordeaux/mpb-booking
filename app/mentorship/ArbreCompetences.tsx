@@ -7,13 +7,20 @@ import {
   DOMAINE_COULEURS,
   DOMAINE_ACCROCHES,
   COULEUR_TRONC,
+  COULEUR_FLAMME,
   Domaine,
   DomaineOuTronc,
   NoeudMentorshipPublic,
+  ExerciceMentorship,
+  PalierFlamme,
   XP_BONUS_DEFI_QUOTIDIEN,
+  estNoeudAcquisDepuisProgression,
+  moduleIdExercice,
+  pourcentageFlammeNoeud,
+  palierFlamme,
 } from '@/lib/mentorship-modules';
 import { COULEURS, POLICE_DISPLAY, POLICE_CORPS } from '@/lib/theme';
-import { soumettreVideo, repondreQCM, validerDefiQuotidien } from './actions';
+import { soumettreVideo, repondreQCM, validerDefiQuotidien, soumettreVideoExercice } from './actions';
 
 type Progression = {
   module_id: string;
@@ -78,8 +85,39 @@ function Pictogramme({ domaine, taille = 12, couleur }: { domaine: DomaineOuTron
   }
 }
 
+const PALIER_LABEL: Record<PalierFlamme, string> = {
+  aucune: '', normal: 'Normal', epique: 'Épique', legendaire: 'Légendaire', mythique: 'Mythique',
+};
+
+// Petit badge flamme animé, superposé en coin d'un nœud (palier local) ou
+// affiché dans l'en-tête XP (palier global de l'élève).
+function IconeFlamme({ palier }: { palier: PalierFlamme }) {
+  if (palier === 'aucune') return null;
+  const mythique = palier === 'mythique';
+  const couleur = COULEUR_FLAMME[palier];
+  return (
+    <span
+      aria-hidden
+      title={`Flamme ${PALIER_LABEL[palier]}`}
+      style={{
+        position: 'absolute', top: -6, right: -6, width: 18, height: 18, borderRadius: '50%',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: mythique ? 'linear-gradient(270deg, #FF3B30, #FF2D78, #8B5CF6, #FF3B30)' : '#161618',
+        backgroundSize: mythique ? '400% 100%' : undefined,
+        animation: mythique ? 'flame-shift 3s linear infinite' : 'pulse-noeud 2.4s ease-in-out infinite',
+        border: `2px solid ${mythique ? 'transparent' : couleur}`,
+        boxShadow: `0 0 6px ${mythique ? '#FF2D78' : couleur}`,
+      }}
+    >
+      <svg width="11" height="11" viewBox="0 0 24 24" fill={mythique ? '#fff' : couleur}>
+        <path d="M12 2c1 4-3 5-3 9a3 3 0 006 0c0-1-.5-2-1-3 2 1 3 3 3 5a5 5 0 01-10 0c0-5 4-6 5-11z" />
+      </svg>
+    </span>
+  );
+}
+
 // --- En-tête XP / niveau — compact, avec titre du pratiquant et barre vers le niveau suivant --
-function EnTeteXP({ xpTotal, niveau }: { xpTotal: number; niveau: Niveau }) {
+function EnTeteXP({ xpTotal, niveau, badge }: { xpTotal: number; niveau: Niveau; badge?: PalierFlamme }) {
   return (
     <div style={{ background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: '14px 16px', minWidth: 150 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
@@ -99,6 +137,12 @@ function EnTeteXP({ xpTotal, niveau }: { xpTotal: number; niveau: Niveau }) {
         <div style={{ height: '100%', width: `${(niveau.xpDansPalier / niveau.xpProchainPalier) * 100}%`, background: 'linear-gradient(90deg,#FF3B30,#8B5CF6)', borderRadius: 3 }} />
       </div>
       <p style={{ margin: '4px 0 0', fontSize: 10, color: COULEURS.texteFaible }}>{niveau.xpDansPalier}/{niveau.xpProchainPalier} XP avant le niveau {niveau.niveau + 1}</p>
+      {badge && badge !== 'aucune' && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10, paddingTop: 10, borderTop: `1px solid ${COULEURS.bordure}` }}>
+          <span style={{ position: 'relative', width: 18, height: 18 }}><IconeFlamme palier={badge} /></span>
+          <span style={{ fontSize: 11, color: COULEURS.texteAtt }}>Dépassement : <strong style={{ color: COULEURS.texte }}>{PALIER_LABEL[badge]}</strong></span>
+        </div>
+      )}
     </div>
   );
 }
@@ -204,6 +248,7 @@ export default function ArbreCompetences({
   bilan,
   xpTotal,
   niveau,
+  badge,
   defisValidesAujourdhui,
   courbeXP,
   structureSeance,
@@ -215,6 +260,7 @@ export default function ArbreCompetences({
   bilan: EntreeBilan[];
   xpTotal: number;
   niveau: Niveau;
+  badge?: PalierFlamme;
   defisValidesAujourdhui: Set<string>;
   courbeXP: { jour: string; xp: number }[];
   structureSeance: readonly { etape: string; detail: string }[];
@@ -247,9 +293,22 @@ export default function ArbreCompetences({
   }, [apercu, progressionReelle, tronc, branches]);
 
   const idsAcquis = new Set(
-    [...progression.entries()].filter(([, p]) => p.statut === 'acquis').map(([id]) => id)
+    [...tronc, ...branches].filter((n) => estNoeudAcquisDepuisProgression(n, estModuleAcquisDansMap)).map((n) => n.id)
   );
   const troncComplet = tronc.every((n) => idsAcquis.has(n.id));
+
+  // Généralise "ce module (nœud entier OU exercice précis) est-il acquis ?"
+  // pour les deux modèles. En mode aperçu (admin), la carte fictive ne
+  // marque que l'id du nœud lui-même — on considère alors ses exercices
+  // comme tous acquis, pour simuler correctement le rendu.
+  function estModuleAcquisDansMap(moduleId: string): boolean {
+    if (progression.get(moduleId)?.statut === 'acquis') return true;
+    if (apercu !== 'reel') {
+      const idNoeud = moduleId.split('::')[0];
+      return progression.get(idNoeud)?.statut === 'acquis';
+    }
+    return false;
+  }
 
   function estDeverrouille(noeud: NoeudMentorshipPublic): boolean {
     if (noeud.domaine === 'tronc') {
@@ -265,6 +324,9 @@ export default function ArbreCompetences({
 
   function statutAffiche(noeud: NoeudMentorshipPublic): StatutAffiche {
     if (!estDeverrouille(noeud)) return 'locked';
+    if (noeud.exercices && noeud.exercices.length > 0) {
+      return idsAcquis.has(noeud.id) ? 'acquis' : 'unlocked';
+    }
     const prog = progression.get(noeud.id);
     if (!prog) return 'unlocked';
     if (prog.statut === 'acquis') return 'acquis';
@@ -272,6 +334,13 @@ export default function ArbreCompetences({
     if (prog.statut === 'en_attente') return 'en_attente';
     if (prog.quiz_reussi) return 'qcm_reussi';
     return 'unlocked';
+  }
+
+  // Flamme locale d'un nœud à exercices : % de progressions bonus validées
+  // sur CE nœud précis (0 si le nœud n'a pas ce modèle ou pas de bonus).
+  function flammeDuNoeud(noeud: NoeudMentorshipPublic): PalierFlamme {
+    if (!noeud.exercices || noeud.exercices.length === 0) return 'aucune';
+    return palierFlamme(pourcentageFlammeNoeud(noeud, estModuleAcquisDansMap));
   }
 
   function pourcentageBranche(branche: DomaineOuTronc) {
@@ -316,6 +385,7 @@ export default function ArbreCompetences({
       <style>{`
         @keyframes pulse-noeud { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
         @keyframes glow-acquis { 0%, 100% { filter: drop-shadow(0 0 3px currentColor); } 50% { filter: drop-shadow(0 0 8px currentColor); } }
+        @keyframes flame-shift { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
       `}</style>
 
       <MenuOnglets actif={onglet} onChange={setOnglet} />
@@ -359,7 +429,7 @@ export default function ArbreCompetences({
               </div>
             </div>
             <div style={{ flex: '0 1 190px' }}>
-              <EnTeteXP xpTotal={xpTotal} niveau={niveau} />
+              <EnTeteXP xpTotal={xpTotal} niveau={niveau} badge={badge} />
             </div>
           </div>
 
@@ -408,6 +478,7 @@ export default function ArbreCompetences({
                     statut={statutAffiche(noeud)}
                     couleur={DOMAINE_COULEURS[d]}
                     domaine={d}
+                    flamme={flammeDuNoeud(noeud)}
                     onClick={() => setSelection(noeud.id)}
                   />
                 );
@@ -587,6 +658,7 @@ export default function ArbreCompetences({
           noeud={noeudSelectionne}
           statut={statutAffiche(noeudSelectionne)}
           progression={progression.get(noeudSelectionne.id)}
+          progressionMap={progression}
           couleur={noeudSelectionne.domaine === 'tronc' ? COULEUR_TRONC : DOMAINE_COULEURS[noeudSelectionne.domaine as Domaine]}
           reponsesQCM={reponsesQCM}
           setReponsesQCM={setReponsesQCM}
@@ -637,7 +709,7 @@ function LigneProgression({ label, pourcentage, couleur, domaine, entrees, compa
   );
 }
 
-function Noeud({ x, y, statut, couleur, domaine, onClick }: { x: number; y: number; statut: StatutAffiche; couleur: string; domaine: DomaineOuTronc; onClick: () => void }) {
+function Noeud({ x, y, statut, couleur, domaine, flamme, onClick }: { x: number; y: number; statut: StatutAffiche; couleur: string; domaine: DomaineOuTronc; flamme?: PalierFlamme; onClick: () => void }) {
   const meta = metaPour(statut, couleur);
   const pulse = statut === 'en_attente';
   const acquis = statut === 'acquis';
@@ -656,6 +728,7 @@ function Noeud({ x, y, statut, couleur, domaine, onClick }: { x: number; y: numb
         boxShadow: acquis ? `0 0 16px ${couleur}99` : statut !== 'locked' ? `0 0 8px ${couleur}44` : 'none',
       }}
     >
+      {flamme && flamme !== 'aucune' && <IconeFlamme palier={flamme} />}
       {statut === 'locked' ? (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={couleur} strokeWidth={2} opacity={0.75}>
           <rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V7a4 4 0 018 0v4" />
@@ -717,12 +790,75 @@ function FeuilleModale({ onFermer, children }: { onFermer: () => void; children:
   );
 }
 
+function StatutExercicePastille({ statut }: { statut: 'locked' | 'a_faire' | 'en_attente' | 'acquis' | 'refuse' }) {
+  const map = {
+    locked: { label: 'Verrouillé', couleur: COULEURS.texteFaible },
+    a_faire: { label: 'À soumettre', couleur: COULEURS.texteAtt },
+    en_attente: { label: 'En attente', couleur: '#FFC24B' },
+    acquis: { label: 'Validé', couleur: '#9ef29e' },
+    refuse: { label: 'À retravailler', couleur: '#ff6b6b' },
+  } as const;
+  const m = map[statut];
+  return <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 999, border: `1px solid ${m.couleur}`, color: m.couleur, flexShrink: 0 }}>{m.label}</span>;
+}
+
+// Un exercice indépendant (obligatoire ou progression bonus), avec son
+// propre statut et son propre formulaire de soumission vidéo.
+function BlocExercice({
+  noeud, exercice, prog, estBonus, estAdmin,
+}: {
+  noeud: NoeudMentorshipPublic;
+  exercice: ExerciceMentorship;
+  prog?: Progression;
+  estBonus: boolean;
+  estAdmin?: boolean;
+}) {
+  const statutEx: 'a_faire' | 'en_attente' | 'acquis' | 'refuse' =
+    prog?.statut === 'acquis' ? 'acquis' : prog?.statut === 'refuse' ? 'refuse' : prog?.statut === 'en_attente' ? 'en_attente' : 'a_faire';
+
+  return (
+    <div style={{ background: COULEURS.surface, borderRadius: 8, padding: '10px 14px', marginBottom: 8 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <div>
+          <p style={{ margin: 0, fontSize: 13, color: COULEURS.texte }}>{exercice.nom}{estBonus ? ' 🔥' : ''}</p>
+          {exercice.note && <p style={{ margin: '2px 0 0', fontSize: 11, color: COULEURS.texteFaible, fontStyle: 'italic' }}>{exercice.note}</p>}
+          {exercice.videoUrl && (
+            <a href={exercice.videoUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#f0a' }}>▶ Voir la référence</a>
+          )}
+        </div>
+        <StatutExercicePastille statut={statutEx} />
+      </div>
+
+      {!estAdmin && statutEx === 'refuse' && prog?.commentaire_coach && (
+        <p style={{ fontSize: 12, color: '#ff6b6b', margin: '8px 0 0' }}>Retour de Sylvain : {prog.commentaire_coach}</p>
+      )}
+      {!estAdmin && statutEx === 'en_attente' && (
+        <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: '8px 0 0' }}>
+          Envoyée —{' '}<a href={prog?.video_url ?? '#'} target="_blank" rel="noopener noreferrer" style={{ color: '#f0a' }}>revoir ce que tu as envoyé</a>
+        </p>
+      )}
+      {!estAdmin && (statutEx === 'a_faire' || statutEx === 'refuse') && (
+        <form action={soumettreVideoExercice} style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+          <input type="hidden" name="noeud_id" value={noeud.id} />
+          <input type="hidden" name="exercice_id" value={exercice.id} />
+          <input type="url" name="video_url" required placeholder="Lien de ta vidéo"
+            style={{ flexGrow: 1, minWidth: 160, fontSize: 12, padding: '7px 10px', borderRadius: 8, border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surfaceForte, color: COULEURS.texte }} />
+          <button type="submit" style={{ fontSize: 12, padding: '7px 12px', borderRadius: 999, border: '1px solid #f0a', background: 'rgba(255,0,170,0.1)', color: '#f0a', cursor: 'pointer' }}>
+            {statutEx === 'refuse' ? 'Renvoyer' : 'Envoyer'}
+          </button>
+        </form>
+      )}
+    </div>
+  );
+}
+
 function PanneauNoeud({
-  noeud, statut, progression, couleur, reponsesQCM, setReponsesQCM, estAdmin, onFermer,
+  noeud, statut, progression, progressionMap, couleur, reponsesQCM, setReponsesQCM, estAdmin, onFermer,
 }: {
   noeud: NoeudMentorshipPublic;
   statut: string;
   progression?: Progression;
+  progressionMap: Map<string, Progression>;
   couleur: string;
   reponsesQCM: Record<string, number>;
   setReponsesQCM: (fn: (r: Record<string, number>) => Record<string, number>) => void;
@@ -730,6 +866,7 @@ function PanneauNoeud({
   onFermer: () => void;
 }) {
   const label = noeud.domaine === 'tronc' ? 'Armure Organique' : DOMAINE_LABELS[noeud.domaine as Domaine];
+  const aDesExercices = (noeud.exercices?.length ?? 0) > 0;
 
   return (
     <FeuilleModale onFermer={onFermer}>
@@ -738,6 +875,35 @@ function PanneauNoeud({
 
       {statut === 'locked' ? (
         <p style={{ color: COULEURS.texteFaible, fontSize: 13, marginTop: 8 }}>🔒 Ce niveau est encore verrouillé.</p>
+      ) : aDesExercices ? (
+        <>
+          <p style={{ color: COULEURS.texteAtt, fontSize: 14, lineHeight: 1.6, marginTop: 8 }}>{noeud.resume}</p>
+          {!noeud.contenuDefini && (
+            <p style={{ color: COULEURS.texteFaible, fontSize: 12, fontStyle: 'italic', marginTop: 4 }}>
+              Théorie et QCM à venir — les exercices ci-dessous sont déjà soumissibles.
+            </p>
+          )}
+
+          <div style={{ marginTop: 16 }}>
+            <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              Exercices à valider ({noeud.exercices!.filter((ex) => progressionMap.get(moduleIdExercice(noeud, ex))?.statut === 'acquis').length}/{noeud.exercices!.length})
+            </p>
+            {noeud.exercices!.map((ex) => (
+              <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progressionMap.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} />
+            ))}
+          </div>
+
+          {(noeud.progressionBonus?.length ?? 0) > 0 && (
+            <div style={{ marginTop: 16 }}>
+              <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                🔥 Progression bonus (facultatif, dépassement)
+              </p>
+              {noeud.progressionBonus!.map((ex) => (
+                <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progressionMap.get(moduleIdExercice(noeud, ex))} estBonus estAdmin={estAdmin} />
+              ))}
+            </div>
+          )}
+        </>
       ) : !noeud.contenuDefini ? (
         <p style={{ color: COULEURS.texteAtt, fontSize: 13, marginTop: 8, lineHeight: 1.6 }}>
           Ce niveau n'a pas encore de contenu détaillé — théorie, programmation et QCM restent à définir avec Sylvain.

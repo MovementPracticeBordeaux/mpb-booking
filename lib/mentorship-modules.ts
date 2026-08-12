@@ -29,6 +29,19 @@
 // passer des données au composant client de l'arbre, utilise
 // `noeudSansReponses()` pour les retirer. La correction du QCM se fait
 // uniquement dans l'action serveur `repondreQCM`.
+//
+// --- Nœuds à exercices indépendants (branches, v4 — 08/2026) --------------
+// Un nœud de branche peut, en plus (ou au lieu) du modèle vidéo unique
+// hérité du tronc, définir une liste `exercices` : chacun est validé
+// indépendamment (sa propre vidéo, son propre statut acquis/en_attente/
+// refusé côté `mentorship_progression`, sous la clé composite
+// `${noeud.id}::${exercice.id}` comme `module_id`). Le nœud est considéré
+// acquis quand TOUS ses `exercices` sont acquis.
+//
+// `progressionBonus` est la liste optionnelle des exercices "en plus" :
+// ils ne bloquent/débloquent rien, mais rapportent un supplément d'XP et
+// alimentent la "flamme" du nœud (voir plus bas). Même mécanique de
+// validation indépendante que les exercices obligatoires.
 
 export type Domaine = 'force' | 'flexibilite' | 'locomotion' | 'connexion' | 'figures';
 export type DomaineOuTronc = 'tronc' | Domaine;
@@ -84,6 +97,14 @@ export type QuestionQCM = {
 // Version d'une question sans la bonne réponse, sûre à envoyer au navigateur.
 export type QuestionQCMPublique = Omit<QuestionQCM, 'bonneReponse'>;
 
+// Un exercice validable indépendamment à l'intérieur d'un nœud de branche.
+export type ExerciceMentorship = {
+  id: string; // slug unique DANS le nœud (ex. 'pushup-ring') — combiné à l'id du nœud pour la clé de progression
+  nom: string;
+  videoUrl: string;
+  note?: string; // précision libre (ex. "à filmer", variante retenue, etc.)
+};
+
 export type NoeudMentorship = {
   id: string; // slug stable, sert de clé de progression — ne pas changer une fois publié
   domaine: DomaineOuTronc;
@@ -95,7 +116,17 @@ export type NoeudMentorship = {
   programmation: CiblesProgrammation[];
   qcm: QuestionQCM[];
   contenuDefini: boolean; // false = squelette provisoire, contenu à rédiger ensemble
+  // Modèle "exercices indépendants" (branches, v4). Absent/vide = le nœud
+  // suit encore l'ancien modèle à validation vidéo unique (tronc).
+  exercices?: ExerciceMentorship[];
+  progressionBonus?: ExerciceMentorship[];
 };
+
+// module_id composite utilisé dans `mentorship_progression` pour un exercice
+// donné d'un nœud à exercices indépendants.
+export function moduleIdExercice(noeud: NoeudMentorship | NoeudMentorshipPublic, exercice: ExerciceMentorship): string {
+  return `${noeud.id}::${exercice.id}`;
+}
 
 export type NoeudMentorshipPublic = Omit<NoeudMentorship, 'qcm'> & { qcm: QuestionQCMPublique[] };
 
@@ -242,9 +273,76 @@ function squelette(domaine: Domaine, niveau: 1 | 2 | 3, titre: string, resume: s
 }
 
 const FORCE: NoeudMentorship[] = [
-  squelette('force', 1, 'Force — niveau 1', 'Contenu à définir ensemble.'),
-  squelette('force', 2, 'Force — niveau 2', 'Contenu à définir ensemble.'),
-  squelette('force', 3, 'Force — niveau 3', 'Contenu à définir ensemble.'),
+  {
+    id: 'force-1',
+    domaine: 'force',
+    niveau: 1,
+    titre: 'Force — niveau 1',
+    resume: 'Bases de tirage, poussée et suspension unilatérale.',
+    objectifPedagogique: 'À définir ensemble (théorie/QCM à rédiger — exercices déjà calés).',
+    theorie: [],
+    programmation: [],
+    qcm: [],
+    contenuDefini: false, // exercices calés, théorie/QCM restent à rédiger
+    exercices: [
+      { id: 'pushup-ring', nom: 'Push up ring', videoUrl: 'https://youtu.be/VM9s-3m7bAQ' },
+      { id: 'rowing-unilat', nom: 'Rowing unilatérale', videoUrl: 'https://youtu.be/bW-nMmiKrSk' },
+      { id: 'suspension-unilat', nom: 'Suspension unilatérale', videoUrl: 'https://youtu.be/Av2UT-xcGtc' },
+    ],
+    progressionBonus: [
+      { id: 'mu-horizontal', nom: 'MU Horizontal', videoUrl: 'https://youtu.be/FpASYrW6dwA' },
+      { id: 'force-pushup', nom: 'Force - Push Up (régression/référence)', videoUrl: 'https://youtu.be/dvKypiqTkJE' },
+    ],
+  },
+  {
+    id: 'force-2',
+    domaine: 'force',
+    niveau: 2,
+    titre: 'Force — niveau 2',
+    resume: 'Travail aux anneaux de gymnastique : dips, tractions, transition et skin the cat.',
+    objectifPedagogique: 'À définir ensemble (théorie/QCM à rédiger — exercices déjà calés).',
+    theorie: [],
+    programmation: [],
+    qcm: [],
+    contenuDefini: false,
+    exercices: [
+      { id: 'dips-anneaux', nom: 'Dips aux anneaux de gymnastique', videoUrl: 'https://youtu.be/QqSfP_g5sCM' },
+      { id: 'traction-anneaux', nom: 'Traction aux anneaux de gymnastique', videoUrl: 'https://youtu.be/P87xMGptjr4' },
+      { id: 'skin-the-cat', nom: 'Skin the cat', videoUrl: 'https://youtu.be/Cayfdp36_2Q' },
+    ],
+    progressionBonus: [
+      { id: 'transition-mu-anneaux', nom: 'Transition du muscle up aux anneaux de gymnastique', videoUrl: 'https://youtu.be/LGKT7v0HCp0' },
+      { id: 'skin-the-cat-german-hang', nom: 'Skin the cat — progression German hang', videoUrl: 'https://youtu.be/SOWsMAIX2Tc' },
+      { id: 'traction-faux-grip', nom: 'Traction faux grip', videoUrl: '', note: 'Vidéo à confirmer — non trouvée dans la bibliothèque classée' },
+      { id: 'l-sit-ring', nom: 'L-sit ring', videoUrl: 'https://youtu.be/2l1Nf2CgRwA' },
+    ],
+  },
+  {
+    id: 'force-3',
+    domaine: 'force',
+    niveau: 3,
+    titre: 'Force — niveau 3',
+    resume: 'Muscle up, poussée/tirage unilatéraux avancés, toes to bar et session ring complète.',
+    objectifPedagogique: 'À définir ensemble (théorie/QCM à rédiger — exercices déjà calés).',
+    theorie: [],
+    programmation: [],
+    qcm: [],
+    contenuDefini: false,
+    exercices: [
+      { id: 'muscle-up', nom: 'Muscle up', videoUrl: 'https://youtu.be/nzRhNyAtVf0' },
+      { id: 'pu-unilat', nom: 'Unilatérale Push up', videoUrl: 'https://youtu.be/-zXIsHTl9AU' },
+      { id: 'archer-chin-up', nom: 'Archer Chin Up', videoUrl: 'https://youtu.be/3fVu6hYk1Yc' },
+      { id: 'toes-to-bar', nom: 'Toes to bar', videoUrl: 'https://youtu.be/_VPnwAtdWPw' },
+    ],
+    progressionBonus: [
+      { id: 'pelican-curl', nom: 'Pelican curl', videoUrl: 'https://youtu.be/uVlNAUHdI-E' },
+      { id: 'rings-session-1', nom: 'Rings session — Level 1', videoUrl: 'https://youtu.be/Sf_sn6jfvuc' },
+      { id: 'rings-session-2', nom: 'Rings session — Level 2', videoUrl: 'https://youtu.be/-7E4fPzjNuw' },
+      { id: 'rings-session-3', nom: 'Rings session — Level 3', videoUrl: 'https://youtu.be/Rpo3KH_IOOg' },
+      { id: 'ring-rotation', nom: 'Ring rotation', videoUrl: 'https://youtu.be/ZV6m93LlElE' },
+      { id: 'shoulder-stand', nom: 'Shoulder stand', videoUrl: 'https://youtu.be/4eXHJwbHSRs' },
+    ],
+  },
 ];
 const FLEXIBILITE: NoeudMentorship[] = [
   squelette('flexibilite', 1, 'Flexibilité — niveau 1', 'Contenu à définir ensemble.'),
@@ -328,6 +426,39 @@ export function xpGagneParNoeud(noeud: NoeudMentorship | NoeudMentorshipPublic, 
 }
 
 export const XP_BONUS_DEFI_QUOTIDIEN = 10;
+const XP_PAR_PROGRESSION_BONUS_VALIDEE = 25;
+
+// Généralise "ce nœud est-il acquis ?" aux deux modèles : ancien modèle
+// (une seule ligne de progression, clé = noeud.id) et nouveau modèle à
+// exercices indépendants (clé = moduleIdExercice pour chaque exercice
+// obligatoire, TOUS doivent être acquis). `estModuleAcquis` est fourni par
+// l'appelant (lit `mentorship_progression`, statut === 'acquis').
+export function estNoeudAcquisDepuisProgression(
+  noeud: NoeudMentorship | NoeudMentorshipPublic,
+  estModuleAcquis: (moduleId: string) => boolean
+): boolean {
+  if (noeud.exercices && noeud.exercices.length > 0) {
+    return noeud.exercices.every((ex) => estModuleAcquis(moduleIdExercice(noeud, ex)));
+  }
+  return estModuleAcquis(noeud.id);
+}
+
+// XP d'un nœud à exercices indépendants : le total du nœud (xpMaxDuNoeud)
+// est réparti à parts égales entre ses exercices obligatoires, + un bonus
+// fixe par progression bonus validée (indépendant du nombre de progressions
+// disponibles sur le nœud, pour rester simple à expliquer).
+export function xpNoeudExercices(
+  noeud: NoeudMentorship | NoeudMentorshipPublic,
+  estModuleAcquis: (moduleId: string) => boolean
+): number {
+  const exercices = noeud.exercices ?? [];
+  if (exercices.length === 0) return 0;
+  const xpParExercice = xpMaxDuNoeud(noeud) / exercices.length;
+  const nbAcquis = exercices.filter((ex) => estModuleAcquis(moduleIdExercice(noeud, ex))).length;
+  const bonus = noeud.progressionBonus ?? [];
+  const nbBonusAcquis = bonus.filter((ex) => estModuleAcquis(moduleIdExercice(noeud, ex))).length;
+  return Math.round(xpParExercice * nbAcquis) + nbBonusAcquis * XP_PAR_PROGRESSION_BONUS_VALIDEE;
+}
 
 // Grille de niveaux par défaut — les seuils et les titres sont volontairement
 // simples pour démarrer, à ajuster une fois que les vrais élèves progressent.
@@ -383,6 +514,76 @@ export function courbeXPParJour(
     cumule += gainsParJour.get(jour)!;
     return { jour, xp: cumule };
   });
+}
+
+// --- Flamme de nœud & badge élève (dépassement / progressions bonus) ------
+//
+// Flamme d'un nœud : % de `progressionBonus` validés (acquis) sur ce nœud
+// précis, rapporté au nombre de progressions bonus disponibles pour ce
+// nœud. Purement locale — ne dépend que de ce nœud.
+//
+// Badge élève : recalculé en continu à partir de TOUS les nœuds acquis de
+// l'élève = % de ces nœuds acquis dont la flamme est Légendaire ou plus.
+// Un seul nœud parfait ne suffit pas à décrocher un badge élevé — il faut
+// répéter la performance sur plusieurs nœuds. Garde-fou : badge "Normal"
+// tant que l'élève a moins de 3 nœuds acquis.
+
+export type PalierFlamme = 'aucune' | 'normal' | 'epique' | 'legendaire' | 'mythique';
+
+export const COULEUR_FLAMME: Record<PalierFlamme, string> = {
+  aucune: 'transparent',
+  normal: '#FFA500', // orange/jaune classique
+  epique: '#8B5CF6', // violet — cohérent avec DOMAINE_COULEURS.figures
+  legendaire: '#FFD700', // or
+  mythique: 'linear-gradient(90deg, #FF3B30, #FF2D78, #8B5CF6)', // dégradé animé multicolore
+};
+
+const SEUIL_MIN_NOEUDS_ACQUIS_POUR_BADGE = 3;
+
+// Calcule le % de progressions bonus acquises sur un nœud donné.
+// `estAcquis` : fonction fournie par l'appelant, qui sait lire le statut
+// d'un exercice donné (vient de `mentorship_progression`, clé
+// `moduleIdExercice(noeud, exercice)`).
+export function pourcentageFlammeNoeud(
+  noeud: NoeudMentorship | NoeudMentorshipPublic,
+  estAcquis: (moduleId: string) => boolean
+): number {
+  const bonus = noeud.progressionBonus ?? [];
+  if (bonus.length === 0) return 0;
+  const acquis = bonus.filter((ex) => estAcquis(moduleIdExercice(noeud, ex))).length;
+  return acquis / bonus.length;
+}
+
+export function palierFlamme(pourcentage: number): PalierFlamme {
+  if (pourcentage <= 0) return 'aucune';
+  if (pourcentage < 0.5) return 'normal';
+  if (pourcentage < 0.8) return 'epique';
+  if (pourcentage < 1) return 'legendaire';
+  return 'mythique';
+}
+
+// Est-ce qu'un nœud à exercices indépendants est acquis dans son ensemble ?
+// (tous les exercices obligatoires acquis — la progression bonus ne compte pas).
+export function noeudExercicesAcquis(
+  noeud: NoeudMentorship | NoeudMentorshipPublic,
+  estAcquis: (moduleId: string) => boolean
+): boolean {
+  const exercices = noeud.exercices ?? [];
+  if (exercices.length === 0) return false;
+  return exercices.every((ex) => estAcquis(moduleIdExercice(noeud, ex)));
+}
+
+// Badge global de l'élève à partir de la liste de ses nœuds acquis (déjà
+// filtrés par l'appelant) et de leur % de flamme respectif.
+export function badgeEleve(pourcentagesFlammeNoeudsAcquis: number[]): PalierFlamme {
+  const total = pourcentagesFlammeNoeudsAcquis.length;
+  if (total < SEUIL_MIN_NOEUDS_ACQUIS_POUR_BADGE) return 'normal';
+  const nbLegendairePlus = pourcentagesFlammeNoeudsAcquis.filter((p) => palierFlamme(p) === 'legendaire' || palierFlamme(p) === 'mythique').length;
+  const ratio = nbLegendairePlus / total;
+  if (ratio < 0.3) return 'normal';
+  if (ratio < 0.6) return 'epique';
+  if (ratio < 0.9) return 'legendaire';
+  return 'mythique';
 }
 
 // Déroulé de séance type (repris de "Cours collectif").
