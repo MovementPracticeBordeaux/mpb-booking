@@ -470,14 +470,14 @@ export default function ArbreCompetences({
 
           {/* Arbre — en vedette, section large */}
           <div style={{ position: 'relative', width: '100%', maxWidth: 460, marginInline: 'auto', aspectRatio: '3 / 4' }}>
-            <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none" width="100%" height="100%" style={{ position: 'absolute', inset: 0, display: 'block' }}>
               <defs>
                 <linearGradient id="gradient-lignes" x1="0" y1="1" x2="0" y2="0">
                   <stop offset="0%" stopColor="#FF3B30" /><stop offset="35%" stopColor="#FF8A00" /><stop offset="70%" stopColor="#FF2D78" /><stop offset="100%" stopColor="#8B5CF6" />
                 </linearGradient>
               </defs>
               {lignes.map((l) => (
-                <line key={l.key} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke={l.active ? 'url(#gradient-lignes)' : COULEURS.bordure} strokeWidth={l.active ? 0.9 : 0.6} opacity={l.active ? 0.9 : 0.5} />
+                <line key={l.key} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke={l.active ? 'url(#gradient-lignes)' : COULEURS.texteFaible} strokeWidth={l.active ? 0.9 : 0.6} opacity={l.active ? 0.9 : 0.7} />
               ))}
               {/* Ligne du tronc — couleur pleine dédiée (pas le gradient partagé),
                   pour être toujours visible quel que soit l'état des branches */}
