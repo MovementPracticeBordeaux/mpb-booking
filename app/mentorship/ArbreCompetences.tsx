@@ -106,7 +106,7 @@ function IconeFlamme({ palier }: { palier: PalierFlamme }) {
       title={`Flamme ${PALIER_LABEL[palier]}`}
       style={{
         position: 'absolute', top: -6, right: -6, width: 18, height: 18, borderRadius: '50%',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2,
         background: mythique ? 'linear-gradient(270deg, #FF3B30, #FF2D78, #8B5CF6, #FF3B30)' : '#161618',
         backgroundSize: mythique ? '400% 100%' : undefined,
         animation: mythique ? 'flame-shift 3s linear infinite' : 'pulse-noeud 2.4s ease-in-out infinite',
@@ -749,7 +749,8 @@ function Noeud({ x, y, statut, couleur, domaine, flamme, image, onClick }: { x: 
   const meta = metaPour(statut, couleur);
   const pulse = statut === 'en_attente';
   const acquis = statut === 'acquis';
-  const aImage = !!image && statut !== 'locked';
+  const locked = statut === 'locked';
+  const aImage = !!image;
   return (
     <button
       onClick={onClick}
@@ -766,25 +767,36 @@ function Noeud({ x, y, statut, couleur, domaine, flamme, image, onClick }: { x: 
       }}
     >
       {flamme && flamme !== 'aucune' && <IconeFlamme palier={flamme} />}
-      {statut === 'locked' ? (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={couleur} strokeWidth={2} opacity={0.75}>
-          <rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V7a4 4 0 018 0v4" />
-        </svg>
-      ) : aImage ? (
+      {aImage ? (
         <>
+          {/* Pastille encore éteinte tant que verrouillée (silhouette
+              sombre, à peine visible) — s'éclaire progressivement au fil
+              du déblocage puis de la validation. */}
           <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', overflow: 'hidden' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: acquis ? 1 : 0.55, filter: acquis ? 'none' : 'grayscale(35%)' }} />
+            <img
+              src={image}
+              alt=""
+              style={{
+                width: '100%', height: '100%', objectFit: 'cover',
+                opacity: acquis ? 1 : locked ? 0.16 : 0.55,
+                filter: acquis ? 'none' : locked ? 'grayscale(100%) brightness(0.4)' : 'grayscale(35%)',
+              }}
+            />
           </div>
           {acquis && (
             <span style={{
-              position: 'absolute', bottom: -3, right: -3, width: 15, height: 15, borderRadius: '50%',
+              position: 'absolute', bottom: -3, right: -3, width: 15, height: 15, borderRadius: '50%', zIndex: 2,
               background: couleur, border: `2px solid ${COULEURS.fond}`, display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
               <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#0b0b0d" strokeWidth={4}><path d="M5 13l4 4L19 7" /></svg>
             </span>
           )}
         </>
+      ) : locked ? (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={couleur} strokeWidth={2} opacity={0.75}>
+          <rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V7a4 4 0 018 0v4" />
+        </svg>
       ) : acquis ? (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0b0b0d" strokeWidth={3}><path d="M5 13l4 4L19 7" /></svg>
       ) : (
