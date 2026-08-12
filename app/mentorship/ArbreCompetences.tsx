@@ -18,6 +18,7 @@ import {
   moduleIdExercice,
   pourcentageFlammeNoeud,
   palierFlamme,
+  badgeEleve,
 } from '@/lib/mentorship-modules';
 import { COULEURS, POLICE_DISPLAY, POLICE_CORPS } from '@/lib/theme';
 import { soumettreVideo, repondreQCM, validerDefiQuotidien, soumettreVideoExercice } from './actions';
@@ -315,6 +316,18 @@ export default function ArbreCompetences({
   );
   const troncComplet = tronc.every((n) => idsAcquis.has(n.id));
 
+  // Badge affiché dans l'en-tête XP : en mode aperçu (admin), on simule le
+  // badge à partir des nœuds fictivement acquis, pour prévisualiser le
+  // cadre luminescent. En mode réel, on garde le badge calculé côté
+  // serveur à partir des vraies données de l'élève.
+  const badgeAffiche: PalierFlamme = useMemo(() => {
+    if (apercu === 'reel') return badge ?? 'aucune';
+    const noeudsAcquisApercu = [...tronc, ...branches].filter((n) => idsAcquis.has(n.id));
+    const flammes = noeudsAcquisApercu.map((n) => pourcentageFlammeNoeud(n, estModuleAcquisDansMap));
+    return badgeEleve(flammes);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apercu, idsAcquis.size, badge]);
+
   // Généralise "ce module (nœud entier OU exercice précis) est-il acquis ?"
   // pour les deux modèles. En mode aperçu (admin), la carte fictive ne
   // marque que l'id du nœud lui-même — on considère alors ses exercices
@@ -447,7 +460,7 @@ export default function ArbreCompetences({
               </div>
             </div>
             <div style={{ flex: '0 1 190px' }}>
-              <EnTeteXP xpTotal={xpTotal} niveau={niveau} badge={badge} />
+              <EnTeteXP xpTotal={xpTotal} niveau={niveau} badge={badgeAffiche} />
             </div>
           </div>
 
