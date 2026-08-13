@@ -769,7 +769,7 @@ function Noeud({ x, y, statut, couleur, domaine, flamme, image, onClick }: { x: 
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, cursor: 'pointer',
         animation: pulse ? 'pulse-noeud 1.8s ease-in-out infinite' : 'none',
         color: couleur,
-        boxShadow: acquis ? `0 0 16px ${couleur}99` : statut !== 'locked' ? `0 0 8px ${couleur}44` : 'none',
+        boxShadow: acquis ? `0 0 22px ${couleur}cc, 0 0 10px ${couleur}` : statut !== 'locked' ? `0 0 13px ${couleur}77` : 'none',
       }}
     >
       {flamme && flamme !== 'aucune' && <IconeFlamme palier={flamme} />}
