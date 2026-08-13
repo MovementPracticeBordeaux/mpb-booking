@@ -47,11 +47,31 @@ export default async function AdminCandidaturesPage({ searchParams }: { searchPa
     .order('cree_le', { ascending: false });
 
   const candidatures = (candidaturesData ?? []) as Candidature[];
+
+  // Pour chaque candidature, on regarde si un compte existe déjà avec cet
+  // email (comparaison insensible à la casse), et s'il a déjà une formule
+  // Mentorat active — pour savoir en un coup d'œil quoi faire ensuite.
+  const emails = candidatures.map((c) => c.email.toLowerCase());
+  const { data: profilsData } = emails.length
+    ? await admin.from('profiles').select('email, formule_nom, abonnement_actif').in('email', emails)
+    : { data: [] };
+  const profilParEmail = new Map(
+    (profilsData ?? []).map((p: any) => [p.email?.toLowerCase(), p])
+  );
+
+  function infoCompte(email: string): { aUnCompte: boolean; aDejaUneFormule: boolean } {
+    const p = profilParEmail.get(email.toLowerCase());
+    if (!p) return { aUnCompte: false, aDejaUneFormule: false };
+    const formule = p.formule_nom ? FORMULES[p.formule_nom] : null;
+    return { aUnCompte: true, aDejaUneFormule: !!(formule?.categorie === 'coaching' && p.abonnement_actif) };
+  }
+
   const nouvelles = candidatures.filter((c) => c.statut === 'nouvelle');
   const traitees = candidatures.filter((c) => c.statut !== 'nouvelle');
 
   function CarteCandidature({ c }: { c: Candidature }) {
     const style = STATUT_STYLE[c.statut];
+    const compte = infoCompte(c.email);
     return (
       <section
         key={c.id}
@@ -78,6 +98,16 @@ export default async function AdminCandidaturesPage({ searchParams }: { searchPa
           <strong>Niveau :</strong> {NIVEAU_LABELS[c.niveau] ?? c.niveau}
           {' · '}
           <strong>Durée souhaitée :</strong> {c.formule_souhaitee ? FORMULES[c.formule_souhaitee]?.nom ?? c.formule_souhaitee : 'non précisée'}
+        </p>
+        <p style={{ fontSize: 12, margin: '4px 0 0' }}>
+          {compte.aUnCompte ? (
+            <span style={{ color: '#9ef29e' }}>✓ A déjà un compte sur le site</span>
+          ) : (
+            <span style={{ color: '#ffb4b4' }}>⚠ Pas encore de compte — à créer avant de pouvoir attribuer une formule</span>
+          )}
+          {compte.aDejaUneFormule && (
+            <span style={{ color: '#ffcf6b' }}> · a déjà une formule coaching/Mentorat active</span>
+          )}
         </p>
         <p style={{ fontSize: 13, color: COULEURS.texte, whiteSpace: 'pre-wrap', margin: '8px 0 0' }}>{c.objectifs}</p>
 
