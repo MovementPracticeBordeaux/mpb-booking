@@ -314,7 +314,7 @@ export default function ArbreCompetences({
       tronc.forEach((n) => marquer(n.id));
       if (apercu === 'branches-en-cours') {
         branches.filter((n) => n.niveau === 1).forEach((n) => marquer(n.id));
-        branches.filter((n) => n.domaine === 'force' && n.niveau === 2).forEach((n) => marquer(n.id));
+        branches.filter((n) => (n.domaine === 'force' || n.domaine === 'figures') && n.niveau === 2).forEach((n) => marquer(n.id));
       }
     }
     return m;
