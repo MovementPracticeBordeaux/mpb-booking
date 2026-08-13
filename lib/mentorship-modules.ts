@@ -365,9 +365,73 @@ const CONNEXION: NoeudMentorship[] = [
   squelette('connexion', 3, 'Connexion — niveau 3', 'Contenu à définir ensemble.'),
 ];
 const FIGURES: NoeudMentorship[] = [
-  squelette('figures', 1, 'Figures — niveau 1', 'Contenu à définir ensemble.'),
-  squelette('figures', 2, 'Figures — niveau 2', 'Contenu à définir ensemble.'),
-  squelette('figures', 3, 'Figures — niveau 3', 'Contenu à définir ensemble.'),
+  {
+    id: 'figures-1',
+    domaine: 'figures',
+    niveau: 1,
+    titre: 'Figures — niveau 1',
+    resume: 'Bases du pont, du handstand contre le mur et de l\'elbow lever.',
+    objectifPedagogique: 'À définir ensemble (théorie/QCM à rédiger — exercices déjà calés).',
+    theorie: [],
+    programmation: [],
+    qcm: [],
+    contenuDefini: false,
+    exercices: [
+      { id: 'pont-bas', nom: 'Pont bas', videoUrl: 'https://youtu.be/MD7sDoWnpAc' },
+      { id: 'handstand-dos-au-mur', nom: 'Handstand dos au mur', videoUrl: 'https://youtu.be/XOPq9QtH6Lw' },
+      { id: 'elbow-diamant', nom: 'Elbow diamant', videoUrl: 'https://youtu.be/sHHs-rS_Z1s' },
+      { id: 'frog', nom: 'Frog', videoUrl: 'https://youtu.be/YPVYiqCGZfg' },
+    ],
+    progressionBonus: [
+      { id: 'frog-transition-1', nom: 'Frog transition 1', videoUrl: 'https://youtu.be/FobsslhMKeA' },
+      { id: 'pont-bas-touche-epaule', nom: 'Pont bas — touche épaules', videoUrl: 'https://youtu.be/EAv-Wes9Xdo' },
+    ],
+  },
+  {
+    id: 'figures-2',
+    domaine: 'figures',
+    niveau: 2,
+    titre: 'Figures — niveau 2',
+    resume: 'Handstand ventre au mur, L-sit et transitions frog/elbow.',
+    objectifPedagogique: 'À définir ensemble (théorie/QCM à rédiger — exercices déjà calés).',
+    theorie: [],
+    programmation: [],
+    qcm: [],
+    contenuDefini: false,
+    exercices: [
+      { id: 'handstand-ventre-au-mur', nom: 'Handstand ventre au mur', videoUrl: 'https://youtu.be/lNQYdhRlejI' },
+      { id: 'l-sit', nom: 'L-sit', videoUrl: 'https://youtu.be/kO0ntgyhG0E' },
+      { id: 'elbow-split', nom: 'Elbow split', videoUrl: '', note: 'Vidéo à confirmer — non trouvée dans la bibliothèque classée' },
+      { id: 'frog-one-leg', nom: 'Frog one leg', videoUrl: 'https://youtu.be/pJWjfbpQvuQ', note: 'Vidéo retenue : Frog transition 2' },
+    ],
+    progressionBonus: [
+      { id: 'frog-transition-3', nom: 'Frog transition 3', videoUrl: 'https://youtu.be/a5d_or-nXvc' },
+      { id: 'lateral-frog', nom: 'Latéral frog (air baby)', videoUrl: 'https://youtu.be/cGv25OOYBEE' },
+    ],
+  },
+  {
+    id: 'figures-3',
+    domaine: 'figures',
+    niveau: 3,
+    titre: 'Figures — niveau 3',
+    resume: 'Handstand, QDR, pont haut et elbow straddle.',
+    objectifPedagogique: 'À définir ensemble (théorie/QCM à rédiger — exercices déjà calés).',
+    theorie: [],
+    programmation: [],
+    qcm: [],
+    contenuDefini: false,
+    exercices: [
+      { id: 'qdr', nom: 'QDR', videoUrl: 'https://youtu.be/1N-KzT5NiUk' },
+      { id: 'pont-haut', nom: 'Pont haut', videoUrl: 'https://youtu.be/NcDCSB9dSU0' },
+      { id: 'elbow-straddle', nom: 'Elbow straddle', videoUrl: 'https://youtu.be/6sKdFFP7qnM' },
+      { id: 'handstand', nom: 'Handstand', videoUrl: 'https://youtu.be/Nx86xgOx0UY', note: 'Vidéo retenue : Handstand & kick up' },
+    ],
+    progressionBonus: [
+      { id: 'handstand-straddle', nom: 'Handstand straddle', videoUrl: 'https://youtu.be/iGSNpzZEQZ4' },
+      { id: 'souplesse-arriere', nom: 'Souplesse arrière', videoUrl: 'https://youtu.be/6NL67F76Wgw' },
+      { id: 'elbow-split-transition', nom: 'Elbow split transition', videoUrl: '', note: 'Vidéo à confirmer — non trouvée dans la bibliothèque classée' },
+    ],
+  },
 ];
 
 export const BRANCHES: NoeudMentorship[] = [...FORCE, ...FLEXIBILITE, ...LOCOMOTION, ...CONNEXION, ...FIGURES];
