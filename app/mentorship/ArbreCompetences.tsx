@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import {
   ORDRE_DOMAINES,
   DOMAINE_LABELS,
@@ -874,10 +874,91 @@ function idYoutube(url: string): string | null {
 }
 
 // Lecteur vidéo en superposition (au-dessus du panneau du nœud) : la vidéo
-// de référence du coach se lit intégralement sur la page du Mentorship,
-// jamais sur YouTube directement.
+// de référence du coach se lit intégralement sur la page du Mentorship.
+// Contrôles maison (lecture/pause + barre de progression) uniquement — le
+// lecteur YouTube natif est privé de toute interaction (pointer-events:
+// none sur l'iframe une fois prêt) pour qu'aucun bouton "Partager", lien
+// "Regarder sur YouTube" ou menu clic-droit natif ne soit accessible.
+declare global {
+  interface Window {
+    YT: any;
+    onYouTubeIframeAPIReady?: () => void;
+  }
+}
+
+let chargementApiYoutube: Promise<void> | null = null;
+function chargerApiYoutube(): Promise<void> {
+  if (typeof window === 'undefined') return Promise.resolve();
+  if (window.YT?.Player) return Promise.resolve();
+  if (chargementApiYoutube) return chargementApiYoutube;
+  chargementApiYoutube = new Promise((resolve) => {
+    const precedent = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => { precedent?.(); resolve(); };
+    if (!document.getElementById('yt-iframe-api')) {
+      const script = document.createElement('script');
+      script.id = 'yt-iframe-api';
+      script.src = 'https://www.youtube.com/iframe_api';
+      document.head.appendChild(script);
+    }
+  });
+  return chargementApiYoutube;
+}
+
 function LecteurVideoModal({ url, titre, onFermer }: { url: string; titre: string; onFermer: () => void }) {
   const id = idYoutube(url);
+  const cibleRef = useRef<HTMLDivElement>(null);
+  const playerRef = useRef<any>(null);
+  const [enLecture, setEnLecture] = useState(false);
+  const [avancement, setAvancement] = useState(0);
+
+  useEffect(() => {
+    if (!id) return;
+    let annule = false;
+    chargerApiYoutube().then(() => {
+      if (annule || !cibleRef.current) return;
+      playerRef.current = new window.YT.Player(cibleRef.current, {
+        videoId: id,
+        width: '100%',
+        height: '100%',
+        host: 'https://www.youtube-nocookie.com',
+        playerVars: { controls: 0, modestbranding: 1, rel: 0, iv_load_policy: 3, disablekb: 1, fs: 0, playsinline: 1 },
+        events: {
+          onReady: (e: any) => {
+            // Neutralise toute interaction directe avec l'iframe YouTube :
+            // seuls nos boutons maison pilotent la lecture.
+            try { e.target.getIframe().style.pointerEvents = 'none'; } catch {}
+            e.target.playVideo();
+          },
+          onStateChange: (e: any) => setEnLecture(e.data === 1),
+        },
+      });
+    });
+    const intervalle = window.setInterval(() => {
+      const p = playerRef.current;
+      if (p?.getDuration && p.getDuration() > 0) setAvancement(p.getCurrentTime() / p.getDuration());
+    }, 400);
+    return () => {
+      annule = true;
+      window.clearInterval(intervalle);
+      try { playerRef.current?.destroy?.(); } catch {}
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  function basculerLecture() {
+    const p = playerRef.current;
+    if (!p) return;
+    if (enLecture) p.pauseVideo(); else p.playVideo();
+  }
+
+  function chercher(e: React.MouseEvent<HTMLDivElement>) {
+    const p = playerRef.current;
+    if (!p?.getDuration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+    p.seekTo(ratio * p.getDuration(), true);
+  }
+
   return (
     <div onClick={onFermer} style={{ position: 'fixed', inset: 0, background: '#000000cc', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 40, padding: 16 }}>
       <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 520 }}>
@@ -887,13 +968,21 @@ function LecteurVideoModal({ url, titre, onFermer }: { url: string; titre: strin
         </div>
         <div style={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', borderRadius: 12, overflow: 'hidden', background: '#000' }}>
           {id ? (
-            <iframe
-              src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&modestbranding=1&rel=0&iv_load_policy=3`}
-              title={titre}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none' }}
-            />
+            <>
+              <div ref={cibleRef} style={{ position: 'absolute', inset: 0 }} onClick={basculerLecture} />
+              <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '8px 10px', background: 'linear-gradient(transparent, rgba(0,0,0,0.8))', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button onClick={basculerLecture} aria-label={enLecture ? 'Pause' : 'Lecture'} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', padding: 4, display: 'flex' }}>
+                  {enLecture ? (
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="#fff"><rect x="6" y="5" width="4" height="14" /><rect x="14" y="5" width="4" height="14" /></svg>
+                  ) : (
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z" /></svg>
+                  )}
+                </button>
+                <div onClick={chercher} style={{ flexGrow: 1, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.25)', cursor: 'pointer' }}>
+                  <div style={{ height: '100%', width: `${avancement * 100}%`, borderRadius: 2, background: '#f0a' }} />
+                </div>
+              </div>
+            </>
           ) : (
             <p style={{ color: COULEURS.texteFaible, fontSize: 12, padding: 16 }}>Vidéo indisponible.</p>
           )}
