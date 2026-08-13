@@ -418,7 +418,8 @@ const LOCOMOTION: NoeudMentorship[] = [
       { id: 'self-dominance-squat', nom: 'Self-dominance squat', videoUrl: 'https://youtu.be/8FAjwRHjrx4', note: 'Vidéo 1/2 — voir aussi LOCOMOTION GAME - SELF DOMINANCE 2' },
     ],
     progressionBonus: [
-      { id: 'entree-sortie-pont-qdr', nom: 'Entrée/Sortie sur le pont bas par le QDR', videoUrl: 'https://youtu.be/c9KDc7I7NQE' },
+      { id: 'entree-sortie-pont', nom: 'Entrée & sortie sur le pont', videoUrl: 'https://youtu.be/vPM8tf3Fjkw' },
+      { id: 'entree-pont-par-qdr', nom: 'Entrée sur le pont par le QDR', videoUrl: 'https://youtu.be/c9KDc7I7NQE' },
       { id: 'chute-sur-qdr', nom: 'Chute sur QDR', videoUrl: 'https://youtu.be/EZeFqhHS_bY' },
     ],
   },
