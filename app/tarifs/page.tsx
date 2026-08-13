@@ -206,6 +206,7 @@ export default function TarifsPage({ searchParams }: { searchParams: { erreur?: 
         <p style={{ color: COULEURS.texteFaible, fontSize: 13, margin: '0 0 16px', maxWidth: 640 }}>
           Un accompagnement personnel et structuré, en petit volume, avec un retour direct de mon regard de
           coach à chaque étape validée. {MENTORAT_PLACES_PAR_SESSION} places par session pour garantir un vrai suivi individuel.
+          {' '}<a href="/mentorat" style={{ color: '#f0a' }}>En savoir plus →</a>
         </p>
 
         {!MENTORAT_OUVERT ? (

@@ -171,7 +171,7 @@ export default function CoachingPage() {
             Une formation pensée pour les passionnés et les professionnels qui veulent construire et
             comprendre en profondeur une pratique du mouvement, dans une optique d'enseignement ou non.
           </p>
-          <a href="/tarifs#mentorat" style={{ display: 'inline-block', color: '#FF2D78', textDecoration: 'none', fontWeight: 600 }}>
+          <a href="/mentorat" style={{ display: 'inline-block', color: '#FF2D78', textDecoration: 'none', fontWeight: 600 }}>
             Découvrir le Mentorat →
           </a>
         </div>
