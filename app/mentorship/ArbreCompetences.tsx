@@ -90,6 +90,12 @@ function Pictogramme({ domaine, taille = 12, couleur }: { domaine: DomaineOuTron
   }
 }
 
+// Fond des cartes du dashboard (Compétences, XP, Progression, Entraînement
+// du jour) : légèrement plus clair que COULEURS.surface par défaut, pour
+// qu'elles se distinguent mieux du fond de page presque noir.
+const FOND_CARTE = 'rgba(255,255,255,0.055)';
+const BORDURE_CARTE = 'rgba(255,255,255,0.16)';
+
 const PALIER_LABEL: Record<PalierFlamme, string> = {
   aucune: '', normal: 'Normal', epique: 'Épique', legendaire: 'Légendaire', mythique: 'Mythique',
 };
@@ -138,8 +144,8 @@ function EnTeteXP({ xpTotal, niveau, badge }: { xpTotal: number; niveau: Niveau;
   const aCadre = cadre.border !== '';
   return (
     <div style={{
-      background: COULEURS.surface, borderRadius: 12, padding: '14px 16px', minWidth: 150,
-      border: `1px solid ${aCadre ? cadre.border : COULEURS.bordure}`,
+      background: FOND_CARTE, borderRadius: 12, padding: '14px 16px', minWidth: 150,
+      border: `1px solid ${aCadre ? cadre.border : BORDURE_CARTE}`,
       boxShadow: aCadre ? cadre.boxShadow : 'none',
       animation: cadre.anime,
       transition: 'box-shadow 0.6s ease, border-color 0.6s ease',
@@ -454,7 +460,7 @@ export default function ArbreCompetences({
         <>
           {/* Tes compétences (vignette compacte) + XP (compact, largeur fixe), comme sur le croquis */}
           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12, marginBottom: 28 }}>
-            <div style={{ flex: '0 1 260px', background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: '12px 14px' }}>
+            <div style={{ flex: '0 1 260px', background: FOND_CARTE, border: `1px solid ${BORDURE_CARTE}`, borderRadius: 12, padding: '12px 14px' }}>
               <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 13, letterSpacing: 0.3, margin: '0 0 8px', color: COULEURS.texte }}>Tes compétences</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <LigneProgression compact label="Armure Organique" pourcentage={pourcentageTronc} couleur={COULEUR_TRONC} domaine="tronc" entrees={bilan.filter((b) => b.domaine === 'tronc')} />
@@ -494,11 +500,11 @@ export default function ArbreCompetences({
                 </linearGradient>
               </defs>
               {lignes.map((l) => (
-                <line key={l.key} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke={l.active ? 'url(#gradient-lignes)' : COULEURS.texteFaible} strokeWidth={l.active ? 0.9 : 0.6} opacity={l.active ? 0.9 : 0.7} />
+                <line key={l.key} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke={l.active ? 'url(#gradient-lignes)' : COULEURS.texteFaible} strokeWidth={l.active ? 0.45 : 0.35} opacity={l.active ? 0.85 : 0.6} />
               ))}
               {/* Ligne du tronc — couleur pleine dédiée (pas le gradient partagé),
                   pour être toujours visible quel que soit l'état des branches */}
-              <line x1={TRUNK_X} y1={JUNCTION_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1]} stroke="#ff00aa" strokeWidth={1.3} opacity={0.9} />
+              <line x1={TRUNK_X} y1={JUNCTION_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1]} stroke="#ff00aa" strokeWidth={0.7} opacity={0.85} />
             </svg>
 
             {/* Nœuds des branches */}
@@ -553,13 +559,13 @@ export default function ArbreCompetences({
 
           {/* Ta progression (courbe) + Entraînement du jour, comme sur le croquis */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, marginTop: 24 }}>
-            <div style={{ background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: '16px 18px' }}>
+            <div style={{ background: FOND_CARTE, border: `1px solid ${BORDURE_CARTE}`, borderRadius: 12, padding: '16px 18px' }}>
               <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 15, letterSpacing: 0.3, margin: '0 0 4px', color: COULEURS.texte }}>Ta progression</p>
               <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 12px' }}>Points Mouvement gagnés au fil des jours.</p>
               <CourbeXP points={courbeXP} />
             </div>
 
-            <div style={{ background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: '16px 18px' }}>
+            <div style={{ background: FOND_CARTE, border: `1px solid ${BORDURE_CARTE}`, borderRadius: 12, padding: '16px 18px' }}>
               <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 15, letterSpacing: 0.3, margin: '0 0 4px', color: COULEURS.texte }}>Entraînement du jour</p>
               <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 4px' }}>Le travail à faire aujourd'hui ou en prévision.</p>
               {defisDuJour.length === 0 ? (
@@ -912,6 +918,16 @@ function LecteurVideoModal({ url, titre, onFermer }: { url: string; titre: strin
   const [enLecture, setEnLecture] = useState(false);
   const [avancement, setAvancement] = useState(0);
   const [pleinEcran, setPleinEcran] = useState(false);
+  // YouTube affiche un bandeau titre/chaîne quelques secondes après le
+  // début de la lecture, même avec controls=0 — on garde le cache maison
+  // visible un peu après le démarrage pour couvrir cette fenêtre, en plus
+  // de l'afficher systématiquement en pause.
+  const [cacheVisible, setCacheVisible] = useState(true);
+  useEffect(() => {
+    if (!enLecture) { setCacheVisible(true); return; }
+    const t = window.setTimeout(() => setCacheVisible(false), 3200);
+    return () => window.clearTimeout(t);
+  }, [enLecture]);
 
   useEffect(() => {
     const onChange = () => setPleinEcran(document.fullscreenElement === boiteRef.current);
@@ -987,7 +1003,7 @@ function LecteurVideoModal({ url, titre, onFermer }: { url: string; titre: strin
                   partage) qui reste visible malgré pointer-events:none —
                   affiché au chargement et à chaque pause, masqué dès que
                   la lecture démarre réellement. */}
-              {!enLecture && (
+              {cacheVisible && (
                 <button
                   onClick={basculerLecture}
                   aria-label="Lecture"
