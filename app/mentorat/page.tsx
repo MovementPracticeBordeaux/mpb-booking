@@ -15,17 +15,17 @@ export const metadata = {
 };
 
 const BRANCHES_PRESENTATION = [
-  { titre: 'Force', texte: 'Tirer, pousser, bras tendus, anneaux de gymnastique.' },
-  { titre: 'Figures', texte: 'Handstand, renversements, appuis sur les coudes.' },
-  { titre: 'Locomotion', texte: 'Quadrupédie, brachiation, reptation, assemblages au sol.' },
-  { titre: 'Connexion', texte: 'Coordination, jeux de balle, ondes et précision.' },
-  { titre: 'Flexibilité', texte: 'Squats profonds, écarts, chaînes musculaires.' },
+  { titre: 'Force', texte: 'Travail de la force du haut du corps, avec les anneaux de gymnastique.' },
+  { titre: 'Figures', texte: 'Travail des figures en équilibre, sur les mains ou sur les coudes.' },
+  { titre: 'Locomotion', texte: 'Apprentissage des déplacements au sol — un mélange de force, de mobilité et de coordination.' },
+  { titre: 'Connexion', texte: "Travail d'habileté et de coordination, avec des jeux de manipulation d'objets." },
+  { titre: 'Flexibilité', texte: 'Travail de mobilité active du bas du corps.' },
 ];
 
 const FONCTIONNEMENT = [
   {
-    titre: 'Un tronc commun avant tout',
-    texte: "L'Armure Organique — trois niveaux de fondations sur l'ensemble du corps — se valide en entier avant que les cinq branches de spécialisation ne s'ouvrent. Pas de raccourci : la base doit être solide.",
+    titre: 'Des fondations avant tout',
+    texte: "Trois niveaux de fondations sur l'ensemble du corps se valident en entier avant que les cinq thématiques de spécialisation ne s'ouvrent. Pas de raccourci : la base doit être solide.",
   },
   {
     titre: 'Ma validation personnelle',
@@ -76,9 +76,13 @@ export default function MentoratPage() {
 
       {/* ARBRE DE COMPÉTENCES */}
       <section style={{ maxWidth: 860, margin: '0 auto', padding: '0 20px 56px' }}>
-        <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 26, letterSpacing: 0.5, margin: '0 0 20px', textAlign: 'center' }}>
-          Un tronc, puis cinq branches
+        <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 26, letterSpacing: 0.5, margin: '0 0 12px', textAlign: 'center' }}>
+          Cinq thématiques de travail
         </h2>
+        <p style={{ color: COULEURS.texteAtt, lineHeight: 1.6, textAlign: 'center', maxWidth: 560, margin: '0 auto 24px' }}>
+          Le programme commence par un socle de fondations complet pour tout le corps, avant de s'ouvrir
+          vers cinq axes de spécialisation :
+        </p>
         <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
           {BRANCHES_PRESENTATION.map((b) => (
             <div key={b.titre} style={{ border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: 18, background: COULEURS.surface }}>
