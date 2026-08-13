@@ -907,9 +907,22 @@ function chargerApiYoutube(): Promise<void> {
 function LecteurVideoModal({ url, titre, onFermer }: { url: string; titre: string; onFermer: () => void }) {
   const id = idYoutube(url);
   const cibleRef = useRef<HTMLDivElement>(null);
+  const boiteRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
   const [enLecture, setEnLecture] = useState(false);
   const [avancement, setAvancement] = useState(0);
+  const [pleinEcran, setPleinEcran] = useState(false);
+
+  useEffect(() => {
+    const onChange = () => setPleinEcran(document.fullscreenElement === boiteRef.current);
+    document.addEventListener('fullscreenchange', onChange);
+    return () => document.removeEventListener('fullscreenchange', onChange);
+  }, []);
+
+  function basculerPleinEcran() {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else boiteRef.current?.requestFullscreen();
+  }
 
   useEffect(() => {
     if (!id) return;
@@ -966,11 +979,11 @@ function LecteurVideoModal({ url, titre, onFermer }: { url: string; titre: strin
           <p style={{ margin: 0, fontSize: 13, color: COULEURS.texte, fontWeight: 600 }}>{titre}</p>
           <button onClick={onFermer} aria-label="Fermer" style={{ background: 'none', border: 'none', color: COULEURS.texteFaible, fontSize: 22, lineHeight: 1, cursor: 'pointer', padding: 4 }}>×</button>
         </div>
-        <div style={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', borderRadius: 12, overflow: 'hidden', background: '#000' }}>
+        <div ref={boiteRef} style={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', borderRadius: 12, overflow: 'hidden', background: '#000' }}>
           {id ? (
             <>
               <div ref={cibleRef} style={{ position: 'absolute', inset: 0 }} onClick={basculerLecture} />
-              <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '8px 10px', background: 'linear-gradient(transparent, rgba(0,0,0,0.8))', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '8px 10px', background: 'linear-gradient(transparent, rgba(0,0,0,0.8))', display: 'flex', alignItems: 'center', gap: 10 }}>
                 <button onClick={basculerLecture} aria-label={enLecture ? 'Pause' : 'Lecture'} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', padding: 4, display: 'flex' }}>
                   {enLecture ? (
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="#fff"><rect x="6" y="5" width="4" height="14" /><rect x="14" y="5" width="4" height="14" /></svg>
@@ -981,6 +994,17 @@ function LecteurVideoModal({ url, titre, onFermer }: { url: string; titre: strin
                 <div onClick={chercher} style={{ flexGrow: 1, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.25)', cursor: 'pointer' }}>
                   <div style={{ height: '100%', width: `${avancement * 100}%`, borderRadius: 2, background: '#f0a' }} />
                 </div>
+                <button onClick={basculerPleinEcran} aria-label={pleinEcran ? 'Quitter le plein écran' : 'Plein écran'} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', padding: 4, display: 'flex' }}>
+                  {pleinEcran ? (
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 4v3a2 2 0 01-2 2H4M20 9h-3a2 2 0 01-2-2V4M15 20v-3a2 2 0 012-2h3M4 15h3a2 2 0 012 2v3" />
+                    </svg>
+                  ) : (
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 9V6a2 2 0 012-2h3M20 9V6a2 2 0 00-2-2h-3M4 15v3a2 2 0 002 2h3M20 15v3a2 2 0 01-2 2h-3" />
+                    </svg>
+                  )}
+                </button>
               </div>
             </>
           ) : (
