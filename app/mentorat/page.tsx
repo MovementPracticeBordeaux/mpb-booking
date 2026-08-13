@@ -22,6 +22,21 @@ const BRANCHES_PRESENTATION = [
   { titre: 'Flexibilité', texte: 'Travail de mobilité active du bas du corps.' },
 ];
 
+const METHODOLOGIE = [
+  {
+    titre: 'Comprendre, pas seulement exécuter',
+    texte: "Un contenu théorique t'accompagne à chaque étape : pourquoi ce mouvement fonctionne, comment il se construit, ce qu'il prépare. Tu ne reproduis pas un exercice, tu comprends ce que tu fais.",
+  },
+  {
+    titre: 'Apprendre à structurer ta pratique',
+    texte: "Au-delà des mouvements eux-mêmes, le Mentorat transmet une méthodologie pour apprendre à s'entraîner : comment organiser ses séances, doser l'effort, identifier ses priorités du moment.",
+  },
+  {
+    titre: 'Des domaines qui se nourrissent entre eux',
+    texte: "Force, figures, locomotion, connexion, flexibilité : ces domaines ne se travaillent pas en silos. Chacun renforce les autres, et la méthode t'apprend à voir ces liens plutôt qu'à cocher des cases séparément.",
+  },
+];
+
 const FONCTIONNEMENT = [
   {
     titre: 'Des fondations avant tout',
@@ -72,6 +87,24 @@ export default function MentoratPage() {
           accompagnement pour qui veut construire une vraie base et progresser en profondeur, à son
           rythme, débutant comme pratiquant confirmé.
         </p>
+      </section>
+
+      {/* MÉTHODOLOGIE / FORCE THÉORIQUE */}
+      <section style={{ maxWidth: 720, margin: '0 auto', padding: '0 20px 56px' }}>
+        <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 26, letterSpacing: 0.5, margin: '0 0 20px', textAlign: 'center' }}>
+          Une méthode, pas juste des exercices
+        </h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {METHODOLOGIE.map((m) => (
+            <div key={m.titre} style={{ display: 'flex', gap: 14 }}>
+              <span style={{ ...GRADIENT_TEXTE, fontFamily: POLICE_DISPLAY, fontSize: 20, lineHeight: 1.3, flexShrink: 0 }}>—</span>
+              <div>
+                <h3 style={{ fontSize: 15, fontWeight: 600, margin: '0 0 4px' }}>{m.titre}</h3>
+                <p style={{ fontSize: 14, color: COULEURS.texteAtt, margin: 0, lineHeight: 1.6 }}>{m.texte}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* ARBRE DE COMPÉTENCES */}
