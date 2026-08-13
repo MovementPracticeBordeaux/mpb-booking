@@ -767,7 +767,7 @@ function Noeud({ x, y, statut, couleur, domaine, flamme, image, onClick }: { x: 
         background: aImage ? COULEURS.fond : acquis ? `radial-gradient(circle at 35% 30%, ${couleur}, ${couleur}bb)` : meta.fill,
         border: `1.5px ${meta.dash ? 'dashed' : 'solid'} ${meta.border}`,
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, cursor: 'pointer',
-        animation: pulse ? 'pulse-noeud 1.8s ease-in-out infinite' : acquis ? 'glow-acquis 2.4s ease-in-out infinite' : 'none',
+        animation: pulse ? 'pulse-noeud 1.8s ease-in-out infinite' : 'none',
         color: couleur,
         boxShadow: acquis ? `0 0 16px ${couleur}99` : statut !== 'locked' ? `0 0 8px ${couleur}44` : 'none',
       }}
