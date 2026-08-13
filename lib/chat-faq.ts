@@ -41,7 +41,7 @@ const FAQ_GENERALE: ChatFAQ[] = [
     motsCles: ['coaching', 'individuel', 'privé', 'personnalisé', 'online', 'ligne'],
   },
   {
-    question: "Qu'est-ce que le Mentorship ?",
+    question: "Qu'est-ce que le Mentorat ?",
     reponse: "Un mentorat (pas une formation ni un coaching personnalisé) pour comprendre et organiser sa pratique du Mouvement en profondeur. Plus d'infos sur la page Pro.",
     motsCles: ['mentorship', 'mentorat', 'professionnel', 'formation', 'enseigner', 'transmettre'],
   },

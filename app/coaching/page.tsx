@@ -165,14 +165,14 @@ export default function CoachingPage() {
         <div style={{ border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surface, borderRadius: 16, padding: 28, textAlign: 'center' }}>
           <p style={{ fontSize: 12, letterSpacing: 2, color: COULEURS.texteFaible, marginBottom: 10 }}>POUR ALLER PLUS LOIN</p>
           <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 26, letterSpacing: 0.5, margin: '0 0 12px' }}>
-            Programme Mentorship
+            Le Mentorat
           </h2>
           <p style={{ color: COULEURS.texteAtt, lineHeight: 1.6, maxWidth: 520, margin: '0 auto 20px' }}>
             Une formation pensée pour les passionnés et les professionnels qui veulent construire et
             comprendre en profondeur une pratique du mouvement, dans une optique d'enseignement ou non.
           </p>
-          <a href="/pro" style={{ display: 'inline-block', color: '#FF2D78', textDecoration: 'none', fontWeight: 600 }}>
-            Voir le programme Mentorship →
+          <a href="/tarifs#mentorat" style={{ display: 'inline-block', color: '#FF2D78', textDecoration: 'none', fontWeight: 600 }}>
+            Découvrir le Mentorat →
           </a>
         </div>
       </section>

@@ -1,5 +1,5 @@
 import { supabaseServer } from '@/lib/supabase-server';
-import { FORMULES } from '@/lib/formules';
+import { FORMULES, CLES_ACCES_MENTORAT } from '@/lib/formules';
 import { redirect } from 'next/navigation';
 import BoutonDeconnexion from '../components/BoutonDeconnexion';
 
@@ -51,12 +51,12 @@ export default async function ProfilPage() {
               </a>
             </>
           )}
-          {['mentorship', 'post_mentorship'].includes(profil.formule_nom) && (
+          {CLES_ACCES_MENTORAT.includes(profil.formule_nom) && (
             <a
               href="/mentorship"
               style={{ display: 'inline-block', marginTop: 16, padding: '10px 16px', background: '#f0a', color: 'white', borderRadius: 6, textDecoration: 'none' }}
             >
-              Accéder à mon programme Mentorship →
+              Accéder à mon Mentorat →
             </a>
           )}
         </div>

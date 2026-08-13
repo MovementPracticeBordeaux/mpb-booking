@@ -1,6 +1,7 @@
 import { supabaseServer } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
 import { TRONC, BRANCHES, TOUS_LES_NOEUDS, STRUCTURE_SEANCE, noeudSansReponses, statutXP, xpGagneParNoeud, niveauGlobal, courbeXPParJour, estNoeudAcquisDepuisProgression, xpNoeudExercices, pourcentageFlammeNoeud, badgeEleve } from '@/lib/mentorship-modules';
+import { CLES_ACCES_MENTORAT } from '@/lib/formules';
 import { COULEURS, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
 import ArbreCompetences from './ArbreCompetences';
 
@@ -23,17 +24,17 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
   if (!user) redirect('/login');
 
   const { data: profil } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-  const accesAutorise = ['mentorship', 'post_mentorship'].includes(profil?.formule_nom ?? '')
+  const accesAutorise = CLES_ACCES_MENTORAT.includes(profil?.formule_nom ?? '')
     && profil?.abonnement_actif && !profil?.gele;
 
   if (!accesAutorise) {
     return (
       <main style={{ maxWidth: 480, margin: '0 auto', padding: 20 }}>
-        <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 32, letterSpacing: 0.5 }}>MENTORSHIP</h1>
+        <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 32, letterSpacing: 0.5 }}>MENTORAT</h1>
         <p style={{ color: COULEURS.texteAtt }}>
-          Cette page est réservée aux élèves ayant le programme Mentorship actif.
-          {' '}Rends-toi sur <a href="/tarifs" style={{ color: '#f0a' }}>la page tarifs</a> pour y accéder,
-          ou contacte Sylvain si tu penses qu'il y a une erreur.
+          Cette page est réservée aux élèves ayant le Mentorat actif.
+          {' '}Rends-toi sur <a href="/mentorat/candidature" style={{ color: '#f0a' }}>la page de candidature</a> pour
+          demander à rejoindre le programme, ou contacte Sylvain si tu penses qu'il y a une erreur.
         </p>
       </main>
     );
@@ -96,7 +97,7 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
   return (
     <main style={{ maxWidth: 900, margin: '0 auto', padding: 20 }}>
       <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 'clamp(28px, 7vw, 40px)', letterSpacing: 0.5, marginBottom: 4 }}>
-        PROGRAMME <span style={GRADIENT_TEXTE}>MENTORSHIP</span>
+        LE <span style={GRADIENT_TEXTE}>MENTORAT</span>
       </h1>
       <p style={{ color: COULEURS.texteFaible, fontSize: 13, marginBottom: 24 }}>
         Le tronc — l'Armure Organique — se gravit seul, niveau après niveau. Une fois validé en entier,

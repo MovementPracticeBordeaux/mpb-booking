@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { FORMULES } from '@/lib/formules';
+import { FORMULES, MENTORAT_OUVERT, MENTORAT_PLACES_PAR_SESSION } from '@/lib/formules';
 import { COULEURS, GRADIENT, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
 
 type Erreur = { message: string; connexionRequise: boolean };
@@ -45,28 +45,33 @@ const PRICE_IDS: Record<string, string> = {
   coaching_carnet_3h: 'price_1U0fjMA7uUFwYAcPJ1bm09Wq',
   coaching_carnet_4h: 'price_1U0fkNA7uUFwYAcPPB0ftT8Q',
   coaching_online: 'price_1U0frAA7uUFwYAcPc2PhR6B3',
-  mentorship: 'price_1U0fs2A7uUFwYAcPtoCTfOc3',
+  // ⚠️ À créer dans Stripe (Produits > Prix, achat ponctuel) puis remplacer
+  // ces 3 valeurs avant réouverture du Mentorat :
+  mentorship_3: 'À_CREER_DANS_STRIPE_mentorship_3',
+  mentorship_6: 'À_CREER_DANS_STRIPE_mentorship_6',
+  mentorship_12: 'À_CREER_DANS_STRIPE_mentorship_12',
   post_mentorship: 'price_1U0ftFA7uUFwYAcPwzVQnERa',
 };
 
 const GROUPES = [
   { titre: 'Cours collectifs', cles: ['cours_decouverte', 'mensuel_4', 'mensuel_8', 'illimite', 'carnet_5', 'carnet_10'] },
   { titre: 'Coaching individuel', cles: ['coaching_unite', 'coaching_carnet_3h', 'coaching_carnet_4h', 'coaching_online'] },
-  { titre: 'Mentorship', cles: ['mentorship', 'post_mentorship'] },
 ];
 
 // Formules mises en avant (badge). Clé -> libellé du badge.
 const MIS_EN_AVANT: Record<string, string> = {
   illimite: 'Le + populaire',
   coaching_online: 'Le + demandé',
-  mentorship: 'Programme phare',
+  mentorship_6: 'Le + choisi',
 };
+
+const CLES_MENTORAT = ['mentorship_3', 'mentorship_6', 'mentorship_12'];
 
 function ligneQuota(f: (typeof FORMULES)[string]): string {
   return f.quota ? `${f.quota} ${f.unite}${f.quota > 1 ? 's' : ''}` : 'Accès illimité';
 }
 
-function CarteFormule({ cle, onAcheter }: { cle: string; onAcheter: () => void }) {
+function CarteFormule({ cle, onAcheter, libelleBouton = 'Acheter' }: { cle: string; onAcheter: () => void; libelleBouton?: string }) {
   const f = FORMULES[cle];
   const badge = MIS_EN_AVANT[cle];
 
@@ -134,7 +139,7 @@ function CarteFormule({ cle, onAcheter }: { cle: string; onAcheter: () => void }
           cursor: 'pointer',
         }}
       >
-        Acheter
+        {libelleBouton}
       </button>
     </div>
   );
@@ -193,6 +198,40 @@ export default function TarifsPage({ searchParams }: { searchParams: { erreur?: 
           </div>
         </section>
       ))}
+
+      <section id="mentorat" style={{ marginBottom: 36, scrollMarginTop: 20 }}>
+        <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 20, letterSpacing: 1, margin: '0 0 8px', ...GRADIENT_TEXTE }}>
+          MENTORAT
+        </h2>
+        <p style={{ color: COULEURS.texteFaible, fontSize: 13, margin: '0 0 16px', maxWidth: 640 }}>
+          Un accompagnement personnel et structuré, en petit volume, avec un retour direct de mon regard de
+          coach à chaque étape validée. {MENTORAT_PLACES_PAR_SESSION} places par session pour garantir un vrai suivi individuel.
+        </p>
+
+        {!MENTORAT_OUVERT ? (
+          <div style={{ border: `1px solid ${COULEURS.bordure}`, borderRadius: 14, padding: 24, background: COULEURS.surface, maxWidth: 480 }}>
+            <p style={{ margin: 0, fontWeight: 600 }}>Le Mentorat est temporairement fermé aux nouvelles candidatures.</p>
+            <p style={{ margin: '8px 0 0', color: COULEURS.texteFaible, fontSize: 13 }}>
+              Une refonte du programme est en cours. Réouverture prochainement — les élèves déjà en Mentorat
+              conservent leur accès normalement.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', marginBottom: 16 }}>
+              {CLES_MENTORAT.map((cle) => (
+                <CarteFormule key={cle} cle={cle} onAcheter={() => (window.location.href = '/mentorat/candidature')} libelleBouton="Candidater" />
+              ))}
+            </div>
+            <p style={{ color: COULEURS.texteFaible, fontSize: 12, maxWidth: 640 }}>
+              L'accès se fait sur candidature : quelques questions sur ton niveau actuel et tes objectifs,
+              pour s'assurer que le Mentorat correspond à ta démarche. Les échanges se font exclusivement via
+              la plateforme, avec des validations traitées de façon groupée chaque semaine (délai de réponse
+              maximum : 5 jours ouvrés).
+            </p>
+          </>
+        )}
+      </section>
     </main>
   );
 }

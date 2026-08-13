@@ -48,7 +48,6 @@ const LIENS = [
   { href: '/planning', label: 'Planning' },
   { href: '/tarifs', label: 'Tarifs' },
   { href: '/coaching', label: 'Coaching' },
-  { href: '/pro', label: 'Pro' },
   { href: '/contact', label: 'Contact' },
 ];
 

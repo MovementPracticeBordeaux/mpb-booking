@@ -23,7 +23,7 @@ export default function CGVPage() {
         <h2 style={style.h2}>1. Objet</h2>
         <p style={style.p}>
           Les présentes CGV s'appliquent à toute réservation de cours collectifs, de séances de coaching
-          individuel ou en ligne, et au programme Mentorship, proposés par Movement Practice Bordeaux via
+          individuel ou en ligne, et au Mentorat, proposés par Movement Practice Bordeaux via
           ce site.
         </p>
       </section>
@@ -31,7 +31,7 @@ export default function CGVPage() {
       <section style={style.section}>
         <h2 style={style.h2}>2. Formules et tarifs</h2>
         <p style={style.p}>
-          Les formules disponibles (cours à l'unité, pass mensuels, carnets, coaching, Mentorship) et
+          Les formules disponibles (cours à l'unité, pass mensuels, carnets, coaching, Mentorat) et
           leurs tarifs en vigueur sont détaillés sur la page{' '}
           <a href="/tarifs" style={{ color: '#FF2D78' }}>Tarifs</a>. Sauf mention contraire, il s'agit de
           pass à durée de validité fixe, payés en une seule fois — pas d'abonnement à reconduction
@@ -67,7 +67,7 @@ export default function CGVPage() {
       </section>
 
       <section style={style.section}>
-        <h2 style={style.h2}>5. Coaching individuel, coaching en ligne et Mentorship</h2>
+        <h2 style={style.h2}>5. Coaching individuel, coaching en ligne et Mentorat</h2>
         <p style={style.p}>
           Ces formules ne font pas l'objet d'une réservation de créneau sur le planning : après l'achat,
           l'élève est mis en relation directe avec Sylvain pour convenir des modalités (créneau, contenu,
