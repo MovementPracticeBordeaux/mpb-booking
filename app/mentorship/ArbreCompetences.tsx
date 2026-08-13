@@ -475,7 +475,7 @@ export default function ArbreCompetences({
           </div>
 
           {/* En-têtes de branches — icône, nom, accroche, avant l'arbre lui-même */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 4, maxWidth: 460, marginInline: 'auto', marginBottom: 4 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 4, maxWidth: 560, marginInline: 'auto', marginBottom: 4 }}>
             {ORDRE_VISUEL.map((d) => (
               <div key={d} style={{ textAlign: 'center', padding: '0 2px' }}>
                 <div style={{
@@ -492,7 +492,7 @@ export default function ArbreCompetences({
           </div>
 
           {/* Arbre — en vedette, section large */}
-          <div style={{ position: 'relative', width: '100%', maxWidth: 460, marginInline: 'auto', aspectRatio: '3 / 4' }}>
+          <div style={{ position: 'relative', width: '100%', maxWidth: 560, marginInline: 'auto', aspectRatio: '3 / 4' }}>
             <svg viewBox="0 0 100 100" preserveAspectRatio="none" width="100%" height="100%" style={{ position: 'absolute', inset: 0, display: 'block' }}>
               <defs>
                 <linearGradient id="gradient-lignes" gradientUnits="userSpaceOnUse" x1="0" y1="100" x2="0" y2="0">
@@ -500,11 +500,11 @@ export default function ArbreCompetences({
                 </linearGradient>
               </defs>
               {lignes.map((l) => (
-                <line key={l.key} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke={l.active ? 'url(#gradient-lignes)' : COULEURS.texteFaible} strokeWidth={l.active ? 0.45 : 0.35} opacity={l.active ? 0.85 : 0.6} />
+                <line key={l.key} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke={l.active ? 'url(#gradient-lignes)' : COULEURS.texteFaible} strokeWidth={l.active ? 0.45 : 0.35} opacity={l.active ? 0.85 : 0.6} strokeLinecap="round" />
               ))}
               {/* Ligne du tronc — couleur pleine dédiée (pas le gradient partagé),
                   pour être toujours visible quel que soit l'état des branches */}
-              <line x1={TRUNK_X} y1={JUNCTION_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1]} stroke="#ff00aa" strokeWidth={0.7} opacity={0.85} />
+              <line x1={TRUNK_X} y1={JUNCTION_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1]} stroke="#ff00aa" strokeWidth={0.7} opacity={0.85} strokeLinecap="round" />
             </svg>
 
             {/* Nœuds des branches */}
@@ -925,7 +925,7 @@ function LecteurVideoModal({ url, titre, onFermer }: { url: string; titre: strin
   const [cacheVisible, setCacheVisible] = useState(true);
   useEffect(() => {
     if (!enLecture) { setCacheVisible(true); return; }
-    const t = window.setTimeout(() => setCacheVisible(false), 3200);
+    const t = window.setTimeout(() => setCacheVisible(false), 4200);
     return () => window.clearTimeout(t);
   }, [enLecture]);
 
