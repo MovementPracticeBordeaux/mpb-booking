@@ -983,6 +983,21 @@ function LecteurVideoModal({ url, titre, onFermer }: { url: string; titre: strin
           {id ? (
             <>
               <div ref={cibleRef} style={{ position: 'absolute', inset: 0 }} onClick={basculerLecture} />
+              {/* Cache l'écran "pause" natif de YouTube (logo + icône
+                  partage) qui reste visible malgré pointer-events:none —
+                  affiché au chargement et à chaque pause, masqué dès que
+                  la lecture démarre réellement. */}
+              {!enLecture && (
+                <button
+                  onClick={basculerLecture}
+                  aria-label="Lecture"
+                  style={{ position: 'absolute', inset: 0, background: COULEURS.fond, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <span style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z" /></svg>
+                  </span>
+                </button>
+              )}
               <div onClick={(e) => e.stopPropagation()} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '8px 10px', background: 'linear-gradient(transparent, rgba(0,0,0,0.8))', display: 'flex', alignItems: 'center', gap: 10 }}>
                 <button onClick={basculerLecture} aria-label={enLecture ? 'Pause' : 'Lecture'} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', padding: 4, display: 'flex' }}>
                   {enLecture ? (
