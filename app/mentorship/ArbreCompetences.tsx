@@ -859,16 +859,61 @@ function StatutExercicePastille({ statut }: { statut: 'locked' | 'a_faire' | 'en
   return <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 999, border: `1px solid ${m.couleur}`, color: m.couleur, flexShrink: 0 }}>{m.label}</span>;
 }
 
+// Extrait l'ID YouTube d'une URL youtu.be/xxx ou youtube.com/watch?v=xxx —
+// pour intégrer le lecteur directement sur la page, sans jamais renvoyer
+// l'élève vers YouTube (pas de nouvel onglet, pas d'URL cliquable brute).
+function idYoutube(url: string): string | null {
+  try {
+    const u = new URL(url);
+    if (u.hostname === 'youtu.be') return u.pathname.slice(1);
+    if (u.hostname.includes('youtube.com')) return u.searchParams.get('v');
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+// Lecteur vidéo en superposition (au-dessus du panneau du nœud) : la vidéo
+// de référence du coach se lit intégralement sur la page du Mentorship,
+// jamais sur YouTube directement.
+function LecteurVideoModal({ url, titre, onFermer }: { url: string; titre: string; onFermer: () => void }) {
+  const id = idYoutube(url);
+  return (
+    <div onClick={onFermer} style={{ position: 'fixed', inset: 0, background: '#000000cc', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 40, padding: 16 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: '100%', maxWidth: 520 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <p style={{ margin: 0, fontSize: 13, color: COULEURS.texte, fontWeight: 600 }}>{titre}</p>
+          <button onClick={onFermer} aria-label="Fermer" style={{ background: 'none', border: 'none', color: COULEURS.texteFaible, fontSize: 22, lineHeight: 1, cursor: 'pointer', padding: 4 }}>×</button>
+        </div>
+        <div style={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', borderRadius: 12, overflow: 'hidden', background: '#000' }}>
+          {id ? (
+            <iframe
+              src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&modestbranding=1&rel=0&iv_load_policy=3`}
+              title={titre}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none' }}
+            />
+          ) : (
+            <p style={{ color: COULEURS.texteFaible, fontSize: 12, padding: 16 }}>Vidéo indisponible.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Un exercice indépendant (obligatoire ou progression bonus), avec son
 // propre statut et son propre formulaire de soumission vidéo.
 function BlocExercice({
-  noeud, exercice, prog, estBonus, estAdmin,
+  noeud, exercice, prog, estBonus, estAdmin, onOuvrirVideo,
 }: {
   noeud: NoeudMentorshipPublic;
   exercice: ExerciceMentorship;
   prog?: Progression;
   estBonus: boolean;
   estAdmin?: boolean;
+  onOuvrirVideo: (url: string, titre: string) => void;
 }) {
   const statutEx: 'a_faire' | 'en_attente' | 'acquis' | 'refuse' =
     prog?.statut === 'acquis' ? 'acquis' : prog?.statut === 'refuse' ? 'refuse' : prog?.statut === 'en_attente' ? 'en_attente' : 'a_faire';
@@ -880,7 +925,12 @@ function BlocExercice({
           <p style={{ margin: 0, fontSize: 13, color: COULEURS.texte }}>{exercice.nom}{estBonus ? ' 🔥' : ''}</p>
           {exercice.note && <p style={{ margin: '2px 0 0', fontSize: 11, color: COULEURS.texteFaible, fontStyle: 'italic' }}>{exercice.note}</p>}
           {exercice.videoUrl && (
-            <a href={exercice.videoUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#f0a' }}>▶ Voir la référence</a>
+            <button
+              onClick={() => onOuvrirVideo(exercice.videoUrl, exercice.nom)}
+              style={{ fontSize: 11, color: '#f0a', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 2 }}
+            >
+              ▶ Voir la référence
+            </button>
           )}
         </div>
         <StatutExercicePastille statut={statutEx} />
@@ -924,9 +974,13 @@ function PanneauNoeud({
 }) {
   const label = noeud.domaine === 'tronc' ? 'Armure Organique' : DOMAINE_LABELS[noeud.domaine as Domaine];
   const aDesExercices = (noeud.exercices?.length ?? 0) > 0;
+  const [videoOuverte, setVideoOuverte] = useState<{ url: string; titre: string } | null>(null);
 
   return (
     <FeuilleModale onFermer={onFermer}>
+      {videoOuverte && (
+        <LecteurVideoModal url={videoOuverte.url} titre={videoOuverte.titre} onFermer={() => setVideoOuverte(null)} />
+      )}
       <span style={{ fontSize: 11, color: couleur, letterSpacing: 1, fontWeight: 600 }}>{label.toUpperCase()} · NIVEAU {noeud.niveau}</span>
       <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 22, letterSpacing: 0.3, margin: '2px 0 4px', color: COULEURS.texte }}>{noeud.titre}</h2>
 
@@ -946,7 +1000,7 @@ function PanneauNoeud({
               Exercices à valider ({noeud.exercices!.filter((ex) => progressionMap.get(moduleIdExercice(noeud, ex))?.statut === 'acquis').length}/{noeud.exercices!.length})
             </p>
             {noeud.exercices!.map((ex) => (
-              <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progressionMap.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} />
+              <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progressionMap.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverte({ url, titre })} />
             ))}
           </div>
 
@@ -956,7 +1010,7 @@ function PanneauNoeud({
                 🔥 Progression bonus (facultatif, dépassement)
               </p>
               {noeud.progressionBonus!.map((ex) => (
-                <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progressionMap.get(moduleIdExercice(noeud, ex))} estBonus estAdmin={estAdmin} />
+                <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progressionMap.get(moduleIdExercice(noeud, ex))} estBonus estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverte({ url, titre })} />
               ))}
             </div>
           )}
