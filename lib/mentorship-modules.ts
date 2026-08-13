@@ -429,6 +429,7 @@ const FIGURES: NoeudMentorship[] = [
     progressionBonus: [
       { id: 'handstand-straddle', nom: 'Handstand straddle', videoUrl: 'https://youtu.be/iGSNpzZEQZ4' },
       { id: 'souplesse-arriere', nom: 'Souplesse arrière', videoUrl: 'https://youtu.be/6NL67F76Wgw' },
+      { id: 'elbow-lever', nom: 'Elbow lever', videoUrl: 'https://youtu.be/me2-E5q456M' },
     ],
   },
 ];
