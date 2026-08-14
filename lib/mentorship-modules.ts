@@ -425,9 +425,73 @@ const LOCOMOTION: NoeudMentorship[] = [
   },
 ];
 const CONNEXION: NoeudMentorship[] = [
-  squelette('connexion', 1, 'Connexion — niveau 1', 'Contenu à définir ensemble.'),
-  squelette('connexion', 2, 'Connexion — niveau 2', 'Contenu à définir ensemble.'),
-  squelette('connexion', 3, 'Connexion — niveau 3', 'Contenu à définir ensemble.'),
+  {
+    id: 'connexion-1',
+    domaine: 'connexion',
+    niveau: 1,
+    titre: 'Connexion — niveau 1',
+    resume: 'Premiers jeux de coordination cerveau et manipulation de balle.',
+    objectifPedagogique: 'À définir ensemble (théorie/QCM à rédiger — exercices déjà calés).',
+    theorie: [],
+    programmation: [],
+    qcm: [],
+    contenuDefini: false,
+    exercices: [
+      { id: 'brain-work-1', nom: 'Brain work 1', videoUrl: 'https://youtu.be/EdrHn-ipZS0' },
+      { id: 'dribble-2-balles-coordonnees', nom: 'Dribble 2 balles coordonnées', videoUrl: 'https://youtu.be/tjXgfNBTz-M' },
+      { id: 'manipulation-1-balle', nom: 'Connexion — manipulation 1 balle', videoUrl: 'https://youtu.be/qhfai2Nq0dI' },
+    ],
+    progressionBonus: [
+      { id: 'reflexe-balle', nom: 'Réflexe balle', videoUrl: 'https://youtu.be/4y13rzDMJ2s' },
+      { id: 'jeux-de-contact', nom: 'Jeux de contact debout / assis / couché', videoUrl: 'https://youtu.be/c_qf0nU341Q' },
+      { id: 'brain-work-2', nom: 'Brain work 2', videoUrl: 'https://youtu.be/c4J3BNvYmjU' },
+    ],
+  },
+  {
+    id: 'connexion-2',
+    domaine: 'connexion',
+    niveau: 2,
+    titre: 'Connexion — niveau 2',
+    resume: 'Dribbles de pieds, deux balles et jeux de percussion.',
+    objectifPedagogique: 'À définir ensemble (théorie/QCM à rédiger — exercices déjà calés).',
+    theorie: [],
+    programmation: [],
+    qcm: [],
+    contenuDefini: false,
+    exercices: [
+      { id: 'dribbles-pieds-phase-1', nom: 'Dribbles de pieds — phase 1', videoUrl: 'https://youtu.be/q9DWr5q_jd8' },
+      { id: 'dribble-2-balles-2-mains', nom: 'Dribble 2 balles — 2 mains', videoUrl: 'https://youtu.be/ZWTVQqZSTPQ' },
+      { id: 'brain-work-3', nom: 'Brain work 3', videoUrl: 'https://youtu.be/8ADflr3ygJk' },
+      { id: 'jeux-de-percussion', nom: 'Jeux de percussion', videoUrl: 'https://youtu.be/lHr3wfgUQb0' },
+    ],
+    progressionBonus: [
+      { id: 'brain-work-4', nom: 'Brain work 4', videoUrl: 'https://youtu.be/oS2ZUqftDfI' },
+      { id: 'flexibilite-sauts-balanciers', nom: 'Flexibilité — sauts & balanciers', videoUrl: 'https://youtu.be/JETWpCgiNSs' },
+    ],
+  },
+  {
+    id: 'connexion-3',
+    domaine: 'connexion',
+    niveau: 3,
+    titre: 'Connexion — niveau 3',
+    resume: 'Monkey ball, manipulation avancée et dribbles progressifs.',
+    objectifPedagogique: 'À définir ensemble (théorie/QCM à rédiger — exercices déjà calés).',
+    theorie: [],
+    programmation: [],
+    qcm: [],
+    contenuDefini: false,
+    exercices: [
+      { id: 'monkey-ball', nom: 'Monkey ball', videoUrl: 'https://youtu.be/baNnB3pNAgo' },
+      { id: 'manipulation-ballon-front', nom: "Manipulation d'objet — ballon sur le front", videoUrl: 'https://youtu.be/M84UQmSCRJE' },
+      { id: 'brain-work-5', nom: 'Brain work 5', videoUrl: 'https://youtu.be/Rlan5rrsMUU' },
+      { id: 'dribbles-pieds-phase-2', nom: 'Dribbles de pieds — phase 2', videoUrl: 'https://youtu.be/BlZQRcE09rE' },
+      { id: 'dribbles-2-balles-progression', nom: 'Dribbles 2 balles — progression', videoUrl: 'https://youtu.be/ayI2yRrud5Y' },
+    ],
+    progressionBonus: [
+      { id: 'brain-work-6', nom: 'Brain work 6', videoUrl: 'https://youtu.be/0j2mWD2VmgU' },
+      { id: 'dribbles-inversees', nom: 'Dribbles inversées', videoUrl: 'https://youtu.be/pJKhMBwCarI' },
+    ],
+  },
 ];
 const FIGURES: NoeudMentorship[] = [
   {
