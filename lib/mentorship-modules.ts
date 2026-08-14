@@ -350,9 +350,71 @@ const FORCE: NoeudMentorship[] = [
   },
 ];
 const FLEXIBILITE: NoeudMentorship[] = [
-  squelette('flexibilite', 1, 'Flexibilité — niveau 1', 'Contenu à définir ensemble.'),
-  squelette('flexibilite', 2, 'Flexibilité — niveau 2', 'Contenu à définir ensemble.'),
-  squelette('flexibilite', 3, 'Flexibilité — niveau 3', 'Contenu à définir ensemble.'),
+  {
+    id: 'flexibilite-1',
+    domaine: 'flexibilite',
+    niveau: 1,
+    titre: 'Flexibilité — niveau 1',
+    resume: 'Jefferson curl, squats de mobilité et straddle assis-debout.',
+    objectifPedagogique: 'À définir ensemble (théorie/QCM à rédiger — exercices déjà calés).',
+    theorie: [],
+    programmation: [],
+    qcm: [],
+    contenuDefini: false,
+    exercices: [
+      { id: 'jefferson-curl', nom: 'Jefferson curl', videoUrl: 'https://youtu.be/DpqNwfWy0dA' },
+      { id: 'squat-bulgare-progression', nom: 'Squat bulgare — progression', videoUrl: 'https://youtu.be/rNh_ohNQBCc' },
+      { id: 'straddle-assis-debout-progression', nom: 'Straddle assis-debout — progression', videoUrl: 'https://youtu.be/ncKMvHELMiA' },
+      { id: 'pigeon-squat', nom: 'Pigeon squat', videoUrl: 'https://youtu.be/U3HpCKZ5yDc' },
+    ],
+    progressionBonus: [
+      { id: 'straddle-swing', nom: 'Straddle swing', videoUrl: 'https://youtu.be/35ov0kOlB78' },
+      { id: 'papillon-avec-charge', nom: 'Papillon avec charge', videoUrl: 'https://youtu.be/baLUesFruG0' },
+    ],
+  },
+  {
+    id: 'flexibilite-2',
+    domaine: 'flexibilite',
+    niveau: 2,
+    titre: 'Flexibilité — niveau 2',
+    resume: 'Routine active complète, Jefferson curl straddle et squats chargés.',
+    objectifPedagogique: 'À définir ensemble (théorie/QCM à rédiger — exercices déjà calés).',
+    theorie: [],
+    programmation: [],
+    qcm: [],
+    contenuDefini: false,
+    exercices: [
+      { id: 'routine-stretch-actif-full', nom: 'Routine stretch actif 1 — full', videoUrl: 'https://youtu.be/0XyyLXF1tAo' },
+      { id: 'jefferson-curl-straddle', nom: 'Jefferson curl straddle', videoUrl: 'https://youtu.be/exMdSnDCUyU' },
+      { id: 'horse-squat', nom: 'Horse squat', videoUrl: 'https://youtu.be/sxyP-W2ql2g' },
+      { id: 'dragon-squat-unilateral', nom: 'Dragon squat unilatéral', videoUrl: 'https://youtu.be/-HPktyi536s' },
+    ],
+    progressionBonus: [
+      { id: 'sissy-squat-progression', nom: 'Sissy squat — progression', videoUrl: 'https://youtu.be/nW1k0BdzyqA' },
+      { id: 'straddle-fermeture', nom: 'Straddle fermeture', videoUrl: 'https://youtu.be/7zLuNIW3qm0' },
+    ],
+  },
+  {
+    id: 'flexibilite-3',
+    domaine: 'flexibilite',
+    niveau: 3,
+    titre: 'Flexibilité — niveau 3',
+    resume: 'Diagonal stretch, pancake chargé et squats avancés.',
+    objectifPedagogique: 'À définir ensemble (théorie/QCM à rédiger — exercices déjà calés).',
+    theorie: [],
+    programmation: [],
+    qcm: [],
+    contenuDefini: false,
+    exercices: [
+      { id: 'diagonal-stretch', nom: 'Diagonal stretch', videoUrl: 'https://youtu.be/2yqAw7LeRlk' },
+      { id: 'pancake-loaded', nom: 'Pancake loaded', videoUrl: 'https://youtu.be/-0JIuM_S6zg' },
+      { id: 'good-morning-unilateral', nom: 'Good morning unilatéral', videoUrl: 'https://youtu.be/1gJbxRFwS80', note: 'Vidéo classée dans Armure Organique, reprise ici' },
+      { id: 'big-4-squats', nom: 'Big 4 squats', videoUrl: 'https://youtu.be/ediycvN5YdA' },
+    ],
+    progressionBonus: [
+      { id: 'front-splits-to-straddle', nom: 'Front splits to straddle', videoUrl: 'https://youtu.be/wjFaZOS4SkI' },
+    ],
+  },
 ];
 const LOCOMOTION: NoeudMentorship[] = [
   {
