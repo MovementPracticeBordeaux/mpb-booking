@@ -568,6 +568,7 @@ const FIGURES: NoeudMentorship[] = [
     titre: 'Figures — niveau 1',
     resume: 'Bases du pont, du handstand contre le mur et de l\'elbow lever.',
     objectifPedagogique: 'À définir ensemble (théorie/QCM à rédiger — exercices déjà calés).',
+    image: '/mentorship/figures-1.png',
     theorie: [],
     programmation: [],
     qcm: [],
