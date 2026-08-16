@@ -1,7 +1,7 @@
 import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
 import { COULEURS, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
-import { FORMULES } from '@/lib/formules';
+import { FORMULES, BRANCHES_MENTORAT } from '@/lib/formules';
 import { accepterCandidature, refuserCandidature, remettreEnAttente } from './actions';
 
 export const dynamic = 'force-dynamic';
@@ -11,6 +11,8 @@ const NIVEAU_LABELS: Record<string, string> = {
   intermediaire: 'Intermédiaire',
   avance: 'Avancé',
 };
+
+const NOM_BRANCHE = Object.fromEntries(BRANCHES_MENTORAT.map((b) => [b.cle, b.nom]));
 
 const STATUT_STYLE: Record<string, { label: string; couleur: string; fond: string }> = {
   nouvelle: { label: 'Nouvelle', couleur: '#f0a', fond: 'rgba(255,0,170,0.12)' },
@@ -24,11 +26,24 @@ type Candidature = {
   email: string;
   telephone: string | null;
   niveau: string;
-  formule_souhaitee: string | null;
+  duree: string | null;
+  nombre_branches: number | null;
+  branches: string | null;
   objectifs: string;
   statut: 'nouvelle' | 'acceptee' | 'refusee';
   cree_le: string;
 };
+
+function libelleBranches(c: Candidature): string {
+  if (!c.branches) return 'non précisé';
+  return c.branches.split(',').map((cle) => NOM_BRANCHE[cle] ?? cle).join(' + ');
+}
+
+function libelleFormule(c: Candidature): string {
+  if (!c.nombre_branches || !c.duree) return 'non précisée';
+  const cle = `mentorship_${c.nombre_branches === 2 ? '2branches' : '1branche'}_${c.duree}`;
+  return `${FORMULES[cle]?.prixIndicatif ?? '?'} €`;
+}
 
 export default async function AdminCandidaturesPage({ searchParams }: { searchParams: { erreur?: string } }) {
   const supabase = supabaseServer();
@@ -97,7 +112,11 @@ export default async function AdminCandidaturesPage({ searchParams }: { searchPa
         <p style={{ fontSize: 13, color: COULEURS.texteAtt, margin: '12px 0 4px' }}>
           <strong>Niveau :</strong> {NIVEAU_LABELS[c.niveau] ?? c.niveau}
           {' · '}
-          <strong>Durée souhaitée :</strong> {c.formule_souhaitee ? FORMULES[c.formule_souhaitee]?.nom ?? c.formule_souhaitee : 'non précisée'}
+          <strong>Branche(s) :</strong> {libelleBranches(c)}
+          {' · '}
+          <strong>Durée :</strong> {c.duree ? `${c.duree} mois` : 'non précisée'}
+          {' · '}
+          <strong>Tarif :</strong> {libelleFormule(c)}
         </p>
         <p style={{ fontSize: 12, margin: '4px 0 0' }}>
           {compte.aUnCompte ? (

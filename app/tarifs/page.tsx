@@ -46,10 +46,13 @@ const PRICE_IDS: Record<string, string> = {
   coaching_carnet_4h: 'price_1U0fkNA7uUFwYAcPPB0ftT8Q',
   coaching_online: 'price_1U0frAA7uUFwYAcPc2PhR6B3',
   // ⚠️ À créer dans Stripe (Produits > Prix, achat ponctuel) puis remplacer
-  // ces 3 valeurs avant réouverture du Mentorat :
-  mentorship_3: 'À_CREER_DANS_STRIPE_mentorship_3',
-  mentorship_6: 'À_CREER_DANS_STRIPE_mentorship_6',
-  mentorship_12: 'À_CREER_DANS_STRIPE_mentorship_12',
+  // ces 6 valeurs avant réouverture du Mentorat :
+  mentorship_1branche_3: 'À_CREER_DANS_STRIPE_mentorship_1branche_3',
+  mentorship_1branche_6: 'À_CREER_DANS_STRIPE_mentorship_1branche_6',
+  mentorship_1branche_12: 'À_CREER_DANS_STRIPE_mentorship_1branche_12',
+  mentorship_2branches_3: 'À_CREER_DANS_STRIPE_mentorship_2branches_3',
+  mentorship_2branches_6: 'À_CREER_DANS_STRIPE_mentorship_2branches_6',
+  mentorship_2branches_12: 'À_CREER_DANS_STRIPE_mentorship_2branches_12',
   post_mentorship: 'price_1U0ftFA7uUFwYAcPwzVQnERa',
 };
 
@@ -62,10 +65,11 @@ const GROUPES = [
 const MIS_EN_AVANT: Record<string, string> = {
   illimite: 'Le + populaire',
   coaching_online: 'Le + demandé',
-  mentorship_6: 'Le + choisi',
+  mentorship_1branche_6: 'Le + choisi',
 };
 
-const CLES_MENTORAT = ['mentorship_3', 'mentorship_6', 'mentorship_12'];
+const CLES_MENTORAT_1_BRANCHE = ['mentorship_1branche_3', 'mentorship_1branche_6', 'mentorship_1branche_12'];
+const CLES_MENTORAT_2_BRANCHES = ['mentorship_2branches_3', 'mentorship_2branches_6', 'mentorship_2branches_12'];
 
 function ligneQuota(f: (typeof FORMULES)[string]): string {
   return f.quota ? `${f.quota} ${f.unite}${f.quota > 1 ? 's' : ''}` : 'Accès illimité';
@@ -205,7 +209,8 @@ export default function TarifsPage({ searchParams }: { searchParams: { erreur?: 
         </h2>
         <p style={{ color: COULEURS.texteFaible, fontSize: 13, margin: '0 0 16px', maxWidth: 640 }}>
           Un accompagnement personnel et structuré, en petit volume, avec un retour direct de mon regard de
-          coach à chaque étape validée. {MENTORAT_PLACES_PAR_SESSION} places par session pour garantir un vrai suivi individuel.
+          coach à chaque étape validée. Accès par branche : une thématique au choix, ou deux pour aller plus
+          loin. {MENTORAT_PLACES_PAR_SESSION} places par session pour garantir un vrai suivi individuel.
           {' '}<a href="/mentorat" style={{ color: '#f0a' }}>En savoir plus →</a>
         </p>
 
@@ -219,16 +224,25 @@ export default function TarifsPage({ searchParams }: { searchParams: { erreur?: 
           </div>
         ) : (
           <>
-            <div style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', marginBottom: 16 }}>
-              {CLES_MENTORAT.map((cle) => (
+            <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 10px' }}>1 branche au choix</p>
+            <div style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', marginBottom: 24 }}>
+              {CLES_MENTORAT_1_BRANCHE.map((cle) => (
                 <CarteFormule key={cle} cle={cle} onAcheter={() => (window.location.href = '/mentorat/candidature')} libelleBouton="Candidater" />
               ))}
             </div>
+
+            <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 10px' }}>2 branches au choix</p>
+            <div style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', marginBottom: 16 }}>
+              {CLES_MENTORAT_2_BRANCHES.map((cle) => (
+                <CarteFormule key={cle} cle={cle} onAcheter={() => (window.location.href = '/mentorat/candidature')} libelleBouton="Candidater" />
+              ))}
+            </div>
+
             <p style={{ color: COULEURS.texteFaible, fontSize: 12, maxWidth: 640 }}>
-              L'accès se fait sur candidature : quelques questions sur ton niveau actuel et tes objectifs,
-              pour s'assurer que le Mentorat correspond à ta démarche. Les échanges se font exclusivement via
-              la plateforme, avec des validations traitées de façon groupée chaque semaine (délai de réponse
-              maximum : 5 jours ouvrés).
+              L'accès se fait sur candidature : tu précises ton niveau, la ou les branches qui t'intéressent
+              et tes objectifs, pour s'assurer que le Mentorat correspond à ta démarche. Les échanges se font
+              exclusivement via la plateforme, avec des validations traitées de façon groupée chaque semaine
+              (délai de réponse maximum : 5 jours ouvrés).
             </p>
           </>
         )}

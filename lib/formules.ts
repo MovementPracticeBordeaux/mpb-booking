@@ -55,16 +55,48 @@ export const FORMULES: Record<string, Formule> = {
   // cours). Ne plus vendre — retirée de la page /tarifs.
   mentorship: { nom: 'Mentorat (ancienne formule)', categorie: 'coaching', unite: null, quota: null, validiteMois: 3, prixIndicatif: 599 },
 
-  // Nouvelles formules Mentorat, en pass à durée fixe (pas d'abonnement),
-  // avec dégressif au mois pour valoriser l'engagement dans la durée.
+  // Nouvelles formules Mentorat, en pass à durée fixe (pas d'abonnement).
+  // Accès par branche plutôt que global : 1 branche au choix, ou 2 branches
+  // au choix (le nombre de branches change peu la charge de suivi réelle,
+  // d'où un supplément raisonnable plutôt qu'un doublement du prix).
   // ⚠️ Prix proposés à confirmer avec Sylvain avant mise en vente réelle.
-  mentorship_3: { nom: 'Mentorat — 3 mois', categorie: 'coaching', unite: null, quota: null, validiteMois: 3, prixIndicatif: 249 },
-  mentorship_6: { nom: 'Mentorat — 6 mois', categorie: 'coaching', unite: null, quota: null, validiteMois: 6, prixIndicatif: 449 },
-  mentorship_12: { nom: 'Mentorat — 12 mois', categorie: 'coaching', unite: null, quota: null, validiteMois: 12, prixIndicatif: 799 },
+  mentorship_1branche_3: { nom: 'Mentorat — 1 branche — 3 mois', categorie: 'coaching', unite: null, quota: null, validiteMois: 3, prixIndicatif: 249 },
+  mentorship_1branche_6: { nom: 'Mentorat — 1 branche — 6 mois', categorie: 'coaching', unite: null, quota: null, validiteMois: 6, prixIndicatif: 449 },
+  mentorship_1branche_12: { nom: 'Mentorat — 1 branche — 12 mois', categorie: 'coaching', unite: null, quota: null, validiteMois: 12, prixIndicatif: 799 },
+  mentorship_2branches_3: { nom: 'Mentorat — 2 branches — 3 mois', categorie: 'coaching', unite: null, quota: null, validiteMois: 3, prixIndicatif: 329 },
+  mentorship_2branches_6: { nom: 'Mentorat — 2 branches — 6 mois', categorie: 'coaching', unite: null, quota: null, validiteMois: 6, prixIndicatif: 599 },
+  mentorship_2branches_12: { nom: 'Mentorat — 2 branches — 12 mois', categorie: 'coaching', unite: null, quota: null, validiteMois: 12, prixIndicatif: 999 },
 
   post_mentorship: { nom: 'Suivi Post-Mentorat', categorie: 'coaching', unite: null, quota: null, validiteMois: 1, prixIndicatif: 80 },
 };
 
 // Toutes les clés de formule donnant accès à l'espace /mentorship (ancienne
-// + nouvelles formules + suivi post-programme).
-export const CLES_ACCES_MENTORAT = ['mentorship', 'mentorship_3', 'mentorship_6', 'mentorship_12', 'post_mentorship'];
+// + nouvelles formules par branche + suivi post-programme).
+export const CLES_ACCES_MENTORAT = [
+  'mentorship',
+  'mentorship_1branche_3', 'mentorship_1branche_6', 'mentorship_1branche_12',
+  'mentorship_2branches_3', 'mentorship_2branches_6', 'mentorship_2branches_12',
+  'post_mentorship',
+];
+
+// Les 5 branches de spécialisation (mêmes clés que le champ `domaine` dans
+// lib/mentorship-modules.ts, pour rester cohérent avec le modèle de données
+// de l'arbre de compétences).
+export const BRANCHES_MENTORAT: { cle: string; nom: string }[] = [
+  { cle: 'force', nom: 'Force' },
+  { cle: 'figures', nom: 'Figures' },
+  { cle: 'locomotion', nom: 'Locomotion' },
+  { cle: 'connexion', nom: 'Connexion' },
+  { cle: 'flexibilite', nom: 'Flexibilité' },
+];
+
+// Duos recommandés par Sylvain (synergie pédagogique) pour la formule
+// "2 branches" — présentés en priorité, mais le choix reste libre.
+export const DUOS_RECOMMANDES: [string, string][] = [
+  ['force', 'figures'],
+  ['force', 'locomotion'],
+  ['force', 'flexibilite'],
+  ['flexibilite', 'locomotion'],
+  ['connexion', 'locomotion'],
+  ['figures', 'locomotion'],
+];

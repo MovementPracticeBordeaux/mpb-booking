@@ -1,5 +1,5 @@
 import { COULEURS, GRADIENT, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
-import { MENTORAT_OUVERT, MENTORAT_PLACES_PAR_SESSION, FORMULES } from '@/lib/formules';
+import { MENTORAT_OUVERT, MENTORAT_PLACES_PAR_SESSION, FORMULES, DUOS_RECOMMANDES, BRANCHES_MENTORAT } from '@/lib/formules';
 
 export const metadata = {
   title: 'Mentorat — Calisthenics, Handstand, Locomotion & Mobilité | Movement Practice Bordeaux',
@@ -56,7 +56,10 @@ const FONCTIONNEMENT = [
   },
 ];
 
-const CLES_MENTORAT = ['mentorship_3', 'mentorship_6', 'mentorship_12'];
+const CLES_MENTORAT_1_BRANCHE = ['mentorship_1branche_3', 'mentorship_1branche_6', 'mentorship_1branche_12'];
+const CLES_MENTORAT_2_BRANCHES = ['mentorship_2branches_3', 'mentorship_2branches_6', 'mentorship_2branches_12'];
+
+const NOM_BRANCHE = Object.fromEntries(BRANCHES_MENTORAT.map((b) => [b.cle, b.nom]));
 
 export default function MentoratPage() {
   return (
@@ -128,6 +131,35 @@ export default function MentoratPage() {
         </div>
       </section>
 
+      {/* ACCÈS PAR BRANCHE */}
+      <section style={{ maxWidth: 720, margin: '0 auto', padding: '0 20px 56px' }}>
+        <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 26, letterSpacing: 0.5, margin: '0 0 12px', textAlign: 'center' }}>
+          Une thématique, ou deux
+        </h2>
+        <p style={{ color: COULEURS.texteAtt, lineHeight: 1.6, textAlign: 'center', maxWidth: 600, margin: '0 auto 20px' }}>
+          Le Mentorat ne se prend pas en bloc : tu choisis la thématique qui t'intéresse, ou deux si tu veux
+          aller plus loin. La plupart des pratiquants ont une envie précise plutôt qu'une volonté de tout
+          aborder à la fois — l'offre est pensée pour ça.
+        </p>
+        <p style={{ color: COULEURS.texteAtt, lineHeight: 1.6, textAlign: 'center', maxWidth: 600, margin: '0 auto 16px' }}>
+          Pour ceux qui prennent deux thématiques, certaines associations sont particulièrement
+          complémentaires. Quelques exemples que je recommande souvent — le choix reste libre :
+        </p>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+          {DUOS_RECOMMANDES.map(([a, b]) => (
+            <span
+              key={`${a}-${b}`}
+              style={{
+                fontSize: 13, padding: '7px 14px', borderRadius: 999,
+                border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surface, color: COULEURS.texteAtt,
+              }}
+            >
+              {NOM_BRANCHE[a]} + {NOM_BRANCHE[b]}
+            </span>
+          ))}
+        </div>
+      </section>
+
       {/* FONCTIONNEMENT */}
       <section style={{ maxWidth: 720, margin: '0 auto', padding: '0 20px 56px' }}>
         <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 26, letterSpacing: 0.5, margin: '0 0 20px', textAlign: 'center' }}>
@@ -161,19 +193,38 @@ export default function MentoratPage() {
             </>
           ) : (
             <>
-              <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 22, letterSpacing: 0.3, margin: '0 0 16px' }}>
+              <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 22, letterSpacing: 0.3, margin: '0 0 20px' }}>
                 {MENTORAT_PLACES_PAR_SESSION} places par session
               </p>
-              <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 24 }}>
-                {CLES_MENTORAT.map((cle) => (
+
+              <p style={{ fontSize: 12, letterSpacing: 1, color: COULEURS.texteFaible, margin: '0 0 10px', textTransform: 'uppercase' }}>
+                1 branche au choix
+              </p>
+              <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 22 }}>
+                {CLES_MENTORAT_1_BRANCHE.map((cle) => (
                   <div key={cle} style={{ fontSize: 14, color: COULEURS.texteAtt }}>
                     <span style={{ display: 'block', fontFamily: POLICE_DISPLAY, fontSize: 22, ...GRADIENT_TEXTE }}>
                       {FORMULES[cle].prixIndicatif} €
                     </span>
-                    {FORMULES[cle].nom.replace('Mentorat — ', '')}
+                    {FORMULES[cle].nom.replace('Mentorat — 1 branche — ', '')}
                   </div>
                 ))}
               </div>
+
+              <p style={{ fontSize: 12, letterSpacing: 1, color: COULEURS.texteFaible, margin: '0 0 10px', textTransform: 'uppercase' }}>
+                2 branches au choix
+              </p>
+              <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 24 }}>
+                {CLES_MENTORAT_2_BRANCHES.map((cle) => (
+                  <div key={cle} style={{ fontSize: 14, color: COULEURS.texteAtt }}>
+                    <span style={{ display: 'block', fontFamily: POLICE_DISPLAY, fontSize: 22, ...GRADIENT_TEXTE }}>
+                      {FORMULES[cle].prixIndicatif} €
+                    </span>
+                    {FORMULES[cle].nom.replace('Mentorat — 2 branches — ', '')}
+                  </div>
+                ))}
+              </div>
+
               <a
                 href="/mentorat/candidature"
                 style={{ display: 'inline-block', background: GRADIENT, color: 'white', fontWeight: 600, padding: '13px 26px', borderRadius: 999, textDecoration: 'none' }}
@@ -181,8 +232,8 @@ export default function MentoratPage() {
                 Candidater au Mentorat →
               </a>
               <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginTop: 14, maxWidth: 460, marginLeft: 'auto', marginRight: 'auto' }}>
-                L'accès se fait sur candidature : quelques questions sur ton niveau et tes objectifs,
-                pour s'assurer que le Mentorat correspond à ta démarche.
+                L'accès se fait sur candidature : quelques questions sur ton niveau, la ou les branches qui
+                t'intéressent, et tes objectifs, pour s'assurer que le Mentorat correspond à ta démarche.
               </p>
             </>
           )}

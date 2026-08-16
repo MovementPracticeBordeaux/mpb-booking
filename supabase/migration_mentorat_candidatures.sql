@@ -17,7 +17,9 @@ create table if not exists mentorat_candidatures (
   email text not null,
   telephone text,
   niveau text not null,          -- 'debutant' | 'intermediaire' | 'avance'
-  formule_souhaitee text,        -- 'mentorship_3' | 'mentorship_6' | 'mentorship_12'
+  duree text,                    -- '3' | '6' | '12'
+  nombre_branches int,           -- 1 ou 2
+  branches text,                 -- ex. 'force' ou 'force,figures'
   objectifs text not null,
   statut text not null default 'nouvelle',  -- 'nouvelle' | 'acceptee' | 'refusee'
   cree_le timestamptz not null default now()

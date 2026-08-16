@@ -18,13 +18,24 @@ export async function envoyerCandidature(formData: FormData) {
   const email = (formData.get('email') as string)?.trim();
   const telephone = (formData.get('telephone') as string)?.trim() || null;
   const niveau = formData.get('niveau') as string;
-  const formuleSouhaitee = formData.get('formule_souhaitee') as string;
+  const duree = formData.get('duree') as string;
+  const nombreBranches = Number(formData.get('nombre_branches'));
+  const branche1 = formData.get('branche_1') as string;
+  const branche2 = formData.get('branche_2') as string;
   const objectifs = (formData.get('objectifs') as string)?.trim();
 
   if (!nom) echouer('Merci d\'indiquer ton nom.');
   if (!email || !email.includes('@')) echouer('Merci d\'indiquer une adresse email valide.');
   if (!niveau) echouer('Merci d\'indiquer ton niveau actuel.');
+  if (!duree) echouer('Merci d\'indiquer la durée souhaitée.');
+  if (![1, 2].includes(nombreBranches)) echouer('Merci d\'indiquer 1 ou 2 branches.');
+  if (!branche1) echouer('Merci de choisir au moins une branche.');
+  if (nombreBranches === 2 && (!branche2 || branche2 === branche1)) {
+    echouer('Merci de choisir deux branches différentes.');
+  }
   if (!objectifs || objectifs.length < 10) echouer('Merci de préciser un peu tes objectifs.');
+
+  const branches = nombreBranches === 2 ? `${branche1},${branche2}` : branche1;
 
   const admin = supabaseAdmin();
   const { error } = await admin.from('mentorat_candidatures').insert({
@@ -32,7 +43,9 @@ export async function envoyerCandidature(formData: FormData) {
     email,
     telephone,
     niveau,
-    formule_souhaitee: formuleSouhaitee || null,
+    duree,
+    nombre_branches: nombreBranches,
+    branches,
     objectifs,
   });
 
@@ -50,9 +63,10 @@ export async function envoyerCandidature(formData: FormData) {
         `Nouvelle candidature Mentorat — ${nom}`,
         `<p><strong>${nom}</strong> (${email}${telephone ? `, ${telephone}` : ''}) vient de candidater au Mentorat.</p>
          <p><strong>Niveau :</strong> ${niveau}</p>
-         <p><strong>Formule souhaitée :</strong> ${formuleSouhaitee || 'non précisée'}</p>
+         <p><strong>Durée souhaitée :</strong> ${duree} mois</p>
+         <p><strong>Branche(s) :</strong> ${branches}</p>
          <p><strong>Objectifs :</strong><br/>${objectifs.replace(/\n/g, '<br/>')}</p>
-         <p>À traiter depuis /admin (section candidatures).</p>`
+         <p>À traiter depuis /admin/candidatures.</p>`
       );
     }
   } catch {
