@@ -12,7 +12,7 @@ create table if not exists push_subscriptions (
 alter table push_subscriptions enable row level security;
 
 grant all on push_subscriptions to service_role;
-grant select, insert, delete on push_subscriptions to authenticated;
+grant select, insert, update, delete on push_subscriptions to authenticated;
 
 drop policy if exists "Élèves gèrent leurs propres abonnements push" on push_subscriptions;
 create policy "Élèves gèrent leurs propres abonnements push"
