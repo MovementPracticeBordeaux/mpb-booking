@@ -1,10 +1,12 @@
 import { supabaseAdmin } from '@/lib/supabase-server';
 import { ajouterCours, desactiverCours, definirSemaineReference, ajouterVacances, supprimerVacances } from '../actions';
+import { calculerSemaine } from '@/lib/semaine';
 
 export const dynamic = 'force-dynamic';
 
 const JOURS = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
 const COULEUR_SEMAINE: Record<'A' | 'B', string> = { A: '#4FC3F7', B: '#FFB74D' };
+const JOURS_A_VENIR = 14; // fenêtre de la section "Prochaines séances"
 
 export default async function AdminPlanningPage({ searchParams }: { searchParams: { erreur?: string } }) {
   const admin = supabaseAdmin();
@@ -18,6 +20,54 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
     .order('semaine')
     .order('jour_semaine');
 
+  // --- Prochaines séances datées + nombre d'inscrits (admin uniquement) ---
+  // À la différence de "Créneaux actifs" (le modèle récurrent A/B), cette
+  // section calcule les VRAIES dates des prochaines séances et compte les
+  // réservations confirmées pour chacune. Jamais visible côté élève.
+  const { data: reservationsAVenir } = await admin
+    .from('reservations')
+    .select('cours_id, date_seance')
+    .eq('statut', 'confirmee');
+
+  const nbInscritsParSeance = new Map<string, number>();
+  for (const r of reservationsAVenir ?? []) {
+    const cle = `${r.cours_id}::${r.date_seance}`;
+    nbInscritsParSeance.set(cle, (nbInscritsParSeance.get(cle) ?? 0) + 1);
+  }
+
+  type SeanceAVenir = {
+    dateISO: string;
+    dateAffichee: string;
+    discipline: string;
+    heureDebut: string;
+    heureFin: string;
+    nbInscrits: number;
+  };
+  const seancesAVenir: SeanceAVenir[] = [];
+  if (ref) {
+    const lundiRef = new Date(ref.date_lundi_reference);
+    const periodesVacancesActives = periodesVacances ?? [];
+    for (let i = 0; i < JOURS_A_VENIR; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() + i);
+      const dateStr = d.toISOString().slice(0, 10);
+      const enVacances = periodesVacancesActives.some((v) => dateStr >= v.date_debut && dateStr <= v.date_fin);
+      if (enVacances) continue;
+      const semaine = calculerSemaine(d, lundiRef, ref.semaine_ce_lundi);
+      const coursDuJour = (coursListe ?? []).filter((c) => c.jour_semaine === d.getDay() && c.semaine === semaine);
+      for (const c of coursDuJour) {
+        seancesAVenir.push({
+          dateISO: dateStr,
+          dateAffichee: d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }),
+          discipline: c.discipline as string,
+          heureDebut: (c.heure_debut as string).slice(0, 5),
+          heureFin: (c.heure_fin as string).slice(0, 5),
+          nbInscrits: nbInscritsParSeance.get(`${c.id}::${dateStr}`) ?? 0,
+        });
+      }
+    }
+  }
+
   return (
     <main style={{ maxWidth: 640, margin: '0 auto', padding: 20 }}>
       <h1>Planning collectif</h1>
@@ -26,6 +76,40 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
           ⚠️ {searchParams.erreur}
         </p>
       )}
+
+      <section style={{ marginBottom: 32 }}>
+        <h2>Prochaines séances — inscrits</h2>
+        <p style={{ fontSize: 13, opacity: 0.7, marginBottom: 12 }}>
+          Visible uniquement par toi. Les élèves ne voient jamais ce nombre.
+        </p>
+        {seancesAVenir.length === 0 && (
+          <p style={{ fontSize: 13, opacity: 0.5 }}>Aucune séance dans les {JOURS_A_VENIR} prochains jours.</p>
+        )}
+        {seancesAVenir.map((s, i) => (
+          <div
+            key={`${s.dateISO}-${i}`}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, fontSize: 13, padding: '8px 0', borderBottom: '1px solid #333' }}
+          >
+            <span>
+              <span style={{ opacity: 0.6, textTransform: 'capitalize' }}>{s.dateAffichee}</span>
+              {' — '}
+              <strong>{s.discipline}</strong>
+              {' '}
+              <span style={{ opacity: 0.6 }}>{s.heureDebut}-{s.heureFin}</span>
+            </span>
+            <span
+              style={{
+                fontWeight: 700, fontSize: 12, padding: '3px 10px', borderRadius: 999,
+                background: s.nbInscrits > 0 ? 'rgba(255,0,170,0.15)' : '#222',
+                color: s.nbInscrits > 0 ? '#f0a' : '#777',
+                flexShrink: 0,
+              }}
+            >
+              {s.nbInscrits} inscrit{s.nbInscrits !== 1 ? 's' : ''}
+            </span>
+          </div>
+        ))}
+      </section>
 
       <section style={{ marginBottom: 32 }}>
         <h2>Semaine de référence</h2>
