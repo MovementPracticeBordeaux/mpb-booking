@@ -5,7 +5,7 @@
 // /mentorship est explicitement exclu de toute logique de cache tant que
 // cette partie est en chantier, pour ne jamais servir une version périmée.
 
-const VERSION = 'mpb-v1';
+const VERSION = 'mpb-v2';
 const APP_SHELL = ['/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', (event) => {
@@ -42,4 +42,43 @@ self.addEventListener('fetch', (event) => {
       caches.match(event.request).then((reponse) => reponse || fetch(event.request))
     );
   }
+});
+
+// --- Notifications push -----------------------------------------------
+// Réception d'une notification envoyée par le serveur (rappel de cours,
+// confirmation de réservation...). Le payload est un JSON simple :
+// { titre, corps, url }.
+self.addEventListener('push', (event) => {
+  let donnees = { titre: 'Movement Practice Bordeaux', corps: '', url: '/planning' };
+  try {
+    if (event.data) donnees = { ...donnees, ...event.data.json() };
+  } catch {}
+
+  event.waitUntil(
+    self.registration.showNotification(donnees.titre, {
+      body: donnees.corps,
+      icon: '/icons/icon-192.png',
+      badge: '/icons/icon-192.png',
+      data: { url: donnees.url },
+    })
+  );
+});
+
+// Clic sur la notification : ouvre (ou remet au premier plan) l'onglet du
+// site sur la page concernée, plutôt que d'en ouvrir un nouveau à chaque fois.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const cible = event.notification.data?.url || '/planning';
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientsList) => {
+      for (const client of clientsList) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          client.navigate(cible);
+          return client.focus();
+        }
+      }
+      return self.clients.openWindow(cible);
+    })
+  );
 });

@@ -2,6 +2,7 @@ import { supabaseServer } from '@/lib/supabase-server';
 import { FORMULES, CLES_ACCES_MENTORAT } from '@/lib/formules';
 import { redirect } from 'next/navigation';
 import BoutonDeconnexion from '../components/BoutonDeconnexion';
+import NotificationsToggle from './NotificationsToggle';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,7 +24,13 @@ export default async function ProfilPage() {
         <p style={{ margin: 0, fontSize: 13, opacity: 0.6 }}>{user.email}</p>
       </div>
 
-      <h2 style={{ fontSize: 16, opacity: 0.7 }}>Mon abonnement</h2>
+      <h2 style={{ fontSize: 16, opacity: 0.7 }}>Notifications</h2>
+      <p style={{ fontSize: 13, opacity: 0.6, marginBottom: 4 }}>
+        Reçois tes rappels de cours directement sur ton téléphone, même le site fermé.
+      </p>
+      <NotificationsToggle />
+
+      <h2 style={{ fontSize: 16, opacity: 0.7, marginTop: 24 }}>Mon abonnement</h2>
       {!formule || !profil?.abonnement_actif ? (
         <p>
           Tu n'as pas de formule active pour le moment. Rends-toi sur{' '}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-server';
 import { envoyerEmail } from '@/lib/resend';
+import { envoyerPushAEleve } from '@/lib/push';
 import { degelerProfil } from '@/app/admin/actions';
 import { alerterAdmin } from '@/lib/alerte-admin';
 
@@ -70,6 +71,17 @@ export async function GET(req: NextRequest) {
       } catch {
         echecs++;
       }
+      // La notification push est un bonus best-effort : un échec ici (élève
+      // non abonné, endpoint expiré...) ne doit jamais faire échouer le
+      // rappel email, qui reste le canal principal.
+      try {
+        await envoyerPushAEleve(
+          (r as any).eleve_id,
+          `Cours de ${cours.discipline} demain`,
+          `${cours.heure_debut.slice(0, 5)} - ${cours.heure_fin.slice(0, 5)}${cours.lieu ? ` · ${cours.lieu}` : ''}`,
+          '/planning'
+        );
+      } catch {}
     }
 
     if (echecs > 0) {
