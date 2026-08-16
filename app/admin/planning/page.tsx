@@ -20,19 +20,27 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
     .order('semaine')
     .order('jour_semaine');
 
-  // --- Prochaines séances datées + nombre d'inscrits (admin uniquement) ---
+  // --- Prochaines séances datées + inscrits nommés (admin uniquement) ---
   // À la différence de "Créneaux actifs" (le modèle récurrent A/B), cette
-  // section calcule les VRAIES dates des prochaines séances et compte les
-  // réservations confirmées pour chacune. Jamais visible côté élève.
+  // section calcule les VRAIES dates des prochaines séances et liste les
+  // élèves inscrits pour chacune. Jamais visible côté élève.
   const { data: reservationsAVenir } = await admin
     .from('reservations')
-    .select('cours_id, date_seance')
+    .select('eleve_id, cours_id, date_seance')
     .eq('statut', 'confirmee');
 
-  const nbInscritsParSeance = new Map<string, number>();
+  const idsEleves = [...new Set((reservationsAVenir ?? []).map((r) => r.eleve_id))];
+  const { data: profilsEleves } = idsEleves.length > 0
+    ? await admin.from('profiles').select('id, nom, email').in('id', idsEleves)
+    : { data: [] as { id: string; nom: string | null; email: string | null }[] };
+  const nomParEleveId = new Map((profilsEleves ?? []).map((p) => [p.id, p.nom || p.email || 'Élève']));
+
+  const inscritsParSeance = new Map<string, string[]>();
   for (const r of reservationsAVenir ?? []) {
     const cle = `${r.cours_id}::${r.date_seance}`;
-    nbInscritsParSeance.set(cle, (nbInscritsParSeance.get(cle) ?? 0) + 1);
+    const noms = inscritsParSeance.get(cle) ?? [];
+    noms.push(nomParEleveId.get(r.eleve_id) ?? 'Élève');
+    inscritsParSeance.set(cle, noms);
   }
 
   type SeanceAVenir = {
@@ -41,7 +49,7 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
     discipline: string;
     heureDebut: string;
     heureFin: string;
-    nbInscrits: number;
+    inscrits: string[];
   };
   const seancesAVenir: SeanceAVenir[] = [];
   if (ref) {
@@ -62,7 +70,7 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
           discipline: c.discipline as string,
           heureDebut: (c.heure_debut as string).slice(0, 5),
           heureFin: (c.heure_fin as string).slice(0, 5),
-          nbInscrits: nbInscritsParSeance.get(`${c.id}::${dateStr}`) ?? 0,
+          inscrits: inscritsParSeance.get(`${c.id}::${dateStr}`) ?? [],
         });
       }
     }
@@ -86,28 +94,35 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
           <p style={{ fontSize: 13, opacity: 0.5 }}>Aucune séance dans les {JOURS_A_VENIR} prochains jours.</p>
         )}
         {seancesAVenir.map((s, i) => (
-          <div
+          <details
             key={`${s.dateISO}-${i}`}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, fontSize: 13, padding: '8px 0', borderBottom: '1px solid #333' }}
+            style={{ padding: '8px 0', borderBottom: '1px solid #333' }}
           >
-            <span>
-              <span style={{ opacity: 0.6, textTransform: 'capitalize' }}>{s.dateAffichee}</span>
-              {' — '}
-              <strong>{s.discipline}</strong>
-              {' '}
-              <span style={{ opacity: 0.6 }}>{s.heureDebut}-{s.heureFin}</span>
-            </span>
-            <span
-              style={{
-                fontWeight: 700, fontSize: 12, padding: '3px 10px', borderRadius: 999,
-                background: s.nbInscrits > 0 ? 'rgba(255,0,170,0.15)' : '#222',
-                color: s.nbInscrits > 0 ? '#f0a' : '#777',
-                flexShrink: 0,
-              }}
-            >
-              {s.nbInscrits} inscrit{s.nbInscrits !== 1 ? 's' : ''}
-            </span>
-          </div>
+            <summary style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, fontSize: 13, cursor: 'pointer', listStyle: 'none' }}>
+              <span>
+                <span style={{ opacity: 0.6, textTransform: 'capitalize' }}>{s.dateAffichee}</span>
+                {' — '}
+                <strong>{s.discipline}</strong>
+                {' '}
+                <span style={{ opacity: 0.6 }}>{s.heureDebut}-{s.heureFin}</span>
+              </span>
+              <span
+                style={{
+                  fontWeight: 700, fontSize: 12, padding: '3px 10px', borderRadius: 999,
+                  background: s.inscrits.length > 0 ? 'rgba(255,0,170,0.15)' : '#222',
+                  color: s.inscrits.length > 0 ? '#f0a' : '#777',
+                  flexShrink: 0,
+                }}
+              >
+                {s.inscrits.length} inscrit{s.inscrits.length !== 1 ? 's' : ''}
+              </span>
+            </summary>
+            {s.inscrits.length > 0 && (
+              <ul style={{ margin: '8px 0 0', paddingLeft: 20, fontSize: 13, opacity: 0.85 }}>
+                {s.inscrits.map((nom, j) => <li key={j}>{nom}</li>)}
+              </ul>
+            )}
+          </details>
         ))}
       </section>
 
