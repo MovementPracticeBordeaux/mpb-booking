@@ -33,7 +33,7 @@ const OBJECTIFS = [
   { id: 'perte_poids', label: 'Perdre du poids, me remettre en forme' },
   { id: 'decouvrir', label: 'Découvrir mes capacités' },
   { id: 'explorer', label: 'Explorer le monde du mouvement' },
-  { id: 'bien_etre', label: 'Le bien-être, la gestion du stress' },
+  { id: 'bien_etre', label: "Un système qui s'adapte — force, mobilité, coordination, engagement" },
 ] as const;
 
 const DISCIPLINES: Record<string, { titre: string; description: string }> = {
@@ -58,7 +58,7 @@ const SCORE_OBJECTIFS: Record<string, Record<string, number>> = {
   perte_poids: { Calisthenics: 2, Locomotion: 1 },
   decouvrir: { Handstand: 1, 'Arm Balance': 1, Locomotion: 1, Altinha: 1 },
   explorer: { Locomotion: 3, Altinha: 1 },
-  bien_etre: { Mobilité: 3, Locomotion: 1 },
+  bien_etre: { Mobilité: 2, Locomotion: 2, Altinha: 1, Calisthenics: 1 },
 };
 
 type Reponses = {

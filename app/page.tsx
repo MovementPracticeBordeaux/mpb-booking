@@ -126,6 +126,23 @@ export default function AccueilPage() {
         </div>
       </section>
 
+      {/* PHILOSOPHIE DE LA SANTÉ */}
+      <section style={{ maxWidth: 720, margin: '0 auto', padding: '0 20px 64px', textAlign: 'center' }}>
+        <p style={{ fontSize: 12, letterSpacing: 2, color: COULEURS.texteFaible, marginBottom: 10 }}>NOTRE VISION DE LA SANTÉ</p>
+        <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 30, letterSpacing: 0.3, margin: '0 0 16px' }}>
+          La santé, ça se construit — ça ne se repose pas
+        </h2>
+        <p style={{ color: COULEURS.texteAtt, lineHeight: 1.7, marginBottom: 12 }}>
+          Ici, la santé n'est pas une question de détente ou de relâchement. C'est la force, la mobilité, la
+          coordination, l'engagement, l'interaction, la réflexion — tout ce qui fait fonctionner ton système et
+          lui permet de s'adapter.
+        </p>
+        <p style={{ color: COULEURS.texteAtt, lineHeight: 1.7 }}>
+          Chaque discipline proposée demande un vrai engagement physique et mental. C'est exigeant, ça dépense de
+          l'énergie, et c'est précisément ce qui construit un corps — et un système — capable de s'adapter à tout.
+        </p>
+      </section>
+
       {/* DISCIPLINES */}
       <section style={{ maxWidth: 960, margin: '0 auto', padding: '0 20px 64px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
