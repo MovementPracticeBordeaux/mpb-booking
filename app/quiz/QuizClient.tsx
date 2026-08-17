@@ -25,7 +25,7 @@ const GOUTS = [
   { id: 'creativite', label: "La créativité, l'exploration du mouvement" },
   { id: 'jeux_balle', label: 'Les jeux de balle, la coordination ludique' },
   { id: 'construction', label: 'La construction physique, structurée et progressive' },
-  { id: 'amplitude', label: "L'amplitude et le renforcement en profondeur, un travail exigeant" },
+  { id: 'amplitude', label: 'La mobilité et le travail en profondeur, un travail exigeant' },
 ] as const;
 
 const OBJECTIFS = [
