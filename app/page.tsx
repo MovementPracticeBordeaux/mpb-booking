@@ -80,6 +80,27 @@ export default function AccueilPage() {
         </div>
       </div>
 
+      {/* QUIZ — orientation rapide pour les indécis */}
+      <section style={{ maxWidth: 640, margin: '0 auto', padding: '48px 20px 0' }}>
+        <div style={{
+          background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 20,
+          padding: '32px 28px', textAlign: 'center',
+        }}>
+          <p style={{ fontSize: 12, letterSpacing: 2, color: COULEURS.texteFaible, marginBottom: 10 }}>
+            PAS SÛR·E PAR OÙ COMMENCER ?
+          </p>
+          <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 28, letterSpacing: 0.3, margin: '0 0 12px' }}>
+            Découvre quel cours te correspond
+          </h2>
+          <p style={{ color: COULEURS.texteAtt, lineHeight: 1.6, margin: '0 0 24px', maxWidth: 440, marginLeft: 'auto', marginRight: 'auto' }}>
+            Cinq questions rapides sur tes goûts et tes objectifs, et on te propose les disciplines les plus adaptées.
+          </p>
+          <a href="/quiz" style={{ background: GRADIENT, color: 'white', fontWeight: 600, padding: '13px 28px', borderRadius: 999, textDecoration: 'none', display: 'inline-block' }}>
+            Faire le quiz (2 min)
+          </a>
+        </div>
+      </section>
+
       {/* MÉTHODE */}
       <section style={{ maxWidth: 860, margin: '0 auto', padding: '64px 20px', display: 'flex', gap: 32, flexWrap: 'wrap-reverse', alignItems: 'center' }}>
         <img
