@@ -133,13 +133,14 @@ export default function AccueilPage() {
           La santé, ça se construit — ça ne se repose pas
         </h2>
         <p style={{ color: COULEURS.texteAtt, lineHeight: 1.7, marginBottom: 12 }}>
-          Ici, la santé n'est pas une question de détente ou de relâchement. C'est la force, la mobilité, la
-          coordination, l'engagement, l'interaction, la réflexion — tout ce qui fait fonctionner ton système et
-          lui permet de s'adapter.
+          Ici, la santé n'est pas d'abord une question de détente. C'est la force, la mobilité, la coordination,
+          l'engagement, l'interaction, l'apprentissage — tout ce qui fait fonctionner ton système et lui permet de
+          s'adapter.
         </p>
         <p style={{ color: COULEURS.texteAtt, lineHeight: 1.7 }}>
           Chaque discipline proposée demande un vrai engagement physique et mental. C'est exigeant, ça dépense de
           l'énergie, et c'est précisément ce qui construit un corps — et un système — capable de s'adapter à tout.
+          Le relâchement a toute sa place ensuite, comme récupération après l'effort — jamais comme point de départ.
         </p>
       </section>
 
