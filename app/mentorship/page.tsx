@@ -99,10 +99,13 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
       <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 'clamp(28px, 7vw, 40px)', letterSpacing: 0.5, marginBottom: 4 }}>
         LE <span style={GRADIENT_TEXTE}>MENTORAT</span>
       </h1>
-      <p style={{ color: COULEURS.texteFaible, fontSize: 13, marginBottom: 24 }}>
+      <p style={{ color: COULEURS.texteFaible, fontSize: 13, marginBottom: 8 }}>
         Le tronc — l'Armure Organique — se gravit seul, niveau après niveau. Une fois validé en entier,
         les cinq branches s'ouvrent et progressent chacune à son rythme.
       </p>
+      <a href="/mentorship/journal" style={{ display: 'inline-block', fontSize: 13, color: '#f0a', marginBottom: 24, textDecoration: 'none' }}>
+        📓 Mon journal d'entraînement →
+      </a>
 
       {searchParams.erreur && (
         <p style={{ color: '#ff6b6b', fontSize: 13, marginBottom: 12 }}>{searchParams.erreur}</p>
