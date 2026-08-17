@@ -51,22 +51,53 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Regroupe par élève : s'il a plusieurs cours demain, un seul email et
+    // une seule notification push, listant tous les créneaux — plutôt
+    // qu'un rappel séparé par cours, redondant et un peu spammy.
+    type CoursDuLendemain = { discipline: string; heureDebut: string; heureFin: string; lieu: string | null };
+    const parEleve = new Map<string, { email: string | null; notifEmailActive: boolean; cours: CoursDuLendemain[] }>();
+
+    for (const r of reservations ?? []) {
+      const eleveId = (r as any).eleve_id as string;
+      const cours = (r as any).cours;
+      if (!cours) continue;
+      const entree = parEleve.get(eleveId) ?? {
+        email: (r as any).profiles?.email ?? null,
+        notifEmailActive: (r as any).profiles?.notif_email_rappel !== false,
+        cours: [] as CoursDuLendemain[],
+      };
+      entree.cours.push({
+        discipline: cours.discipline,
+        heureDebut: cours.heure_debut.slice(0, 5),
+        heureFin: cours.heure_fin.slice(0, 5),
+        lieu: cours.lieu ?? null,
+      });
+      parEleve.set(eleveId, entree);
+    }
+
     let envoyes = 0;
     let echecs = 0;
 
-    for (const r of reservations ?? []) {
-      const email = (r as any).profiles?.email;
-      const notifEmailActive = (r as any).profiles?.notif_email_rappel !== false;
-      const cours = (r as any).cours;
-      if (!cours) continue;
+    for (const [eleveId, { email, notifEmailActive, cours }] of parEleve) {
+      // Ordre chronologique, au cas où la requête ne les aurait pas rendus
+      // triés (aucune garantie sans ORDER BY explicite sur la jointure).
+      cours.sort((a, b) => a.heureDebut.localeCompare(b.heureDebut));
+
+      const listeHtml = cours
+        .map((c) => `<li><strong>${c.discipline}</strong>, ${c.heureDebut} à ${c.heureFin}${c.lieu ? ` (${c.lieu})` : ''}</li>`)
+        .join('');
+      const sujet = cours.length > 1
+        ? `Rappel : tes ${cours.length} cours demain`
+        : `Rappel : ton cours de ${cours[0].discipline} demain`;
+
       if (email && notifEmailActive) {
         try {
           await envoyerEmail(
             email,
-            `Rappel : ton cours de ${cours.discipline} demain`,
+            sujet,
             `<p>Bonjour,</p>
-             <p>Petit rappel : tu es inscrit·e au cours de <strong>${cours.discipline}</strong> demain,
-             de ${cours.heure_debut.slice(0, 5)} à ${cours.heure_fin.slice(0, 5)}${cours.lieu ? ` (${cours.lieu})` : ''}.</p>
+             <p>Petit rappel, tu es inscrit·e ${cours.length > 1 ? 'aux cours suivants' : 'au cours suivant'} demain :</p>
+             <ul>${listeHtml}</ul>
              <p>À demain !</p>`
           );
           envoyes++;
@@ -78,10 +109,13 @@ export async function GET(req: NextRequest) {
       // non abonné, endpoint expiré...) ne doit jamais faire échouer le
       // rappel email, qui reste le canal principal.
       try {
+        const corps = cours.length > 1
+          ? cours.map((c) => `${c.discipline} ${c.heureDebut}-${c.heureFin}`).join(' · ')
+          : `${cours[0].heureDebut} - ${cours[0].heureFin}${cours[0].lieu ? ` · ${cours[0].lieu}` : ''}`;
         await envoyerPushAEleve(
-          (r as any).eleve_id,
-          `Cours de ${cours.discipline} demain`,
-          `${cours.heure_debut.slice(0, 5)} - ${cours.heure_fin.slice(0, 5)}${cours.lieu ? ` · ${cours.lieu}` : ''}`,
+          eleveId,
+          cours.length > 1 ? `${cours.length} cours demain` : `Cours de ${cours[0].discipline} demain`,
+          corps,
           '/planning',
           'rappel'
         );
@@ -91,11 +125,11 @@ export async function GET(req: NextRequest) {
     if (echecs > 0) {
       await alerterAdmin(
         `${echecs} email(s) de rappel non envoyé(s)`,
-        `Sur ${(reservations ?? []).length} rappel(s) à envoyer aujourd'hui, ${echecs} ont échoué et ${envoyes} sont bien partis. Vérifie la configuration Resend si ça se reproduit.`
+        `Sur ${parEleve.size} élève(s) à prévenir aujourd'hui, ${echecs} envoi(s) ont échoué et ${envoyes} sont bien partis. Vérifie la configuration Resend si ça se reproduit.`
       );
     }
 
-    return NextResponse.json({ envoyes, echecs, total: (reservations ?? []).length, degeles });
+    return NextResponse.json({ envoyes, echecs, eleves: parEleve.size, reservations: (reservations ?? []).length, degeles });
   } catch (e: any) {
     await alerterAdmin(
       'Le cron des rappels a planté',
