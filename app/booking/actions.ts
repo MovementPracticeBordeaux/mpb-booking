@@ -4,6 +4,7 @@ import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { envoyerEmail } from '@/lib/resend';
+import { envoyerPushAEleve } from '@/lib/push';
 
 export async function reserverCours(formData: FormData) {
   const supabase = supabaseServer();
@@ -61,31 +62,42 @@ export async function reserverCours(formData: FormData) {
       return;
   }
 
-  // Email de confirmation — ne doit jamais faire échouer la réservation
-  // elle-même si Resend est indisponible, d'où le try/catch silencieux.
-  try {
-    const { data: cours } = await admin
-      .from('cours')
-      .select('discipline, heure_debut, heure_fin, lieu')
-      .eq('id', coursId)
-      .single();
-    if (cours && user.email) {
-      const dateAffichee = new Date(dateSeance + 'T00:00:00').toLocaleDateString('fr-FR', {
-        weekday: 'long', day: 'numeric', month: 'long',
-      });
-      await envoyerEmail(
-        user.email,
-        `Réservation confirmée : ${cours.discipline} le ${dateAffichee}`,
-        `<p>C'est confirmé !</p>
-         <p>Tu es inscrit·e au cours de <strong>${cours.discipline}</strong>, le <strong>${dateAffichee}</strong>,
-         de ${cours.heure_debut.slice(0, 5)} à ${cours.heure_fin.slice(0, 5)}${cours.lieu ? ` (${cours.lieu})` : ''}.</p>
-         <p>Tu peux annuler cette réservation depuis ton espace sur le site, jusqu'à 1h30 avant le début du cours.</p>
-         <p>À bientôt !</p>`
-      );
+  // Email + notification push de confirmation — ne doivent jamais faire
+  // échouer la réservation elle-même si Resend/le push sont indisponibles,
+  // d'où les try/catch silencieux indépendants l'un de l'autre.
+  const { data: cours } = await admin
+    .from('cours')
+    .select('discipline, heure_debut, heure_fin, lieu')
+    .eq('id', coursId)
+    .single();
+
+  if (cours) {
+    const dateAffichee = new Date(dateSeance + 'T00:00:00').toLocaleDateString('fr-FR', {
+      weekday: 'long', day: 'numeric', month: 'long',
+    });
+
+    if (user.email) {
+      try {
+        await envoyerEmail(
+          user.email,
+          `Réservation confirmée : ${cours.discipline} le ${dateAffichee}`,
+          `<p>C'est confirmé !</p>
+           <p>Tu es inscrit·e au cours de <strong>${cours.discipline}</strong>, le <strong>${dateAffichee}</strong>,
+           de ${cours.heure_debut.slice(0, 5)} à ${cours.heure_fin.slice(0, 5)}${cours.lieu ? ` (${cours.lieu})` : ''}.</p>
+           <p>Tu peux annuler cette réservation depuis ton espace sur le site, jusqu'à 1h30 avant le début du cours.</p>
+           <p>À bientôt !</p>`
+        );
+      } catch {}
     }
-  } catch {
-    // Email de confirmation non critique : on n'interrompt jamais la
-    // réservation elle-même à cause d'un souci d'envoi.
+
+    try {
+      await envoyerPushAEleve(
+        user.id,
+        'Réservation confirmée ✅',
+        `${cours.discipline} le ${dateAffichee}, ${cours.heure_debut.slice(0, 5)}-${cours.heure_fin.slice(0, 5)}`,
+        '/planning'
+      );
+    } catch {}
   }
 
   revalidatePath('/planning');
