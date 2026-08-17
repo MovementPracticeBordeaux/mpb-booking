@@ -130,17 +130,22 @@ export default function AccueilPage() {
       <section style={{ maxWidth: 720, margin: '0 auto', padding: '0 20px 64px', textAlign: 'center' }}>
         <p style={{ fontSize: 12, letterSpacing: 2, color: COULEURS.texteFaible, marginBottom: 10 }}>NOTRE VISION DE LA SANTÉ</p>
         <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 30, letterSpacing: 0.3, margin: '0 0 16px' }}>
-          La santé, ça se construit — ça ne se repose pas
+          La santé se construit, à ton rythme
         </h2>
         <p style={{ color: COULEURS.texteAtt, lineHeight: 1.7, marginBottom: 12 }}>
-          Ici, la santé n'est pas d'abord une question de détente. C'est la force, la mobilité, la coordination,
-          l'engagement, l'interaction, l'apprentissage — tout ce qui fait fonctionner ton système et lui permet de
-          s'adapter.
+          Ici, la santé se construit : par la force, la mobilité, la coordination, l'engagement, l'interaction,
+          l'apprentissage — tout ce qui permet à ton corps de s'adapter. Ce n'est pas une question d'intensité
+          identique pour tout le monde, mais de trouver, dans chaque domaine, l'exercice qui te correspond aujourd'hui.
+        </p>
+        <p style={{ color: COULEURS.texteAtt, lineHeight: 1.7, marginBottom: 12 }}>
+          Chaque mouvement se décline en progressions et régressions : ton point de départ n'est pas celui de ton
+          voisin, et c'est très bien ainsi. En cours collectif, tout le monde travaille la même thématique — chacun
+          à son niveau. La récupération fait pleinement partie de l'entraînement, même si elle ne fait pas l'objet
+          d'un cours à part.
         </p>
         <p style={{ color: COULEURS.texteAtt, lineHeight: 1.7 }}>
-          Chaque discipline proposée demande un vrai engagement physique et mental. C'est exigeant, ça dépense de
-          l'énergie, et c'est précisément ce qui construit un corps — et un système — capable de s'adapter à tout.
-          Le relâchement a toute sa place ensuite, comme récupération après l'effort — jamais comme point de départ.
+          Le collectif transmet la méthode à l'échelle d'un groupe ; pour un accompagnement encore plus personnalisé,
+          jusque dans le détail de ta progression, c'est le coaching individuel qui s'y prête le mieux.
         </p>
       </section>
 
