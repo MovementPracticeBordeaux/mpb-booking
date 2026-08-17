@@ -25,7 +25,7 @@ const GOUTS = [
   { id: 'creativite', label: "La créativité, l'exploration du mouvement" },
   { id: 'jeux_balle', label: 'Les jeux de balle, la coordination ludique' },
   { id: 'construction', label: 'La construction physique, structurée et progressive' },
-  { id: 'detente', label: 'Le lâcher-prise, la détente, la mobilité' },
+  { id: 'amplitude', label: "L'amplitude et le renforcement en profondeur, un travail exigeant" },
 ] as const;
 
 const OBJECTIFS = [
@@ -42,7 +42,7 @@ const DISCIPLINES: Record<string, { titre: string; description: string }> = {
   Calisthenics: { titre: 'Calisthenics', description: 'Construction de force au poids du corps, structurée et progressive.' },
   Locomotion: { titre: 'Locomotion', description: 'Déplacements au sol — exploration et créativité du mouvement.' },
   Altinha: { titre: 'Altinha', description: 'Jeux de balle au pied — coordination, plaisir du jeu, esprit d\'équipe.' },
-  Mobilité: { titre: 'Mobilité', description: 'Souplesse et relâchement, à son rythme.' },
+  Mobilité: { titre: 'Mobilité', description: 'Stretch actif et renforcement en grande amplitude — exigeant et énergivore, loin d\'un cours doux.' },
 };
 
 const SCORE_GOUTS: Record<string, Record<string, number>> = {
@@ -50,7 +50,7 @@ const SCORE_GOUTS: Record<string, Record<string, number>> = {
   creativite: { Locomotion: 3 },
   jeux_balle: { Altinha: 3 },
   construction: { Calisthenics: 3, Handstand: 1 },
-  detente: { Mobilité: 3 },
+  amplitude: { Mobilité: 3 },
 };
 
 const SCORE_OBJECTIFS: Record<string, Record<string, number>> = {
