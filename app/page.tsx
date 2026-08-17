@@ -127,9 +127,9 @@ export default function AccueilPage() {
       </section>
 
       {/* PHILOSOPHIE DE LA SANTÉ */}
-      <section style={{ maxWidth: 720, margin: '0 auto', padding: '0 20px 64px', textAlign: 'center' }}>
+      <section style={{ maxWidth: 640, margin: '0 auto', padding: '0 20px 64px' }}>
         <p style={{ fontSize: 12, letterSpacing: 2, color: COULEURS.texteFaible, marginBottom: 10 }}>NOTRE VISION DE LA SANTÉ</p>
-        <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 30, letterSpacing: 0.3, margin: '0 0 16px' }}>
+        <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 32, letterSpacing: 0.5, margin: '0 0 16px' }}>
           La santé se construit, à ton rythme
         </h2>
         <p style={{ color: COULEURS.texteAtt, lineHeight: 1.7, marginBottom: 12 }}>
