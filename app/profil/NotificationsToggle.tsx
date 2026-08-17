@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { enregistrerAbonnementPush, supprimerAbonnementPush, definirPreferencesPush } from './push-actions';
+import { enregistrerAbonnementPush, supprimerAbonnementPush, definirPreferencesNotif } from './push-actions';
 
 // Convertit la clé publique VAPID (base64 url-safe) au format attendu par
 // pushManager.subscribe (obligatoire, c'est le format standard de l'API).
@@ -88,7 +88,7 @@ export default function NotificationsToggle({
 
   async function basculerPreference(type: 'rappel' | 'confirmation', valeur: boolean) {
     if (type === 'rappel') setPrefRappel(valeur); else setPrefConfirmation(valeur);
-    const resultat = await definirPreferencesPush({ [type]: valeur });
+    const resultat = await definirPreferencesNotif(type === 'rappel' ? { pushRappel: valeur } : { pushConfirmation: valeur });
     if (!resultat.ok) {
       // On annule le changement visuel si l'enregistrement échoue.
       if (type === 'rappel') setPrefRappel(!valeur); else setPrefConfirmation(!valeur);

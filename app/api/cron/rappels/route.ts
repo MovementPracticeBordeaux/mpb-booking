@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
 
     const { data: reservations, error } = await admin
       .from('reservations')
-      .select('*, cours(discipline, heure_debut, heure_fin, lieu), profiles(email)')
+      .select('*, cours(discipline, heure_debut, heure_fin, lieu), profiles(email, notif_email_rappel)')
       .eq('date_seance', demainStr)
       .eq('statut', 'confirmee');
 
@@ -56,20 +56,23 @@ export async function GET(req: NextRequest) {
 
     for (const r of reservations ?? []) {
       const email = (r as any).profiles?.email;
+      const notifEmailActive = (r as any).profiles?.notif_email_rappel !== false;
       const cours = (r as any).cours;
-      if (!email || !cours) continue;
-      try {
-        await envoyerEmail(
-          email,
-          `Rappel : ton cours de ${cours.discipline} demain`,
-          `<p>Bonjour,</p>
-           <p>Petit rappel : tu es inscrit·e au cours de <strong>${cours.discipline}</strong> demain,
-           de ${cours.heure_debut.slice(0, 5)} à ${cours.heure_fin.slice(0, 5)}${cours.lieu ? ` (${cours.lieu})` : ''}.</p>
-           <p>À demain !</p>`
-        );
-        envoyes++;
-      } catch {
-        echecs++;
+      if (!cours) continue;
+      if (email && notifEmailActive) {
+        try {
+          await envoyerEmail(
+            email,
+            `Rappel : ton cours de ${cours.discipline} demain`,
+            `<p>Bonjour,</p>
+             <p>Petit rappel : tu es inscrit·e au cours de <strong>${cours.discipline}</strong> demain,
+             de ${cours.heure_debut.slice(0, 5)} à ${cours.heure_fin.slice(0, 5)}${cours.lieu ? ` (${cours.lieu})` : ''}.</p>
+             <p>À demain !</p>`
+          );
+          envoyes++;
+        } catch {
+          echecs++;
+        }
       }
       // La notification push est un bonus best-effort : un échec ici (élève
       // non abonné, endpoint expiré...) ne doit jamais faire échouer le

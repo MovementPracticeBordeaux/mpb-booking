@@ -35,16 +35,23 @@ export async function supprimerAbonnementPush(endpoint: string) {
 }
 
 // Met à jour les préférences par type de notification (rappel de cours /
-// confirmation de réservation) de l'élève connecté. Ne touche pas à
-// l'abonnement push lui-même — juste quels types de messages il reçoit.
-export async function definirPreferencesPush(preferences: { rappel?: boolean; confirmation?: boolean }) {
+// confirmation de réservation), pour le push et/ou l'email. Ne touche pas à
+// l'abonnement push lui-même — juste quels types de messages l'élève reçoit.
+export async function definirPreferencesNotif(preferences: {
+  pushRappel?: boolean;
+  pushConfirmation?: boolean;
+  emailRappel?: boolean;
+  emailConfirmation?: boolean;
+}) {
   const supabase = supabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { ok: false, erreur: 'Non connecté.' };
 
   const patch: Record<string, boolean> = {};
-  if (typeof preferences.rappel === 'boolean') patch.notif_push_rappel = preferences.rappel;
-  if (typeof preferences.confirmation === 'boolean') patch.notif_push_confirmation = preferences.confirmation;
+  if (typeof preferences.pushRappel === 'boolean') patch.notif_push_rappel = preferences.pushRappel;
+  if (typeof preferences.pushConfirmation === 'boolean') patch.notif_push_confirmation = preferences.pushConfirmation;
+  if (typeof preferences.emailRappel === 'boolean') patch.notif_email_rappel = preferences.emailRappel;
+  if (typeof preferences.emailConfirmation === 'boolean') patch.notif_email_confirmation = preferences.emailConfirmation;
   if (Object.keys(patch).length === 0) return { ok: true };
 
   const { error } = await supabase.from('profiles').update(patch).eq('id', user.id);

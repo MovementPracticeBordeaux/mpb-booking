@@ -3,6 +3,7 @@ import { FORMULES, CLES_ACCES_MENTORAT } from '@/lib/formules';
 import { redirect } from 'next/navigation';
 import BoutonDeconnexion from '../components/BoutonDeconnexion';
 import NotificationsToggle from './NotificationsToggle';
+import EmailPreferences from './EmailPreferences';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,6 +26,16 @@ export default async function ProfilPage() {
       </div>
 
       <h2 style={{ fontSize: 16, opacity: 0.7 }}>Notifications</h2>
+
+      <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Par email</p>
+      <EmailPreferences
+        preferencesInitiales={{
+          rappel: profil?.notif_email_rappel ?? true,
+          confirmation: profil?.notif_email_confirmation ?? true,
+        }}
+      />
+
+      <p style={{ fontSize: 13, fontWeight: 600, marginTop: 16, marginBottom: 4 }}>Sur ton téléphone</p>
       <p style={{ fontSize: 13, opacity: 0.6, marginBottom: 4 }}>
         Reçois tes rappels de cours directement sur ton téléphone, même le site fermé.
       </p>

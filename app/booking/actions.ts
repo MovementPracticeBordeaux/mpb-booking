@@ -78,15 +78,18 @@ export async function reserverCours(formData: FormData) {
 
     if (user.email) {
       try {
-        await envoyerEmail(
-          user.email,
-          `Réservation confirmée : ${cours.discipline} le ${dateAffichee}`,
-          `<p>C'est confirmé !</p>
-           <p>Tu es inscrit·e au cours de <strong>${cours.discipline}</strong>, le <strong>${dateAffichee}</strong>,
-           de ${cours.heure_debut.slice(0, 5)} à ${cours.heure_fin.slice(0, 5)}${cours.lieu ? ` (${cours.lieu})` : ''}.</p>
-           <p>Tu peux annuler cette réservation depuis ton espace sur le site, jusqu'à 1h30 avant le début du cours.</p>
-           <p>À bientôt !</p>`
-        );
+        const { data: profilPrefs } = await admin.from('profiles').select('notif_email_confirmation').eq('id', user.id).single();
+        if (profilPrefs?.notif_email_confirmation !== false) {
+          await envoyerEmail(
+            user.email,
+            `Réservation confirmée : ${cours.discipline} le ${dateAffichee}`,
+            `<p>C'est confirmé !</p>
+             <p>Tu es inscrit·e au cours de <strong>${cours.discipline}</strong>, le <strong>${dateAffichee}</strong>,
+             de ${cours.heure_debut.slice(0, 5)} à ${cours.heure_fin.slice(0, 5)}${cours.lieu ? ` (${cours.lieu})` : ''}.</p>
+             <p>Tu peux annuler cette réservation depuis ton espace sur le site, jusqu'à 1h30 avant le début du cours.</p>
+             <p>À bientôt !</p>`
+          );
+        }
       } catch {}
     }
 
