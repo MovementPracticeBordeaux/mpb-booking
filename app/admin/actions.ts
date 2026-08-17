@@ -6,6 +6,8 @@ import { redirect } from 'next/navigation';
 import { FORMULES } from '@/lib/formules';
 import { joursVacancesDansPeriode, ajouterJours } from '@/lib/vacances';
 import { stripe } from '@/lib/stripe';
+import { envoyerEmail } from '@/lib/resend';
+import { envoyerPushAEleve } from '@/lib/push';
 
 // Toute erreur dans une action admin redirige vers la page d'où elle vient
 // (avec un message clair), au lieu de crasher (Next.js masque les throw en
@@ -165,6 +167,70 @@ export async function creerEleve(formData: FormData) {
   }
 
   revalidatePath('/admin/eleves');
+}
+
+// Réserve une séance datée pour le compte d'un élève, depuis l'admin —
+// réutilise exactement le même RPC atomique que la réservation côté élève
+// (reserver_creneau), donc les mêmes règles s'appliquent (quota, gel,
+// expiration, 1h30 avant le cours...). Pratique pour un élève qui réserve
+// en direct au studio, ou pour corriger un oubli.
+export async function reserverCoursPourEleve(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+
+  const eleveId = formData.get('eleve_id') as string;
+  const seance = formData.get('seance') as string; // format "coursId::dateISO"
+  if (!eleveId || !seance) echouer('/admin/planning', 'Choisis un élève et une séance.');
+  const [coursId, dateSeance] = seance.split('::');
+
+  const { data: resultat, error } = await admin.rpc('reserver_creneau', {
+    p_eleve_id: eleveId,
+    p_cours_id: coursId,
+    p_date_seance: dateSeance,
+  });
+  if (error) echouer('/admin/planning', error.message);
+
+  const messages: Record<string, string> = {
+    pas_abonne: "Cet élève n'a pas de pass actif — attribue-lui une formule d'abord.",
+    gele: 'Le pass de cet élève est actuellement gelé.',
+    expire: 'Le pass de cet élève a expiré.',
+    quota_epuise: 'Le quota de cet élève est épuisé.',
+    deja_reserve: 'Cet élève a déjà réservé cette séance.',
+    trop_tard: 'Moins de 1h30 avant le début — réserve-le manuellement en ajustant le quota si besoin.',
+  };
+  if (resultat !== 'ok') echouer('/admin/planning', messages[resultat as string] ?? 'Réservation impossible.');
+
+  // Même confirmation (email + push) que si l'élève avait réservé
+  // lui-même, en respectant ses préférences de notification.
+  const { data: cours } = await admin.from('cours').select('discipline, heure_debut, heure_fin, lieu').eq('id', coursId).single();
+  const { data: profilEleve } = await admin.from('profiles').select('email, notif_email_confirmation').eq('id', eleveId).single();
+  if (cours) {
+    const dateAffichee = new Date(dateSeance + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+    if (profilEleve?.email && profilEleve.notif_email_confirmation !== false) {
+      try {
+        await envoyerEmail(
+          profilEleve.email,
+          `Réservation confirmée : ${cours.discipline} le ${dateAffichee}`,
+          `<p>C'est confirmé !</p>
+           <p>Tu es inscrit·e au cours de <strong>${cours.discipline}</strong>, le <strong>${dateAffichee}</strong>,
+           de ${cours.heure_debut.slice(0, 5)} à ${cours.heure_fin.slice(0, 5)}${cours.lieu ? ` (${cours.lieu})` : ''}.</p>
+           <p>À bientôt !</p>`
+        );
+      } catch {}
+    }
+    try {
+      await envoyerPushAEleve(
+        eleveId,
+        'Réservation confirmée ✅',
+        `${cours.discipline} le ${dateAffichee}, ${cours.heure_debut.slice(0, 5)}-${cours.heure_fin.slice(0, 5)}`,
+        '/planning',
+        'confirmation'
+      );
+    } catch {}
+  }
+
+  revalidatePath('/admin/planning');
+  revalidatePath('/planning');
 }
 
 // Permet à l'admin d'octroyer une formule à un élève sans passer par Stripe

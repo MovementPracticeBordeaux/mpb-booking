@@ -1,5 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase-server';
-import { ajouterCours, desactiverCours, definirSemaineReference, ajouterVacances, supprimerVacances } from '../actions';
+import { ajouterCours, desactiverCours, definirSemaineReference, ajouterVacances, supprimerVacances, reserverCoursPourEleve } from '../actions';
 import { calculerSemaine } from '@/lib/semaine';
 
 export const dynamic = 'force-dynamic';
@@ -19,6 +19,9 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
     .eq('actif', true)
     .order('semaine')
     .order('jour_semaine');
+
+  // Pour le formulaire "Réserver pour un élève" un peu plus bas.
+  const { data: eleves } = await admin.from('profiles').select('id, nom, email').order('email');
 
   // --- Prochaines séances datées + inscrits nommés (admin uniquement) ---
   // À la différence de "Créneaux actifs" (le modèle récurrent A/B), cette
@@ -44,6 +47,7 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
   }
 
   type SeanceAVenir = {
+    coursId: string;
     dateISO: string;
     dateAffichee: string;
     discipline: string;
@@ -65,6 +69,7 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
       const coursDuJour = (coursListe ?? []).filter((c) => c.jour_semaine === d.getDay() && c.semaine === semaine);
       for (const c of coursDuJour) {
         seancesAVenir.push({
+          coursId: c.id,
           dateISO: dateStr,
           dateAffichee: d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }),
           discipline: c.discipline as string,
@@ -84,6 +89,31 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
           ⚠️ {searchParams.erreur}
         </p>
       )}
+
+      <section style={{ marginBottom: 32 }}>
+        <h2>Réserver une séance pour un élève</h2>
+        <p style={{ fontSize: 13, opacity: 0.7, marginBottom: 12 }}>
+          Utile pour un élève qui réserve en direct au studio, ou pour corriger un oubli. Applique les mêmes règles
+          que la réservation normale (pass actif, quota, gel...).
+        </p>
+        <form action={reserverCoursPourEleve} style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 360 }}>
+          <select name="eleve_id" required>
+            <option value="">-- Choisir un élève --</option>
+            {(eleves ?? []).map((e) => (
+              <option key={e.id} value={e.id}>{e.nom ?? e.email}</option>
+            ))}
+          </select>
+          <select name="seance" required>
+            <option value="">-- Choisir une séance --</option>
+            {seancesAVenir.map((s, i) => (
+              <option key={i} value={`${s.coursId}::${s.dateISO}`}>
+                {s.dateAffichee} — {s.discipline} {s.heureDebut}-{s.heureFin} ({s.inscrits.length} inscrit{s.inscrits.length !== 1 ? 's' : ''})
+              </option>
+            ))}
+          </select>
+          <button type="submit">Réserver</button>
+        </form>
+      </section>
 
       <section style={{ marginBottom: 32 }}>
         <h2>Prochaines séances — inscrits</h2>
