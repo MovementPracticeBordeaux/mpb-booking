@@ -5,7 +5,7 @@
 // /mentorship est explicitement exclu de toute logique de cache tant que
 // cette partie est en chantier, pour ne jamais servir une version périmée.
 
-const VERSION = 'mpb-v2';
+const VERSION = 'mpb-v3';
 const APP_SHELL = ['/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', (event) => {
@@ -66,15 +66,20 @@ self.addEventListener('push', (event) => {
 
 // Clic sur la notification : ouvre (ou remet au premier plan) l'onglet du
 // site sur la page concernée, plutôt que d'en ouvrir un nouveau à chaque fois.
+// Important : self.clients.openWindow() exige une URL ABSOLUE — une URL
+// relative peut échouer silencieusement selon les navigateurs et faire
+// retomber sur un comportement par défaut moins précis (ouverture générique
+// du navigateur plutôt que la bonne page).
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const cible = event.notification.data?.url || '/planning';
+  const chemin = event.notification.data?.url || '/planning';
+  const cible = new URL(chemin, self.location.origin).href;
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientsList) => {
       for (const client of clientsList) {
-        if (client.url.includes(self.location.origin) && 'focus' in client) {
-          client.navigate(cible);
+        if (client.url.startsWith(self.location.origin) && 'focus' in client) {
+          if ('navigate' in client) client.navigate(cible);
           return client.focus();
         }
       }
