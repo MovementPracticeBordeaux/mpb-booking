@@ -134,14 +134,12 @@ export default function AccueilPage() {
         </h2>
         <p style={{ color: COULEURS.texteAtt, lineHeight: 1.7, marginBottom: 12 }}>
           Ici, la santé se construit : par la force, la mobilité, la coordination, l'engagement, l'interaction,
-          l'apprentissage — tout ce qui permet à ton corps de s'adapter. Ce n'est pas une question d'intensité
-          identique pour tout le monde, mais de trouver, dans chaque domaine, l'exercice qui te correspond aujourd'hui.
+          l'apprentissage, le jeu — tout ce qui permet à ton corps de s'adapter, de se développer.
         </p>
         <p style={{ color: COULEURS.texteAtt, lineHeight: 1.7, marginBottom: 12 }}>
           Chaque mouvement se décline en progressions et régressions : ton point de départ n'est pas celui de ton
           voisin, et c'est très bien ainsi. En cours collectif, tout le monde travaille la même thématique — chacun
-          à son niveau. La récupération fait pleinement partie de l'entraînement, même si elle ne fait pas l'objet
-          d'un cours à part.
+          à son niveau quand c'est possible.
         </p>
         <p style={{ color: COULEURS.texteAtt, lineHeight: 1.7 }}>
           Le collectif transmet la méthode à l'échelle d'un groupe ; pour un accompagnement encore plus personnalisé,
