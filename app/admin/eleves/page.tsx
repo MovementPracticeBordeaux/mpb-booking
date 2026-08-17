@@ -1,5 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase-server';
-import { attribuerFormule, suspendreAcces, decompterCoaching, modifierQuotaRestant, modifierExpiration, gelerPass, degelerPass, definirDateReprise, rembourserPaiement } from '../actions';
+import { attribuerFormule, suspendreAcces, decompterCoaching, modifierQuotaRestant, modifierExpiration, gelerPass, degelerPass, definirDateReprise, rembourserPaiement, creerEleve } from '../actions';
 import { FORMULES } from '@/lib/formules';
 import ListeElevesRepliable from '../ListeElevesRepliable';
 import ListePaiementsRepliable from '../ListePaiementsRepliable';
@@ -28,6 +28,19 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
           ⚠️ {searchParams.erreur}
         </p>
       )}
+
+      <section style={{ marginBottom: 32 }}>
+        <h2>Ajouter un élève par email</h2>
+        <p style={{ fontSize: 13, opacity: 0.7 }}>
+          Pour créer directement le compte de quelqu'un qui paye en présentiel et n'a jamais utilisé le site —
+          il/elle pourra se connecter plus tard avec ce même email via le lien magique habituel.
+        </p>
+        <form action={creerEleve} style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 320 }}>
+          <input type="email" name="email" placeholder="Adresse email" required />
+          <input type="text" name="nom" placeholder="Nom (optionnel)" />
+          <button type="submit">Créer le compte</button>
+        </form>
+      </section>
 
       <section style={{ marginBottom: 32 }}>
         <h2>Attribuer une formule à un élève</h2>

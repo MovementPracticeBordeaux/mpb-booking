@@ -130,6 +130,43 @@ export async function supprimerVacances(formData: FormData) {
 
 // --- Élèves & paiements -------------------------------------------------
 
+// Crée directement le compte d'un élève à partir de son email — utile
+// quand quelqu'un paye en présentiel (liquide, virement) et n'a jamais mis
+// les pieds sur le site : ça permet de lui attribuer une formule tout de
+// suite, sans attendre qu'il/elle se connecte une première fois. Le compte
+// est créé côté auth (le trigger 'on_auth_user_created' génère
+// automatiquement la ligne profiles correspondante) ; l'élève pourra se
+// connecter plus tard avec cette même adresse via le lien magique habituel,
+// aucun mot de passe à définir.
+export async function creerEleve(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+
+  const email = (formData.get('email') as string)?.trim().toLowerCase();
+  const nom = (formData.get('nom') as string)?.trim();
+  if (!email) echouer('/admin/eleves', 'Renseigne une adresse email.');
+
+  const { data: creation, error } = await admin.auth.admin.createUser({
+    email,
+    email_confirm: true, // pas d'email de vérification à envoyer, le compte est actif tout de suite
+  });
+
+  if (error) {
+    // Compte déjà existant : pas une vraie erreur, l'élève apparaît déjà
+    // dans la liste plus bas — on redirige simplement sans planter.
+    if (error.message?.toLowerCase().includes('already') || error.message?.toLowerCase().includes('existe')) {
+      echouer('/admin/eleves', `${email} a déjà un compte — choisis-le directement dans "Attribuer une formule" ci-dessous.`);
+    }
+    echouer('/admin/eleves', error.message);
+  }
+
+  if (nom && creation.user) {
+    await admin.from('profiles').update({ nom }).eq('id', creation.user.id);
+  }
+
+  revalidatePath('/admin/eleves');
+}
+
 // Permet à l'admin d'octroyer une formule à un élève sans passer par Stripe
 // (offert gratuitement, payé en liquide/virement, geste commercial, etc.)
 export async function attribuerFormule(formData: FormData) {
