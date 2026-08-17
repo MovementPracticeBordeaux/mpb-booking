@@ -28,7 +28,12 @@ export default async function ProfilPage() {
       <p style={{ fontSize: 13, opacity: 0.6, marginBottom: 4 }}>
         Reçois tes rappels de cours directement sur ton téléphone, même le site fermé.
       </p>
-      <NotificationsToggle />
+      <NotificationsToggle
+        preferencesInitiales={{
+          rappel: profil?.notif_push_rappel ?? true,
+          confirmation: profil?.notif_push_confirmation ?? true,
+        }}
+      />
 
       <h2 style={{ fontSize: 16, opacity: 0.7, marginTop: 24 }}>Mon abonnement</h2>
       {!formule || !profil?.abonnement_actif ? (

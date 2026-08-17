@@ -79,7 +79,8 @@ export async function GET(req: NextRequest) {
           (r as any).eleve_id,
           `Cours de ${cours.discipline} demain`,
           `${cours.heure_debut.slice(0, 5)} - ${cours.heure_fin.slice(0, 5)}${cours.lieu ? ` · ${cours.lieu}` : ''}`,
-          '/planning'
+          '/planning',
+          'rappel'
         );
       } catch {}
     }

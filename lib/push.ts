@@ -22,11 +22,28 @@ let configure = () => {
 // Envoie une notification à TOUS les appareils abonnés d'un élève. Nettoie
 // automatiquement les abonnements expirés/révoqués (status 404/410) pour ne
 // pas les retenter indéfiniment.
-export async function envoyerPushAEleve(eleveId: string, titre: string, corps: string, url?: string) {
+//
+// `type` permet de respecter les préférences granulaires de l'élève
+// (colonnes notif_push_rappel / notif_push_confirmation sur profiles) — si
+// omis, l'envoi n'est pas filtré (utile pour de futurs types ponctuels).
+export async function envoyerPushAEleve(
+  eleveId: string,
+  titre: string,
+  corps: string,
+  url?: string,
+  type?: 'rappel' | 'confirmation'
+) {
   configure();
   if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) return;
 
   const admin = supabaseAdmin();
+
+  if (type) {
+    const colonne = type === 'rappel' ? 'notif_push_rappel' : 'notif_push_confirmation';
+    const { data: profil } = await admin.from('profiles').select(colonne).eq('id', eleveId).single();
+    if (profil && (profil as any)[colonne] === false) return; // préférence désactivée par l'élève
+  }
+
   const { data: abonnements } = await admin
     .from('push_subscriptions')
     .select('id, endpoint, p256dh, auth')

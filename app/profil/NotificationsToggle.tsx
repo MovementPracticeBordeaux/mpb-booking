@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { enregistrerAbonnementPush, supprimerAbonnementPush } from './push-actions';
+import { enregistrerAbonnementPush, supprimerAbonnementPush, definirPreferencesPush } from './push-actions';
 
 // Convertit la clé publique VAPID (base64 url-safe) au format attendu par
 // pushManager.subscribe (obligatoire, c'est le format standard de l'API).
@@ -14,9 +14,15 @@ function urlBase64ToUint8Array(base64String: string) {
 
 type Etat = 'verification' | 'non-supporte' | 'refuse' | 'inactif' | 'actif' | 'en-cours';
 
-export default function NotificationsToggle() {
+export default function NotificationsToggle({
+  preferencesInitiales,
+}: {
+  preferencesInitiales: { rappel: boolean; confirmation: boolean };
+}) {
   const [etat, setEtat] = useState<Etat>('verification');
   const [erreur, setErreur] = useState<string | null>(null);
+  const [prefRappel, setPrefRappel] = useState(preferencesInitiales.rappel);
+  const [prefConfirmation, setPrefConfirmation] = useState(preferencesInitiales.confirmation);
 
   useEffect(() => {
     (async () => {
@@ -80,6 +86,16 @@ export default function NotificationsToggle() {
     }
   }
 
+  async function basculerPreference(type: 'rappel' | 'confirmation', valeur: boolean) {
+    if (type === 'rappel') setPrefRappel(valeur); else setPrefConfirmation(valeur);
+    const resultat = await definirPreferencesPush({ [type]: valeur });
+    if (!resultat.ok) {
+      // On annule le changement visuel si l'enregistrement échoue.
+      if (type === 'rappel') setPrefRappel(!valeur); else setPrefConfirmation(!valeur);
+      setErreur(resultat.erreur ?? 'Impossible d\'enregistrer cette préférence.');
+    }
+  }
+
   if (etat === 'verification') return null;
 
   if (etat === 'non-supporte') {
@@ -108,6 +124,28 @@ export default function NotificationsToggle() {
         {etat === 'en-cours' ? '...' : etat === 'actif' ? '🔔 Désactiver les notifications' : '🔕 Activer les notifications'}
       </button>
       {erreur && <p style={{ fontSize: 12, color: '#ff6b6b', marginTop: 6 }}>{erreur}</p>}
+
+      {etat === 'actif' && (
+        <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <p style={{ fontSize: 12, opacity: 0.6, margin: 0 }}>Choisis ce que tu veux recevoir :</p>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={prefRappel}
+              onChange={(e) => basculerPreference('rappel', e.target.checked)}
+            />
+            Rappels de cours (la veille)
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={prefConfirmation}
+              onChange={(e) => basculerPreference('confirmation', e.target.checked)}
+            />
+            Confirmations de réservation
+          </label>
+        </div>
+      )}
     </div>
   );
 }

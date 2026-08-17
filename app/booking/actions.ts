@@ -95,7 +95,8 @@ export async function reserverCours(formData: FormData) {
         user.id,
         'Réservation confirmée ✅',
         `${cours.discipline} le ${dateAffichee}, ${cours.heure_debut.slice(0, 5)}-${cours.heure_fin.slice(0, 5)}`,
-        '/planning'
+        '/planning',
+        'confirmation'
       );
     } catch {}
   }
