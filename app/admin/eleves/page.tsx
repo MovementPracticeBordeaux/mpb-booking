@@ -6,7 +6,7 @@ import ListePaiementsRepliable from '../ListePaiementsRepliable';
 
 export const dynamic = 'force-dynamic';
 
-export default async function AdminElevesPage({ searchParams }: { searchParams: { erreur?: string } }) {
+export default async function AdminElevesPage({ searchParams }: { searchParams: { erreur?: string; succes?: string } }) {
   const admin = supabaseAdmin();
 
   const { data: eleves } = await admin
@@ -26,6 +26,11 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
       {searchParams.erreur && (
         <p style={{ background: '#5a1a1a', color: '#ffb4b4', padding: 12, borderRadius: 8 }}>
           ⚠️ {searchParams.erreur}
+        </p>
+      )}
+      {searchParams.succes && (
+        <p style={{ background: '#1a4d2e', color: '#b4ffcc', padding: 12, borderRadius: 8 }}>
+          ✅ {searchParams.succes}
         </p>
       )}
 

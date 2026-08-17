@@ -9,6 +9,10 @@ function echouer(message: string): never {
   redirect(`/admin/mentorship?erreur=${encodeURIComponent(message)}`);
 }
 
+function reussir(message: string): never {
+  redirect(`/admin/mentorship?succes=${encodeURIComponent(message)}`);
+}
+
 async function verifierAdmin() {
   const supabase = supabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
@@ -52,6 +56,7 @@ export async function validerSoumission(formData: FormData) {
   }
 
   revalidatePath('/admin/mentorship');
+  reussir('Vidéo validée.');
 }
 
 export async function refuserSoumission(formData: FormData) {
@@ -78,4 +83,5 @@ export async function refuserSoumission(formData: FormData) {
   }
 
   revalidatePath('/admin/mentorship');
+  reussir('Retour envoyé à l\'élève.');
 }

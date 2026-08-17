@@ -45,7 +45,7 @@ function libelleFormule(c: Candidature): string {
   return `${FORMULES[cle]?.prixIndicatif ?? '?'} €`;
 }
 
-export default async function AdminCandidaturesPage({ searchParams }: { searchParams: { erreur?: string } }) {
+export default async function AdminCandidaturesPage({ searchParams }: { searchParams: { erreur?: string; succes?: string } }) {
   const supabase = supabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
@@ -174,6 +174,9 @@ export default async function AdminCandidaturesPage({ searchParams }: { searchPa
 
       {searchParams.erreur && (
         <p style={{ color: '#ff6b6b', fontSize: 13, marginBottom: 16 }}>{searchParams.erreur}</p>
+      )}
+      {searchParams.succes && (
+        <p style={{ color: '#7fffa0', fontSize: 13, marginBottom: 16 }}>✅ {searchParams.succes}</p>
       )}
 
       {nouvelles.length === 0 ? (

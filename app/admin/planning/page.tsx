@@ -8,7 +8,7 @@ const JOURS = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'S
 const COULEUR_SEMAINE: Record<'A' | 'B', string> = { A: '#4FC3F7', B: '#FFB74D' };
 const JOURS_A_VENIR = 14; // fenêtre de la section "Prochaines séances"
 
-export default async function AdminPlanningPage({ searchParams }: { searchParams: { erreur?: string } }) {
+export default async function AdminPlanningPage({ searchParams }: { searchParams: { erreur?: string; succes?: string } }) {
   const admin = supabaseAdmin();
 
   const { data: ref } = await admin.from('semaine_reference').select('*').eq('id', 1).single();
@@ -87,6 +87,11 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
       {searchParams.erreur && (
         <p style={{ background: '#5a1a1a', color: '#ffb4b4', padding: 12, borderRadius: 8 }}>
           ⚠️ {searchParams.erreur}
+        </p>
+      )}
+      {searchParams.succes && (
+        <p style={{ background: '#1a4d2e', color: '#b4ffcc', padding: 12, borderRadius: 8 }}>
+          ✅ {searchParams.succes}
         </p>
       )}
 

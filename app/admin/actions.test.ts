@@ -84,7 +84,9 @@ describe('decompterCoaching', () => {
     ]);
     vi.mocked(supabaseAdmin).mockReturnValue(admin as any);
 
-    await decompterCoaching(formData({ eleve_id: 'e1', quantite: '2' }));
+    await expect(decompterCoaching(formData({ eleve_id: 'e1', quantite: '2' }))).rejects.toThrow(
+      /REDIRECT:\/admin\/eleves\?succes=/
+    );
 
     const updateChain = admin.from.mock.results[1].value;
     expect(updateChain.update).toHaveBeenCalledWith({ quota_restant: 3 });
@@ -97,7 +99,7 @@ describe('suspendreAcces', () => {
     const admin = mockAdminClient([{ error: null }]);
     vi.mocked(supabaseAdmin).mockReturnValue(admin as any);
 
-    await suspendreAcces(formData({ eleve_id: 'e1' }));
+    await expect(suspendreAcces(formData({ eleve_id: 'e1' }))).rejects.toThrow(/REDIRECT:\/admin\/eleves\?succes=/);
 
     const updateChain = admin.from.mock.results[0].value;
     expect(updateChain.update).toHaveBeenCalledWith({ abonnement_actif: false });
@@ -114,7 +116,7 @@ describe('degelerPass', () => {
     ]);
     vi.mocked(supabaseAdmin).mockReturnValue(admin as any);
 
-    await degelerPass(formData({ eleve_id: 'e1' }));
+    await expect(degelerPass(formData({ eleve_id: 'e1' }))).rejects.toThrow(/REDIRECT:\/admin\/eleves\?succes=/);
 
     const updateChain = admin.from.mock.results[1].value;
     expect(updateChain.update).toHaveBeenCalledWith({
@@ -162,7 +164,9 @@ describe('rembourserPaiement', () => {
     ]);
     vi.mocked(supabaseAdmin).mockReturnValue(admin as any);
 
-    await rembourserPaiement(formData({ paiement_id: 'p1' }));
+    await expect(rembourserPaiement(formData({ paiement_id: 'p1' }))).rejects.toThrow(
+      /REDIRECT:\/admin\/eleves\?succes=/
+    );
 
     expect(admin.from).toHaveBeenCalledTimes(4);
     const coupureChain = admin.from.mock.results[3].value;
@@ -178,7 +182,9 @@ describe('rembourserPaiement', () => {
     ]);
     vi.mocked(supabaseAdmin).mockReturnValue(admin as any);
 
-    await rembourserPaiement(formData({ paiement_id: 'p1' }));
+    await expect(rembourserPaiement(formData({ paiement_id: 'p1' }))).rejects.toThrow(
+      /REDIRECT:\/admin\/eleves\?succes=/
+    );
 
     expect(admin.from).toHaveBeenCalledTimes(3); // pas d'appel de coupure supplémentaire
   });
@@ -193,7 +199,9 @@ describe('ajouterVacances', () => {
     ]);
     vi.mocked(supabaseAdmin).mockReturnValue(admin as any);
 
-    await ajouterVacances(formData({ date_debut: '2026-08-01', date_fin: '2026-08-15' }));
+    await expect(ajouterVacances(formData({ date_debut: '2026-08-01', date_fin: '2026-08-15' }))).rejects.toThrow(
+      /REDIRECT:\/admin\/planning\?succes=/
+    );
 
     const chaineSelect = admin.from.mock.results[1].value;
     expect(chaineSelect.in).toHaveBeenCalledWith('formule_nom', ['mensuel_4', 'mensuel_8', 'illimite']);

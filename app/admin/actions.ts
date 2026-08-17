@@ -16,6 +16,13 @@ function echouer(chemin: string, message: string): never {
   redirect(`${chemin}?erreur=${encodeURIComponent(message)}`);
 }
 
+// Symétrique de echouer() : confirmation visible après une action réussie
+// (bandeau vert), pour qu'un clic sur "Attribuer"/"Valider"/etc. donne
+// toujours un retour visuel clair, succès ou échec.
+function reussir(chemin: string, message: string): never {
+  redirect(`${chemin}?succes=${encodeURIComponent(message)}`);
+}
+
 async function verifierAdmin() {
   const supabase = supabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
@@ -41,6 +48,7 @@ export async function ajouterCours(formData: FormData) {
   if (error) echouer('/admin/planning', error.message);
   revalidatePath('/admin/planning');
   revalidatePath('/planning');
+  reussir('/admin/planning', 'Cours ajouté au planning.');
 }
 
 export async function desactiverCours(formData: FormData) {
@@ -51,6 +59,7 @@ export async function desactiverCours(formData: FormData) {
   if (error) echouer('/admin/planning', error.message);
   revalidatePath('/admin/planning');
   revalidatePath('/planning');
+  reussir('/admin/planning', 'Créneau désactivé.');
 }
 
 export async function definirSemaineReference(formData: FormData) {
@@ -64,6 +73,7 @@ export async function definirSemaineReference(formData: FormData) {
   if (error) echouer('/admin/planning', error.message);
   revalidatePath('/admin/planning');
   revalidatePath('/planning');
+  reussir('/admin/planning', 'Semaine de référence mise à jour.');
 }
 
 // Périodes de vacances : tant que la date du jour est dans l'une de ces
@@ -117,6 +127,7 @@ export async function ajouterVacances(formData: FormData) {
 
   revalidatePath('/admin/planning');
   revalidatePath('/planning');
+  reussir('/admin/planning', 'Période de vacances ajoutée.');
 }
 
 export async function supprimerVacances(formData: FormData) {
@@ -128,6 +139,7 @@ export async function supprimerVacances(formData: FormData) {
   if (error) echouer('/admin/planning', error.message);
   revalidatePath('/admin/planning');
   revalidatePath('/planning');
+  reussir('/admin/planning', 'Période de vacances supprimée.');
 }
 
 // --- Élèves & paiements -------------------------------------------------
@@ -167,6 +179,7 @@ export async function creerEleve(formData: FormData) {
   }
 
   revalidatePath('/admin/eleves');
+  reussir('/admin/eleves', `Compte créé pour ${email}.`);
 }
 
 // Réserve une séance datée pour le compte d'un élève, depuis l'admin —
@@ -231,6 +244,7 @@ export async function reserverCoursPourEleve(formData: FormData) {
 
   revalidatePath('/admin/planning');
   revalidatePath('/planning');
+  reussir('/admin/planning', 'Réservation effectuée, confirmation envoyée à l\'élève.');
 }
 
 // Permet à l'admin d'octroyer une formule à un élève sans passer par Stripe
@@ -276,6 +290,7 @@ export async function attribuerFormule(formData: FormData) {
   if (errPaiement) echouer('/admin/eleves', errPaiement.message);
 
   revalidatePath('/admin/eleves');
+  reussir('/admin/eleves', 'Formule attribuée.');
 }
 
 
@@ -296,6 +311,7 @@ export async function decompterCoaching(formData: FormData) {
   if (error) echouer('/admin/eleves', error.message);
 
   revalidatePath('/admin/eleves');
+  reussir('/admin/eleves', 'Quota décompté.');
 }
 
 // Coupe l'accès d'un élève de façon définitive (résiliation, formule terminée)
@@ -306,6 +322,7 @@ export async function suspendreAcces(formData: FormData) {
   const { error } = await admin.from('profiles').update({ abonnement_actif: false }).eq('id', eleveId);
   if (error) echouer('/admin/eleves', error.message);
   revalidatePath('/admin/eleves');
+  reussir('/admin/eleves', 'Accès suspendu.');
 }
 
 // Corrige directement le nombre de séances/heures restantes (erreur, geste
@@ -319,6 +336,7 @@ export async function modifierQuotaRestant(formData: FormData) {
   const { error } = await admin.from('profiles').update({ quota_restant: nouveauQuota }).eq('id', eleveId);
   if (error) echouer('/admin/eleves', error.message);
   revalidatePath('/admin/eleves');
+  reussir('/admin/eleves', 'Quota mis à jour.');
 }
 
 // Corrige directement la date de validité du pass
@@ -330,6 +348,7 @@ export async function modifierExpiration(formData: FormData) {
   const { error } = await admin.from('profiles').update({ date_expiration: nouvelleDate }).eq('id', eleveId);
   if (error) echouer('/admin/eleves', error.message);
   revalidatePath('/admin/eleves');
+  reussir('/admin/eleves', 'Date d\'expiration mise à jour.');
 }
 
 // Gel temporaire (blessure, vacances...) : le pass reste attribué mais
@@ -349,6 +368,7 @@ export async function gelerPass(formData: FormData) {
   }).eq('id', eleveId);
   if (error) echouer('/admin/eleves', error.message);
   revalidatePath('/admin/eleves');
+  reussir('/admin/eleves', 'Pass gelé.');
 }
 
 // Corrige/renseigne la date de reprise d'un pass déjà gelé, sans le
@@ -367,6 +387,7 @@ export async function definirDateReprise(formData: FormData) {
   }).eq('id', eleveId).eq('gele', true);
   if (error) echouer('/admin/eleves', error.message);
   revalidatePath('/admin/eleves');
+  reussir('/admin/eleves', 'Date de reprise mise à jour.');
 }
 
 // Dégel : prolonge automatiquement la date de validité du nombre de jours
@@ -404,6 +425,7 @@ export async function degelerPass(formData: FormData) {
   const resultat = await degelerProfil(eleveId);
   if (!resultat.ok) echouer('/admin/eleves', resultat.erreur ?? 'Erreur inconnue.');
   revalidatePath('/admin/eleves');
+  reussir('/admin/eleves', 'Pass dégelé.');
 }
 
 // Rembourse un paiement passé par Stripe directement depuis l'admin
@@ -444,4 +466,5 @@ export async function rembourserPaiement(formData: FormData) {
   }
 
   revalidatePath('/admin/eleves');
+  reussir('/admin/eleves', 'Paiement remboursé.');
 }
