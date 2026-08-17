@@ -108,7 +108,7 @@ export default function QuizClient() {
     <main style={{ maxWidth: 640, margin: '0 auto', padding: '32px 20px 80px', minHeight: '70vh' }}>
       {etape === 'intro' && (
         <div>
-          <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 40, letterSpacing: 0.5, margin: '0 0 16px', ...GRADIENT_TEXTE }}>
+          <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 'clamp(28px, 8vw, 40px)', lineHeight: 1.08, letterSpacing: 0.5, margin: '0 0 16px', ...GRADIENT_TEXTE }}>
             Quel cours te correspond ?
           </h1>
           <p style={{ color: COULEURS.texteAtt, fontSize: 16, lineHeight: 1.6, marginBottom: 32 }}>
@@ -251,7 +251,7 @@ function QuestionMultiple({
               }}>
                 {actif ? '✓' : ''}
               </span>
-              {o.label}
+              <span>{o.label}</span>
             </button>
           );
         })}
