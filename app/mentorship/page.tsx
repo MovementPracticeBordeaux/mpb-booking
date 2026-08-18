@@ -111,8 +111,12 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
         Le tronc — l'Armure Organique — se gravit seul, niveau après niveau. Une fois validé en entier,
         les cinq branches s'ouvrent et progressent chacune à son rythme.
       </p>
-      <a href="/mentorship/journal" style={{ display: 'inline-block', fontSize: 13, color: '#f0a', marginBottom: 24, textDecoration: 'none' }}>
+      <a href="/mentorship/journal" style={{ display: 'inline-block', fontSize: 13, color: '#f0a', marginBottom: 8, textDecoration: 'none' }}>
         📓 Mon journal d'entraînement →
+      </a>
+      <br />
+      <a href="/mentorship/outils/locomotion" style={{ display: 'inline-block', fontSize: 13, color: '#f0a', marginBottom: 24, textDecoration: 'none' }}>
+        🎲 Outil Locomotion (combinaisons + métronome) →
       </a>
 
       {searchParams.erreur && (
