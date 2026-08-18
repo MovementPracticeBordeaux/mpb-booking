@@ -23,6 +23,7 @@ import {
 import { COULEURS, POLICE_DISPLAY, POLICE_CORPS } from '@/lib/theme';
 import { soumettreVideo, repondreQCM, validerDefiQuotidien, soumettreVideoExercice } from './actions';
 import ChecklistNoeud from './ChecklistNoeud';
+import JournalDuNoeud from './JournalDuNoeud';
 
 type Progression = {
   module_id: string;
@@ -72,6 +73,33 @@ function metaPour(statut: StatutAffiche, couleurBranche: string) {
 // --- Pictogrammes simplifiés par domaine ---------------------------------
 // Volontairement minimalistes (Sylvain remplacera par ses propres visuels
 // plus tard) : un symbole simple par domaine, dessiné en trait.
+// Lien vers l'outil dédié de chaque branche, affiché dans l'accordéon
+// "Outil" de la vue chemin. Toutes les branches n'ont pas encore le leur.
+const OUTIL_PAR_BRANCHE: Partial<Record<Domaine, { href: string; label: string }>> = {
+  force: { href: '/mentorship/outils/force', label: 'Outil Force — EMOM + compteur reps/sets' },
+  locomotion: { href: '/mentorship/outils/locomotion', label: 'Outil Locomotion — combinaisons + métronome' },
+};
+
+// Section repliable simple, utilisée dans le panneau accordéon de la vue chemin.
+function Accordeon({ titre, ouvertParDefaut = false, children }: { titre: string; ouvertParDefaut?: boolean; children: React.ReactNode }) {
+  const [ouvert, setOuvert] = useState(ouvertParDefaut);
+  return (
+    <div style={{ border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, marginBottom: 10, overflow: 'hidden' }}>
+      <button
+        onClick={() => setOuvert((o) => !o)}
+        style={{
+          width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          background: COULEURS.surface, border: 'none', padding: '13px 16px', cursor: 'pointer', textAlign: 'left',
+        }}
+      >
+        <span style={{ fontSize: 13, fontWeight: 600, color: COULEURS.texte }}>{titre}</span>
+        <span style={{ fontSize: 12, color: COULEURS.texteFaible, transform: ouvert ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>▾</span>
+      </button>
+      {ouvert && <div style={{ padding: '14px 16px', borderTop: `1px solid ${COULEURS.bordure}` }}>{children}</div>}
+    </div>
+  );
+}
+
 function Pictogramme({ domaine, taille = 12, couleur }: { domaine: DomaineOuTronc; taille?: number; couleur: string }) {
   const props = { width: taille, height: taille, viewBox: '0 0 24 24', fill: 'none', stroke: couleur, strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
   switch (domaine) {
@@ -304,6 +332,8 @@ export default function ArbreCompetences({
   const [selection, setSelection] = useState<string | null>(null);
   // Vue isolée d'une branche (chemin vertical) — null = vue globale (dashboard).
   const [vueBranche, setVueBranche] = useState<Domaine | null>(null);
+  const [noeudPanneauId, setNoeudPanneauId] = useState<string | null>(null);
+  const [videoOuverteChemin, setVideoOuverteChemin] = useState<{ url: string; titre: string } | null>(null);
   const refNoeudCourant = useRef<HTMLDivElement | null>(null);
   const [reponsesQCM, setReponsesQCM] = useState<Record<string, number>>({});
   const [onglet, setOnglet] = useState<Onglet>('arbre');
@@ -443,10 +473,12 @@ export default function ArbreCompetences({
   }, [vueBranche, tronc, branches, idsAcquis.size]);
 
   useEffect(() => {
-    if (vueBranche && refNoeudCourant.current) {
-      refNoeudCourant.current.scrollIntoView({ block: 'center', behavior: 'auto' });
+    if (vueBranche) {
+      setNoeudPanneauId(noeudCourantId);
+      // Laisse le DOM se peindre avant de scroller (le rail vient d'apparaître).
+      requestAnimationFrame(() => refNoeudCourant.current?.scrollIntoView({ block: 'center', behavior: 'auto' }));
     }
-  }, [vueBranche]);
+  }, [vueBranche, noeudCourantId]);
 
   function entrerBranche(d: Domaine) {
     if (brancheIncluse(d) || estAdmin) {
@@ -554,7 +586,7 @@ export default function ArbreCompetences({
           {/* Fil d'Ariane — toujours visible, jamais l'arbre entier derrière */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 18, fontSize: 12 }}>
             <button
-              onClick={() => setVueBranche(null)}
+              onClick={() => { setVueBranche(null); setNoeudPanneauId(null); }}
               style={{ background: 'none', border: 'none', color: COULEURS.texteFaible, cursor: 'pointer', padding: 0, fontSize: 12 }}
             >
               ← Vue globale
@@ -563,47 +595,208 @@ export default function ArbreCompetences({
             <span style={{ color: DOMAINE_COULEURS[vueBranche], fontWeight: 600 }}>{DOMAINE_LABELS[vueBranche]}</span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 480, marginInline: 'auto' }}>
-            {noeudsChemin.map((noeud) => {
-              const statut = statutAffiche(noeud);
-              const estCourant = noeud.id === noeudCourantId;
-              const couleur = noeud.domaine === 'tronc' ? COULEUR_TRONC : DOMAINE_COULEURS[noeud.domaine as Domaine];
-              const inerte = statut === 'locked';
-              const label = noeud.domaine === 'tronc' ? 'Armure Organique' : DOMAINE_LABELS[noeud.domaine as Domaine];
-              return (
-                <div
-                  key={noeud.id}
-                  ref={estCourant ? refNoeudCourant : undefined}
-                  onClick={() => { if (!inerte) setSelection(noeud.id); }}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 14,
-                    padding: estCourant ? '16px 18px' : '12px 16px',
-                    borderRadius: 14,
-                    cursor: inerte ? 'default' : 'pointer',
-                    border: estCourant ? `1.5px solid ${couleur}` : `1px solid ${COULEURS.bordure}`,
-                    background: estCourant ? `${couleur}14` : inerte ? 'transparent' : COULEURS.surface,
-                    opacity: inerte ? 0.35 : 1,
-                    boxShadow: estCourant ? `0 0 16px ${couleur}33` : undefined,
-                  }}
-                >
-                  <div style={{
-                    width: estCourant ? 40 : 32, height: estCourant ? 40 : 32, borderRadius: '50%', flexShrink: 0,
-                    border: `2px solid ${statut === 'acquis' ? couleur : inerte ? COULEURS.texteFaible : couleur}`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: statut === 'acquis' ? `${couleur}22` : 'transparent',
-                  }}>
-                    {statut === 'acquis' ? <span style={{ color: couleur, fontSize: 16 }}>✓</span> : inerte ? <span style={{ color: COULEURS.texteFaible, fontSize: 14 }}>🔒</span> : <span style={{ color: couleur, fontSize: 12, fontFamily: POLICE_DISPLAY }}>{noeud.niveau}</span>}
+          <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+            {/* Rail — chemin vertical de pastilles, socle en bas / progression en haut */}
+            <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', maxHeight: 560, overflowY: 'auto', padding: '8px 4px' }}>
+              {noeudsChemin.map((noeud, i) => {
+                const statut = statutAffiche(noeud);
+                const estCourant = noeud.id === noeudCourantId;
+                const estSelectionne = noeud.id === noeudPanneauId;
+                const couleur = noeud.domaine === 'tronc' ? COULEUR_TRONC : DOMAINE_COULEURS[noeud.domaine as Domaine];
+                const inerte = statut === 'locked';
+                return (
+                  <div key={noeud.id} ref={estCourant ? refNoeudCourant : undefined} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    {i > 0 && <div style={{ width: 2, height: 20, background: inerte ? COULEURS.bordure : `${couleur}66` }} />}
+                    <button
+                      onClick={() => { if (!inerte) setNoeudPanneauId(noeud.id); }}
+                      aria-label={noeud.titre}
+                      style={{
+                        width: estSelectionne ? 60 : 50, height: estSelectionne ? 60 : 50, borderRadius: '50%', flexShrink: 0,
+                        position: 'relative',
+                        border: `${estSelectionne ? 2 : 1.5}px solid ${inerte ? COULEURS.texteFaible : couleur}`,
+                        background: noeud.image ? COULEURS.fond : statut === 'acquis' ? `${couleur}22` : 'transparent',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, cursor: inerte ? 'default' : 'pointer',
+                        boxShadow: estCourant ? `0 0 18px ${couleur}dd, 0 0 8px ${couleur}` : estSelectionne ? `0 0 10px ${couleur}88` : 'none',
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      {noeud.image ? (
+                        <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', overflow: 'hidden' }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={noeud.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: inerte ? 0.4 : statut === 'acquis' ? 1 : 0.9, filter: inerte ? 'brightness(0.5)' : 'none' }} />
+                        </div>
+                      ) : inerte ? (
+                        <span style={{ fontSize: 14, opacity: 0.6 }}>🔒</span>
+                      ) : statut === 'acquis' ? (
+                        <span style={{ color: couleur, fontSize: 18 }}>✓</span>
+                      ) : (
+                        <span style={{ color: couleur, fontSize: 12, fontFamily: POLICE_DISPLAY }}>{noeud.niveau}</span>
+                      )}
+                    </button>
                   </div>
-                  <div style={{ flexGrow: 1, minWidth: 0 }}>
-                    <p style={{ margin: 0, fontSize: 11, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 0.4 }}>{label} · niveau {noeud.niveau}</p>
-                    <p style={{ margin: '1px 0 0', fontSize: estCourant ? 15 : 13, fontWeight: estCourant ? 700 : 400, color: inerte ? COULEURS.texteFaible : COULEURS.texte, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {noeud.titre}
-                    </p>
+                );
+              })}
+            </div>
+
+            {/* Panneau accordéon — contenu du nœud sélectionné dans le rail */}
+            <div style={{ flexGrow: 1, minWidth: 0 }}>
+              {(() => {
+                const noeud = noeudsChemin.find((n) => n.id === noeudPanneauId);
+                if (!noeud) return <p style={{ fontSize: 13, color: COULEURS.texteFaible }}>Choisis un niveau sur le chemin à gauche.</p>;
+                const statut = statutAffiche(noeud);
+                const label = noeud.domaine === 'tronc' ? 'Armure Organique' : DOMAINE_LABELS[noeud.domaine as Domaine];
+                const couleur = noeud.domaine === 'tronc' ? COULEUR_TRONC : DOMAINE_COULEURS[noeud.domaine as Domaine];
+                const aDesExercices = (noeud.exercices?.length ?? 0) > 0;
+                const outil = noeud.domaine !== 'tronc' ? OUTIL_PAR_BRANCHE[noeud.domaine as Domaine] : undefined;
+                const progUnique = progression.get(noeud.id);
+
+                if (statut === 'locked') {
+                  return (
+                    <div>
+                      <span style={{ fontSize: 11, color: couleur, letterSpacing: 1, fontWeight: 600 }}>{label.toUpperCase()} · NIVEAU {noeud.niveau}</span>
+                      <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 20, margin: '2px 0 8px', color: COULEURS.texte }}>{noeud.titre}</h2>
+                      <p style={{ color: COULEURS.texteFaible, fontSize: 13 }}>🔒 Ce niveau est encore verrouillé.</p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div>
+                    {videoOuverteChemin && (
+                      <LecteurVideoModal url={videoOuverteChemin.url} titre={videoOuverteChemin.titre} onFermer={() => setVideoOuverteChemin(null)} />
+                    )}
+                    <span style={{ fontSize: 11, color: couleur, letterSpacing: 1, fontWeight: 600 }}>{label.toUpperCase()} · NIVEAU {noeud.niveau}</span>
+                    <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 20, margin: '2px 0 4px', color: COULEURS.texte }}>{noeud.titre}</h2>
+                    <p style={{ color: COULEURS.texteAtt, fontSize: 13, lineHeight: 1.6, margin: '4px 0 16px' }}>{noeud.resume}</p>
+
+                    <Accordeon titre="📖 Contenu théorique" ouvertParDefaut>
+                      {!noeud.contenuDefini && noeud.theorie.length === 0 ? (
+                        <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: 0 }}>Théorie à venir pour ce niveau.</p>
+                      ) : (
+                        <>
+                          {noeud.objectifPedagogique && (
+                            <p style={{ fontSize: 13, color: COULEURS.texteFaible, fontStyle: 'italic', margin: '0 0 12px' }}>Objectif : {noeud.objectifPedagogique}</p>
+                          )}
+                          {noeud.theorie.map((t) => (
+                            <div key={t.titre} style={{ marginBottom: 12, borderLeft: `2px solid ${couleur}`, paddingLeft: 12 }}>
+                              <p style={{ fontSize: 13, fontWeight: 600, margin: 0, color: COULEURS.texte }}>{t.titre}</p>
+                              <p style={{ fontSize: 13, color: COULEURS.texteAtt, lineHeight: 1.7, margin: '4px 0 0' }}>{t.texte}</p>
+                            </div>
+                          ))}
+                          {noeud.programmation.length > 0 && (
+                            <div style={{ marginTop: 12 }}>
+                              {noeud.programmation.map((p, i) => (
+                                <div key={i} style={{ background: COULEURS.surfaceForte, borderRadius: 8, padding: '10px 14px', marginBottom: 8, fontSize: 13, lineHeight: 1.6 }}>
+                                  <p style={{ margin: 0 }}><strong>Cible :</strong> {p.cible}</p>
+                                  <p style={{ margin: '4px 0 0', color: COULEURS.texteAtt }}><strong>Régression :</strong> {p.regression}</p>
+                                  <p style={{ margin: '4px 0 0', color: COULEURS.texteAtt }}><strong>Progression :</strong> {p.progression}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </Accordeon>
+
+                    <Accordeon titre="🎯 Entraînement (exercices à valider)">
+                      {aDesExercices ? (
+                        <>
+                          <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                            {noeud.exercices!.filter((ex) => progression.get(moduleIdExercice(noeud, ex))?.statut === 'acquis').length}/{noeud.exercices!.length} validés
+                          </p>
+                          {noeud.exercices!.map((ex) => (
+                            <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} />
+                          ))}
+                          {(noeud.progressionBonus?.length ?? 0) > 0 && (
+                            <div style={{ marginTop: 14 }}>
+                              <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>🔥 Bonus (facultatif)</p>
+                              {noeud.progressionBonus!.map((ex) => (
+                                <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} />
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      ) : !estAdmin ? (
+                        <>
+                          {statut === 'acquis' && <p style={{ fontSize: 13, color: '#9ef29e', margin: 0 }}>Niveau validé par Sylvain — bravo !</p>}
+                          {statut === 'en_attente' && (
+                            <p style={{ fontSize: 13, color: COULEURS.texteAtt, margin: 0 }}>
+                              Ta vidéo a été envoyée, Sylvain la regarde bientôt.{' '}
+                              <a href={progUnique?.video_url ?? '#'} target="_blank" rel="noopener noreferrer" style={{ color: '#f0a' }}>Revoir</a>
+                            </p>
+                          )}
+                          {(statut === 'qcm_reussi' || statut === 'refuse') && (
+                            <>
+                              {statut === 'refuse' && progUnique?.commentaire_coach && (
+                                <p style={{ fontSize: 13, color: '#ff6b6b', marginBottom: 10 }}>Retour de Sylvain : {progUnique.commentaire_coach}</p>
+                              )}
+                              {statut === 'qcm_reussi' && (
+                                <p style={{ fontSize: 13, color: '#9ef29e', marginBottom: 10 }}>QCM réussi ({progUnique?.quiz_score}%) — envoie ta vidéo.</p>
+                              )}
+                              <form action={soumettreVideo} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                                <input type="hidden" name="noeud_id" value={noeud.id} />
+                                <input type="url" name="video_url" required placeholder="Lien de ta vidéo"
+                                  style={{ flexGrow: 1, minWidth: 160, fontSize: 13, padding: '9px 12px', borderRadius: 8, border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surfaceForte, color: COULEURS.texte }} />
+                                <button type="submit" style={{ fontSize: 13, padding: '9px 16px', borderRadius: 999, border: '1px solid #f0a', background: 'rgba(255,0,170,0.1)', color: '#f0a', cursor: 'pointer' }}>
+                                  {statut === 'refuse' ? 'Renvoyer' : 'Soumettre'}
+                                </button>
+                              </form>
+                            </>
+                          )}
+                          {statut === 'unlocked' && noeud.qcm.length > 0 && (
+                            <form action={repondreQCM}>
+                              <input type="hidden" name="noeud_id" value={noeud.id} />
+                              <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 10 }}>QCM — réussis-le pour débloquer l'envoi vidéo</p>
+                              {noeud.qcm.map((q, i) => (
+                                <div key={q.id} style={{ marginBottom: 14 }}>
+                                  <p style={{ fontSize: 13, marginBottom: 6, color: COULEURS.texte }}>{i + 1}. {q.question}</p>
+                                  {q.choix.map((choix, idx) => (
+                                    <label key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: COULEURS.texteAtt, marginBottom: 4, cursor: 'pointer' }}>
+                                      <input type="radio" name={`reponse-${q.id}`} value={idx} required onChange={() => setReponsesQCM((r) => ({ ...r, [q.id]: idx }))} />
+                                      {choix}
+                                    </label>
+                                  ))}
+                                </div>
+                              ))}
+                              <button type="submit" style={{ fontSize: 13, padding: '9px 16px', borderRadius: 999, border: '1px solid #f0a', background: 'rgba(255,0,170,0.1)', color: '#f0a', cursor: 'pointer' }}>
+                                Valider mes réponses
+                              </button>
+                            </form>
+                          )}
+                          {statut === 'unlocked' && noeud.qcm.length === 0 && (
+                            <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: 0 }}>Pas encore de QCM — contenu à venir.</p>
+                          )}
+                        </>
+                      ) : (
+                        <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: 0 }}>(Vue admin — actions élève masquées)</p>
+                      )}
+                    </Accordeon>
+
+                    <Accordeon titre="📓 Mon journal d'entraînement">
+                      <JournalDuNoeud noeudId={noeud.id} branche={noeud.domaine} />
+                    </Accordeon>
+
+                    <Accordeon titre="🛠️ Outil">
+                      {outil ? (
+                        <a href={outil.href} style={{ display: 'inline-block', fontSize: 13, color: '#f0a', textDecoration: 'none', fontWeight: 600 }}>
+                          {outil.label} →
+                        </a>
+                      ) : (
+                        <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: 0 }}>
+                          {noeud.domaine === 'tronc' ? "Pas d'outil dédié pour le tronc commun." : "Outil dédié à cette branche à venir."}
+                        </p>
+                      )}
+                    </Accordeon>
+
+                    {!estAdmin && statut !== 'acquis' && (
+                      <div style={{ marginTop: 4 }}>
+                        <ChecklistNoeud noeudId={noeud.id} />
+                      </div>
+                    )}
                   </div>
-                  {estCourant && <span style={{ fontSize: 10, color: couleur, fontWeight: 700, letterSpacing: 0.5, flexShrink: 0 }}>EN COURS</span>}
-                </div>
-              );
-            })}
+                );
+              })()}
+            </div>
           </div>
         </div>
       )}
