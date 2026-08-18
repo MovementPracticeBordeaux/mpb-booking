@@ -107,21 +107,10 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
       <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 'clamp(28px, 7vw, 40px)', letterSpacing: 0.5, marginBottom: 4 }}>
         LE <span style={GRADIENT_TEXTE}>MENTORAT</span>
       </h1>
-      <p style={{ color: COULEURS.texteFaible, fontSize: 13, marginBottom: 8 }}>
+      <p style={{ color: COULEURS.texteFaible, fontSize: 13, marginBottom: 24 }}>
         Le tronc — l'Armure Organique — se gravit seul, niveau après niveau. Une fois validé en entier,
         les cinq branches s'ouvrent et progressent chacune à son rythme.
       </p>
-      <a href="/mentorship/journal" style={{ display: 'inline-block', fontSize: 13, color: '#f0a', marginBottom: 8, textDecoration: 'none' }}>
-        📓 Mon journal d'entraînement →
-      </a>
-      <br />
-      <a href="/mentorship/outils/locomotion" style={{ display: 'inline-block', fontSize: 13, color: '#f0a', marginBottom: 8, textDecoration: 'none' }}>
-        🎲 Outil Locomotion (combinaisons + métronome) →
-      </a>
-      <br />
-      <a href="/mentorship/outils/force" style={{ display: 'inline-block', fontSize: 13, color: '#f0a', marginBottom: 24, textDecoration: 'none' }}>
-        💪 Outil Force (EMOM + compteur reps/sets) →
-      </a>
 
       {searchParams.erreur && (
         <p style={{ color: '#ff6b6b', fontSize: 13, marginBottom: 12 }}>{searchParams.erreur}</p>

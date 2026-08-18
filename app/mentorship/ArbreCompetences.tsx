@@ -24,6 +24,7 @@ import { COULEURS, POLICE_DISPLAY, POLICE_CORPS } from '@/lib/theme';
 import { soumettreVideo, repondreQCM, validerDefiQuotidien, soumettreVideoExercice } from './actions';
 import ChecklistNoeud from './ChecklistNoeud';
 import JournalDuNoeud from './JournalDuNoeud';
+import JournalComplet from './JournalComplet';
 
 type Progression = {
   module_id: string;
@@ -266,12 +267,14 @@ function CourbeXP({ points }: { points: { jour: string; xp: number }[] }) {
 
 // --- Petit menu d'onglets — pour du contenu qui n'est PAS déjà sur le
 // dashboard (le dashboard lui-même reste tout sur un seul écran) ----------
-type Onglet = 'arbre' | 'theorie' | 'validation' | 'seances';
+type Onglet = 'arbre' | 'theorie' | 'validation' | 'seances' | 'journal' | 'outils';
 const ONGLETS: { id: Onglet; label: string; icone: (c: string) => React.ReactNode }[] = [
   { id: 'arbre', label: 'Tableau de bord', icone: (c) => <path d="M12 2l3 6h-2l3 6h-2l3 6H7l3-6H8l3-6H9l3-6z" stroke={c} strokeWidth={1.6} fill="none" strokeLinejoin="round" /> },
   { id: 'theorie', label: 'Théorie', icone: (c) => <><path d="M4 5a2 2 0 012-2h9v18H6a2 2 0 01-2-2V5z" stroke={c} strokeWidth={2} fill="none" /><path d="M9 8h6M9 12h6" stroke={c} strokeWidth={1.6} strokeLinecap="round" /></> },
   { id: 'validation', label: 'Validation', icone: (c) => <><rect x="3" y="6" width="18" height="13" rx="2" stroke={c} strokeWidth={2} fill="none" /><path d="M3 8l9 6 9-6" stroke={c} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" /></> },
   { id: 'seances', label: 'Séances', icone: (c) => <><rect x="4" y="5" width="16" height="15" rx="2" stroke={c} strokeWidth={2} fill="none" /><path d="M4 9h16M8 3v4M16 3v4" stroke={c} strokeWidth={2} strokeLinecap="round" /></> },
+  { id: 'journal', label: 'Journal', icone: (c) => <><rect x="4" y="3" width="16" height="18" rx="2" stroke={c} strokeWidth={2} fill="none" /><path d="M8 8h8M8 12h8M8 16h5" stroke={c} strokeWidth={1.6} strokeLinecap="round" /></> },
+  { id: 'outils', label: 'Outils', icone: (c) => <path d="M14.7 6.3a4 4 0 00-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 005.4-5.4l-2.3 2.3-2-2z" stroke={c} strokeWidth={1.6} fill="none" strokeLinejoin="round" /> },
 ];
 
 function MenuOnglets({ actif, onChange }: { actif: Onglet; onChange: (o: Onglet) => void }) {
@@ -597,7 +600,7 @@ export default function ArbreCompetences({
 
           <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
             {/* Rail — chemin vertical de pastilles, socle en bas / progression en haut */}
-            <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', maxHeight: 560, overflowY: 'auto', padding: '8px 4px' }}>
+            <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', maxHeight: 560, overflowY: 'auto', overflowX: 'visible', padding: '8px 28px' }}>
               {noeudsChemin.map((noeud, i) => {
                 const statut = statutAffiche(noeud);
                 const estCourant = noeud.id === noeudCourantId;
@@ -616,7 +619,7 @@ export default function ArbreCompetences({
                         border: `${estSelectionne ? 2 : 1.5}px solid ${inerte ? COULEURS.texteFaible : couleur}`,
                         background: noeud.image ? COULEURS.fond : statut === 'acquis' ? `${couleur}22` : 'transparent',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, cursor: inerte ? 'default' : 'pointer',
-                        boxShadow: estCourant ? `0 0 18px ${couleur}dd, 0 0 8px ${couleur}` : estSelectionne ? `0 0 10px ${couleur}88` : 'none',
+                        boxShadow: estCourant ? `0 0 6px ${couleur}, 0 0 16px ${couleur}aa, 0 0 32px ${couleur}55` : estSelectionne ? `0 0 10px ${couleur}88` : 'none',
                         transition: 'all 0.15s',
                       }}
                     >
@@ -1040,6 +1043,32 @@ export default function ArbreCompetences({
               <p style={{ fontSize: 13, color: COULEURS.texteAtt, margin: '2px 0 0' }}>{etape.detail}</p>
             </div>
           ))}
+        </div>
+      )}
+
+      {onglet === 'journal' && (
+        <div style={{ background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: '24px 20px' }}>
+          <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 18, letterSpacing: 0.3, margin: '0 0 4px', color: COULEURS.texte }}>Journal d'entraînement</p>
+          <JournalComplet />
+        </div>
+      )}
+
+      {onglet === 'outils' && (
+        <div style={{ background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: '24px 20px' }}>
+          <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 18, letterSpacing: 0.3, margin: '0 0 16px', color: COULEURS.texte }}>Outils</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {Object.entries(OUTIL_PAR_BRANCHE).map(([domaine, outil]) => (
+              <a
+                key={domaine}
+                href={outil!.href}
+                style={{ display: 'block', border: `1px solid ${COULEURS.bordure}`, borderRadius: 10, padding: '14px 16px', textDecoration: 'none', color: COULEURS.texte }}
+              >
+                <span style={{ fontSize: 14, fontWeight: 600, color: DOMAINE_COULEURS[domaine as Domaine] }}>{outil!.label}</span>
+                <span style={{ display: 'block', fontSize: 12, color: COULEURS.texteFaible, marginTop: 2 }}>Ouvrir →</span>
+              </a>
+            ))}
+            <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginTop: 4 }}>Les outils Figures, Flexibilité et Connexion arriveront progressivement.</p>
+          </div>
         </div>
       )}
 
