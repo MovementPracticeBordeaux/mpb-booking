@@ -115,8 +115,12 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
         📓 Mon journal d'entraînement →
       </a>
       <br />
-      <a href="/mentorship/outils/locomotion" style={{ display: 'inline-block', fontSize: 13, color: '#f0a', marginBottom: 24, textDecoration: 'none' }}>
+      <a href="/mentorship/outils/locomotion" style={{ display: 'inline-block', fontSize: 13, color: '#f0a', marginBottom: 8, textDecoration: 'none' }}>
         🎲 Outil Locomotion (combinaisons + métronome) →
+      </a>
+      <br />
+      <a href="/mentorship/outils/force" style={{ display: 'inline-block', fontSize: 13, color: '#f0a', marginBottom: 24, textDecoration: 'none' }}>
+        💪 Outil Force (EMOM + compteur reps/sets) →
       </a>
 
       {searchParams.erreur && (
