@@ -1,0 +1,16 @@
+name: Rappel admin avant chaque séance
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch: {}
+
+jobs:
+  appeler-la-route:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Appelle /api/cron/rappel-admin
+        run: |
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer ${{ secrets.RAPPEL_ADMIN_SECRET }}" \
+            "https://www.movementpracticebordeaux.com/api/cron/rappel-admin"
