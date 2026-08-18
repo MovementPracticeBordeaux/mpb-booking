@@ -887,6 +887,7 @@ export default function ArbreCompetences({
                 statut={statutAffiche(noeud)}
                 couleur={COULEUR_TRONC}
                 domaine="tronc"
+                image={noeud.image}
                 onClick={() => setSelection(noeud.id)}
               />
             ))}
@@ -896,6 +897,7 @@ export default function ArbreCompetences({
               x={TRUNK_X} y={TRUNK_LEVEL_Y[3]}
               pourcentage={pourcentageTronc}
               statut={statutAffiche(tronc.find((n) => n.niveau === 3)!)}
+              image={tronc.find((n) => n.niveau === 3)!.image}
               onClick={() => setSelection(tronc.find((n) => n.niveau === 3)!.id)}
             />
           </div>
@@ -1186,7 +1188,7 @@ function Noeud({ x, y, statut, couleur, domaine, flamme, image, onClick }: { x: 
 
 // Le grand rond du tronc (niveau 3) : se remplit en anneau selon le
 // pourcentage d'avancement global de l'Armure Organique.
-function NoeudTroncPrincipal({ x, y, pourcentage, statut, onClick }: { x: number; y: number; pourcentage: number; statut: StatutAffiche; onClick: () => void }) {
+function NoeudTroncPrincipal({ x, y, pourcentage, statut, image, onClick }: { x: number; y: number; pourcentage: number; statut: StatutAffiche; image?: string; onClick: () => void }) {
   const rayon = 15.5;
   const circonference = 2 * Math.PI * rayon;
   const acquis = statut === 'acquis';
@@ -1195,7 +1197,18 @@ function NoeudTroncPrincipal({ x, y, pourcentage, statut, onClick }: { x: number
   return (
     <button onClick={onClick} aria-label="Armure Organique — niveau 3" style={{ position: 'absolute', left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)', width: 58, height: 58, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
       <svg width="58" height="58" viewBox="0 0 40 40" style={{ animation: pulse ? 'pulse-noeud 1.8s ease-in-out infinite' : 'none' }}>
-        <circle cx="20" cy="20" r={rayon} fill={acquis ? COULEUR_TRONC : locked ? '#131316' : '#17171b'} />
+        <defs>
+          <clipPath id="clip-tronc-principal"><circle cx="20" cy="20" r={rayon - 1.5} /></clipPath>
+        </defs>
+        <circle cx="20" cy="20" r={rayon} fill={image ? '#0b0b0d' : acquis ? COULEUR_TRONC : locked ? '#131316' : '#17171b'} />
+        {image && (
+          <image
+            href={image} x={20 - rayon} y={20 - rayon} width={rayon * 2} height={rayon * 2}
+            clipPath="url(#clip-tronc-principal)" preserveAspectRatio="xMidYMid slice"
+            opacity={locked ? 0.4 : acquis ? 1 : 0.9}
+            style={locked ? { filter: 'brightness(0.5)' } : undefined}
+          />
+        )}
         <circle cx="20" cy="20" r={rayon} fill="none" stroke={locked ? `${COULEUR_TRONC}55` : COULEURS.bordure} strokeWidth="2.5" strokeDasharray={locked ? '2 2' : undefined} />
         {!locked && (
           <circle
@@ -1205,7 +1218,7 @@ function NoeudTroncPrincipal({ x, y, pourcentage, statut, onClick }: { x: number
             style={{ transition: 'stroke-dashoffset 0.6s ease', filter: pourcentage > 0 ? `drop-shadow(0 0 4px ${COULEUR_TRONC})` : 'none' }}
           />
         )}
-        {acquis ? (
+        {image ? null : acquis ? (
           <path d="M13 20l5 5 10-10" stroke="#0b0b0d" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
         ) : locked ? (
           <g transform="translate(13,13)" opacity={0.75}>

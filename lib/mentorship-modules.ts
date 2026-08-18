@@ -185,6 +185,7 @@ export const TRONC: NoeudMentorship[] = [
       },
     ],
     contenuDefini: true,
+    image: '/mentorship/armure-organique.jpg',
   },
   {
     id: 'armure-2',
@@ -219,6 +220,7 @@ export const TRONC: NoeudMentorship[] = [
       },
     ],
     contenuDefini: true,
+    image: '/mentorship/armure-organique.jpg',
   },
   {
     id: 'armure-3',
@@ -253,6 +255,7 @@ export const TRONC: NoeudMentorship[] = [
       },
     ],
     contenuDefini: true,
+    image: '/mentorship/armure-organique.jpg',
   },
 ];
 
