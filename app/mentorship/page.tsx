@@ -28,7 +28,7 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
   // coaching, les trois catégories étant désormais indépendantes.
   const { data: aboMentorat } = await supabase
     .from('abonnements')
-    .select('gele')
+    .select('gele, branches, formule_nom')
     .eq('eleve_id', user.id)
     .eq('categorie', 'mentorat')
     .eq('abonnement_actif', true)
@@ -139,6 +139,7 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
         courbeXP={courbeXP}
         structureSeance={STRUCTURE_SEANCE}
         estAdmin={profil?.role === 'admin'}
+        branchesAutorisees={aboMentorat?.branches ? (aboMentorat.branches.split(',') as any) : null}
       />
     </main>
   );

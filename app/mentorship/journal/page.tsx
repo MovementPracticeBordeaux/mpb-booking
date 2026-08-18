@@ -74,9 +74,9 @@ export default async function JournalPage({ searchParams }: { searchParams: { er
         <textarea
           name="contenu"
           required
-          rows={3}
+          rows={8}
           placeholder="Ex. : 3 tractions strictes aujourd'hui, ressenti correct, encore un peu de tremblement en fin de série."
-          style={{ background: COULEURS.surfaceForte, border: `1px solid ${COULEURS.bordure}`, borderRadius: 8, padding: '10px 12px', color: COULEURS.texte, fontSize: 14, resize: 'vertical', fontFamily: 'inherit' }}
+          style={{ background: COULEURS.surfaceForte, border: `1px solid ${COULEURS.bordure}`, borderRadius: 8, padding: '10px 12px', color: COULEURS.texte, fontSize: 14, resize: 'vertical', fontFamily: 'inherit', minHeight: 160, lineHeight: 1.5 }}
         />
         <button
           type="submit"

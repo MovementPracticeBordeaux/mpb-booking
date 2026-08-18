@@ -283,6 +283,7 @@ export default function ArbreCompetences({
   courbeXP,
   structureSeance,
   estAdmin,
+  branchesAutorisees,
 }: {
   tronc: NoeudMentorshipPublic[];
   branches: NoeudMentorshipPublic[];
@@ -295,6 +296,10 @@ export default function ArbreCompetences({
   courbeXP: { jour: string; xp: number }[];
   structureSeance: readonly { etape: string; detail: string }[];
   estAdmin?: boolean;
+  // Branches couvertes par la formule Mentorat de l'élève (ex. ['force',
+  // 'locomotion']). null/undefined = pas de restriction (admin, aperçu, ou
+  // ancienne formule globale) : toutes les branches restent accessibles.
+  branchesAutorisees?: Domaine[] | null;
 }) {
   const [selection, setSelection] = useState<string | null>(null);
   const [reponsesQCM, setReponsesQCM] = useState<Record<string, number>>({});
@@ -352,7 +357,17 @@ export default function ArbreCompetences({
     return false;
   }
 
+  // Une branche est incluse si l'élève a une formule Mentorat globale/sans
+  // restriction (branchesAutorisees absent, ex. admin ou ancienne formule),
+  // ou si elle figure explicitement dans sa liste de branches achetées.
+  function brancheIncluse(domaine: DomaineOuTronc): boolean {
+    if (domaine === 'tronc') return true;
+    if (!branchesAutorisees) return true;
+    return branchesAutorisees.includes(domaine as Domaine);
+  }
+
   function estDeverrouille(noeud: NoeudMentorshipPublic): boolean {
+    if (noeud.domaine !== 'tronc' && !brancheIncluse(noeud.domaine)) return false;
     if (noeud.domaine === 'tronc') {
       if (noeud.niveau === 1) return true;
       const precedent = tronc.find((n) => n.niveau === noeud.niveau - 1);
@@ -706,6 +721,7 @@ export default function ArbreCompetences({
           reponsesQCM={reponsesQCM}
           setReponsesQCM={setReponsesQCM}
           estAdmin={estAdmin}
+          brancheNonIncluse={!brancheIncluse(noeudSelectionne.domaine)}
           onFermer={() => setSelection(null)}
         />
       )}
@@ -1105,7 +1121,7 @@ function BlocExercice({
 }
 
 function PanneauNoeud({
-  noeud, statut, progression, progressionMap, couleur, reponsesQCM, setReponsesQCM, estAdmin, onFermer,
+  noeud, statut, progression, progressionMap, couleur, reponsesQCM, setReponsesQCM, estAdmin, brancheNonIncluse, onFermer,
 }: {
   noeud: NoeudMentorshipPublic;
   statut: string;
@@ -1115,6 +1131,7 @@ function PanneauNoeud({
   reponsesQCM: Record<string, number>;
   setReponsesQCM: (fn: (r: Record<string, number>) => Record<string, number>) => void;
   estAdmin?: boolean;
+  brancheNonIncluse?: boolean;
   onFermer: () => void;
 }) {
   const label = noeud.domaine === 'tronc' ? 'Armure Organique' : DOMAINE_LABELS[noeud.domaine as Domaine];
@@ -1130,7 +1147,14 @@ function PanneauNoeud({
       <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 22, letterSpacing: 0.3, margin: '2px 0 4px', color: COULEURS.texte }}>{noeud.titre}</h2>
 
       {statut === 'locked' ? (
-        <p style={{ color: COULEURS.texteFaible, fontSize: 13, marginTop: 8 }}>🔒 Ce niveau est encore verrouillé.</p>
+        brancheNonIncluse ? (
+          <p style={{ color: COULEURS.texteFaible, fontSize: 13, marginTop: 8 }}>
+            🔒 Cette branche n'est pas incluse dans ta formule Mentorat actuelle.
+            {!estAdmin && ' Contacte Sylvain si tu veux ajouter cette branche à ton accès.'}
+          </p>
+        ) : (
+          <p style={{ color: COULEURS.texteFaible, fontSize: 13, marginTop: 8 }}>🔒 Ce niveau est encore verrouillé.</p>
+        )
       ) : (
         <>
         {!estAdmin && statut !== 'acquis' && <ChecklistNoeud noeudId={noeud.id} />}

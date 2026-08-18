@@ -54,7 +54,17 @@ export default function OutilLocomotion() {
     if (mouvements.length === 0) return;
     const tirage: Mouvement[] = [];
     for (let i = 0; i < longueur; i++) {
-      tirage.push(mouvements[Math.floor(Math.random() * mouvements.length)]);
+      // Évite de tirer deux fois le même mouvement d'affilée (sauf s'il n'y
+      // a qu'un seul mouvement disponible, auquel cas pas le choix).
+      let choix = mouvements[Math.floor(Math.random() * mouvements.length)];
+      if (mouvements.length > 1) {
+        let tentatives = 0;
+        while (tirage.length > 0 && choix.chiffre === tirage[tirage.length - 1].chiffre && tentatives < 20) {
+          choix = mouvements[Math.floor(Math.random() * mouvements.length)];
+          tentatives++;
+        }
+      }
+      tirage.push(choix);
     }
     setSequence(tirage);
   }
