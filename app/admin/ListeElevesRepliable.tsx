@@ -19,6 +19,7 @@ type Abonnement = {
   abonnement_actif: boolean;
   origine: string;
   paye: boolean;
+  branches: string | null;
   formuleAffichage: { nom: string; unite: string; quota: number | null; categorie: string } | null;
 };
 
@@ -117,6 +118,7 @@ export default function ListeElevesRepliable({
 
                         <p style={{ fontSize: 12, opacity: 0.8, margin: '0 0 8px' }}>
                           {formule?.quota && `${a.quota_restant}/${a.quota_total} ${formule.unite}s`}
+                          {a.categorie === 'mentorat' && a.branches && ` · branche(s) : ${a.branches.split(',').join(' + ')}`}
                           {a.date_expiration && ` · exp. ${a.date_expiration}`}
                           {a.gele && a.date_fin_gel_prevue && ` · reprise prévue le ${a.date_fin_gel_prevue}`}
                           {' · '}{a.origine === 'manuel' ? 'manuel' : 'Stripe'}

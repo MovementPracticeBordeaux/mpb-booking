@@ -257,11 +257,20 @@ export async function attribuerFormule(formData: FormData) {
   const formuleNom = formData.get('formule_nom') as string;
   const paye = formData.get('paye') === 'on';
   const montant = Number(formData.get('montant') ?? 0);
+  const branche1 = (formData.get('branche_1') as string) || '';
+  const branche2 = (formData.get('branche_2') as string) || '';
 
   if (!eleveId) echouer('/admin/eleves', 'Choisis un élève.');
 
   const formule = FORMULES[formuleNom];
   if (!formule) echouer('/admin/eleves', 'Formule inconnue.');
+
+  if (formule.categorie === 'mentorat' && formuleNom.startsWith('mentorship_') && !branche1) {
+    echouer('/admin/eleves', 'Choisis au moins une branche pour cette formule Mentorat.');
+  }
+  const branches = formule.categorie === 'mentorat' && branche1
+    ? (branche2 ? `${branche1},${branche2}` : branche1)
+    : null;
 
   const expiration = new Date();
   expiration.setMonth(expiration.getMonth() + formule.validiteMois);
@@ -289,6 +298,7 @@ export async function attribuerFormule(formData: FormData) {
     abonnement_actif: true,
     origine: 'manuel',
     paye,
+    branches,
   });
   if (error) echouer('/admin/eleves', error.message);
 
