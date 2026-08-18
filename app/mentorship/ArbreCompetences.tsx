@@ -33,6 +33,8 @@ type Progression = {
   quiz_score: number | null;
   video_url: string | null;
   commentaire_coach: string | null;
+  premiere_video_url: string | null;
+  premiere_video_date: string | null;
 };
 type StatutAffiche = 'locked' | 'unlocked' | 'qcm_reussi' | 'en_attente' | 'acquis' | 'refuse';
 type EntreeBilan = {
@@ -98,6 +100,54 @@ function Accordeon({ titre, ouvertParDefaut = false, children }: { titre: string
         <span style={{ fontSize: 12, color: COULEURS.texteFaible, transform: ouvert ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>▾</span>
       </button>
       {ouvert && <div style={{ padding: '14px 16px', borderTop: `1px solid ${COULEURS.bordure}` }}>{children}</div>}
+    </div>
+  );
+}
+
+// Comparaison de la première vidéo jamais soumise sur un module (nœud ou
+// exercice) avec la plus récente — deux boutons qui ouvrent chacun le
+// lecteur vidéo existant. Rien à comparer si une seule vidéo a été soumise
+// à ce jour (première = dernière).
+function ComparaisonVideo({
+  titre, premiereUrl, premiereDate, derniereUrl, onOuvrir,
+}: {
+  titre: string;
+  premiereUrl: string;
+  premiereDate: string | null;
+  derniereUrl: string | null;
+  onOuvrir: (url: string, titre: string) => void;
+}) {
+  const memeVideo = !derniereUrl || derniereUrl === premiereUrl;
+  return (
+    <div>
+      <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 8px', color: COULEURS.texte }}>{titre}</p>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <button
+          type="button"
+          onClick={() => onOuvrir(premiereUrl, `${titre} — première vidéo`)}
+          style={{ flex: '1 1 140px', textAlign: 'left', padding: '10px 12px', borderRadius: 10, border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surfaceForte, cursor: 'pointer' }}
+        >
+          <span style={{ display: 'block', fontSize: 11, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 0.4 }}>Première vidéo</span>
+          <span style={{ display: 'block', fontSize: 13, color: '#f0a', marginTop: 2 }}>
+            ▶ {premiereDate ? new Date(premiereDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Voir'}
+          </span>
+        </button>
+        {!memeVideo && (
+          <button
+            type="button"
+            onClick={() => onOuvrir(derniereUrl!, `${titre} — dernière vidéo`)}
+            style={{ flex: '1 1 140px', textAlign: 'left', padding: '10px 12px', borderRadius: 10, border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surfaceForte, cursor: 'pointer' }}
+          >
+            <span style={{ display: 'block', fontSize: 11, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 0.4 }}>Dernière vidéo</span>
+            <span style={{ display: 'block', fontSize: 13, color: '#9ef29e', marginTop: 2 }}>▶ Voir</span>
+          </button>
+        )}
+      </div>
+      {memeVideo && (
+        <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: '8px 0 0' }}>
+          Une seule vidéo soumise pour l'instant — soumets-en une nouvelle plus tard pour voir ta progression.
+        </p>
+      )}
     </div>
   );
 }
@@ -352,7 +402,7 @@ export default function ArbreCompetences({
       ? apercuAcces === 'toutes' ? null : apercuAcces === '1branche' ? ['force'] : ['force', 'locomotion']
       : (branchesAutorisees ?? null);
 
-  const NOEUD_ACQUIS: Progression = { module_id: '', statut: 'acquis', quiz_reussi: true, quiz_score: 100, video_url: null, commentaire_coach: null };
+  const NOEUD_ACQUIS: Progression = { module_id: '', statut: 'acquis', quiz_reussi: true, quiz_score: 100, video_url: null, commentaire_coach: null, premiere_video_url: null, premiere_video_date: null };
 
   // Aperçu (admin uniquement) : simule différents états d'avancement sans
   // toucher aux vraies données, pour visualiser le rendu à chaque étape.
@@ -773,6 +823,40 @@ export default function ArbreCompetences({
                         </>
                       ) : (
                         <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: 0 }}>(Vue admin — actions élève masquées)</p>
+                      )}
+                    </Accordeon>
+
+                    <Accordeon titre="📹 Avant / Après">
+                      {aDesExercices ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                          {[...(noeud.exercices ?? []), ...(noeud.progressionBonus ?? [])].map((ex) => {
+                            const p = progression.get(moduleIdExercice(noeud, ex));
+                            if (!p?.premiere_video_url) return null;
+                            return (
+                              <ComparaisonVideo
+                                key={ex.id}
+                                titre={ex.nom}
+                                premiereUrl={p.premiere_video_url}
+                                premiereDate={p.premiere_video_date}
+                                derniereUrl={p.video_url}
+                                onOuvrir={(url, titre) => setVideoOuverteChemin({ url, titre })}
+                              />
+                            );
+                          })}
+                          {[...(noeud.exercices ?? []), ...(noeud.progressionBonus ?? [])].every((ex) => !progression.get(moduleIdExercice(noeud, ex))?.premiere_video_url) && (
+                            <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: 0 }}>Pas encore de vidéo soumise sur ce niveau.</p>
+                          )}
+                        </div>
+                      ) : progUnique?.premiere_video_url ? (
+                        <ComparaisonVideo
+                          titre={noeud.titre}
+                          premiereUrl={progUnique.premiere_video_url}
+                          premiereDate={progUnique.premiere_video_date}
+                          derniereUrl={progUnique.video_url}
+                          onOuvrir={(url, titre) => setVideoOuverteChemin({ url, titre })}
+                        />
+                      ) : (
+                        <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: 0 }}>Pas encore de vidéo soumise sur ce niveau.</p>
                       )}
                     </Accordeon>
 

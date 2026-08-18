@@ -88,7 +88,7 @@ export async function soumettreVideo(formData: FormData) {
 
   const { data: ligneActuelle } = await supabase
     .from('mentorship_progression')
-    .select('statut, quiz_reussi')
+    .select('statut, quiz_reussi, premiere_video_url')
     .eq('eleve_id', user.id)
     .eq('module_id', noeudId)
     .maybeSingle();
@@ -96,8 +96,17 @@ export async function soumettreVideo(formData: FormData) {
   const peutSoumettre = ligneActuelle?.quiz_reussi === true || ligneActuelle?.statut === 'refuse';
   if (!peutSoumettre) echouer('Réussis le QCM de ce niveau avant de soumettre ta vidéo.');
 
+  const misAJour: Record<string, unknown> = { statut: 'en_attente', video_url: videoUrl, submitted_at: new Date().toISOString() };
+  // On ne garde que la toute première vidéo jamais soumise sur ce module —
+  // les resoumissions suivantes ne l'écrasent jamais, pour permettre une
+  // comparaison avant/après dans la vue chemin.
+  if (!ligneActuelle?.premiere_video_url) {
+    misAJour.premiere_video_url = videoUrl;
+    misAJour.premiere_video_date = new Date().toISOString();
+  }
+
   const { error } = await supabase.from('mentorship_progression')
-    .update({ statut: 'en_attente', video_url: videoUrl, submitted_at: new Date().toISOString() })
+    .update(misAJour)
     .eq('eleve_id', user.id).eq('module_id', noeudId);
 
   if (error) echouer(error.message);
@@ -139,11 +148,22 @@ export async function soumettreVideoExercice(formData: FormData) {
   if (!estNoeudDeverrouille(noeud, idsNoeudsAcquis)) echouer('Ce niveau est encore verrouillé.');
 
   const moduleId = moduleIdExercice(noeud, exercice);
+
+  const { data: ligneActuelle } = await supabase
+    .from('mentorship_progression')
+    .select('premiere_video_url')
+    .eq('eleve_id', user.id)
+    .eq('module_id', moduleId)
+    .maybeSingle();
+
+  const valeurs: Record<string, unknown> = { eleve_id: user.id, module_id: moduleId, statut: 'en_attente', video_url: videoUrl, submitted_at: new Date().toISOString() };
+  if (!ligneActuelle?.premiere_video_url) {
+    valeurs.premiere_video_url = videoUrl;
+    valeurs.premiere_video_date = new Date().toISOString();
+  }
+
   const { error } = await supabase.from('mentorship_progression')
-    .upsert(
-      { eleve_id: user.id, module_id: moduleId, statut: 'en_attente', video_url: videoUrl, submitted_at: new Date().toISOString() },
-      { onConflict: 'eleve_id,module_id' }
-    );
+    .upsert(valeurs, { onConflict: 'eleve_id,module_id' });
   if (error) echouer(error.message);
 
   revalidatePath('/mentorship');

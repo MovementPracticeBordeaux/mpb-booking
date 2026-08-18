@@ -15,6 +15,8 @@ type Progression = {
   reviewed_at: string | null;
   video_url: string | null;
   commentaire_coach: string | null;
+  premiere_video_url: string | null;
+  premiere_video_date: string | null;
 };
 
 export default async function MentorshipPage({ searchParams }: { searchParams: { erreur?: string } }) {
@@ -51,7 +53,7 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
   const [{ data: progressionData }, { data: suiviData }, { data: defisAujourdhuiData }, { data: defisHistoriqueData }] = await Promise.all([
     supabase
       .from('mentorship_progression')
-      .select('module_id, statut, quiz_reussi, quiz_score, quiz_valide_le, reviewed_at, video_url, commentaire_coach')
+      .select('module_id, statut, quiz_reussi, quiz_score, quiz_valide_le, reviewed_at, video_url, commentaire_coach, premiere_video_url, premiere_video_date')
       .eq('eleve_id', user.id),
     supabase
       .from('mentorship_suivi_competence')
