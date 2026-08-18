@@ -302,6 +302,9 @@ export default function ArbreCompetences({
   branchesAutorisees?: Domaine[] | null;
 }) {
   const [selection, setSelection] = useState<string | null>(null);
+  // Vue isolée d'une branche (chemin vertical) — null = vue globale (dashboard).
+  const [vueBranche, setVueBranche] = useState<Domaine | null>(null);
+  const refNoeudCourant = useRef<HTMLDivElement | null>(null);
   const [reponsesQCM, setReponsesQCM] = useState<Record<string, number>>({});
   const [onglet, setOnglet] = useState<Onglet>('arbre');
   const [apercu, setApercu] = useState<'reel' | 'tronc-1' | 'tronc-complet' | 'branches-en-cours'>('reel');
@@ -417,6 +420,46 @@ export default function ArbreCompetences({
 
   const pourcentageTronc = pourcentageBranche('tronc');
 
+  // --- Vue chemin (branche isolée) -----------------------------------
+  // Ordre d'affichage du haut (le plus avancé) vers le bas (le socle) :
+  // branche niveau 3 → 1, puis tronc niveau 3 → 1. Reprend le sens déjà
+  // utilisé dans l'arbre global (bas = fondation, haut = progression).
+  const noeudsChemin = useMemo(() => {
+    if (!vueBranche) return [];
+    const brancheOrdonnee = branches.filter((n) => n.domaine === vueBranche).sort((a, b) => b.niveau - a.niveau);
+    const troncOrdonne = [...tronc].sort((a, b) => b.niveau - a.niveau);
+    return [...brancheOrdonnee, ...troncOrdonne];
+  }, [vueBranche, branches, tronc]);
+
+  // Le nœud "courant" : le premier, dans l'ordre chronologique réel
+  // (tronc 1→3 puis branche 1→3), qui n'est pas encore acquis. Si tout est
+  // acquis, on centre sur le dernier (branche niveau 3).
+  const noeudCourantId = useMemo(() => {
+    if (!vueBranche) return null;
+    const chrono = [...[...tronc].sort((a, b) => a.niveau - b.niveau), ...branches.filter((n) => n.domaine === vueBranche).sort((a, b) => a.niveau - b.niveau)];
+    const premierNonAcquis = chrono.find((n) => !idsAcquis.has(n.id));
+    return (premierNonAcquis ?? chrono[chrono.length - 1])?.id ?? null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vueBranche, tronc, branches, idsAcquis.size]);
+
+  useEffect(() => {
+    if (vueBranche && refNoeudCourant.current) {
+      refNoeudCourant.current.scrollIntoView({ block: 'center', behavior: 'auto' });
+    }
+  }, [vueBranche]);
+
+  function entrerBranche(d: Domaine) {
+    if (brancheIncluse(d) || estAdmin) {
+      setVueBranche(d);
+    } else {
+      // Branche non incluse dans la formule : on garde l'ancien comportement
+      // (ouvrir directement le panneau du niveau 1, qui affiche le message
+      // "branche non incluse") plutôt que d'entrer dans un chemin vide.
+      const n = branches.find((b) => b.domaine === d && b.niveau === 1);
+      if (n) setSelection(n.id);
+    }
+  }
+
   // Entraînement du jour : la programmation des compétences débloquées mais
   // pas encore acquises (tronc + branches) — un résumé du travail à faire.
   const defisDuJour = useMemo(() => {
@@ -506,7 +549,66 @@ export default function ArbreCompetences({
         </div>
       )}
 
-      {onglet === 'arbre' && (
+      {onglet === 'arbre' && vueBranche && (
+        <div>
+          {/* Fil d'Ariane — toujours visible, jamais l'arbre entier derrière */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 18, fontSize: 12 }}>
+            <button
+              onClick={() => setVueBranche(null)}
+              style={{ background: 'none', border: 'none', color: COULEURS.texteFaible, cursor: 'pointer', padding: 0, fontSize: 12 }}
+            >
+              ← Vue globale
+            </button>
+            <span style={{ color: COULEURS.texteFaible }}>/</span>
+            <span style={{ color: DOMAINE_COULEURS[vueBranche], fontWeight: 600 }}>{DOMAINE_LABELS[vueBranche]}</span>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 480, marginInline: 'auto' }}>
+            {noeudsChemin.map((noeud) => {
+              const statut = statutAffiche(noeud);
+              const estCourant = noeud.id === noeudCourantId;
+              const couleur = noeud.domaine === 'tronc' ? COULEUR_TRONC : DOMAINE_COULEURS[noeud.domaine as Domaine];
+              const inerte = statut === 'locked';
+              const label = noeud.domaine === 'tronc' ? 'Armure Organique' : DOMAINE_LABELS[noeud.domaine as Domaine];
+              return (
+                <div
+                  key={noeud.id}
+                  ref={estCourant ? refNoeudCourant : undefined}
+                  onClick={() => { if (!inerte) setSelection(noeud.id); }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 14,
+                    padding: estCourant ? '16px 18px' : '12px 16px',
+                    borderRadius: 14,
+                    cursor: inerte ? 'default' : 'pointer',
+                    border: estCourant ? `1.5px solid ${couleur}` : `1px solid ${COULEURS.bordure}`,
+                    background: estCourant ? `${couleur}14` : inerte ? 'transparent' : COULEURS.surface,
+                    opacity: inerte ? 0.35 : 1,
+                    boxShadow: estCourant ? `0 0 16px ${couleur}33` : undefined,
+                  }}
+                >
+                  <div style={{
+                    width: estCourant ? 40 : 32, height: estCourant ? 40 : 32, borderRadius: '50%', flexShrink: 0,
+                    border: `2px solid ${statut === 'acquis' ? couleur : inerte ? COULEURS.texteFaible : couleur}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: statut === 'acquis' ? `${couleur}22` : 'transparent',
+                  }}>
+                    {statut === 'acquis' ? <span style={{ color: couleur, fontSize: 16 }}>✓</span> : inerte ? <span style={{ color: COULEURS.texteFaible, fontSize: 14 }}>🔒</span> : <span style={{ color: couleur, fontSize: 12, fontFamily: POLICE_DISPLAY }}>{noeud.niveau}</span>}
+                  </div>
+                  <div style={{ flexGrow: 1, minWidth: 0 }}>
+                    <p style={{ margin: 0, fontSize: 11, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 0.4 }}>{label} · niveau {noeud.niveau}</p>
+                    <p style={{ margin: '1px 0 0', fontSize: estCourant ? 15 : 13, fontWeight: estCourant ? 700 : 400, color: inerte ? COULEURS.texteFaible : COULEURS.texte, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {noeud.titre}
+                    </p>
+                  </div>
+                  {estCourant && <span style={{ fontSize: 10, color: couleur, fontWeight: 700, letterSpacing: 0.5, flexShrink: 0 }}>EN COURS</span>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {onglet === 'arbre' && !vueBranche && (
         <>
           {/* Tes compétences (vignette compacte) + XP (compact, largeur fixe), comme sur le croquis */}
           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12, marginBottom: 28 }}>
@@ -524,10 +626,14 @@ export default function ArbreCompetences({
             </div>
           </div>
 
-          {/* En-têtes de branches — icône, nom, accroche, avant l'arbre lui-même */}
+          {/* En-têtes de branches — icône, nom, accroche, avant l'arbre lui-même. Cliquable : entre dans le chemin isolé de la branche. */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 4, maxWidth: 560, marginInline: 'auto', marginBottom: 4 }}>
             {ORDRE_VISUEL.map((d) => (
-              <div key={d} style={{ textAlign: 'center', padding: '0 2px' }}>
+              <button
+                key={d}
+                onClick={() => entrerBranche(d)}
+                style={{ textAlign: 'center', padding: '0 2px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
+              >
                 <div style={{
                   width: 36, height: 36, borderRadius: '50%', marginInline: 'auto', marginBottom: 6,
                   border: `2px solid ${DOMAINE_COULEURS[d]}`, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -537,7 +643,7 @@ export default function ArbreCompetences({
                 </div>
                 <p style={{ margin: 0, fontFamily: POLICE_DISPLAY, fontSize: 12, letterSpacing: '0.04em', textTransform: 'uppercase', color: DOMAINE_COULEURS[d] }}>{DOMAINE_LABELS[d]}</p>
                 <p style={{ margin: '2px 0 0', fontSize: 10, color: COULEURS.texteFaible, lineHeight: 1.3 }}>{DOMAINE_ACCROCHES[d]}</p>
-              </div>
+              </button>
             ))}
           </div>
 
@@ -557,7 +663,7 @@ export default function ArbreCompetences({
               <line x1={TRUNK_X} y1={JUNCTION_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1]} stroke="#ff00aa" strokeWidth={0.7} opacity={0.85} strokeLinecap="round" />
             </svg>
 
-            {/* Nœuds des branches */}
+            {/* Nœuds des branches — cliquer entre dans le chemin isolé de la branche */}
             {ORDRE_DOMAINES.map((d) =>
               ([1, 2, 3] as const).map((lvl) => {
                 const noeud = branches.find((n) => n.domaine === d && n.niveau === lvl);
@@ -571,7 +677,7 @@ export default function ArbreCompetences({
                     domaine={d}
                     flamme={flammeDuNoeud(noeud)}
                     image={noeud.image}
-                    onClick={() => setSelection(noeud.id)}
+                    onClick={() => entrerBranche(d)}
                   />
                 );
               })
