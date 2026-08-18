@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { COULEURS, GRADIENT, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
 import { supabaseBrowser } from '@/lib/supabase-browser';
+import CourbeSimple from '../CourbeSimple';
 
 type EntreeHistorique = {
   id: string;
@@ -204,7 +205,10 @@ function ChronoTentatives({ historiqueInitial }: { historiqueInitial: EntreeHist
 
       {historique.length > 0 && (
         <>
-          <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>Historique</p>
+          <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>Progression</p>
+          <CourbeFigure historique={historique} />
+
+          <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: '20px 0 8px', textTransform: 'uppercase', letterSpacing: 0.5 }}>Historique</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {historique.map((h) => (
               <div key={h.id} style={{ border: `1px solid ${COULEURS.bordure}`, borderRadius: 10, padding: 12 }}>
@@ -228,6 +232,53 @@ function ChronoTentatives({ historiqueInitial }: { historiqueInitial: EntreeHist
         </>
       )}
     </section>
+  );
+}
+
+// ------------------------------------------------------------------------
+// COURBE DE PROGRESSION — meilleur temps par session, pour une figure choisie
+// ------------------------------------------------------------------------
+function CourbeFigure({ historique }: { historique: EntreeHistorique[] }) {
+  const figuresDisponibles = useMemo(
+    () => Array.from(new Set(historique.map((h) => h.figure))),
+    [historique]
+  );
+  const [figureChoisie, setFigureChoisie] = useState(figuresDisponibles[0] ?? '');
+
+  useEffect(() => {
+    if (!figuresDisponibles.includes(figureChoisie)) setFigureChoisie(figuresDisponibles[0] ?? '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [historique]);
+
+  const points = useMemo(() => {
+    return historique
+      .filter((h) => h.figure === figureChoisie)
+      .slice()
+      .reverse() // l'historique est du plus récent au plus ancien ; la courbe se lit dans le sens chronologique
+      .map((h) => ({
+        date: h.cree_le,
+        valeur: Math.max(...h.tentatives.split(',').map(Number)),
+      }));
+  }, [historique, figureChoisie]);
+
+  if (figuresDisponibles.length === 0) return null;
+
+  return (
+    <div>
+      {figuresDisponibles.length > 1 && (
+        <select
+          value={figureChoisie}
+          onChange={(e) => setFigureChoisie(e.target.value)}
+          style={{ ...champStyle, marginBottom: 12 }}
+        >
+          {figuresDisponibles.map((f) => <option key={f} value={f}>{f}</option>)}
+        </select>
+      )}
+      <p style={{ fontSize: 11, color: COULEURS.texteFaible, marginBottom: 8 }}>
+        Meilleure tenue par séance — {figureChoisie}
+      </p>
+      <CourbeSimple points={points} unite={mmss} couleur="#FF8A00" />
+    </div>
   );
 }
 

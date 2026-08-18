@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { COULEURS, GRADIENT, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
 import { supabaseBrowser } from '@/lib/supabase-browser';
+import CourbeSimple from '../CourbeSimple';
 
 type EntreeHistorique = {
   id: string;
@@ -335,7 +336,10 @@ function CompteurRepsSets({ historiqueInitial }: { historiqueInitial: EntreeHist
 
       {historique.length > 0 && (
         <>
-          <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>Historique</p>
+          <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>Progression</p>
+          <CourbeExercice historique={historique} />
+
+          <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: '20px 0 8px', textTransform: 'uppercase', letterSpacing: 0.5 }}>Historique</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {historique.map((h) => (
               <div key={h.id} style={{ border: `1px solid ${COULEURS.bordure}`, borderRadius: 10, padding: 12 }}>
@@ -359,6 +363,53 @@ function CompteurRepsSets({ historiqueInitial }: { historiqueInitial: EntreeHist
         </>
       )}
     </section>
+  );
+}
+
+// ------------------------------------------------------------------------
+// COURBE DE PROGRESSION — volume total (somme des reps) par séance, pour un exercice choisi
+// ------------------------------------------------------------------------
+function CourbeExercice({ historique }: { historique: EntreeHistorique[] }) {
+  const exercicesDisponibles = useMemo(
+    () => Array.from(new Set(historique.map((h) => h.exercice))),
+    [historique]
+  );
+  const [exerciceChoisi, setExerciceChoisi] = useState(exercicesDisponibles[0] ?? '');
+
+  useEffect(() => {
+    if (!exercicesDisponibles.includes(exerciceChoisi)) setExerciceChoisi(exercicesDisponibles[0] ?? '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [historique]);
+
+  const points = useMemo(() => {
+    return historique
+      .filter((h) => h.exercice === exerciceChoisi)
+      .slice()
+      .reverse() // du plus ancien au plus récent, pour lire la courbe chronologiquement
+      .map((h) => ({
+        date: h.cree_le,
+        valeur: h.reps_par_set.split(',').map(Number).reduce((a, b) => a + b, 0),
+      }));
+  }, [historique, exerciceChoisi]);
+
+  if (exercicesDisponibles.length === 0) return null;
+
+  return (
+    <div>
+      {exercicesDisponibles.length > 1 && (
+        <select
+          value={exerciceChoisi}
+          onChange={(e) => setExerciceChoisi(e.target.value)}
+          style={{ ...champStyle, width: '100%', boxSizing: 'border-box', marginBottom: 12 }}
+        >
+          {exercicesDisponibles.map((e) => <option key={e} value={e}>{e}</option>)}
+        </select>
+      )}
+      <p style={{ fontSize: 11, color: COULEURS.texteFaible, marginBottom: 8 }}>
+        Volume total (reps, tous sets confondus) par séance — {exerciceChoisi}
+      </p>
+      <CourbeSimple points={points} unite={(v) => `${v} reps`} couleur="#f0a" />
+    </div>
   );
 }
 
