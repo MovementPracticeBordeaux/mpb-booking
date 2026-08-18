@@ -11,8 +11,17 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
 
   const { data: eleves } = await admin
     .from('profiles')
-    .select('*')
+    .select('id, nom, email')
     .order('email');
+
+  // Un élève peut avoir plusieurs abonnements actifs (planning + coaching +
+  // mentorat en parallèle) — chaque ligne d'abonnements représente une
+  // formule active dans une catégorie précise.
+  const { data: abonnementsBrut } = await admin
+    .from('abonnements')
+    .select('*')
+    .eq('abonnement_actif', true)
+    .order('categorie');
 
   const { data: paiements } = await admin
     .from('paiements')
@@ -66,8 +75,13 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
                 <option key={cle} value={cle}>{f.nom} ({f.quota ? `${f.quota} ${f.unite}s` : 'illimité'}, {f.validiteMois} mois)</option>
               ))}
             </optgroup>
-            <optgroup label="Coaching & Mentorship">
+            <optgroup label="Coaching individuel">
               {Object.entries(FORMULES).filter(([, f]) => f.categorie === 'coaching').map(([cle, f]) => (
+                <option key={cle} value={cle}>{f.nom} ({f.quota ? `${f.quota} ${f.unite}s` : 'illimité'}, {f.validiteMois} mois)</option>
+              ))}
+            </optgroup>
+            <optgroup label="Mentorat">
+              {Object.entries(FORMULES).filter(([, f]) => f.categorie === 'mentorat').map(([cle, f]) => (
                 <option key={cle} value={cle}>{f.nom} ({f.quota ? `${f.quota} ${f.unite}s` : 'illimité'}, {f.validiteMois} mois)</option>
               ))}
             </optgroup>
@@ -82,9 +96,10 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
 
       <section style={{ marginBottom: 32 }}>
         <ListeElevesRepliable
-          eleves={(eleves ?? []).map((e) => ({
-            ...e,
-            formuleAffichage: e.formule_nom ? FORMULES[e.formule_nom] ?? null : null,
+          eleves={(eleves ?? []).map((e) => ({ id: e.id, nom: e.nom, email: e.email }))}
+          abonnements={(abonnementsBrut ?? []).map((a) => ({
+            ...a,
+            formuleAffichage: FORMULES[a.formule_nom] ?? null,
           }))}
           suspendreAcces={suspendreAcces}
           modifierQuotaRestant={modifierQuotaRestant}

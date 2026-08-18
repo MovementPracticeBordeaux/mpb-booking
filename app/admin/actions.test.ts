@@ -159,8 +159,7 @@ describe('rembourserPaiement', () => {
     const admin = mockAdminClient([
       { data: { id: 'p1', eleve_id: 'e1', formule_nom: 'mensuel_4', rembourse: false, stripe_session_id: 'sess_1' }, error: null },
       { error: null }, // update paiements.rembourse
-      { data: { formule_nom: 'mensuel_4', abonnement_actif: true }, error: null }, // select profil
-      { error: null }, // update profiles.abonnement_actif = false
+      { error: null }, // update abonnements (coupure ciblée par eleve_id + categorie + formule_nom + abonnement_actif)
     ]);
     vi.mocked(supabaseAdmin).mockReturnValue(admin as any);
 
@@ -168,17 +167,24 @@ describe('rembourserPaiement', () => {
       /REDIRECT:\/admin\/eleves\?succes=/
     );
 
-    expect(admin.from).toHaveBeenCalledTimes(4);
-    const coupureChain = admin.from.mock.results[3].value;
+    expect(admin.from).toHaveBeenCalledTimes(3);
+    const coupureChain = admin.from.mock.results[2].value;
     expect(coupureChain.update).toHaveBeenCalledWith({ abonnement_actif: false });
+    // La sécurité "seulement si c'est toujours la formule active" se fait
+    // désormais directement dans la clause WHERE (eq formule_nom +
+    // abonnement_actif) plutôt que par une lecture préalable en JS : si
+    // l'élève a changé de formule depuis, cette clause ne matchera
+    // simplement aucune ligne en base, sans qu'on ait besoin de le vérifier
+    // nous-mêmes avant.
+    expect(coupureChain.eq).toHaveBeenCalledWith('formule_nom', 'mensuel_4');
+    expect(coupureChain.eq).toHaveBeenCalledWith('abonnement_actif', true);
   });
 
-  it("ne coupe pas l'accès si l'élève a changé de formule depuis", async () => {
+  it("ne cible que l'abonnement de la formule remboursée (formule inconnue = aucune coupure)", async () => {
     setupStripeSuccess();
     const admin = mockAdminClient([
-      { data: { id: 'p1', eleve_id: 'e1', formule_nom: 'mensuel_4', rembourse: false, stripe_session_id: 'sess_1' }, error: null },
+      { data: { id: 'p1', eleve_id: 'e1', formule_nom: 'formule_inexistante', rembourse: false, stripe_session_id: 'sess_1' }, error: null },
       { error: null }, // update paiements.rembourse
-      { data: { formule_nom: 'illimite', abonnement_actif: true }, error: null }, // select profil (formule différente désormais)
     ]);
     vi.mocked(supabaseAdmin).mockReturnValue(admin as any);
 
@@ -186,7 +192,9 @@ describe('rembourserPaiement', () => {
       /REDIRECT:\/admin\/eleves\?succes=/
     );
 
-    expect(admin.from).toHaveBeenCalledTimes(3); // pas d'appel de coupure supplémentaire
+    // Formule introuvable dans le catalogue -> pas de categorie -> pas de
+    // tentative de coupure du tout (seulement les 2 premiers appels).
+    expect(admin.from).toHaveBeenCalledTimes(2);
   });
 });
 

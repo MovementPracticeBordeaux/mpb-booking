@@ -1,21 +1,21 @@
 import { supabaseAdmin } from '@/lib/supabase-server';
-import { FORMULES } from '@/lib/formules';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminPage() {
   const admin = supabaseAdmin();
 
-  const { data: eleves } = await admin.from('profiles').select('abonnement_actif, formule_nom, gele');
+  // Un élève peut avoir plusieurs abonnements actifs à la fois (une
+  // catégorie chacun) — ces compteurs comptent des ABONNEMENTS, pas des
+  // élèves distincts (un élève avec collectif + mentorat compte dans les
+  // deux catégories).
+  const { data: abonnements } = await admin.from('abonnements').select('categorie, gele').eq('abonnement_actif', true);
 
-  const nbAbonnementsActifs = (eleves ?? []).filter((e) => e.abonnement_actif).length;
-  const nbActifsCollectif = (eleves ?? []).filter(
-    (e) => e.abonnement_actif && FORMULES[e.formule_nom ?? '']?.categorie === 'planning'
-  ).length;
-  const nbActifsCoaching = (eleves ?? []).filter(
-    (e) => e.abonnement_actif && FORMULES[e.formule_nom ?? '']?.categorie === 'coaching'
-  ).length;
-  const nbGeles = (eleves ?? []).filter((e) => e.gele).length;
+  const nbAbonnementsActifs = (abonnements ?? []).length;
+  const nbActifsCollectif = (abonnements ?? []).filter((a) => a.categorie === 'planning').length;
+  const nbActifsCoaching = (abonnements ?? []).filter((a) => a.categorie === 'coaching').length;
+  const nbActifsMentorat = (abonnements ?? []).filter((a) => a.categorie === 'mentorat').length;
+  const nbGeles = (abonnements ?? []).filter((a) => a.gele).length;
 
   const { count: soumissionsMentorshipEnAttente } = await admin
     .from('mentorship_progression')
@@ -37,7 +37,11 @@ export default async function AdminPage() {
         </div>
         <div style={{ border: '1px solid #333', borderRadius: 8, padding: 12, flex: '1 1 140px' }}>
           <p style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>{nbActifsCoaching}</p>
-          <p style={{ fontSize: 12, opacity: 0.7, margin: 0 }}>coaching / mentorship</p>
+          <p style={{ fontSize: 12, opacity: 0.7, margin: 0 }}>coaching individuel</p>
+        </div>
+        <div style={{ border: '1px solid #333', borderRadius: 8, padding: 12, flex: '1 1 140px' }}>
+          <p style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>{nbActifsMentorat}</p>
+          <p style={{ fontSize: 12, opacity: 0.7, margin: 0 }}>mentorat</p>
         </div>
         {nbGeles > 0 && (
           <div style={{ border: '1px solid #333', borderRadius: 8, padding: 12, flex: '1 1 140px' }}>

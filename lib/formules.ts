@@ -4,8 +4,14 @@
 //
 // categorie:
 //   'planning' -> consomme des séances, réservées sur le planning des cours collectifs
-//   'coaching' -> pas de réservation de créneau : après achat, l'élève est mis
-//                 en relation avec Sylvain pour caler le créneau ensemble
+//   'coaching' -> coaching individuel, pas de réservation de créneau : après
+//                 achat, l'élève est mis en relation avec Sylvain
+//   'mentorat' -> accès à l'espace /mentorship (arbre de compétences)
+//
+// Chaque élève peut avoir AU PLUS une formule active par catégorie en même
+// temps (ex. un pass collectif + un accès mentorat simultanément), mais pas
+// deux formules de la même catégorie (ex. deux passs collectifs à la fois).
+// Voir la table 'abonnements' — une ligne par catégorie active par élève.
 //
 // unite: le libellé du quota affiché ('séance' ou 'heure'), null si illimité
 // prixIndicatif: utilisé uniquement comme montant par défaut sur les factures
@@ -14,7 +20,7 @@
 
 export type Formule = {
   nom: string;
-  categorie: 'planning' | 'coaching';
+  categorie: 'planning' | 'coaching' | 'mentorat';
   unite: 'séance' | 'heure' | null;
   quota: number | null; // null = illimité, pas de décompte
   validiteMois: number;
@@ -53,21 +59,21 @@ export const FORMULES: Record<string, Formule> = {
   // Ancienne formule Mentorship (un seul pass 3 mois à 599€) : conservée
   // uniquement pour les élèves qui l'ont déjà en base (factures, accès en
   // cours). Ne plus vendre — retirée de la page /tarifs.
-  mentorship: { nom: 'Mentorat (ancienne formule)', categorie: 'coaching', unite: null, quota: null, validiteMois: 3, prixIndicatif: 599 },
+  mentorship: { nom: 'Mentorat (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 599 },
 
   // Nouvelles formules Mentorat, en pass à durée fixe (pas d'abonnement).
   // Accès par branche plutôt que global : 1 branche au choix, ou 2 branches
   // au choix (le nombre de branches change peu la charge de suivi réelle,
   // d'où un supplément raisonnable plutôt qu'un doublement du prix).
   // ⚠️ Prix proposés à confirmer avec Sylvain avant mise en vente réelle.
-  mentorship_1branche_3: { nom: 'Mentorat — 1 branche — 3 mois', categorie: 'coaching', unite: null, quota: null, validiteMois: 3, prixIndicatif: 249 },
-  mentorship_1branche_6: { nom: 'Mentorat — 1 branche — 6 mois', categorie: 'coaching', unite: null, quota: null, validiteMois: 6, prixIndicatif: 449 },
-  mentorship_1branche_12: { nom: 'Mentorat — 1 branche — 12 mois', categorie: 'coaching', unite: null, quota: null, validiteMois: 12, prixIndicatif: 799 },
-  mentorship_2branches_3: { nom: 'Mentorat — 2 branches — 3 mois', categorie: 'coaching', unite: null, quota: null, validiteMois: 3, prixIndicatif: 329 },
-  mentorship_2branches_6: { nom: 'Mentorat — 2 branches — 6 mois', categorie: 'coaching', unite: null, quota: null, validiteMois: 6, prixIndicatif: 599 },
-  mentorship_2branches_12: { nom: 'Mentorat — 2 branches — 12 mois', categorie: 'coaching', unite: null, quota: null, validiteMois: 12, prixIndicatif: 999 },
+  mentorship_1branche_3: { nom: 'Mentorat — 1 branche — 3 mois', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 249 },
+  mentorship_1branche_6: { nom: 'Mentorat — 1 branche — 6 mois', categorie: 'mentorat', unite: null, quota: null, validiteMois: 6, prixIndicatif: 449 },
+  mentorship_1branche_12: { nom: 'Mentorat — 1 branche — 12 mois', categorie: 'mentorat', unite: null, quota: null, validiteMois: 12, prixIndicatif: 799 },
+  mentorship_2branches_3: { nom: 'Mentorat — 2 branches — 3 mois', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 329 },
+  mentorship_2branches_6: { nom: 'Mentorat — 2 branches — 6 mois', categorie: 'mentorat', unite: null, quota: null, validiteMois: 6, prixIndicatif: 599 },
+  mentorship_2branches_12: { nom: 'Mentorat — 2 branches — 12 mois', categorie: 'mentorat', unite: null, quota: null, validiteMois: 12, prixIndicatif: 999 },
 
-  post_mentorship: { nom: 'Suivi Post-Mentorat', categorie: 'coaching', unite: null, quota: null, validiteMois: 1, prixIndicatif: 80 },
+  post_mentorship: { nom: 'Suivi Post-Mentorat', categorie: 'mentorat', unite: null, quota: null, validiteMois: 1, prixIndicatif: 80 },
 };
 
 // Toutes les clés de formule donnant accès à l'espace /mentorship (ancienne

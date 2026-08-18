@@ -30,7 +30,7 @@ function makeChainable(result: { data?: any; error?: any }) {
   const chainable: any = {
     then: (resolve: any) => resolve(result),
   };
-  for (const methode of ['select', 'eq', 'update', 'insert', 'upsert', 'single', 'order']) {
+  for (const methode of ['select', 'eq', 'update', 'insert', 'upsert', 'single', 'maybeSingle', 'order']) {
     chainable[methode] = vi.fn(() => chainable);
   }
   return chainable;

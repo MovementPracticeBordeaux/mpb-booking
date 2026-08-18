@@ -2,13 +2,15 @@
 
 import { useState } from 'react';
 
-// Reçoit les élèves déjà enrichis de leur formule (nom, unité, quota, catégorie)
-// pour ne pas avoir à repasser tout le catalogue FORMULES en prop.
-type Eleve = {
+type Eleve = { id: string; nom: string | null; email: string };
+
+// Reçoit les abonnements déjà enrichis de leur formule (nom, unité, quota,
+// catégorie) pour ne pas avoir à repasser tout le catalogue FORMULES en prop.
+type Abonnement = {
   id: string;
-  nom: string | null;
-  email: string;
-  formule_nom: string | null;
+  eleve_id: string;
+  categorie: string;
+  formule_nom: string;
   quota_restant: number | null;
   quota_total: number | null;
   date_expiration: string | null;
@@ -20,8 +22,15 @@ type Eleve = {
   formuleAffichage: { nom: string; unite: string; quota: number | null; categorie: string } | null;
 };
 
+const LIBELLE_CATEGORIE: Record<string, string> = {
+  planning: 'Collectif',
+  coaching: 'Coaching',
+  mentorat: 'Mentorat',
+};
+
 export default function ListeElevesRepliable({
   eleves,
+  abonnements,
   suspendreAcces,
   modifierQuotaRestant,
   modifierExpiration,
@@ -31,6 +40,7 @@ export default function ListeElevesRepliable({
   decompterCoaching,
 }: {
   eleves: Eleve[];
+  abonnements: Abonnement[];
   suspendreAcces: (formData: FormData) => void;
   modifierQuotaRestant: (formData: FormData) => void;
   modifierExpiration: (formData: FormData) => void;
@@ -42,8 +52,19 @@ export default function ListeElevesRepliable({
   const [ouvert, setOuvert] = useState(false);
   const [recherche, setRecherche] = useState('');
 
+  // Un élève peut désormais avoir plusieurs abonnements actifs en même
+  // temps (planning + coaching + mentorat) — on les regroupe par élève
+  // pour l'affichage.
+  const abosParEleve = new Map<string, Abonnement[]>();
+  for (const a of abonnements) {
+    const liste = abosParEleve.get(a.eleve_id) ?? [];
+    liste.push(a);
+    abosParEleve.set(a.eleve_id, liste);
+  }
+
   const filtres = eleves.filter((e) => {
-    const cible = `${e.nom ?? ''} ${e.email} ${e.formuleAffichage?.nom ?? ''}`.toLowerCase();
+    const abos = abosParEleve.get(e.id) ?? [];
+    const cible = `${e.nom ?? ''} ${e.email} ${abos.map((a) => a.formuleAffichage?.nom ?? '').join(' ')}`.toLowerCase();
     return cible.includes(recherche.toLowerCase());
   });
 
@@ -67,83 +88,94 @@ export default function ListeElevesRepliable({
           />
           {filtres.length === 0 && <p style={{ fontSize: 13, opacity: 0.6 }}>Aucun élève ne correspond.</p>}
           {filtres.map((e) => {
-            const formule = e.formuleAffichage;
-            const statut = e.gele ? '❄️ gelé' : e.abonnement_actif ? '✅ actif' : '⛔ inactif';
+            const abos = abosParEleve.get(e.id) ?? [];
+            const resume = abos.length === 0
+              ? 'aucune formule active'
+              : abos.map((a) => `${LIBELLE_CATEGORIE[a.categorie] ?? a.categorie}: ${a.formuleAffichage?.nom ?? a.formule_nom}`).join(' + ');
             return (
               <details key={e.id} style={{ borderBottom: '1px solid #333', padding: 8 }}>
                 <summary style={{ fontSize: 14, cursor: 'pointer' }}>
-                  {e.nom ?? e.email} — {formule?.nom ?? 'aucune formule'} · {statut}
+                  {e.nom ?? e.email} — {resume}
                 </summary>
 
                 <div style={{ marginTop: 10 }}>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 8, fontSize: 13, opacity: 0.8, marginBottom: 8 }}>
-                    <span>
-                      {formule?.quota && `${e.quota_restant}/${e.quota_total} ${formule.unite}s`}
-                      {e.date_expiration && ` · exp. ${e.date_expiration}`}
-                      {e.gele && e.date_fin_gel_prevue && ` · reprise prévue le ${e.date_fin_gel_prevue}`}
-                      {' · '}{e.origine === 'manuel' ? 'manuel' : 'Stripe'}
-                      {!e.paye && ' · offert'}
-                    </span>
-                    {e.abonnement_actif && (
-                      <form action={suspendreAcces}>
-                        <input type="hidden" name="eleve_id" value={e.id} />
-                        <button type="submit">Suspendre</button>
-                      </form>
-                    )}
-                  </div>
+                  {abos.length === 0 && <p style={{ fontSize: 13, opacity: 0.6 }}>Aucun abonnement actif pour cet élève.</p>}
+                  {abos.map((a) => {
+                    const formule = a.formuleAffichage;
+                    const statut = a.gele ? '❄️ gelé' : '✅ actif';
+                    return (
+                      <div key={a.id} style={{ border: '1px solid #333', borderRadius: 6, padding: 10, marginBottom: 10 }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                          <span style={{ fontSize: 13, fontWeight: 600 }}>
+                            {LIBELLE_CATEGORIE[a.categorie] ?? a.categorie} — {formule?.nom ?? a.formule_nom} · {statut}
+                          </span>
+                          <form action={suspendreAcces}>
+                            <input type="hidden" name="abonnement_id" value={a.id} />
+                            <button type="submit">Suspendre</button>
+                          </form>
+                        </div>
 
-                  {e.formule_nom && (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, fontSize: 12 }}>
-                      {formule?.quota && (
-                        <form action={modifierQuotaRestant} style={{ display: 'flex', gap: 4 }}>
-                          <input type="hidden" name="eleve_id" value={e.id} />
-                          <input type="number" name="quota_restant" defaultValue={e.quota_restant ?? 0} style={{ width: 50 }} />
-                          <button type="submit">Corriger quota</button>
-                        </form>
-                      )}
-                      <form action={modifierExpiration} style={{ display: 'flex', gap: 4 }}>
-                        <input type="hidden" name="eleve_id" value={e.id} />
-                        <input type="date" name="date_expiration" defaultValue={e.date_expiration ?? ''} />
-                        <button type="submit">Corriger date</button>
-                      </form>
-                      {e.gele ? (
-                        <>
-                          <form action={degelerPass}>
-                            <input type="hidden" name="eleve_id" value={e.id} />
-                            <button type="submit">Dégeler (prolonge auto)</button>
+                        <p style={{ fontSize: 12, opacity: 0.8, margin: '0 0 8px' }}>
+                          {formule?.quota && `${a.quota_restant}/${a.quota_total} ${formule.unite}s`}
+                          {a.date_expiration && ` · exp. ${a.date_expiration}`}
+                          {a.gele && a.date_fin_gel_prevue && ` · reprise prévue le ${a.date_fin_gel_prevue}`}
+                          {' · '}{a.origine === 'manuel' ? 'manuel' : 'Stripe'}
+                          {!a.paye && ' · offert'}
+                        </p>
+
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, fontSize: 12 }}>
+                          {formule?.quota && (
+                            <form action={modifierQuotaRestant} style={{ display: 'flex', gap: 4 }}>
+                              <input type="hidden" name="abonnement_id" value={a.id} />
+                              <input type="number" name="quota_restant" defaultValue={a.quota_restant ?? 0} style={{ width: 50 }} />
+                              <button type="submit">Corriger quota</button>
+                            </form>
+                          )}
+                          <form action={modifierExpiration} style={{ display: 'flex', gap: 4 }}>
+                            <input type="hidden" name="abonnement_id" value={a.id} />
+                            <input type="date" name="date_expiration" defaultValue={a.date_expiration ?? ''} />
+                            <button type="submit">Corriger date</button>
                           </form>
-                          <form action={definirDateReprise} style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                            <input type="hidden" name="eleve_id" value={e.id} />
-                            <label style={{ fontSize: 11, opacity: 0.7 }}>
-                              Corriger la date de reprise
-                              <input type="date" name="date_fin_gel_prevue" defaultValue={e.date_fin_gel_prevue ?? ''} style={{ marginLeft: 4 }} />
-                            </label>
-                            <button type="submit">Enregistrer</button>
-                          </form>
-                        </>
-                      ) : (
-                        <form action={gelerPass} style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                          <input type="hidden" name="eleve_id" value={e.id} />
-                          <label style={{ fontSize: 11, opacity: 0.7 }}>
-                            Reprise le
-                            <input type="date" name="date_fin_gel_prevue" style={{ marginLeft: 4 }} />
-                          </label>
-                          <button type="submit">❄️ Geler (blessure, vacances...)</button>
-                        </form>
-                      )}
-                    </div>
-                  )}
-                  {formule?.categorie === 'coaching' && formule.quota && e.abonnement_actif && (
-                    <form action={decompterCoaching} style={{ display: 'flex', gap: 6, marginTop: 6 }}>
-                      <input type="hidden" name="eleve_id" value={e.id} />
-                      <input
-                        type="number" name="quantite" min="1" step="1" defaultValue="1"
-                        style={{ width: 60 }}
-                        aria-label={`${formule.unite}s consommées`}
-                      />
-                      <button type="submit">Décompter ({formule.unite}s consommées après séance)</button>
-                    </form>
-                  )}
+                          {a.gele ? (
+                            <>
+                              <form action={degelerPass}>
+                                <input type="hidden" name="abonnement_id" value={a.id} />
+                                <button type="submit">Dégeler (prolonge auto)</button>
+                              </form>
+                              <form action={definirDateReprise} style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                                <input type="hidden" name="abonnement_id" value={a.id} />
+                                <label style={{ fontSize: 11, opacity: 0.7 }}>
+                                  Corriger la date de reprise
+                                  <input type="date" name="date_fin_gel_prevue" defaultValue={a.date_fin_gel_prevue ?? ''} style={{ marginLeft: 4 }} />
+                                </label>
+                                <button type="submit">Enregistrer</button>
+                              </form>
+                            </>
+                          ) : (
+                            <form action={gelerPass} style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                              <input type="hidden" name="abonnement_id" value={a.id} />
+                              <label style={{ fontSize: 11, opacity: 0.7 }}>
+                                Reprise le
+                                <input type="date" name="date_fin_gel_prevue" style={{ marginLeft: 4 }} />
+                              </label>
+                              <button type="submit">❄️ Geler (blessure, vacances...)</button>
+                            </form>
+                          )}
+                          {a.categorie === 'coaching' && formule?.quota && (
+                            <form action={decompterCoaching} style={{ display: 'flex', gap: 6 }}>
+                              <input type="hidden" name="abonnement_id" value={a.id} />
+                              <input
+                                type="number" name="quantite" min="1" step="1" defaultValue="1"
+                                style={{ width: 60 }}
+                                aria-label={`${formule.unite}s consommées`}
+                              />
+                              <button type="submit">Décompter ({formule.unite}s consommées après séance)</button>
+                            </form>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </details>
             );

@@ -17,23 +17,21 @@ const COULEUR_SEMAINE: Record<'A' | 'B', string> = { A: '#4FC3F7', B: '#FFB74D' 
 export default async function AdminStatistiquesPage() {
   const admin = supabaseAdmin();
 
-  const { data: eleves } = await admin.from('profiles').select('*');
+  // Un élève peut avoir plusieurs abonnements actifs à la fois — ces
+  // compteurs comptent des ABONNEMENTS, pas des élèves distincts.
+  const { data: abonnements } = await admin.from('abonnements').select('categorie, formule_nom').eq('abonnement_actif', true);
   const { data: coursListe } = await admin.from('cours').select('*').eq('actif', true).order('semaine').order('jour_semaine');
   const { data: paiementsTous } = await admin.from('paiements').select('montant, created_at, paye, rembourse');
   const { data: reservationsTotales } = await admin.from('reservations').select('cours_id').eq('statut', 'confirmee');
 
-  const nbAbonnementsActifs = (eleves ?? []).filter((e) => e.abonnement_actif).length;
-  const nbActifsCollectif = (eleves ?? []).filter(
-    (e) => e.abonnement_actif && FORMULES[e.formule_nom ?? '']?.categorie === 'planning'
-  ).length;
-  const nbActifsCoaching = (eleves ?? []).filter(
-    (e) => e.abonnement_actif && FORMULES[e.formule_nom ?? '']?.categorie === 'coaching'
-  ).length;
+  const nbAbonnementsActifs = (abonnements ?? []).length;
+  const nbActifsCollectif = (abonnements ?? []).filter((a) => a.categorie === 'planning').length;
+  const nbActifsCoaching = (abonnements ?? []).filter((a) => a.categorie === 'coaching').length;
+  const nbActifsMentorat = (abonnements ?? []).filter((a) => a.categorie === 'mentorat').length;
 
   const eleveParFormule = new Map<string, number>();
-  for (const e of eleves ?? []) {
-    if (!e.abonnement_actif || !e.formule_nom) continue;
-    eleveParFormule.set(e.formule_nom, (eleveParFormule.get(e.formule_nom) ?? 0) + 1);
+  for (const a of abonnements ?? []) {
+    eleveParFormule.set(a.formule_nom, (eleveParFormule.get(a.formule_nom) ?? 0) + 1);
   }
 
   const reservationsParCours = new Map<string, number>();
@@ -83,7 +81,11 @@ export default async function AdminStatistiquesPage() {
         </div>
         <div style={{ border: '1px solid #333', borderRadius: 8, padding: 12, flex: '1 1 140px' }}>
           <p style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>{nbActifsCoaching}</p>
-          <p style={{ fontSize: 12, opacity: 0.7, margin: 0 }}>coaching / mentorship</p>
+          <p style={{ fontSize: 12, opacity: 0.7, margin: 0 }}>coaching individuel</p>
+        </div>
+        <div style={{ border: '1px solid #333', borderRadius: 8, padding: 12, flex: '1 1 140px' }}>
+          <p style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>{nbActifsMentorat}</p>
+          <p style={{ fontSize: 12, opacity: 0.7, margin: 0 }}>mentorat</p>
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 import { supabaseServer } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
 import { COULEURS, GRADIENT, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
-import { CLES_ACCES_MENTORAT, BRANCHES_MENTORAT } from '@/lib/formules';
+import { BRANCHES_MENTORAT } from '@/lib/formules';
 import { ajouterEntreeJournal, supprimerEntreeJournal } from './actions';
 
 export const dynamic = 'force-dynamic';
@@ -16,8 +16,14 @@ export default async function JournalPage({ searchParams }: { searchParams: { er
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const { data: profil } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-  const accesAutorise = CLES_ACCES_MENTORAT.includes(profil?.formule_nom ?? '') && profil?.abonnement_actif && !profil?.gele;
+  const { data: aboMentorat } = await supabase
+    .from('abonnements')
+    .select('gele')
+    .eq('eleve_id', user.id)
+    .eq('categorie', 'mentorat')
+    .eq('abonnement_actif', true)
+    .maybeSingle();
+  const accesAutorise = !!aboMentorat && !aboMentorat.gele;
 
   if (!accesAutorise) {
     return (

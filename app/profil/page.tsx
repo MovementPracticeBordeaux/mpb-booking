@@ -1,5 +1,5 @@
 import { supabaseServer } from '@/lib/supabase-server';
-import { FORMULES, CLES_ACCES_MENTORAT } from '@/lib/formules';
+import { FORMULES } from '@/lib/formules';
 import { redirect } from 'next/navigation';
 import BoutonDeconnexion from '../components/BoutonDeconnexion';
 import NotificationsToggle from './NotificationsToggle';
@@ -7,14 +7,28 @@ import EmailPreferences from './EmailPreferences';
 
 export const dynamic = 'force-dynamic';
 
+const LIBELLE_CATEGORIE: Record<string, string> = {
+  planning: 'Cours collectifs',
+  coaching: 'Coaching individuel',
+  mentorat: 'Mentorat',
+};
+
 export default async function ProfilPage() {
   const supabase = supabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
   const { data: profil } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-  const formule = profil?.formule_nom ? FORMULES[profil.formule_nom] : null;
-  const estCoaching = formule?.categorie === 'coaching';
+
+  // Un élève peut avoir plusieurs abonnements actifs en même temps (une
+  // catégorie chacun) : un pass collectif, un coaching, un mentorat — ou
+  // n'importe quelle combinaison des trois.
+  const { data: abonnements } = await supabase
+    .from('abonnements')
+    .select('*')
+    .eq('eleve_id', user.id)
+    .eq('abonnement_actif', true)
+    .order('categorie');
 
   return (
     <main style={{ maxWidth: 480, margin: '0 auto', padding: 20 }}>
@@ -46,43 +60,58 @@ export default async function ProfilPage() {
         }}
       />
 
-      <h2 style={{ fontSize: 16, opacity: 0.7, marginTop: 24 }}>Mon abonnement</h2>
-      {!formule || !profil?.abonnement_actif ? (
+      <h2 style={{ fontSize: 16, opacity: 0.7, marginTop: 24 }}>
+        {(abonnements?.length ?? 0) > 1 ? 'Mes abonnements' : 'Mon abonnement'}
+      </h2>
+      {!abonnements || abonnements.length === 0 ? (
         <p>
           Tu n'as pas de formule active pour le moment. Rends-toi sur{' '}
           <a href="/tarifs" style={{ color: '#f0a' }}>la page tarifs</a> pour en choisir une.
         </p>
-      ) : profil.gele ? (
-        <p>❄️ Ton pass est actuellement gelé. Contacte Sylvain pour le débloquer.</p>
       ) : (
-        <div style={{ border: '1px solid #333', borderRadius: 8, padding: 16, marginBottom: 20 }}>
-          <h3 style={{ margin: '0 0 4px' }}>{formule.nom}</h3>
-          <p style={{ fontSize: 13, opacity: 0.7, margin: 0 }}>
-            {formule.quota
-              ? `${profil.quota_restant} ${formule.unite}${profil.quota_restant > 1 ? 's' : ''} restantes sur ${profil.quota_total}`
-              : 'Accès illimité'}
-            {' · '}valable jusqu'au {profil.date_expiration}
-          </p>
-          {estCoaching && (
-            <>
-              <p style={{ marginTop: 16, marginBottom: 4 }}>Pour caler ton créneau, contacte directement Sylvain :</p>
-              <a
-                href="mailto:contact@movementpracticebordeaux.com?subject=Caler%20mon%20créneau%20coaching"
-                style={{ display: 'inline-block', marginTop: 4, padding: '10px 16px', background: '#f0a', color: 'white', borderRadius: 6, textDecoration: 'none' }}
-              >
-                M'écrire pour caler un créneau
-              </a>
-            </>
-          )}
-          {CLES_ACCES_MENTORAT.includes(profil.formule_nom) && (
-            <a
-              href="/mentorship"
-              style={{ display: 'inline-block', marginTop: 16, padding: '10px 16px', background: '#f0a', color: 'white', borderRadius: 6, textDecoration: 'none' }}
-            >
-              Accéder à mon Mentorat →
-            </a>
-          )}
-        </div>
+        abonnements.map((abo) => {
+          const formule = FORMULES[abo.formule_nom];
+          if (!formule) return null;
+          return (
+            <div key={abo.id} style={{ border: '1px solid #333', borderRadius: 8, padding: 16, marginBottom: 12 }}>
+              <p style={{ fontSize: 11, letterSpacing: 1, opacity: 0.5, margin: '0 0 6px', textTransform: 'uppercase' }}>
+                {LIBELLE_CATEGORIE[abo.categorie] ?? abo.categorie}
+              </p>
+              {abo.gele ? (
+                <p style={{ margin: 0 }}>❄️ Ce pass est actuellement gelé. Contacte Sylvain pour le débloquer.</p>
+              ) : (
+                <>
+                  <h3 style={{ margin: '0 0 4px' }}>{formule.nom}</h3>
+                  <p style={{ fontSize: 13, opacity: 0.7, margin: 0 }}>
+                    {formule.quota
+                      ? `${abo.quota_restant} ${formule.unite}${abo.quota_restant > 1 ? 's' : ''} restantes sur ${abo.quota_total}`
+                      : 'Accès illimité'}
+                    {' · '}valable jusqu'au {abo.date_expiration}
+                  </p>
+                  {abo.categorie === 'coaching' && (
+                    <>
+                      <p style={{ marginTop: 16, marginBottom: 4 }}>Pour caler ton créneau, contacte directement Sylvain :</p>
+                      <a
+                        href="mailto:contact@movementpracticebordeaux.com?subject=Caler%20mon%20créneau%20coaching"
+                        style={{ display: 'inline-block', marginTop: 4, padding: '10px 16px', background: '#f0a', color: 'white', borderRadius: 6, textDecoration: 'none' }}
+                      >
+                        M'écrire pour caler un créneau
+                      </a>
+                    </>
+                  )}
+                  {abo.categorie === 'mentorat' && (
+                    <a
+                      href="/mentorship"
+                      style={{ display: 'inline-block', marginTop: 16, padding: '10px 16px', background: '#f0a', color: 'white', borderRadius: 6, textDecoration: 'none' }}
+                    >
+                      Accéder à mon Mentorat →
+                    </a>
+                  )}
+                </>
+              )}
+            </div>
+          );
+        })
       )}
 
       <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 24, flexWrap: 'wrap' }}>

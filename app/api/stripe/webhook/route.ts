@@ -50,7 +50,19 @@ export async function POST(req: NextRequest) {
       const expiration = new Date(dateDebut);
       expiration.setMonth(expiration.getMonth() + formule.validiteMois);
 
-      await admin.from('profiles').update({
+      // Un élève ne peut avoir qu'un seul abonnement ACTIF par catégorie
+      // (planning / coaching / mentorat) — mais peut très bien avoir les
+      // trois en parallèle. On désactive l'éventuel abonnement actif de
+      // cette même catégorie avant d'insérer le nouveau.
+      await admin.from('abonnements')
+        .update({ abonnement_actif: false })
+        .eq('eleve_id', userId)
+        .eq('categorie', formule.categorie)
+        .eq('abonnement_actif', true);
+
+      await admin.from('abonnements').insert({
+        eleve_id: userId,
+        categorie: formule.categorie,
         formule_nom: formuleNom,
         quota_total: formule.quota,
         quota_restant: formule.quota,
@@ -59,8 +71,8 @@ export async function POST(req: NextRequest) {
         abonnement_actif: true,
         origine: 'stripe',
         paye: true,
-        stripe_customer_id: session.customer as string,
-      }).eq('id', userId);
+      });
+      await admin.from('profiles').update({ stripe_customer_id: session.customer as string }).eq('id', userId);
 
       // Historise le paiement pour que l'élève puisse générer sa facture.
       // stripe_session_id a une contrainte unique en base (voir

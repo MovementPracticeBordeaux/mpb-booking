@@ -1,7 +1,6 @@
 import { supabaseServer } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
 import { TRONC, BRANCHES, TOUS_LES_NOEUDS, STRUCTURE_SEANCE, noeudSansReponses, statutXP, xpGagneParNoeud, niveauGlobal, courbeXPParJour, estNoeudAcquisDepuisProgression, xpNoeudExercices, pourcentageFlammeNoeud, badgeEleve } from '@/lib/mentorship-modules';
-import { CLES_ACCES_MENTORAT } from '@/lib/formules';
 import { COULEURS, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
 import ArbreCompetences from './ArbreCompetences';
 
@@ -24,8 +23,17 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
   if (!user) redirect('/login');
 
   const { data: profil } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-  const accesAutorise = CLES_ACCES_MENTORAT.includes(profil?.formule_nom ?? '')
-    && profil?.abonnement_actif && !profil?.gele;
+  // Accès conditionné à un abonnement de catégorie 'mentorat' actif — un
+  // élève peut très bien avoir ça EN PLUS d'un pass collectif ou d'un
+  // coaching, les trois catégories étant désormais indépendantes.
+  const { data: aboMentorat } = await supabase
+    .from('abonnements')
+    .select('gele')
+    .eq('eleve_id', user.id)
+    .eq('categorie', 'mentorat')
+    .eq('abonnement_actif', true)
+    .maybeSingle();
+  const accesAutorise = !!aboMentorat && !aboMentorat.gele;
 
   if (!accesAutorise) {
     return (

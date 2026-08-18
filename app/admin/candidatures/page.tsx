@@ -64,21 +64,24 @@ export default async function AdminCandidaturesPage({ searchParams }: { searchPa
   const candidatures = (candidaturesData ?? []) as Candidature[];
 
   // Pour chaque candidature, on regarde si un compte existe déjà avec cet
-  // email (comparaison insensible à la casse), et s'il a déjà une formule
-  // Mentorat active — pour savoir en un coup d'œil quoi faire ensuite.
+  // email (comparaison insensible à la casse), et s'il a déjà un abonnement
+  // Mentorat actif — pour savoir en un coup d'œil quoi faire ensuite.
   const emails = candidatures.map((c) => c.email.toLowerCase());
   const { data: profilsData } = emails.length
-    ? await admin.from('profiles').select('email, formule_nom, abonnement_actif').in('email', emails)
+    ? await admin.from('profiles').select('id, email').in('email', emails)
     : { data: [] };
-  const profilParEmail = new Map(
-    (profilsData ?? []).map((p: any) => [p.email?.toLowerCase(), p])
-  );
+  const idParEmail = new Map((profilsData ?? []).map((p: any) => [p.email?.toLowerCase(), p.id as string]));
+
+  const idsCandidats = [...idParEmail.values()];
+  const { data: abosMentoratData } = idsCandidats.length
+    ? await admin.from('abonnements').select('eleve_id').eq('categorie', 'mentorat').eq('abonnement_actif', true).in('eleve_id', idsCandidats)
+    : { data: [] };
+  const idsAvecMentoratActif = new Set((abosMentoratData ?? []).map((a) => a.eleve_id));
 
   function infoCompte(email: string): { aUnCompte: boolean; aDejaUneFormule: boolean } {
-    const p = profilParEmail.get(email.toLowerCase());
-    if (!p) return { aUnCompte: false, aDejaUneFormule: false };
-    const formule = p.formule_nom ? FORMULES[p.formule_nom] : null;
-    return { aUnCompte: true, aDejaUneFormule: !!(formule?.categorie === 'coaching' && p.abonnement_actif) };
+    const id = idParEmail.get(email.toLowerCase());
+    if (!id) return { aUnCompte: false, aDejaUneFormule: false };
+    return { aUnCompte: true, aDejaUneFormule: idsAvecMentoratActif.has(id) };
   }
 
   const nouvelles = candidatures.filter((c) => c.statut === 'nouvelle');

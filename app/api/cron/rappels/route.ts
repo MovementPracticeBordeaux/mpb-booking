@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-server';
 import { envoyerEmail } from '@/lib/resend';
 import { envoyerPushAEleve } from '@/lib/push';
-import { degelerProfil } from '@/app/admin/actions';
+import { degelerAbonnement } from '@/app/admin/actions';
 import { alerterAdmin } from '@/lib/alerte-admin';
 
 // Appelée automatiquement une fois par jour par Vercel Cron (voir vercel.json).
@@ -16,20 +16,23 @@ export async function GET(req: NextRequest) {
   try {
     const admin = supabaseAdmin();
 
-    // Dégel automatique des pass dont la date de reprise prévue est atteinte
-    // (planifiée depuis l'admin lors du gel). Fait en premier, avant les
-    // rappels, pour rester indépendant en cas d'échec des rappels eux-mêmes.
+    // Dégel automatique des abonnements dont la date de reprise prévue est
+    // atteinte (planifiée depuis l'admin lors du gel). Fait en premier,
+    // avant les rappels, pour rester indépendant en cas d'échec des
+    // rappels eux-mêmes. Un élève peut avoir plusieurs abonnements gelés
+    // en parallèle (ex. planning ET coaching) — chacun est dégelé
+    // indépendamment.
     const aujourdhui = new Date().toISOString().slice(0, 10);
     const { data: aDegeler } = await admin
-      .from('profiles')
+      .from('abonnements')
       .select('id')
       .eq('gele', true)
       .not('date_fin_gel_prevue', 'is', null)
       .lte('date_fin_gel_prevue', aujourdhui);
 
     let degeles = 0;
-    for (const profil of aDegeler ?? []) {
-      const resultat = await degelerProfil(profil.id);
+    for (const abo of aDegeler ?? []) {
+      const resultat = await degelerAbonnement(abo.id);
       if (resultat.ok) degeles++;
     }
 

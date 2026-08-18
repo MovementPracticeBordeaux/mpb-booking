@@ -157,26 +157,26 @@ export async function annulerReservation(formData: FormData) {
     return;
   }
 
-  const { data: profil } = await supabase
-    .from('profiles')
-    .select('formule_nom, quota_restant')
-    .eq('id', user.id)
-    .single();
+  const { data: abo } = await supabase
+    .from('abonnements')
+    .select('id, formule_nom, quota_restant')
+    .eq('eleve_id', user.id)
+    .eq('categorie', 'planning')
+    .eq('abonnement_actif', true)
+    .maybeSingle();
 
-  if (profil && profil.formule_nom !== 'illimite' && profil.quota_restant != null) {
+  if (abo && abo.formule_nom !== 'illimite' && abo.quota_restant != null) {
     // Écriture volontairement faite avec le client admin plutôt que la
-    // session de l'élève : la policy RLS "profil_update_own" autorise à
-    // modifier N'IMPORTE QUELLE colonne de sa propre fiche (pas seulement
-    // quota_restant). En écrivant via la session utilisateur ici, on
-    // s'appuierait sur cette policy trop permissive pour une opération
-    // sensible — un élève pourrait sinon s'auto-attribuer un abonnement en
-    // modifiant sa fiche directement depuis le navigateur. Le client admin
-    // ignore RLS et ne fait que ce que ce code précis autorise.
+    // session de l'élève : la policy RLS sur abonnements n'autorise que la
+    // LECTURE côté élève (pas l'update) — un élève ne doit jamais pouvoir
+    // s'auto-modifier son propre quota en manipulant le client depuis le
+    // navigateur. Le client admin ignore RLS et ne fait que ce que ce code
+    // précis autorise.
     const admin = supabaseAdmin();
     await admin
-      .from('profiles')
-      .update({ quota_restant: profil.quota_restant + 1 })
-      .eq('id', user.id);
+      .from('abonnements')
+      .update({ quota_restant: abo.quota_restant + 1 })
+      .eq('id', abo.id);
   }
 
   revalidatePath('/planning');

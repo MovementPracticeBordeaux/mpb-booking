@@ -267,7 +267,20 @@ export async function attribuerFormule(formData: FormData) {
   expiration.setMonth(expiration.getMonth() + formule.validiteMois);
   const aujourdhui = new Date().toISOString().slice(0, 10);
 
-  const { error } = await admin.from('profiles').update({
+  // Un élève ne peut avoir qu'un seul abonnement ACTIF par catégorie
+  // (planning / coaching / mentorat) à la fois — mais peut très bien avoir
+  // les trois en parallèle. Si un abonnement de cette catégorie précise est
+  // déjà actif, on le désactive avant d'insérer le nouveau plutôt que
+  // d'échouer sur la contrainte d'unicité.
+  await admin.from('abonnements')
+    .update({ abonnement_actif: false })
+    .eq('eleve_id', eleveId)
+    .eq('categorie', formule.categorie)
+    .eq('abonnement_actif', true);
+
+  const { error } = await admin.from('abonnements').insert({
+    eleve_id: eleveId,
+    categorie: formule.categorie,
     formule_nom: formuleNom,
     quota_total: formule.quota,
     quota_restant: formule.quota,
@@ -276,7 +289,7 @@ export async function attribuerFormule(formData: FormData) {
     abonnement_actif: true,
     origine: 'manuel',
     paye,
-  }).eq('id', eleveId);
+  });
   if (error) echouer('/admin/eleves', error.message);
 
   // Historise le paiement (ou le don) pour que l'élève puisse générer sa facture
@@ -294,32 +307,35 @@ export async function attribuerFormule(formData: FormData) {
 }
 
 
-// d'heures (ou l'unité) consommées sur le pass de l'élève.
+// Corrige directement le nombre de séances/heures restantes (erreur, geste
+// commercial, séance rattrapée...) — fonctionne aussi bien pour les cours
+// collectifs que pour le coaching, puisque les deux utilisent quota_restant.
 export async function decompterCoaching(formData: FormData) {
   await verifierAdmin();
   const admin = supabaseAdmin();
-  const eleveId = formData.get('eleve_id') as string;
+  const abonnementId = formData.get('abonnement_id') as string;
   const quantite = Number(formData.get('quantite'));
 
-  const { data: profil } = await admin.from('profiles').select('quota_restant').eq('id', eleveId).single();
-  if (!profil || profil.quota_restant == null) echouer('/admin/eleves', 'Pas de quota à décompter pour cet élève.');
-  if (profil.quota_restant < quantite) echouer('/admin/eleves', 'Quantité supérieure au quota restant.');
+  const { data: abo } = await admin.from('abonnements').select('quota_restant').eq('id', abonnementId).single();
+  if (!abo || abo.quota_restant == null) echouer('/admin/eleves', 'Pas de quota à décompter pour cet abonnement.');
+  if (abo.quota_restant < quantite) echouer('/admin/eleves', 'Quantité supérieure au quota restant.');
 
-  const { error } = await admin.from('profiles')
-    .update({ quota_restant: profil.quota_restant - quantite })
-    .eq('id', eleveId);
+  const { error } = await admin.from('abonnements')
+    .update({ quota_restant: abo.quota_restant - quantite })
+    .eq('id', abonnementId);
   if (error) echouer('/admin/eleves', error.message);
 
   revalidatePath('/admin/eleves');
   reussir('/admin/eleves', 'Quota décompté.');
 }
 
-// Coupe l'accès d'un élève de façon définitive (résiliation, formule terminée)
+// Coupe l'accès d'un abonnement précis de façon définitive (résiliation,
+// formule terminée) — ne touche pas aux autres abonnements de l'élève.
 export async function suspendreAcces(formData: FormData) {
   await verifierAdmin();
   const admin = supabaseAdmin();
-  const eleveId = formData.get('eleve_id') as string;
-  const { error } = await admin.from('profiles').update({ abonnement_actif: false }).eq('id', eleveId);
+  const abonnementId = formData.get('abonnement_id') as string;
+  const { error } = await admin.from('abonnements').update({ abonnement_actif: false }).eq('id', abonnementId);
   if (error) echouer('/admin/eleves', error.message);
   revalidatePath('/admin/eleves');
   reussir('/admin/eleves', 'Accès suspendu.');
@@ -331,47 +347,48 @@ export async function suspendreAcces(formData: FormData) {
 export async function modifierQuotaRestant(formData: FormData) {
   await verifierAdmin();
   const admin = supabaseAdmin();
-  const eleveId = formData.get('eleve_id') as string;
+  const abonnementId = formData.get('abonnement_id') as string;
   const nouveauQuota = Number(formData.get('quota_restant'));
-  const { error } = await admin.from('profiles').update({ quota_restant: nouveauQuota }).eq('id', eleveId);
+  const { error } = await admin.from('abonnements').update({ quota_restant: nouveauQuota }).eq('id', abonnementId);
   if (error) echouer('/admin/eleves', error.message);
   revalidatePath('/admin/eleves');
   reussir('/admin/eleves', 'Quota mis à jour.');
 }
 
-// Corrige directement la date de validité du pass
+// Corrige directement la date de validité d'un abonnement précis
 export async function modifierExpiration(formData: FormData) {
   await verifierAdmin();
   const admin = supabaseAdmin();
-  const eleveId = formData.get('eleve_id') as string;
+  const abonnementId = formData.get('abonnement_id') as string;
   const nouvelleDate = formData.get('date_expiration') as string;
-  const { error } = await admin.from('profiles').update({ date_expiration: nouvelleDate }).eq('id', eleveId);
+  const { error } = await admin.from('abonnements').update({ date_expiration: nouvelleDate }).eq('id', abonnementId);
   if (error) echouer('/admin/eleves', error.message);
   revalidatePath('/admin/eleves');
   reussir('/admin/eleves', 'Date d\'expiration mise à jour.');
 }
 
-// Gel temporaire (blessure, vacances...) : le pass reste attribué mais
-// devient inutilisable jusqu'au dégel.
+// Gel temporaire (blessure, vacances...) : l'abonnement reste attribué mais
+// devient inutilisable jusqu'au dégel. Les autres abonnements de l'élève
+// (autres catégories) ne sont pas affectés.
 export async function gelerPass(formData: FormData) {
   await verifierAdmin();
   const admin = supabaseAdmin();
-  const eleveId = formData.get('eleve_id') as string;
+  const abonnementId = formData.get('abonnement_id') as string;
   const dateFinGelPrevue = (formData.get('date_fin_gel_prevue') as string) || null;
-  const { error } = await admin.from('profiles').update({
+  const { error } = await admin.from('abonnements').update({
     gele: true,
     date_gel_debut: new Date().toISOString().slice(0, 10),
     // Optionnel : si une date de reprise est indiquée, le cron quotidien
     // dégèlera automatiquement le pass ce jour-là (voir
     // app/api/cron/rappels/route.ts) — sinon dégel manuel comme avant.
     date_fin_gel_prevue: dateFinGelPrevue,
-  }).eq('id', eleveId);
+  }).eq('id', abonnementId);
   if (error) echouer('/admin/eleves', error.message);
   revalidatePath('/admin/eleves');
   reussir('/admin/eleves', 'Pass gelé.');
 }
 
-// Corrige/renseigne la date de reprise d'un pass déjà gelé, sans le
+// Corrige/renseigne la date de reprise d'un abonnement déjà gelé, sans le
 // re-geler (contrairement à gelerPass qui réinitialiserait date_gel_debut
 // à aujourd'hui). Sert notamment pour les pass gelés importés de l'ancien
 // site, sans date de reprise connue au moment de l'import : une fois cette
@@ -380,49 +397,52 @@ export async function gelerPass(formData: FormData) {
 export async function definirDateReprise(formData: FormData) {
   await verifierAdmin();
   const admin = supabaseAdmin();
-  const eleveId = formData.get('eleve_id') as string;
+  const abonnementId = formData.get('abonnement_id') as string;
   const dateFinGelPrevue = (formData.get('date_fin_gel_prevue') as string) || null;
-  const { error } = await admin.from('profiles').update({
+  const { error } = await admin.from('abonnements').update({
     date_fin_gel_prevue: dateFinGelPrevue,
-  }).eq('id', eleveId).eq('gele', true);
+  }).eq('id', abonnementId).eq('gele', true);
   if (error) echouer('/admin/eleves', error.message);
   revalidatePath('/admin/eleves');
   reussir('/admin/eleves', 'Date de reprise mise à jour.');
 }
 
 // Dégel : prolonge automatiquement la date de validité du nombre de jours
-// pendant lesquels le pass est resté gelé (comme sur le site actuel).
+// pendant lesquels l'abonnement est resté gelé (comme sur le site actuel).
 // Factorisée pour être réutilisée par le dégel manuel (bouton admin) et par
 // le dégel automatique planifié (cron quotidien, voir api/cron/rappels).
-export async function degelerProfil(eleveId: string): Promise<{ ok: boolean; erreur?: string }> {
+// Cible un abonnement précis (abonnementId) plutôt qu'un élève : depuis la
+// refonte multi-abonnements, un élève peut avoir plusieurs abonnements
+// actifs (planning/coaching/mentorat), chacun se gèle/dégèle indépendamment.
+export async function degelerAbonnement(abonnementId: string): Promise<{ ok: boolean; erreur?: string }> {
   const admin = supabaseAdmin();
 
-  const { data: profil } = await admin.from('profiles')
+  const { data: abo } = await admin.from('abonnements')
     .select('date_gel_debut, date_expiration')
-    .eq('id', eleveId)
+    .eq('id', abonnementId)
     .single();
-  if (!profil?.date_gel_debut) return { ok: false, erreur: "Ce pass n'est pas gelé." };
+  if (!abo?.date_gel_debut) return { ok: false, erreur: "Cet abonnement n'est pas gelé." };
 
-  const debutGel = new Date(profil.date_gel_debut);
+  const debutGel = new Date(abo.date_gel_debut);
   const joursGeles = Math.max(0, Math.round((Date.now() - debutGel.getTime()) / (1000 * 60 * 60 * 24)));
 
-  const nouvelleExpiration = new Date(profil.date_expiration ?? new Date());
+  const nouvelleExpiration = new Date(abo.date_expiration ?? new Date());
   nouvelleExpiration.setDate(nouvelleExpiration.getDate() + joursGeles);
 
-  const { error } = await admin.from('profiles').update({
+  const { error } = await admin.from('abonnements').update({
     gele: false,
     date_gel_debut: null,
     date_fin_gel_prevue: null,
     date_expiration: nouvelleExpiration.toISOString().slice(0, 10),
-  }).eq('id', eleveId);
+  }).eq('id', abonnementId);
 
   return error ? { ok: false, erreur: error.message } : { ok: true };
 }
 
 export async function degelerPass(formData: FormData) {
   await verifierAdmin();
-  const eleveId = formData.get('eleve_id') as string;
-  const resultat = await degelerProfil(eleveId);
+  const abonnementId = formData.get('abonnement_id') as string;
+  const resultat = await degelerAbonnement(abonnementId);
   if (!resultat.ok) echouer('/admin/eleves', resultat.erreur ?? 'Erreur inconnue.');
   revalidatePath('/admin/eleves');
   reussir('/admin/eleves', 'Pass dégelé.');
@@ -454,15 +474,18 @@ export async function rembourserPaiement(formData: FormData) {
   if (error) echouer('/admin/eleves', error.message);
 
   // Le remboursement n'annule pas automatiquement l'accès de l'élève tant
-  // qu'on ne le fait pas explicitement ici : si sa formule actuelle est
-  // justement celle qu'on vient de rembourser, on coupe l'accès.
-  const { data: profilEleve } = await admin
-    .from('profiles')
-    .select('formule_nom, abonnement_actif')
-    .eq('id', paiement.eleve_id)
-    .single();
-  if (profilEleve?.abonnement_actif && profilEleve.formule_nom === paiement.formule_nom) {
-    await admin.from('profiles').update({ abonnement_actif: false }).eq('id', paiement.eleve_id);
+  // qu'on ne le fait pas explicitement ici : si l'abonnement actif de la
+  // même catégorie correspond justement à la formule qu'on vient de
+  // rembourser, on coupe cet abonnement précis (sans toucher aux autres
+  // catégories que l'élève pourrait avoir en parallèle).
+  const categorie = FORMULES[paiement.formule_nom]?.categorie;
+  if (categorie) {
+    await admin.from('abonnements')
+      .update({ abonnement_actif: false })
+      .eq('eleve_id', paiement.eleve_id)
+      .eq('categorie', categorie)
+      .eq('formule_nom', paiement.formule_nom)
+      .eq('abonnement_actif', true);
   }
 
   revalidatePath('/admin/eleves');
