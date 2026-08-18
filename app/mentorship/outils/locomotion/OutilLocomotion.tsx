@@ -19,7 +19,6 @@ function chargerMouvements(): Mouvement[] {
 
 export default function OutilLocomotion() {
   const [mouvements, setMouvements] = useState<Mouvement[]>([]);
-  const [chiffre, setChiffre] = useState('');
   const [nom, setNom] = useState('');
   const [longueur, setLongueur] = useState(6);
   const [sequence, setSequence] = useState<Mouvement[]>([]);
@@ -39,34 +38,44 @@ export default function OutilLocomotion() {
   }
 
   function ajouterMouvement() {
-    if (!chiffre.trim() || !nom.trim()) return;
-    if (mouvements.some((m) => m.chiffre === chiffre.trim())) return;
-    sauvegarder([...mouvements, { chiffre: chiffre.trim(), nom: nom.trim() }]);
-    setChiffre('');
+    if (!nom.trim()) return;
+    const prochainChiffre = String(mouvements.length + 1);
+    sauvegarder([...mouvements, { chiffre: prochainChiffre, nom: nom.trim() }]);
     setNom('');
   }
 
   function supprimerMouvement(c: string) {
-    sauvegarder(mouvements.filter((m) => m.chiffre !== c));
+    // Retire le mouvement puis renumérote le reste en séquence (1, 2, 3…)
+    // pour ne jamais avoir de trou ni de doublon de numéro.
+    const restants = mouvements.filter((m) => m.chiffre !== c);
+    sauvegarder(restants.map((m, i) => ({ ...m, chiffre: String(i + 1) })));
+  }
+
+  function melanger<T>(liste: T[]): T[] {
+    const copie = [...liste];
+    for (let i = copie.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copie[i], copie[j]] = [copie[j], copie[i]];
+    }
+    return copie;
   }
 
   function tirerSequence() {
     if (mouvements.length === 0) return;
+    // Enchaîne des paquets mélangés (chacun = tous les mouvements, une
+    // seule fois) : garantit qu'aucun mouvement ne revient avant que tous
+    // les autres soient passés, et qu'il n'y a jamais de répétition d'un
+    // paquet à l'autre non plus.
     const tirage: Mouvement[] = [];
-    for (let i = 0; i < longueur; i++) {
-      // Évite de tirer deux fois le même mouvement d'affilée (sauf s'il n'y
-      // a qu'un seul mouvement disponible, auquel cas pas le choix).
-      let choix = mouvements[Math.floor(Math.random() * mouvements.length)];
-      if (mouvements.length > 1) {
-        let tentatives = 0;
-        while (tirage.length > 0 && choix.chiffre === tirage[tirage.length - 1].chiffre && tentatives < 20) {
-          choix = mouvements[Math.floor(Math.random() * mouvements.length)];
-          tentatives++;
-        }
+    while (tirage.length < longueur) {
+      let paquet = melanger(mouvements);
+      if (tirage.length > 0 && paquet[0].chiffre === tirage[tirage.length - 1].chiffre && mouvements.length > 1) {
+        // évite la jonction "dernier du paquet précédent == premier du nouveau"
+        [paquet[0], paquet[1]] = [paquet[1], paquet[0]];
       }
-      tirage.push(choix);
+      tirage.push(...paquet);
     }
-    setSequence(tirage);
+    setSequence(tirage.slice(0, longueur));
   }
 
   function jouerClic() {
@@ -139,7 +148,6 @@ export default function OutilLocomotion() {
         )}
 
         <div style={{ display: 'flex', gap: 8 }}>
-          <input type="text" value={chiffre} onChange={(e) => setChiffre(e.target.value)} placeholder="N°" style={{ ...champStyle, width: 60 }} />
           <input type="text" value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Nom du mouvement" style={{ ...champStyle, flexGrow: 1 }} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); ajouterMouvement(); } }} />
           <button type="button" onClick={ajouterMouvement} style={{ fontSize: 13, padding: '9px 16px', borderRadius: 999, border: `1px solid ${COULEURS.bordure}`, background: 'transparent', color: COULEURS.texteAtt, cursor: 'pointer' }}>
             Ajouter

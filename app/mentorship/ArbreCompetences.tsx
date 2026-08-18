@@ -305,6 +305,15 @@ export default function ArbreCompetences({
   const [reponsesQCM, setReponsesQCM] = useState<Record<string, number>>({});
   const [onglet, setOnglet] = useState<Onglet>('arbre');
   const [apercu, setApercu] = useState<'reel' | 'tronc-1' | 'tronc-complet' | 'branches-en-cours'>('reel');
+  // Aperçu (admin) de l'accès par formule — indépendant de l'aperçu de
+  // progression ci-dessus. Permet de tester visuellement le verrouillage
+  // des branches non incluses dans une formule, sans avoir à s'attribuer
+  // réellement une formule différente depuis /admin/eleves à chaque fois.
+  const [apercuAcces, setApercuAcces] = useState<'reel' | 'toutes' | '1branche' | '2branches'>('reel');
+  const branchesEffectives: Domaine[] | null =
+    estAdmin && apercuAcces !== 'reel'
+      ? apercuAcces === 'toutes' ? null : apercuAcces === '1branche' ? ['force'] : ['force', 'locomotion']
+      : (branchesAutorisees ?? null);
 
   const NOEUD_ACQUIS: Progression = { module_id: '', statut: 'acquis', quiz_reussi: true, quiz_score: 100, video_url: null, commentaire_coach: null };
 
@@ -362,8 +371,8 @@ export default function ArbreCompetences({
   // ou si elle figure explicitement dans sa liste de branches achetées.
   function brancheIncluse(domaine: DomaineOuTronc): boolean {
     if (domaine === 'tronc') return true;
-    if (!branchesAutorisees) return true;
-    return branchesAutorisees.includes(domaine as Domaine);
+    if (!branchesEffectives) return true;
+    return branchesEffectives.includes(domaine as Domaine);
   }
 
   function estDeverrouille(noeud: NoeudMentorshipPublic): boolean {
@@ -448,8 +457,8 @@ export default function ArbreCompetences({
       <MenuOnglets actif={onglet} onChange={setOnglet} />
 
       {estAdmin && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 20, padding: '8px 12px', border: `1px dashed ${COULEURS.bordure}`, borderRadius: 8 }}>
-          <span style={{ fontSize: 11, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 0.5 }}>Aperçu (admin) :</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 12, padding: '8px 12px', border: `1px dashed ${COULEURS.bordure}`, borderRadius: 8 }}>
+          <span style={{ fontSize: 11, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 0.5 }}>Aperçu progression (admin) :</span>
           {([
             ['reel', 'Réel'],
             ['tronc-1', 'Tronc niveau 1'],
@@ -464,6 +473,31 @@ export default function ArbreCompetences({
                 border: `1px solid ${apercu === id ? '#ff00aa' : COULEURS.bordure}`,
                 background: apercu === id ? 'rgba(255,0,170,0.12)' : 'transparent',
                 color: apercu === id ? '#ff00aa' : COULEURS.texteFaible,
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {estAdmin && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 20, padding: '8px 12px', border: `1px dashed ${COULEURS.bordure}`, borderRadius: 8 }}>
+          <span style={{ fontSize: 11, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 0.5 }}>Aperçu accès formule (admin) :</span>
+          {([
+            ['reel', 'Réel (ma vraie formule)'],
+            ['toutes', 'Toutes les branches'],
+            ['1branche', '1 branche (Force)'],
+            ['2branches', '2 branches (Force + Locomotion)'],
+          ] as const).map(([id, label]) => (
+            <button
+              key={id}
+              onClick={() => setApercuAcces(id)}
+              style={{
+                fontSize: 11, padding: '4px 10px', borderRadius: 999, cursor: 'pointer',
+                border: `1px solid ${apercuAcces === id ? '#ff8a00' : COULEURS.bordure}`,
+                background: apercuAcces === id ? 'rgba(255,138,0,0.12)' : 'transparent',
+                color: apercuAcces === id ? '#ff8a00' : COULEURS.texteFaible,
               }}
             >
               {label}
