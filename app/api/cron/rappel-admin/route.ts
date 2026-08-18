@@ -33,8 +33,12 @@ function maintenantParisNaif(): Date {
 }
 
 export async function GET(req: NextRequest) {
+  // Secret dédié (distinct de CRON_SECRET, utilisé par les cron natifs
+  // Vercel) : cette route est appelée depuis l'extérieur par un workflow
+  // GitHub Actions programmé toutes les 15 min, pas par Vercel Cron
+  // lui-même (limité à 1x/jour sur le plan Hobby).
   const authHeader = req.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (authHeader !== `Bearer ${process.env.RAPPEL_ADMIN_SECRET}`) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
   }
 
