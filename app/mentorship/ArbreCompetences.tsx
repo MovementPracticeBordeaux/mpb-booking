@@ -79,6 +79,7 @@ function metaPour(statut: StatutAffiche, couleurBranche: string) {
 const OUTIL_PAR_BRANCHE: Partial<Record<Domaine, { href: string; label: string }>> = {
   force: { href: '/mentorship/outils/force', label: 'Outil Force — EMOM + compteur reps/sets' },
   locomotion: { href: '/mentorship/outils/locomotion', label: 'Outil Locomotion — combinaisons + métronome' },
+  figures: { href: '/mentorship/outils/figures', label: 'Outil Figures — chrono de tenue + récupération' },
 };
 
 // Section repliable simple, utilisée dans le panneau accordéon de la vue chemin.
