@@ -22,6 +22,7 @@ import {
 } from '@/lib/mentorship-modules';
 import { COULEURS, POLICE_DISPLAY, POLICE_CORPS } from '@/lib/theme';
 import { soumettreVideo, repondreQCM, validerDefiQuotidien, soumettreVideoExercice } from './actions';
+import ChecklistNoeud from './ChecklistNoeud';
 
 type Progression = {
   module_id: string;
@@ -1130,7 +1131,10 @@ function PanneauNoeud({
 
       {statut === 'locked' ? (
         <p style={{ color: COULEURS.texteFaible, fontSize: 13, marginTop: 8 }}>🔒 Ce niveau est encore verrouillé.</p>
-      ) : aDesExercices ? (
+      ) : (
+        <>
+        {!estAdmin && statut !== 'acquis' && <ChecklistNoeud noeudId={noeud.id} />}
+        {aDesExercices ? (
         <>
           <p style={{ color: COULEURS.texteAtt, fontSize: 14, lineHeight: 1.6, marginTop: 8 }}>{noeud.resume}</p>
           {!noeud.contenuDefini && (
@@ -1249,6 +1253,8 @@ function PanneauNoeud({
               )}
             </div>
           )}
+        </>
+      )}
         </>
       )}
     </FeuilleModale>
