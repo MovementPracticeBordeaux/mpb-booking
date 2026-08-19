@@ -185,8 +185,11 @@ export async function creerEleve(formData: FormData) {
 // Réserve une séance datée pour le compte d'un élève, depuis l'admin —
 // réutilise exactement le même RPC atomique que la réservation côté élève
 // (reserver_creneau), donc les mêmes règles s'appliquent (quota, gel,
-// expiration, 1h30 avant le cours...). Pratique pour un élève qui réserve
-// en direct au studio, ou pour corriger un oubli.
+// expiration), à une exception près : l'admin peut réserver même à moins
+// de 1h30 du début (ou après le début) via p_ignorer_delai, contrairement
+// à un élève qui réserve lui-même (reserverCours n'active jamais ce
+// contournement). Utile pour un élève qui arrive en dernière minute au
+// studio, ou pour corriger un oubli après coup.
 export async function reserverCoursPourEleve(formData: FormData) {
   await verifierAdmin();
   const admin = supabaseAdmin();
@@ -200,6 +203,7 @@ export async function reserverCoursPourEleve(formData: FormData) {
     p_eleve_id: eleveId,
     p_cours_id: coursId,
     p_date_seance: dateSeance,
+    p_ignorer_delai: true,
   });
   if (error) echouer('/admin/planning', error.message);
 
@@ -209,7 +213,6 @@ export async function reserverCoursPourEleve(formData: FormData) {
     expire: 'Le pass de cet élève a expiré.',
     quota_epuise: 'Le quota de cet élève est épuisé.',
     deja_reserve: 'Cet élève a déjà réservé cette séance.',
-    trop_tard: 'Moins de 1h30 avant le début — réserve-le manuellement en ajustant le quota si besoin.',
   };
   if (resultat !== 'ok') echouer('/admin/planning', messages[resultat as string] ?? 'Réservation impossible.');
 
