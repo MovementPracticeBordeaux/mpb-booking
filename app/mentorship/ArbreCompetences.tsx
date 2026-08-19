@@ -25,6 +25,7 @@ import { soumettreVideo, repondreQCM, validerDefiQuotidien, soumettreVideoExerci
 import ChecklistNoeud from './ChecklistNoeud';
 import JournalDuNoeud from './JournalDuNoeud';
 import JournalComplet from './JournalComplet';
+import type { StatsProgression } from '@/lib/stats-progression';
 
 type Progression = {
   module_id: string;
@@ -267,6 +268,58 @@ const COURBE_EXEMPLE: { jour: string; xp: number }[] = [
   { jour: '13', xp: 420 }, { jour: '14', xp: 510 },
 ];
 
+// Petit graphique en barres pour le volume Force / temps de tenue Figures,
+// par semaine ou par mois — plus lisible qu'une courbe pour des totaux
+// discrets période par période.
+function BarresVolume({
+  points, formatValeur, formatPeriode, couleur,
+}: {
+  points: { periode: string; total: number }[];
+  formatValeur: (v: number) => string;
+  formatPeriode: (p: string) => string;
+  couleur: string;
+}) {
+  if (points.length === 0) {
+    return <p style={{ fontSize: 12, color: COULEURS.texteFaible }}>Pas encore de données pour cette période.</p>;
+  }
+  const max = Math.max(...points.map((p) => p.total), 1);
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 90 }}>
+      {points.map((p) => (
+        <div key={p.periode} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+          <span style={{ fontSize: 9, color: COULEURS.texteFaible }}>{p.total > 0 ? formatValeur(p.total) : ''}</span>
+          <div style={{
+            width: '100%', maxWidth: 28, borderRadius: '4px 4px 0 0',
+            height: Math.max(3, (p.total / max) * 56),
+            background: couleur, opacity: p.total > 0 ? 0.85 : 0.15,
+          }} />
+          <span style={{ fontSize: 9, color: COULEURS.texteFaible, whiteSpace: 'nowrap' }}>{formatPeriode(p.periode)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function mmss(totalSecondes: number): string {
+  const m = Math.floor(totalSecondes / 60);
+  const s = Math.floor(totalSecondes % 60);
+  return m > 0 ? `${m}min${s > 0 ? s : ''}` : `${s}s`;
+}
+
+// Petite liste classée (points forts/faibles) — nom + valeur affichée à droite.
+function ListeClassement({ items, couleur }: { items: { nom: string; valeur: string }[]; couleur: string }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      {items.map((it) => (
+        <div key={it.nom} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13 }}>
+          <span style={{ color: COULEURS.texte }}>{it.nom}</span>
+          <span style={{ color: couleur, fontWeight: 600, flexShrink: 0, marginLeft: 8 }}>{it.valeur}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function CourbeXP({ points }: { points: { jour: string; xp: number }[] }) {
   const exemple = points.length < 2;
   const recents = (exemple ? COURBE_EXEMPLE : points).slice(-14);
@@ -318,14 +371,15 @@ function CourbeXP({ points }: { points: { jour: string; xp: number }[] }) {
 
 // --- Petit menu d'onglets — pour du contenu qui n'est PAS déjà sur le
 // dashboard (le dashboard lui-même reste tout sur un seul écran) ----------
-type Onglet = 'arbre' | 'theorie' | 'validation' | 'seances' | 'journal' | 'outils';
+type Onglet = 'arbre' | 'theorie' | 'seances' | 'journal' | 'outils' | 'validation' | 'progression';
 const ONGLETS: { id: Onglet; label: string; icone: (c: string) => React.ReactNode }[] = [
   { id: 'arbre', label: 'Tableau de bord', icone: (c) => <path d="M12 2l3 6h-2l3 6h-2l3 6H7l3-6H8l3-6H9l3-6z" stroke={c} strokeWidth={1.6} fill="none" strokeLinejoin="round" /> },
   { id: 'theorie', label: 'Théorie', icone: (c) => <><path d="M4 5a2 2 0 012-2h9v18H6a2 2 0 01-2-2V5z" stroke={c} strokeWidth={2} fill="none" /><path d="M9 8h6M9 12h6" stroke={c} strokeWidth={1.6} strokeLinecap="round" /></> },
-  { id: 'validation', label: 'Validation', icone: (c) => <><rect x="3" y="6" width="18" height="13" rx="2" stroke={c} strokeWidth={2} fill="none" /><path d="M3 8l9 6 9-6" stroke={c} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" /></> },
   { id: 'seances', label: 'Séances', icone: (c) => <><rect x="4" y="5" width="16" height="15" rx="2" stroke={c} strokeWidth={2} fill="none" /><path d="M4 9h16M8 3v4M16 3v4" stroke={c} strokeWidth={2} strokeLinecap="round" /></> },
   { id: 'journal', label: 'Journal', icone: (c) => <><rect x="4" y="3" width="16" height="18" rx="2" stroke={c} strokeWidth={2} fill="none" /><path d="M8 8h8M8 12h8M8 16h5" stroke={c} strokeWidth={1.6} strokeLinecap="round" /></> },
   { id: 'outils', label: 'Outils', icone: (c) => <path d="M14.7 6.3a4 4 0 00-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 005.4-5.4l-2.3 2.3-2-2z" stroke={c} strokeWidth={1.6} fill="none" strokeLinejoin="round" /> },
+  { id: 'validation', label: 'Validation', icone: (c) => <><rect x="3" y="6" width="18" height="13" rx="2" stroke={c} strokeWidth={2} fill="none" /><path d="M3 8l9 6 9-6" stroke={c} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" /></> },
+  { id: 'progression', label: 'Progression', icone: (c) => <path d="M3 17l5-5 4 4 8-8M14 8h6v6" stroke={c} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" /> },
 ];
 
 function MenuOnglets({ actif, onChange }: { actif: Onglet; onChange: (o: Onglet) => void }) {
@@ -363,6 +417,7 @@ export default function ArbreCompetences({
   badge,
   defisValidesAujourdhui,
   courbeXP,
+  statsProgression,
   structureSeance,
   estAdmin,
   branchesAutorisees,
@@ -376,6 +431,7 @@ export default function ArbreCompetences({
   badge?: PalierFlamme;
   defisValidesAujourdhui: Set<string>;
   courbeXP: { jour: string; xp: number }[];
+  statsProgression: StatsProgression;
   structureSeance: readonly { etape: string; detail: string }[];
   estAdmin?: boolean;
   // Branches couvertes par la formule Mentorat de l'élève (ex. ['force',
@@ -891,22 +947,6 @@ export default function ArbreCompetences({
 
       {onglet === 'arbre' && !vueBranche && (
         <>
-          {/* Tes compétences (vignette compacte) + XP (compact, largeur fixe), comme sur le croquis */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12, marginBottom: 28 }}>
-            <div style={{ flex: '0 1 260px', background: FOND_CARTE, border: `1px solid ${BORDURE_CARTE}`, borderRadius: 12, padding: '12px 14px' }}>
-              <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 13, letterSpacing: 0.3, margin: '0 0 8px', color: COULEURS.texte }}>Tes compétences</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <LigneProgression compact label="Armure Organique" pourcentage={pourcentageTronc} couleur={COULEUR_TRONC} domaine="tronc" entrees={bilan.filter((b) => b.domaine === 'tronc')} />
-                {ORDRE_DOMAINES.map((d) => (
-                  <LigneProgression compact key={d} label={DOMAINE_LABELS[d]} pourcentage={pourcentageBranche(d)} couleur={DOMAINE_COULEURS[d]} domaine={d} entrees={bilan.filter((b) => b.domaine === d)} />
-                ))}
-              </div>
-            </div>
-            <div style={{ flex: '0 1 190px' }}>
-              <EnTeteXP xpTotal={xpTotal} niveau={niveau} badge={badgeAffiche} />
-            </div>
-          </div>
-
           {/* En-têtes de branches — icône, nom, accroche, avant l'arbre lui-même. Cliquable : entre dans le chemin isolé de la branche. */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 4, maxWidth: 560, marginInline: 'auto', marginBottom: 4 }}>
             {ORDRE_VISUEL.map((d) => (
@@ -996,15 +1036,8 @@ export default function ArbreCompetences({
             </p>
           )}
 
-          {/* Ta progression (courbe) + Entraînement du jour, comme sur le croquis */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, marginTop: 24 }}>
-            <div style={{ background: FOND_CARTE, border: `1px solid ${BORDURE_CARTE}`, borderRadius: 12, padding: '16px 18px' }}>
-              <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 15, letterSpacing: 0.3, margin: '0 0 4px', color: COULEURS.texte }}>Ta progression</p>
-              <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 12px' }}>Points Mouvement gagnés au fil des jours.</p>
-              <CourbeXP points={courbeXP} />
-            </div>
-
-            <div style={{ background: FOND_CARTE, border: `1px solid ${BORDURE_CARTE}`, borderRadius: 12, padding: '16px 18px' }}>
+          {/* Entraînement du jour, comme sur le croquis */}
+          <div style={{ marginTop: 24, background: FOND_CARTE, border: `1px solid ${BORDURE_CARTE}`, borderRadius: 12, padding: '16px 18px', maxWidth: 560, marginInline: 'auto' }}>
               <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 15, letterSpacing: 0.3, margin: '0 0 4px', color: COULEURS.texte }}>Entraînement du jour</p>
               <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 4px' }}>Le travail à faire aujourd'hui ou en prévision.</p>
               {defisDuJour.length === 0 ? (
@@ -1041,7 +1074,6 @@ export default function ArbreCompetences({
                 </div>
               )}
             </div>
-          </div>
         </>
       )}
 
@@ -1156,6 +1188,133 @@ export default function ArbreCompetences({
             ))}
             <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginTop: 4 }}>Les outils Figures, Flexibilité et Connexion arriveront progressivement.</p>
           </div>
+        </div>
+      )}
+
+      {onglet === 'progression' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Tes compétences + XP, déplacés ici depuis le tableau de bord */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12 }}>
+            <div style={{ flex: '0 1 260px', background: FOND_CARTE, border: `1px solid ${BORDURE_CARTE}`, borderRadius: 12, padding: '12px 14px' }}>
+              <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 13, letterSpacing: 0.3, margin: '0 0 8px', color: COULEURS.texte }}>Tes compétences</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <LigneProgression compact label="Armure Organique" pourcentage={pourcentageTronc} couleur={COULEUR_TRONC} domaine="tronc" entrees={bilan.filter((b) => b.domaine === 'tronc')} />
+                {ORDRE_DOMAINES.map((d) => (
+                  <LigneProgression compact key={d} label={DOMAINE_LABELS[d]} pourcentage={pourcentageBranche(d)} couleur={DOMAINE_COULEURS[d]} domaine={d} entrees={bilan.filter((b) => b.domaine === d)} />
+                ))}
+              </div>
+            </div>
+            <div style={{ flex: '0 1 190px' }}>
+              <EnTeteXP xpTotal={xpTotal} niveau={niveau} badge={badgeAffiche} />
+            </div>
+          </div>
+
+          {/* Courbe XP au fil des jours, déplacée ici depuis le tableau de bord */}
+          <div style={{ background: FOND_CARTE, border: `1px solid ${BORDURE_CARTE}`, borderRadius: 12, padding: '16px 18px' }}>
+            <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 15, letterSpacing: 0.3, margin: '0 0 4px', color: COULEURS.texte }}>Ta progression</p>
+            <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 12px' }}>Points Mouvement gagnés au fil des jours.</p>
+            <CourbeXP points={courbeXP} />
+          </div>
+
+          {/* Régularité */}
+          <div style={{ background: FOND_CARTE, border: `1px solid ${BORDURE_CARTE}`, borderRadius: 12, padding: '16px 18px' }}>
+            <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 15, letterSpacing: 0.3, margin: '0 0 4px', color: COULEURS.texte }}>Régularité</p>
+            <p style={{ fontSize: 24, fontWeight: 700, margin: '4px 0 0', color: COULEURS.texte }}>
+              {statsProgression.joursActifs30j} <span style={{ fontSize: 13, fontWeight: 400, color: COULEURS.texteFaible }}>jour{statsProgression.joursActifs30j !== 1 ? 's' : ''} actif{statsProgression.joursActifs30j !== 1 ? 's' : ''} sur les 30 derniers jours</span>
+            </p>
+          </div>
+
+          {/* Volume Force */}
+          {(statsProgression.volumeForceParSemaine.length > 0 || statsProgression.volumeForceParMois.length > 0) && (
+            <div style={{ background: FOND_CARTE, border: `1px solid ${BORDURE_CARTE}`, borderRadius: 12, padding: '16px 18px' }}>
+              <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 15, letterSpacing: 0.3, margin: '0 0 4px', color: COULEURS.texte }}>Volume Force</p>
+              <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 12px' }}>Répétitions totales enregistrées dans l'outil Force.</p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20 }}>
+                <div>
+                  <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 0.5 }}>Par semaine</p>
+                  <BarresVolume
+                    points={statsProgression.volumeForceParSemaine}
+                    formatValeur={(v) => `${v}`}
+                    formatPeriode={(p) => new Date(p).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                    couleur={DOMAINE_COULEURS.force}
+                  />
+                </div>
+                <div>
+                  <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 0.5 }}>Par mois</p>
+                  <BarresVolume
+                    points={statsProgression.volumeForceParMois}
+                    formatValeur={(v) => `${v}`}
+                    formatPeriode={(p) => new Date(p + '-01').toLocaleDateString('fr-FR', { month: 'short' })}
+                    couleur={DOMAINE_COULEURS.force}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Temps de tenue Figures */}
+          {(statsProgression.tempsFiguresParSemaineSec.length > 0 || statsProgression.tempsFiguresParMoisSec.length > 0) && (
+            <div style={{ background: FOND_CARTE, border: `1px solid ${BORDURE_CARTE}`, borderRadius: 12, padding: '16px 18px' }}>
+              <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 15, letterSpacing: 0.3, margin: '0 0 4px', color: COULEURS.texte }}>Temps sur les mains (Figures)</p>
+              <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 12px' }}>Cumul des tenues chronométrées dans l'outil Figures.</p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20 }}>
+                <div>
+                  <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 0.5 }}>Par semaine</p>
+                  <BarresVolume
+                    points={statsProgression.tempsFiguresParSemaineSec}
+                    formatValeur={mmss}
+                    formatPeriode={(p) => new Date(p).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                    couleur={DOMAINE_COULEURS.figures}
+                  />
+                </div>
+                <div>
+                  <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 0.5 }}>Par mois</p>
+                  <BarresVolume
+                    points={statsProgression.tempsFiguresParMoisSec}
+                    formatValeur={mmss}
+                    formatPeriode={(p) => new Date(p + '-01').toLocaleDateString('fr-FR', { month: 'short' })}
+                    couleur={DOMAINE_COULEURS.figures}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Points forts / à travailler */}
+          {(statsProgression.forcePointsForts.length > 0 || statsProgression.figuresMeilleures.length > 0) && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
+              {statsProgression.forcePointsForts.length > 0 && (
+                <div style={{ background: FOND_CARTE, border: `1px solid ${BORDURE_CARTE}`, borderRadius: 12, padding: '16px 18px' }}>
+                  <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 14, letterSpacing: 0.3, margin: '0 0 10px', color: COULEURS.texte }}>Force — les plus pratiqués</p>
+                  <ListeClassement items={statsProgression.forcePointsForts.map((p) => ({ nom: p.nom, valeur: `${p.total} reps` }))} couleur={DOMAINE_COULEURS.force} />
+                  {statsProgression.forcePointsFaibles.length > 0 && (
+                    <>
+                      <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 14, letterSpacing: 0.3, margin: '16px 0 10px', color: COULEURS.texte }}>Force — les moins pratiqués</p>
+                      <ListeClassement items={statsProgression.forcePointsFaibles.map((p) => ({ nom: p.nom, valeur: `${p.total} reps` }))} couleur={COULEURS.texteFaible} />
+                    </>
+                  )}
+                </div>
+              )}
+              {statsProgression.figuresMeilleures.length > 0 && (
+                <div style={{ background: FOND_CARTE, border: `1px solid ${BORDURE_CARTE}`, borderRadius: 12, padding: '16px 18px' }}>
+                  <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 14, letterSpacing: 0.3, margin: '0 0 10px', color: COULEURS.texte }}>Figures — meilleures tenues</p>
+                  <ListeClassement items={statsProgression.figuresMeilleures.map((p) => ({ nom: p.nom, valeur: mmss(p.meilleurTempsSec) }))} couleur={DOMAINE_COULEURS.figures} />
+                  {statsProgression.figuresAAmeliorer.length > 0 && (
+                    <>
+                      <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 14, letterSpacing: 0.3, margin: '16px 0 10px', color: COULEURS.texte }}>Figures — à travailler</p>
+                      <ListeClassement items={statsProgression.figuresAAmeliorer.map((p) => ({ nom: p.nom, valeur: mmss(p.meilleurTempsSec) }))} couleur={COULEURS.texteFaible} />
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {statsProgression.volumeForceParSemaine.length === 0 && statsProgression.tempsFiguresParSemaineSec.length === 0 && statsProgression.joursActifs30j === 0 && (
+            <p style={{ fontSize: 13, color: COULEURS.texteFaible, textAlign: 'center', padding: '20px 0' }}>
+              Utilise les outils Force et Figures pour voir tes statistiques apparaître ici. L'outil Locomotion n'enregistre pas encore de données chiffrées.
+            </p>
+          )}
         </div>
       )}
 

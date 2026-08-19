@@ -1,6 +1,7 @@
 import { supabaseServer } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
 import { TRONC, BRANCHES, TOUS_LES_NOEUDS, STRUCTURE_SEANCE, noeudSansReponses, statutXP, xpGagneParNoeud, niveauGlobal, courbeXPParJour, estNoeudAcquisDepuisProgression, xpNoeudExercices, pourcentageFlammeNoeud, badgeEleve } from '@/lib/mentorship-modules';
+import { calculerStatsProgression } from '@/lib/stats-progression';
 import { COULEURS, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
 import ArbreCompetences from './ArbreCompetences';
 
@@ -93,6 +94,28 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
   const niveau = niveauGlobal(xpTotal);
   const courbeXP = courbeXPParJour(progressionData ?? [], defisHistoriqueData ?? []);
 
+  // Stats de l'onglet "Progression" — historiques bruts des outils Force
+  // (reps_par_set) et Figures (tentatives, en secondes tenues), + le
+  // journal d'entraînement pour la régularité. La Locomotion ne
+  // journalise rien pour l'instant (métronome/combinaisons seulement).
+  const { data: historiqueForce } = await supabase
+    .from('historique_reps_sets')
+    .select('exercice, reps_par_set, cree_le')
+    .eq('eleve_id', user.id);
+  const { data: historiqueFigures } = await supabase
+    .from('historique_figures')
+    .select('figure, tentatives, cree_le')
+    .eq('eleve_id', user.id);
+  const { data: historiqueJournal } = await supabase
+    .from('journal_entrainement')
+    .select('cree_le')
+    .eq('eleve_id', user.id);
+  const statsProgression = calculerStatsProgression(
+    historiqueForce ?? [],
+    historiqueFigures ?? [],
+    historiqueJournal ?? []
+  );
+
   // Badge élève (dépassement) : % de nœuds acquis dont la flamme est
   // Légendaire ou plus — recalculé en continu à chaque affichage.
   const noeudsAcquis = TOUS_LES_NOEUDS.filter((n) => estNoeudAcquisDepuisProgression(n, estModuleAcquis));
@@ -128,6 +151,7 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
         badge={badge}
         defisValidesAujourdhui={defisValidesAujourdhui}
         courbeXP={courbeXP}
+        statsProgression={statsProgression}
         structureSeance={STRUCTURE_SEANCE}
         estAdmin={profil?.role === 'admin'}
         branchesAutorisees={aboMentorat?.branches ? (aboMentorat.branches.split(',') as any) : null}
