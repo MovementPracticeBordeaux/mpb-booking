@@ -1176,6 +1176,13 @@ export default function ArbreCompetences({
         <div style={{ background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: '24px 20px' }}>
           <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 18, letterSpacing: 0.3, margin: '0 0 16px', color: COULEURS.texte }}>Outils</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <a
+              href="/mentorship/outils/faia"
+              style={{ display: 'block', border: '1px solid #8B5CF6', borderRadius: 10, padding: '14px 16px', textDecoration: 'none', color: COULEURS.texte, background: 'rgba(139,92,246,0.08)' }}
+            >
+              <span style={{ fontSize: 14, fontWeight: 600, color: '#8B5CF6' }}>Outil FAIA — planifie n'importe quelle compétence</span>
+              <span style={{ display: 'block', fontSize: 12, color: COULEURS.texteFaible, marginTop: 2 }}>Fragmenter, Assembler, Injecter, Amplifier — Ouvrir →</span>
+            </a>
             {Object.entries(OUTIL_PAR_BRANCHE).map(([domaine, outil]) => (
               <a
                 key={domaine}
@@ -1186,7 +1193,7 @@ export default function ArbreCompetences({
                 <span style={{ display: 'block', fontSize: 12, color: COULEURS.texteFaible, marginTop: 2 }}>Ouvrir →</span>
               </a>
             ))}
-            <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginTop: 4 }}>Les outils Figures, Flexibilité et Connexion arriveront progressivement.</p>
+            <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginTop: 4 }}>Les outils Flexibilité et Connexion arriveront progressivement.</p>
           </div>
         </div>
       )}
