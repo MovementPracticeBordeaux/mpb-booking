@@ -1177,11 +1177,11 @@ export default function ArbreCompetences({
           <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 18, letterSpacing: 0.3, margin: '0 0 16px', color: COULEURS.texte }}>Outils</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <a
-              href="/mentorship/outils/faia"
+              href="/mentorship/objectifs"
               style={{ display: 'block', border: '1px solid #8B5CF6', borderRadius: 10, padding: '14px 16px', textDecoration: 'none', color: COULEURS.texte, background: 'rgba(139,92,246,0.08)' }}
             >
-              <span style={{ fontSize: 14, fontWeight: 600, color: '#8B5CF6' }}>Outil FAIA — planifie n'importe quelle compétence</span>
-              <span style={{ display: 'block', fontSize: 12, color: COULEURS.texteFaible, marginTop: 2 }}>Fragmenter, Assembler, Injecter, Amplifier — Ouvrir →</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: '#8B5CF6' }}>Objectifs — de quoi as-tu besoin pour progresser ?</span>
+              <span style={{ display: 'block', fontSize: 12, color: COULEURS.texteFaible, marginTop: 2 }}>Cherche un objectif, découvre ce sur quoi il repose et ce qu'il débloque — Ouvrir →</span>
             </a>
             {Object.entries(OUTIL_PAR_BRANCHE).map(([domaine, outil]) => (
               <a

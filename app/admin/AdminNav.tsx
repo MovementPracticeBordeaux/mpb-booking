@@ -8,6 +8,7 @@ const LIENS = [
   { href: '/admin/eleves', label: 'Élèves & paiements' },
   { href: '/admin/statistiques', label: 'Statistiques' },
   { href: '/admin/mentorship', label: 'Mentorat' },
+  { href: '/admin/objectifs', label: 'Objectifs' },
   { href: '/admin/candidatures', label: 'Candidatures' },
 ];
 

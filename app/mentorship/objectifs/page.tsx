@@ -1,11 +1,11 @@
 import { supabaseServer } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
 import { COULEURS, POLICE_DISPLAY } from '@/lib/theme';
-import OutilFaia from './OutilFaia';
+import ObjectifsExplorer from './ObjectifsExplorer';
 
 export const dynamic = 'force-dynamic';
 
-export default async function OutilFaiaPage() {
+export default async function ObjectifsPage() {
   const supabase = supabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
@@ -22,16 +22,19 @@ export default async function OutilFaiaPage() {
   if (!accesAutorise) {
     return (
       <main style={{ maxWidth: 480, margin: '0 auto', padding: 20 }}>
-        <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 28 }}>OUTIL FAIA</h1>
+        <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 28 }}>OBJECTIFS</h1>
         <p style={{ color: COULEURS.texteAtt }}>Cette page est réservée aux élèves ayant le Mentorat actif.</p>
       </main>
     );
   }
 
-  const { data: competencesData } = await supabase
-    .from('competences_faia')
-    .select('id, nom, etape_actuelle, fragments, assemblage, injection, amplification, cree_le')
-    .order('cree_le', { ascending: false });
+  const { data: objectifs } = await supabase
+    .from('objectifs_mentorship')
+    .select('id, titre, branche, sous_groupe, video_url, mots_cles, note')
+    .order('titre');
+  const { data: relations } = await supabase
+    .from('objectifs_relations')
+    .select('id, objectif_source_id, objectif_cible_id');
 
-  return <OutilFaia competencesInitiales={competencesData ?? []} />;
+  return <ObjectifsExplorer objectifs={objectifs ?? []} relations={relations ?? []} />;
 }
