@@ -3,10 +3,10 @@
 -- pour ce cours à cette date de séance, pour éviter les doublons si la
 -- route est appelée plusieurs fois dans la fenêtre de 20 min.
 --
--- Cette table était référencée par le code (route.ts) depuis sa création
--- mais la migration avait été oubliée : l'insert échouait systématiquement
--- (table inexistante), ce qui faisait sauter l'envoi du push à chaque fois
--- sans jamais faire remonter d'erreur.
+-- Cette table avait été créée directement en base au moment de la
+-- construction de la fonctionnalité, mais la migration correspondante
+-- n'avait jamais été versionnée dans le repo (écart repo/prod comblé ici).
+-- Contrainte de clé étrangère et RLS ajoutées à cette occasion.
 create table if not exists admin_rappels_envoyes (
   cours_id uuid not null references cours(id) on delete cascade,
   date_seance date not null,
