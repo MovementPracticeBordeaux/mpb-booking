@@ -1280,6 +1280,45 @@ export default function ArbreCompetences({
             </div>
           )}
 
+          {/* Temps de travail Locomotion (chrono de séance) + combinaisons tirées au shaker */}
+          {(statsProgression.tempsLocomotionParSemaineSec.length > 0 || statsProgression.tempsLocomotionParMoisSec.length > 0) && (
+            <div style={{ background: FOND_CARTE, border: `1px solid ${BORDURE_CARTE}`, borderRadius: 12, padding: '16px 18px' }}>
+              <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 15, letterSpacing: 0.3, margin: '0 0 4px', color: COULEURS.texte }}>Temps de travail (Locomotion)</p>
+              <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 12px' }}>Séances chronométrées dans l'outil Locomotion.</p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20 }}>
+                <div>
+                  <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 0.5 }}>Par semaine</p>
+                  <BarresVolume
+                    points={statsProgression.tempsLocomotionParSemaineSec}
+                    formatValeur={mmss}
+                    formatPeriode={(p) => new Date(p).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                    couleur={DOMAINE_COULEURS.locomotion}
+                  />
+                </div>
+                <div>
+                  <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 0.5 }}>Par mois</p>
+                  <BarresVolume
+                    points={statsProgression.tempsLocomotionParMoisSec}
+                    formatValeur={mmss}
+                    formatPeriode={(p) => new Date(p + '-01').toLocaleDateString('fr-FR', { month: 'short' })}
+                    couleur={DOMAINE_COULEURS.locomotion}
+                  />
+                </div>
+              </div>
+              {statsProgression.combinaisonsLocomotionParSemaine.length > 0 && (
+                <>
+                  <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '16px 0 8px', textTransform: 'uppercase', letterSpacing: 0.5 }}>Combinaisons tirées au shaker (par semaine)</p>
+                  <BarresVolume
+                    points={statsProgression.combinaisonsLocomotionParSemaine}
+                    formatValeur={(v) => `${v}`}
+                    formatPeriode={(p) => new Date(p).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                    couleur={DOMAINE_COULEURS.locomotion}
+                  />
+                </>
+              )}
+            </div>
+          )}
+
           {/* Points forts / à travailler */}
           {(statsProgression.forcePointsForts.length > 0 || statsProgression.figuresMeilleures.length > 0) && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
@@ -1310,9 +1349,9 @@ export default function ArbreCompetences({
             </div>
           )}
 
-          {statsProgression.volumeForceParSemaine.length === 0 && statsProgression.tempsFiguresParSemaineSec.length === 0 && statsProgression.joursActifs30j === 0 && (
+          {statsProgression.volumeForceParSemaine.length === 0 && statsProgression.tempsFiguresParSemaineSec.length === 0 && statsProgression.tempsLocomotionParSemaineSec.length === 0 && statsProgression.joursActifs30j === 0 && (
             <p style={{ fontSize: 13, color: COULEURS.texteFaible, textAlign: 'center', padding: '20px 0' }}>
-              Utilise les outils Force et Figures pour voir tes statistiques apparaître ici. L'outil Locomotion n'enregistre pas encore de données chiffrées.
+              Utilise les outils Force, Figures ou Locomotion pour voir tes statistiques apparaître ici.
             </p>
           )}
         </div>

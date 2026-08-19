@@ -9,6 +9,7 @@
 
 export type EntreeForce = { exercice: string; reps_par_set: string; cree_le: string };
 export type EntreeFigure = { figure: string; tentatives: string; cree_le: string };
+export type EntreeLocomotion = { duree_secondes: number; nb_combinaisons: number; cree_le: string };
 export type EntreeJournal = { cree_le: string };
 
 export type PointVolume = { periode: string; total: number };
@@ -19,6 +20,10 @@ export type StatsProgression = {
   volumeForceParMois: PointVolume[]; // reps totales, 6 derniers mois
   tempsFiguresParSemaineSec: PointVolume[]; // secondes de tenue cumulées, 8 dernières semaines
   tempsFiguresParMoisSec: PointVolume[]; // secondes de tenue cumulées, 6 derniers mois
+  tempsLocomotionParSemaineSec: PointVolume[]; // secondes de travail cumulées, 8 dernières semaines
+  tempsLocomotionParMoisSec: PointVolume[]; // secondes de travail cumulées, 6 derniers mois
+  combinaisonsLocomotionParSemaine: PointVolume[]; // nb de tirages shaker, 8 dernières semaines
+  combinaisonsLocomotionParMois: PointVolume[]; // nb de tirages shaker, 6 derniers mois
   forcePointsForts: { nom: string; total: number }[]; // top 3 exercices par volume cumulé
   forcePointsFaibles: { nom: string; total: number }[]; // 3 exercices les moins pratiqués
   figuresMeilleures: { nom: string; meilleurTempsSec: number }[]; // top 3 par meilleure tenue
@@ -50,7 +55,8 @@ function derniersN(map: Map<string, number>, n: number): PointVolume[] {
 export function calculerStatsProgression(
   force: EntreeForce[],
   figures: EntreeFigure[],
-  journal: EntreeJournal[]
+  journal: EntreeJournal[],
+  locomotion: EntreeLocomotion[] = []
 ): StatsProgression {
   const il30j = new Date();
   il30j.setDate(il30j.getDate() - 30);
@@ -62,6 +68,7 @@ export function calculerStatsProgression(
   force.forEach((e) => marquerJour(e.cree_le));
   figures.forEach((e) => marquerJour(e.cree_le));
   journal.forEach((e) => marquerJour(e.cree_le));
+  locomotion.forEach((e) => marquerJour(e.cree_le));
 
   const volSemaine = new Map<string, number>();
   const volMois = new Map<string, number>();
@@ -99,12 +106,30 @@ export function calculerStatsProgression(
   const assezDeVarieteExercices = exercicesTries.length >= 6;
   const assezDeVarieteFigures = figuresTries.length >= 6;
 
+  const tempsLocoSemaine = new Map<string, number>();
+  const tempsLocoMois = new Map<string, number>();
+  const combiLocoSemaine = new Map<string, number>();
+  const combiLocoMois = new Map<string, number>();
+  for (const e of locomotion) {
+    const d = new Date(e.cree_le);
+    const semaine = lundiDeLaSemaine(d);
+    const mois = e.cree_le.slice(0, 7);
+    tempsLocoSemaine.set(semaine, (tempsLocoSemaine.get(semaine) ?? 0) + e.duree_secondes);
+    tempsLocoMois.set(mois, (tempsLocoMois.get(mois) ?? 0) + e.duree_secondes);
+    combiLocoSemaine.set(semaine, (combiLocoSemaine.get(semaine) ?? 0) + e.nb_combinaisons);
+    combiLocoMois.set(mois, (combiLocoMois.get(mois) ?? 0) + e.nb_combinaisons);
+  }
+
   return {
     joursActifs30j: joursActifs.size,
     volumeForceParSemaine: derniersN(volSemaine, 8),
     volumeForceParMois: derniersN(volMois, 6),
     tempsFiguresParSemaineSec: derniersN(tempsSemaine, 8),
     tempsFiguresParMoisSec: derniersN(tempsMois, 6),
+    tempsLocomotionParSemaineSec: derniersN(tempsLocoSemaine, 8),
+    tempsLocomotionParMoisSec: derniersN(tempsLocoMois, 6),
+    combinaisonsLocomotionParSemaine: derniersN(combiLocoSemaine, 8),
+    combinaisonsLocomotionParMois: derniersN(combiLocoMois, 6),
     forcePointsForts: exercicesTries.slice(0, 3).map(([nom, total]) => ({ nom, total })),
     forcePointsFaibles: assezDeVarieteExercices
       ? exercicesTries.slice(-3).reverse().map(([nom, total]) => ({ nom, total }))

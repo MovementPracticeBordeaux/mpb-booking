@@ -110,10 +110,15 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
     .from('journal_entrainement')
     .select('cree_le')
     .eq('eleve_id', user.id);
+  const { data: historiqueLocomotion } = await supabase
+    .from('historique_locomotion')
+    .select('duree_secondes, nb_combinaisons, cree_le')
+    .eq('eleve_id', user.id);
   const statsProgression = calculerStatsProgression(
     historiqueForce ?? [],
     historiqueFigures ?? [],
-    historiqueJournal ?? []
+    historiqueJournal ?? [],
+    historiqueLocomotion ?? []
   );
 
   // Badge élève (dépassement) : % de nœuds acquis dont la flamme est

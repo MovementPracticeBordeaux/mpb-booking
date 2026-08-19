@@ -2,8 +2,16 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { COULEURS, GRADIENT, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
+import { supabaseBrowser } from '@/lib/supabase-browser';
 
 type Mouvement = { chiffre: string; nom: string };
+
+type EntreeHistorique = {
+  id: string;
+  duree_secondes: number;
+  nb_combinaisons: number;
+  cree_le: string;
+};
 
 const CLE_STOCKAGE = 'mpb_locomotion_mouvements';
 
@@ -17,7 +25,14 @@ function chargerMouvements(): Mouvement[] {
   }
 }
 
-export default function OutilLocomotion() {
+function mmss(totalSecondes: number): string {
+  const m = Math.floor(totalSecondes / 60).toString().padStart(2, '0');
+  const s = Math.floor(totalSecondes % 60).toString().padStart(2, '0');
+  return `${m}:${s}`;
+}
+
+export default function OutilLocomotion({ historiqueInitial }: { historiqueInitial: EntreeHistorique[] }) {
+  const supabase = supabaseBrowser();
   const [mouvements, setMouvements] = useState<Mouvement[]>([]);
   const [nom, setNom] = useState('');
   const [longueur, setLongueur] = useState(6);
@@ -27,6 +42,18 @@ export default function OutilLocomotion() {
   const [metronomeActif, setMetronomeActif] = useState(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Chrono de séance : mesure le temps de travail réel et compte les
+  // combinaisons tirées avec le shaker pendant la séance — de quoi
+  // alimenter les stats de Progression (temps de travail, régularité,
+  // volume de combinaisons), ce que l'outil ne permettait pas jusqu'ici.
+  const [chronoActif, setChronoActif] = useState(false);
+  const [ecouleSecondes, setEcouleSecondes] = useState(0);
+  const [combinaisonsSession, setCombinaisonsSession] = useState(0);
+  const [historique, setHistorique] = useState(historiqueInitial);
+  const [enregistrement, setEnregistrement] = useState(false);
+  const debutRef = useRef<number | null>(null);
+  const chronoIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     setMouvements(chargerMouvements());
@@ -76,6 +103,9 @@ export default function OutilLocomotion() {
       tirage.push(...paquet);
     }
     setSequence(tirage.slice(0, longueur));
+    // Ne compte que les tirages faits PENDANT une séance chronométrée —
+    // un tirage fait en dehors ne reflète pas un vrai temps de travail.
+    if (chronoActif) setCombinaisonsSession((n) => n + 1);
   }
 
   function jouerClic() {
@@ -115,6 +145,55 @@ export default function OutilLocomotion() {
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, []);
 
+  // Chrono de séance — même principe robuste que les autres outils (EMOM,
+  // Figures) : recalcul depuis l'horodatage réel de départ à chaque tick,
+  // jamais un simple compteur qui dérive quand l'écran se met en veille.
+  function demarrerSeance() {
+    debutRef.current = Date.now();
+    setEcouleSecondes(0);
+    setCombinaisonsSession(0);
+    setChronoActif(true);
+  }
+
+  async function terminerSeance() {
+    setChronoActif(false);
+    if (chronoIntervalRef.current) clearInterval(chronoIntervalRef.current);
+    if (ecouleSecondes < 5) return; // séance trop courte pour valoir la peine d'être enregistrée
+
+    setEnregistrement(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setEnregistrement(false); return; }
+
+    const { data, error } = await supabase
+      .from('historique_locomotion')
+      .insert({ eleve_id: user.id, duree_secondes: ecouleSecondes, nb_combinaisons: combinaisonsSession })
+      .select('id, duree_secondes, nb_combinaisons, cree_le')
+      .single();
+
+    setEnregistrement(false);
+    if (!error && data) setHistorique((prev) => [data as EntreeHistorique, ...prev]);
+  }
+
+  useEffect(() => {
+    if (!chronoActif) return;
+    function recalculer() {
+      if (!debutRef.current) return;
+      setEcouleSecondes(Math.floor((Date.now() - debutRef.current) / 1000));
+    }
+    chronoIntervalRef.current = setInterval(recalculer, 1000);
+    document.addEventListener('visibilitychange', recalculer);
+    recalculer();
+    return () => {
+      if (chronoIntervalRef.current) clearInterval(chronoIntervalRef.current);
+      document.removeEventListener('visibilitychange', recalculer);
+    };
+  }, [chronoActif]);
+
+  async function supprimerEntreeHistorique(id: string) {
+    setHistorique((prev) => prev.filter((h) => h.id !== id));
+    await supabase.from('historique_locomotion').delete().eq('id', id);
+  }
+
   const champStyle: React.CSSProperties = {
     background: COULEURS.surfaceForte, border: `1px solid ${COULEURS.bordure}`, borderRadius: 8,
     padding: '9px 12px', color: COULEURS.texte, fontSize: 14, fontFamily: 'inherit',
@@ -128,9 +207,52 @@ export default function OutilLocomotion() {
         OUTIL <span style={GRADIENT_TEXTE}>LOCOMOTION</span>
       </h1>
       <p style={{ color: COULEURS.texteFaible, fontSize: 13, margin: '0 0 24px' }}>
-        Associe librement tes mouvements à des chiffres, tire des combinaisons aléatoires, garde le rythme
-        au métronome. Tes mouvements sont sauvegardés sur cet appareil.
+        Associe librement tes mouvements à des chiffres, tire des combinaisons aléatoires avec le shaker de
+        mouvement, garde le rythme au métronome. Tes mouvements sont sauvegardés sur cet appareil.
       </p>
+
+      {/* CHRONO DE SÉANCE */}
+      <section style={{ marginBottom: 28, background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: '16px 18px' }}>
+        <h2 style={{ fontSize: 15, fontWeight: 600, margin: '0 0 4px' }}>Chrono de séance</h2>
+        <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: '0 0 12px' }}>
+          Démarre avant de t'entraîner : ça mesure ton temps de travail et compte les combinaisons tirées avec
+          le shaker, pour nourrir tes stats de Progression.
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+          <span style={{ fontFamily: POLICE_DISPLAY, fontSize: 32, letterSpacing: 0.5, ...(chronoActif ? GRADIENT_TEXTE : {}) }}>
+            {mmss(ecouleSecondes)}
+          </span>
+          {chronoActif && (
+            <span style={{ fontSize: 13, color: COULEURS.texteAtt }}>
+              {combinaisonsSession} combinaison{combinaisonsSession !== 1 ? 's' : ''} tirée{combinaisonsSession !== 1 ? 's' : ''}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={chronoActif ? terminerSeance : demarrerSeance}
+            disabled={enregistrement}
+            style={{ marginLeft: 'auto', fontSize: 14, padding: '11px 22px', borderRadius: 999, border: 'none', background: chronoActif ? '#ff6b6b' : GRADIENT, color: 'white', fontWeight: 600, cursor: enregistrement ? 'default' : 'pointer' }}
+          >
+            {chronoActif ? '⏹ Terminer la séance' : '▶ Démarrer la séance'}
+          </button>
+        </div>
+
+        {historique.length > 0 && (
+          <div style={{ marginTop: 16, borderTop: `1px solid ${COULEURS.bordure}`, paddingTop: 12 }}>
+            <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 0.5 }}>Séances précédentes</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {historique.slice(0, 8).map((h) => (
+                <div key={h.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: COULEURS.texteAtt }}>
+                  <span>{new Date(h.cree_le).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span>
+                  <span style={{ color: COULEURS.texte, fontWeight: 600 }}>{mmss(h.duree_secondes)}</span>
+                  <span>{h.nb_combinaisons} combinaison{h.nb_combinaisons !== 1 ? 's' : ''}</span>
+                  <button type="button" onClick={() => supprimerEntreeHistorique(h.id)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: COULEURS.texteFaible, cursor: 'pointer', fontSize: 12 }}>✕</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
 
       {/* MOUVEMENTS */}
       <section style={{ marginBottom: 28 }}>
@@ -157,7 +279,7 @@ export default function OutilLocomotion() {
 
       {/* TIRAGE */}
       <section style={{ marginBottom: 28 }}>
-        <h2 style={{ fontSize: 15, fontWeight: 600, margin: '0 0 10px' }}>Combinaison aléatoire</h2>
+        <h2 style={{ fontSize: 15, fontWeight: 600, margin: '0 0 10px' }}>Shaker de mouvement</h2>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
           <label style={{ fontSize: 13, color: COULEURS.texteAtt }}>Longueur :</label>
           <input type="number" min={2} max={20} value={longueur} onChange={(e) => setLongueur(Number(e.target.value))} style={{ ...champStyle, width: 60 }} />
@@ -167,7 +289,7 @@ export default function OutilLocomotion() {
             disabled={mouvements.length === 0}
             style={{ fontSize: 13, padding: '9px 18px', borderRadius: 999, border: 'none', background: mouvements.length === 0 ? COULEURS.surfaceForte : GRADIENT, color: mouvements.length === 0 ? COULEURS.texteFaible : 'white', fontWeight: 600, cursor: mouvements.length === 0 ? 'not-allowed' : 'pointer' }}
           >
-            Tirer une combinaison
+            🎲 Tirer une combinaison
           </button>
         </div>
 
@@ -204,3 +326,4 @@ export default function OutilLocomotion() {
     </main>
   );
 }
+

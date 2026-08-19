@@ -83,4 +83,23 @@ describe('calculerStatsProgression', () => {
     expect(stats.volumeForceParSemaine).toEqual([]);
     expect(stats.forcePointsForts).toEqual([]);
   });
+
+  it('cumule le temps de travail et le nombre de combinaisons Locomotion par semaine', () => {
+    const lundi = new Date(aujourdhui);
+    lundi.setDate(lundi.getDate() - ((lundi.getDay() + 6) % 7));
+    const locomotion = [
+      { duree_secondes: 300, nb_combinaisons: 4, cree_le: lundi.toISOString() },
+      { duree_secondes: 180, nb_combinaisons: 2, cree_le: lundi.toISOString() },
+    ];
+    const stats = calculerStatsProgression([], [], [], locomotion);
+    expect(stats.tempsLocomotionParSemaineSec.length).toBe(1);
+    expect(stats.tempsLocomotionParSemaineSec[0].total).toBe(480);
+    expect(stats.combinaisonsLocomotionParSemaine[0].total).toBe(6);
+  });
+
+  it('compte les jours actifs Locomotion pour la régularité', () => {
+    const locomotion = [{ duree_secondes: 300, nb_combinaisons: 3, cree_le: ilYA(2) }];
+    const stats = calculerStatsProgression([], [], [], locomotion);
+    expect(stats.joursActifs30j).toBe(1);
+  });
 });
