@@ -20,7 +20,7 @@ export default async function AdminObjectifsPage({ searchParams }: { searchParam
     .order('titre');
   const { data: relations } = await admin
     .from('objectifs_relations')
-    .select('id, objectif_source_id, objectif_cible_id');
+    .select('id, objectif_source_id, objectif_cible_id, type');
 
   return (
     <main style={{ maxWidth: 720, margin: '0 auto', padding: 20 }}>

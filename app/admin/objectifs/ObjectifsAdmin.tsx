@@ -6,7 +6,7 @@ type Objectif = {
   id: string; titre: string; branche: string; sous_groupe: string | null;
   video_url: string | null; mots_cles: string | null; note: string | null;
 };
-type Relation = { id: string; objectif_source_id: string; objectif_cible_id: string };
+type Relation = { id: string; objectif_source_id: string; objectif_cible_id: string; type: string };
 
 // Petit champ de recherche instantanée pour choisir un objectif lié — sert
 // aussi bien à "Sert à" (l'objectif courant sert à atteindre l'objectif
@@ -19,7 +19,7 @@ function SelecteurCible({
   objectifs: Objectif[];
   excludeId: string;
   idCourant: string;
-  direction: 'sertA' | 'reposeSur';
+  direction: 'sertA' | 'reposeSur' | 'complementaire';
   ajouterRelation: (formData: FormData) => void;
 }) {
   const [recherche, setRecherche] = useState('');
@@ -33,8 +33,12 @@ function SelecteurCible({
   const objetChoisi = cibleId ? objectifs.find((o) => o.id === cibleId) : null;
 
   if (objetChoisi) {
-    const sourceId = direction === 'sertA' ? idCourant : objetChoisi.id;
-    const finalCibleId = direction === 'sertA' ? objetChoisi.id : idCourant;
+    // Pour 'complementaire', peu importe quel id va dans source/cible
+    // (relation symétrique, affichée dans les deux sens) ; pour les deux
+    // autres, l'ordre porte le sens de la progression.
+    const sourceId = direction === 'reposeSur' ? objetChoisi.id : idCourant;
+    const finalCibleId = direction === 'reposeSur' ? idCourant : objetChoisi.id;
+    const type = direction === 'complementaire' ? 'complementaire' : 'sert_a';
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
         <span style={{ fontSize: 12 }}>{objetChoisi.titre}</span>
@@ -42,6 +46,7 @@ function SelecteurCible({
         <form action={ajouterRelation} style={{ marginLeft: 'auto' }}>
           <input type="hidden" name="source_id" value={sourceId} />
           <input type="hidden" name="cible_id" value={finalCibleId} />
+          <input type="hidden" name="type" value={type} />
           <button type="submit" style={{ fontSize: 12, padding: '4px 10px' }}>+ Ajouter</button>
         </form>
       </div>
@@ -100,8 +105,11 @@ export default function ObjectifsAdmin({
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 600, overflowY: 'auto' }}>
         {filtres.map((o) => {
-          const sertA = relations.filter((r) => r.objectif_source_id === o.id);
-          const reposeSur = relations.filter((r) => r.objectif_cible_id === o.id);
+          const sertA = relations.filter((r) => r.type === 'sert_a' && r.objectif_source_id === o.id);
+          const reposeSur = relations.filter((r) => r.type === 'sert_a' && r.objectif_cible_id === o.id);
+          // Symétrique : peu importe de quel côté (source/cible) la paire a
+          // été enregistrée, on affiche toujours "l'autre" objectif.
+          const complementaires = relations.filter((r) => r.type === 'complementaire' && (r.objectif_source_id === o.id || r.objectif_cible_id === o.id));
           const ouvert = ouvertId === o.id;
 
           return (
@@ -113,8 +121,8 @@ export default function ObjectifsAdmin({
                 <span style={{ fontSize: 11, opacity: 0.5 }}>{o.branche} {o.sous_groupe ? `· ${o.sous_groupe}` : ''}{!o.video_url ? ' · ⚠️ pas de vidéo' : ''}</span>
                 <br />
                 <strong>{o.titre}</strong>
-                {(sertA.length > 0 || reposeSur.length > 0) && (
-                  <span style={{ fontSize: 11, opacity: 0.6 }}> — {reposeSur.length} en amont, {sertA.length} en aval</span>
+                {(sertA.length > 0 || reposeSur.length > 0 || complementaires.length > 0) && (
+                  <span style={{ fontSize: 11, opacity: 0.6 }}> — {reposeSur.length} en amont, {sertA.length} en aval, {complementaires.length} complémentaire{complementaires.length !== 1 ? 's' : ''}</span>
                 )}
               </button>
 
@@ -150,6 +158,23 @@ export default function ObjectifsAdmin({
                       </div>
                     ))}
                     <SelecteurCible objectifs={objectifs} excludeId={o.id} idCourant={o.id} direction="sertA" ajouterRelation={ajouterRelation} />
+                  </div>
+
+                  <div>
+                    <p style={{ fontSize: 12, fontWeight: 600, margin: '0 0 4px' }}>Complémentaire à</p>
+                    {complementaires.map((r) => {
+                      const autreId = r.objectif_source_id === o.id ? r.objectif_cible_id : r.objectif_source_id;
+                      return (
+                        <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, margin: '2px 0' }}>
+                          <span>↔ {parId.get(autreId)?.titre ?? '?'}</span>
+                          <form action={supprimerRelation}>
+                            <input type="hidden" name="relation_id" value={r.id} />
+                            <button type="submit" style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: 11 }}>✕</button>
+                          </form>
+                        </div>
+                      );
+                    })}
+                    <SelecteurCible objectifs={objectifs} excludeId={o.id} idCourant={o.id} direction="complementaire" ajouterRelation={ajouterRelation} />
                   </div>
 
                   <form action={mettreAJourObjectif} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

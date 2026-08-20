@@ -34,7 +34,7 @@ export default async function ObjectifsPage() {
     .order('titre');
   const { data: relations } = await supabase
     .from('objectifs_relations')
-    .select('id, objectif_source_id, objectif_cible_id');
+    .select('id, objectif_source_id, objectif_cible_id, type');
 
   return <ObjectifsExplorer objectifs={objectifs ?? []} relations={relations ?? []} />;
 }

@@ -19,15 +19,30 @@ function reussir(message: string): never {
   redirect(`/admin/objectifs?succes=${encodeURIComponent(message)}`);
 }
 
-// Ajoute une relation "sert à" : sourceId sert à atteindre cibleId.
+// Ajoute une relation entre deux objectifs. type='sert_a' (directionnel :
+// sourceId sert à atteindre cibleId) ou type='complementaire' (symétrique
+// : les deux objectifs se renforcent mutuellement, sans ordre imposé —
+// on vérifie donc l'absence de doublon dans les deux sens avant d'insérer,
+// puisque (A,B) et (B,A) représentent la même paire complémentaire).
 export async function ajouterRelation(formData: FormData) {
   await verifierAdmin();
   const admin = supabaseAdmin();
   const sourceId = formData.get('source_id') as string;
   const cibleId = formData.get('cible_id') as string;
+  const type = (formData.get('type') as string) || 'sert_a';
   if (!sourceId || !cibleId || sourceId === cibleId) echouer('Choisis deux objectifs différents.');
 
-  const { error } = await admin.from('objectifs_relations').insert({ objectif_source_id: sourceId, objectif_cible_id: cibleId });
+  if (type === 'complementaire') {
+    const { data: existante } = await admin
+      .from('objectifs_relations')
+      .select('id')
+      .eq('type', 'complementaire')
+      .or(`and(objectif_source_id.eq.${sourceId},objectif_cible_id.eq.${cibleId}),and(objectif_source_id.eq.${cibleId},objectif_cible_id.eq.${sourceId})`)
+      .maybeSingle();
+    if (existante) echouer('Cette relation complémentaire existe déjà.');
+  }
+
+  const { error } = await admin.from('objectifs_relations').insert({ objectif_source_id: sourceId, objectif_cible_id: cibleId, type });
   if (error && !error.message.includes('duplicate')) echouer(error.message);
 
   revalidatePath('/admin/objectifs');
