@@ -85,12 +85,27 @@ export async function GET(req: NextRequest) {
 
       const { data: reservations } = await admin
         .from('reservations')
-        .select('eleve_id')
+        .select('eleve_id, profiles(nom, email)')
         .eq('cours_id', cours.id)
         .eq('date_seance', dateStr)
         .eq('statut', 'confirmee');
 
       const nbInscrits = reservations?.length ?? 0;
+
+      // Prénoms des inscrits, pour un coup d'œil rapide sans avoir à ouvrir
+      // l'admin. Extrait le premier mot du nom complet ; si pas de nom
+      // renseigné, retombe sur la partie avant @ de l'email.
+      const prenoms = (reservations ?? []).map((r: any) => {
+        const nom = r.profiles?.nom as string | null;
+        if (nom?.trim()) return nom.trim().split(/\s+/)[0];
+        const email = r.profiles?.email as string | null;
+        return email ? email.split('@')[0] : 'Élève';
+      });
+      // Liste tronquée pour rester lisible dans une notification (au-delà
+      // de 6 inscrits, ça devient illisible sur un petit écran).
+      const listePrenoms = prenoms.length > 6
+        ? `${prenoms.slice(0, 6).join(', ')} +${prenoms.length - 6} autre${prenoms.length - 6 > 1 ? 's' : ''}`
+        : prenoms.join(', ');
 
       // Présence d'un élève en cours découverte : on regarde si l'un des
       // inscrits a un abonnement 'planning' actif dont la formule est
@@ -109,7 +124,10 @@ export async function GET(req: NextRequest) {
       }
 
       const titre = `${cours.discipline} dans 1h30`;
-      const corps = `${cours.heure_debut.slice(0, 5)}-${cours.heure_fin.slice(0, 5)}${cours.lieu ? ` · ${cours.lieu}` : ''} — ${nbInscrits} inscrit${nbInscrits !== 1 ? 's' : ''}${aUnDecouverte ? ' · 🆕 dont un cours découverte' : ''}`;
+      const ligneInscrits = nbInscrits > 0
+        ? `${nbInscrits} inscrit${nbInscrits !== 1 ? 's' : ''} : ${listePrenoms}`
+        : 'Aucun inscrit pour l\'instant';
+      const corps = `${cours.heure_debut.slice(0, 5)}-${cours.heure_fin.slice(0, 5)}${cours.lieu ? ` · ${cours.lieu}` : ''} — ${ligneInscrits}${aUnDecouverte ? ' · 🆕 dont un cours découverte' : ''}`;
 
       for (const a of admins) {
         try {
