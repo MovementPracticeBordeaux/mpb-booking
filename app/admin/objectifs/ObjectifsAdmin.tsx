@@ -8,15 +8,18 @@ type Objectif = {
 };
 type Relation = { id: string; objectif_source_id: string; objectif_cible_id: string };
 
-// Petit champ de recherche instantanée pour choisir l'objectif cible d'une
-// relation "sert à" — évite de scroller dans un menu déroulant de 333
-// entrées pour en retrouver une précise.
+// Petit champ de recherche instantanée pour choisir un objectif lié — sert
+// aussi bien à "Sert à" (l'objectif courant sert à atteindre l'objectif
+// choisi) qu'à "Repose sur" (l'objectif choisi sert à atteindre l'objectif
+// courant) : direction inverse la source/cible de la relation créée, mais
+// c'est la même table objectifs_relations dans les deux cas.
 function SelecteurCible({
-  objectifs, excludeId, sourceId, ajouterRelation,
+  objectifs, excludeId, idCourant, direction, ajouterRelation,
 }: {
   objectifs: Objectif[];
   excludeId: string;
-  sourceId: string;
+  idCourant: string;
+  direction: 'sertA' | 'reposeSur';
   ajouterRelation: (formData: FormData) => void;
 }) {
   const [recherche, setRecherche] = useState('');
@@ -27,16 +30,18 @@ function SelecteurCible({
         .filter((o) => o.id !== excludeId && `${o.titre} ${o.branche} ${o.sous_groupe ?? ''}`.toLowerCase().includes(recherche.toLowerCase()))
         .slice(0, 10)
     : [];
-  const cibleChoisie = cibleId ? objectifs.find((o) => o.id === cibleId) : null;
+  const objetChoisi = cibleId ? objectifs.find((o) => o.id === cibleId) : null;
 
-  if (cibleChoisie) {
+  if (objetChoisi) {
+    const sourceId = direction === 'sertA' ? idCourant : objetChoisi.id;
+    const finalCibleId = direction === 'sertA' ? objetChoisi.id : idCourant;
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-        <span style={{ fontSize: 12 }}>{cibleChoisie.titre}</span>
+        <span style={{ fontSize: 12 }}>{objetChoisi.titre}</span>
         <button type="button" onClick={() => setCibleId(null)} style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: 11 }}>changer</button>
         <form action={ajouterRelation} style={{ marginLeft: 'auto' }}>
           <input type="hidden" name="source_id" value={sourceId} />
-          <input type="hidden" name="cible_id" value={cibleChoisie.id} />
+          <input type="hidden" name="cible_id" value={finalCibleId} />
           <button type="submit" style={{ fontSize: 12, padding: '4px 10px' }}>+ Ajouter</button>
         </form>
       </div>
@@ -121,13 +126,16 @@ export default function ObjectifsAdmin({
 
                   <div>
                     <p style={{ fontSize: 12, fontWeight: 600, margin: '0 0 4px' }}>Repose sur (en amont)</p>
-                    {reposeSur.length === 0 ? (
-                      <p style={{ fontSize: 12, opacity: 0.5, margin: 0 }}>Aucun — ou modifie-le depuis la fiche de l'objectif source.</p>
-                    ) : (
-                      reposeSur.map((r) => (
-                        <p key={r.id} style={{ fontSize: 12, margin: '2px 0' }}>← {parId.get(r.objectif_source_id)?.titre ?? '?'}</p>
-                      ))
-                    )}
+                    {reposeSur.map((r) => (
+                      <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, margin: '2px 0' }}>
+                        <span>← {parId.get(r.objectif_source_id)?.titre ?? '?'}</span>
+                        <form action={supprimerRelation}>
+                          <input type="hidden" name="relation_id" value={r.id} />
+                          <button type="submit" style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: 11 }}>✕</button>
+                        </form>
+                      </div>
+                    ))}
+                    <SelecteurCible objectifs={objectifs} excludeId={o.id} idCourant={o.id} direction="reposeSur" ajouterRelation={ajouterRelation} />
                   </div>
 
                   <div>
@@ -141,7 +149,7 @@ export default function ObjectifsAdmin({
                         </form>
                       </div>
                     ))}
-                    <SelecteurCible objectifs={objectifs} excludeId={o.id} sourceId={o.id} ajouterRelation={ajouterRelation} />
+                    <SelecteurCible objectifs={objectifs} excludeId={o.id} idCourant={o.id} direction="sertA" ajouterRelation={ajouterRelation} />
                   </div>
 
                   <form action={mettreAJourObjectif} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
