@@ -8,6 +8,65 @@ type Objectif = {
 };
 type Relation = { id: string; objectif_source_id: string; objectif_cible_id: string };
 
+// Petit champ de recherche instantanée pour choisir l'objectif cible d'une
+// relation "sert à" — évite de scroller dans un menu déroulant de 333
+// entrées pour en retrouver une précise.
+function SelecteurCible({
+  objectifs, excludeId, sourceId, ajouterRelation,
+}: {
+  objectifs: Objectif[];
+  excludeId: string;
+  sourceId: string;
+  ajouterRelation: (formData: FormData) => void;
+}) {
+  const [recherche, setRecherche] = useState('');
+  const [cibleId, setCibleId] = useState<string | null>(null);
+
+  const resultats = recherche.trim()
+    ? objectifs
+        .filter((o) => o.id !== excludeId && `${o.titre} ${o.branche} ${o.sous_groupe ?? ''}`.toLowerCase().includes(recherche.toLowerCase()))
+        .slice(0, 10)
+    : [];
+  const cibleChoisie = cibleId ? objectifs.find((o) => o.id === cibleId) : null;
+
+  if (cibleChoisie) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+        <span style={{ fontSize: 12 }}>{cibleChoisie.titre}</span>
+        <button type="button" onClick={() => setCibleId(null)} style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: 11 }}>changer</button>
+        <form action={ajouterRelation} style={{ marginLeft: 'auto' }}>
+          <input type="hidden" name="source_id" value={sourceId} />
+          <input type="hidden" name="cible_id" value={cibleChoisie.id} />
+          <button type="submit" style={{ fontSize: 12, padding: '4px 10px' }}>+ Ajouter</button>
+        </form>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ position: 'relative', marginTop: 6 }}>
+      <input
+        type="text" value={recherche} onChange={(e) => setRecherche(e.target.value)}
+        placeholder="Chercher une vidéo à ajouter..."
+        style={{ fontSize: 12, padding: '5px 8px', width: '100%' }}
+      />
+      {resultats.length > 0 && (
+        <div style={{ border: '1px solid #333', borderRadius: 6, marginTop: 4, maxHeight: 180, overflowY: 'auto', background: '#111' }}>
+          {resultats.map((o) => (
+            <button
+              key={o.id} type="button"
+              onClick={() => { setCibleId(o.id); setRecherche(''); }}
+              style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 8px', fontSize: 12, background: 'none', border: 'none', borderBottom: '1px solid #222', color: 'inherit', cursor: 'pointer' }}
+            >
+              {o.titre} <span style={{ opacity: 0.5 }}>· {o.branche}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ObjectifsAdmin({
   objectifs, relations, ajouterRelation, supprimerRelation, mettreAJourObjectif,
 }: {
@@ -25,16 +84,6 @@ export default function ObjectifsAdmin({
   const filtres = objectifs.filter((o) =>
     `${o.titre} ${o.branche} ${o.sous_groupe ?? ''}`.toLowerCase().includes(recherche.toLowerCase())
   );
-
-  const branchesTriees = useMemo(() => {
-    const parBranche = new Map<string, Objectif[]>();
-    for (const o of objectifs) {
-      const liste = parBranche.get(o.branche) ?? [];
-      liste.push(o);
-      parBranche.set(o.branche, liste);
-    }
-    return [...parBranche.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-  }, [objectifs]);
 
   return (
     <div>
@@ -92,19 +141,7 @@ export default function ObjectifsAdmin({
                         </form>
                       </div>
                     ))}
-                    <form action={ajouterRelation} style={{ display: 'flex', gap: 6, marginTop: 6 }}>
-                      <input type="hidden" name="source_id" value={o.id} />
-                      <select name="cible_id" style={{ flexGrow: 1, fontSize: 12, padding: '4px 6px' }}>
-                        {branchesTriees.map(([branche, liste]) => (
-                          <optgroup key={branche} label={branche}>
-                            {liste.filter((x) => x.id !== o.id).map((x) => (
-                              <option key={x.id} value={x.id}>{x.titre}</option>
-                            ))}
-                          </optgroup>
-                        ))}
-                      </select>
-                      <button type="submit" style={{ fontSize: 12, padding: '4px 10px' }}>+ Ajouter</button>
-                    </form>
+                    <SelecteurCible objectifs={objectifs} excludeId={o.id} sourceId={o.id} ajouterRelation={ajouterRelation} />
                   </div>
 
                   <form action={mettreAJourObjectif} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
