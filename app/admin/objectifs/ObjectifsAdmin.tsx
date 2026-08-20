@@ -20,10 +20,11 @@ function SelecteurCible({
   excludeId: string;
   idCourant: string;
   direction: 'sertA' | 'reposeSur' | 'complementaire';
-  ajouterRelation: (formData: FormData) => void;
+  ajouterRelation: (formData: FormData) => Promise<{ ok: boolean; erreur?: string }>;
 }) {
   const [recherche, setRecherche] = useState('');
   const [cibleId, setCibleId] = useState<string | null>(null);
+  const [enCours, setEnCours] = useState(false);
 
   const resultats = recherche.trim()
     ? objectifs
@@ -39,16 +40,29 @@ function SelecteurCible({
     const sourceId = direction === 'reposeSur' ? objetChoisi.id : idCourant;
     const finalCibleId = direction === 'reposeSur' ? idCourant : objetChoisi.id;
     const type = direction === 'complementaire' ? 'complementaire' : 'sert_a';
+
+    async function confirmer() {
+      setEnCours(true);
+      const formData = new FormData();
+      formData.set('source_id', sourceId);
+      formData.set('cible_id', finalCibleId);
+      formData.set('type', type);
+      await ajouterRelation(formData);
+      // Réinitialise après l'ajout : sans ça, le champ reste bloqué sur
+      // "objectif choisi / changer" au lieu de redevenir une barre de
+      // recherche prête pour le suivant — gênant pour enchaîner plusieurs
+      // ajouts sur le même objectif.
+      setCibleId(null);
+      setEnCours(false);
+    }
+
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
         <span style={{ fontSize: 12 }}>{objetChoisi.titre}</span>
         <button type="button" onClick={() => setCibleId(null)} style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: 11 }}>changer</button>
-        <form action={ajouterRelation} style={{ marginLeft: 'auto' }}>
-          <input type="hidden" name="source_id" value={sourceId} />
-          <input type="hidden" name="cible_id" value={finalCibleId} />
-          <input type="hidden" name="type" value={type} />
-          <button type="submit" style={{ fontSize: 12, padding: '4px 10px' }}>+ Ajouter</button>
-        </form>
+        <button type="button" onClick={confirmer} disabled={enCours} style={{ fontSize: 12, padding: '4px 10px', marginLeft: 'auto' }}>
+          {enCours ? '...' : '+ Ajouter'}
+        </button>
       </div>
     );
   }
@@ -82,7 +96,7 @@ export default function ObjectifsAdmin({
 }: {
   objectifs: Objectif[];
   relations: Relation[];
-  ajouterRelation: (formData: FormData) => void;
+  ajouterRelation: (formData: FormData) => Promise<{ ok: boolean; erreur?: string }>;
   supprimerRelation: (formData: FormData) => void;
   mettreAJourObjectif: (formData: FormData) => void;
 }) {
