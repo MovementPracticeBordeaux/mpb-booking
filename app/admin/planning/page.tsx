@@ -1,12 +1,13 @@
 import { supabaseAdmin } from '@/lib/supabase-server';
-import { ajouterCours, desactiverCours, definirSemaineReference, ajouterVacances, supprimerVacances, reserverCoursPourEleve } from '../actions';
+import { ajouterCours, desactiverCours, definirSemaineReference, ajouterVacances, supprimerVacances, reserverCoursPourEleve, annulerReservationAdmin } from '../actions';
 import { calculerSemaine } from '@/lib/semaine';
 
 export const dynamic = 'force-dynamic';
 
 const JOURS = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
 const COULEUR_SEMAINE: Record<'A' | 'B', string> = { A: '#4FC3F7', B: '#FFB74D' };
-const JOURS_A_VENIR = 14; // fenêtre de la section "Prochaines séances"
+const JOURS_A_VENIR = 14; // fenêtre à venir de la section "Séances"
+const JOURS_PASSES = 14; // fenêtre passée de la même section, pour pouvoir gérer les no-show/erreurs après coup
 
 export default async function AdminPlanningPage({ searchParams }: { searchParams: { erreur?: string; succes?: string } }) {
   const admin = supabaseAdmin();
@@ -23,10 +24,11 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
   // Pour le formulaire "Réserver pour un élève" un peu plus bas.
   const { data: eleves } = await admin.from('profiles').select('id, nom, email').order('email');
 
-  // --- Prochaines séances datées + inscrits nommés (admin uniquement) ---
+  // --- Séances datées (passées et à venir) + inscrits nommés (admin uniquement) ---
   // À la différence de "Créneaux actifs" (le modèle récurrent A/B), cette
-  // section calcule les VRAIES dates des prochaines séances et liste les
-  // élèves inscrits pour chacune. Jamais visible côté élève.
+  // section calcule les VRAIES dates des séances et liste les élèves
+  // inscrits pour chacune, avec la possibilité de retirer un élève d'une
+  // séance (y compris passée) et de le recréditer. Jamais visible côté élève.
   const { data: reservationsAVenir } = await admin
     .from('reservations')
     .select('eleve_id, cours_id, date_seance')
@@ -38,12 +40,13 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
     : { data: [] as { id: string; nom: string | null; email: string | null }[] };
   const nomParEleveId = new Map((profilsEleves ?? []).map((p) => [p.id, p.nom || p.email || 'Élève']));
 
-  const inscritsParSeance = new Map<string, string[]>();
+  type Inscrit = { eleveId: string; nom: string };
+  const inscritsParSeance = new Map<string, Inscrit[]>();
   for (const r of reservationsAVenir ?? []) {
     const cle = `${r.cours_id}::${r.date_seance}`;
-    const noms = inscritsParSeance.get(cle) ?? [];
-    noms.push(nomParEleveId.get(r.eleve_id) ?? 'Élève');
-    inscritsParSeance.set(cle, noms);
+    const liste = inscritsParSeance.get(cle) ?? [];
+    liste.push({ eleveId: r.eleve_id, nom: nomParEleveId.get(r.eleve_id) ?? 'Élève' });
+    inscritsParSeance.set(cle, liste);
   }
 
   type SeanceAVenir = {
@@ -53,13 +56,15 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
     discipline: string;
     heureDebut: string;
     heureFin: string;
-    inscrits: string[];
+    inscrits: Inscrit[];
+    passee: boolean;
   };
-  const seancesAVenir: SeanceAVenir[] = [];
+  const toutesLesSeances: SeanceAVenir[] = [];
   if (ref) {
     const lundiRef = new Date(ref.date_lundi_reference);
     const periodesVacancesActives = periodesVacances ?? [];
-    for (let i = 0; i < JOURS_A_VENIR; i++) {
+    const aujourdhuiISO = new Date().toISOString().slice(0, 10);
+    for (let i = -JOURS_PASSES; i < JOURS_A_VENIR; i++) {
       const d = new Date();
       d.setDate(d.getDate() + i);
       const dateStr = d.toISOString().slice(0, 10);
@@ -68,7 +73,7 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
       const semaine = calculerSemaine(d, lundiRef, ref.semaine_ce_lundi);
       const coursDuJour = (coursListe ?? []).filter((c) => c.jour_semaine === d.getDay() && c.semaine === semaine);
       for (const c of coursDuJour) {
-        seancesAVenir.push({
+        toutesLesSeances.push({
           coursId: c.id,
           dateISO: dateStr,
           dateAffichee: d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }),
@@ -76,10 +81,12 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
           heureDebut: (c.heure_debut as string).slice(0, 5),
           heureFin: (c.heure_fin as string).slice(0, 5),
           inscrits: inscritsParSeance.get(`${c.id}::${dateStr}`) ?? [],
+          passee: dateStr < aujourdhuiISO,
         });
       }
     }
   }
+  const seancesAVenir = toutesLesSeances.filter((s) => !s.passee);
 
   return (
     <main style={{ maxWidth: 640, margin: '0 auto', padding: 20 }}>
@@ -121,20 +128,23 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
       </section>
 
       <section style={{ marginBottom: 32 }}>
-        <h2>Prochaines séances — inscrits</h2>
+        <h2>Séances — inscrits</h2>
         <p style={{ fontSize: 13, opacity: 0.7, marginBottom: 12 }}>
-          Visible uniquement par toi. Les élèves ne voient jamais ce nombre.
+          Visible uniquement par toi. Les élèves ne voient jamais ce nombre. Inclut les {JOURS_PASSES} derniers jours
+          et les {JOURS_A_VENIR} prochains — tu peux retirer un élève d'une séance passée ou du jour même (sa formule
+          est recréditée automatiquement).
         </p>
-        {seancesAVenir.length === 0 && (
-          <p style={{ fontSize: 13, opacity: 0.5 }}>Aucune séance dans les {JOURS_A_VENIR} prochains jours.</p>
+        {toutesLesSeances.length === 0 && (
+          <p style={{ fontSize: 13, opacity: 0.5 }}>Aucune séance sur cette période.</p>
         )}
-        {seancesAVenir.map((s, i) => (
+        {toutesLesSeances.map((s, i) => (
           <details
             key={`${s.dateISO}-${i}`}
-            style={{ padding: '8px 0', borderBottom: '1px solid #333' }}
+            style={{ padding: '8px 0', borderBottom: '1px solid #333', opacity: s.passee ? 0.6 : 1 }}
           >
             <summary style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, fontSize: 13, cursor: 'pointer', listStyle: 'none' }}>
               <span>
+                {s.passee && <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.5, opacity: 0.6, marginRight: 6 }}>Passée</span>}
                 <span style={{ opacity: 0.6, textTransform: 'capitalize' }}>{s.dateAffichee}</span>
                 {' — '}
                 <strong>{s.discipline}</strong>
@@ -153,8 +163,23 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
               </span>
             </summary>
             {s.inscrits.length > 0 && (
-              <ul style={{ margin: '8px 0 0', paddingLeft: 20, fontSize: 13, opacity: 0.85 }}>
-                {s.inscrits.map((nom, j) => <li key={j}>{nom}</li>)}
+              <ul style={{ margin: '8px 0 0', paddingLeft: 0, fontSize: 13, opacity: 0.85, listStyle: 'none' }}>
+                {s.inscrits.map((inscrit, j) => (
+                  <li key={j} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '4px 0' }}>
+                    <span>{inscrit.nom}</span>
+                    <form action={annulerReservationAdmin}>
+                      <input type="hidden" name="eleve_id" value={inscrit.eleveId} />
+                      <input type="hidden" name="cours_id" value={s.coursId} />
+                      <input type="hidden" name="date_seance" value={s.dateISO} />
+                      <button
+                        type="submit"
+                        style={{ fontSize: 11, padding: '3px 10px', borderRadius: 999, border: '1px solid #663', background: 'none', color: '#f88', cursor: 'pointer' }}
+                      >
+                        Retirer
+                      </button>
+                    </form>
+                  </li>
+                ))}
               </ul>
             )}
           </details>

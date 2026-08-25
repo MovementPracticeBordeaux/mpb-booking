@@ -504,3 +504,55 @@ export async function rembourserPaiement(formData: FormData) {
   revalidatePath('/admin/eleves');
   reussir('/admin/eleves', 'Paiement remboursé.');
 }
+
+// Permet à l'admin de retirer un élève d'un cours qu'il a réservé, y
+// compris pour le jour même ou une date passée (contrairement à
+// l'annulation élève, bloquée à moins de 1h30 du début). Recrédite le
+// quota de son abonnement actif, exactement comme une annulation normale
+// (même logique que annulerReservation côté élève).
+export async function annulerReservationAdmin(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+
+  const eleveId = formData.get('eleve_id') as string;
+  const coursId = formData.get('cours_id') as string;
+  const dateSeance = formData.get('date_seance') as string;
+  if (!eleveId || !coursId || !dateSeance) echouer('/admin/planning', 'Réservation introuvable.');
+
+  const { data: reservation } = await admin
+    .from('reservations')
+    .select('id')
+    .eq('eleve_id', eleveId)
+    .eq('cours_id', coursId)
+    .eq('date_seance', dateSeance)
+    .eq('statut', 'confirmee')
+    .maybeSingle();
+
+  if (!reservation) echouer('/admin/planning', 'Réservation introuvable ou déjà annulée.');
+
+  const { error } = await admin
+    .from('reservations')
+    .update({ statut: 'annulee' })
+    .eq('id', reservation.id);
+  if (error) echouer('/admin/planning', error.message);
+
+  const { data: abo } = await admin
+    .from('abonnements')
+    .select('id, formule_nom, quota_restant')
+    .eq('eleve_id', eleveId)
+    .eq('categorie', 'planning')
+    .eq('abonnement_actif', true)
+    .maybeSingle();
+
+  if (abo && abo.formule_nom !== 'illimite' && abo.quota_restant != null) {
+    await admin
+      .from('abonnements')
+      .update({ quota_restant: abo.quota_restant + 1 })
+      .eq('id', abo.id);
+  }
+
+  revalidatePath('/admin/planning');
+  revalidatePath('/planning');
+  revalidatePath('/profil');
+  reussir('/admin/planning', 'Élève retiré du cours, formule recréditée.');
+}
