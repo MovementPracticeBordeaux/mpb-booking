@@ -1,6 +1,7 @@
 import { supabaseAdmin } from '@/lib/supabase-server';
 import { ajouterCours, desactiverCours, definirSemaineReference, ajouterVacances, supprimerVacances, reserverCoursPourEleve, annulerReservationAdmin } from '../actions';
 import { calculerSemaine } from '@/lib/semaine';
+import AdminSeancesCarousel from '../AdminSeancesCarousel';
 
 export const dynamic = 'force-dynamic';
 
@@ -88,6 +89,44 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
   }
   const seancesAVenir = toutesLesSeances.filter((s) => !s.passee);
 
+  // Regroupe les séances par jour pour le carrousel admin (même principe
+  // visuel que le planning public, en un seul jour à la fois plutôt qu'une
+  // liste empilée qui prenait beaucoup trop de place).
+  type JourAdminCarousel = {
+    dateISO: string;
+    jourSemaine: number;
+    enVacances: boolean;
+    cours: { coursId: string; discipline: string; heureDebut: string; heureFin: string; inscrits: Inscrit[] }[];
+  };
+  const joursCarousel: JourAdminCarousel[] = [];
+  let indexAujourdhuiCarousel = JOURS_PASSES;
+  if (ref) {
+    const lundiRef = new Date(ref.date_lundi_reference);
+    const periodesVacancesActives = periodesVacances ?? [];
+    const aujourdhuiISO = new Date().toISOString().slice(0, 10);
+    for (let i = -JOURS_PASSES; i < JOURS_A_VENIR; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() + i);
+      const dateStr = d.toISOString().slice(0, 10);
+      if (dateStr === aujourdhuiISO) indexAujourdhuiCarousel = i + JOURS_PASSES;
+      const enVacances = periodesVacancesActives.some((v) => dateStr >= v.date_debut && dateStr <= v.date_fin);
+      const semaine = calculerSemaine(d, lundiRef, ref.semaine_ce_lundi);
+      const coursDuJour = enVacances ? [] : (coursListe ?? []).filter((c) => c.jour_semaine === d.getDay() && c.semaine === semaine);
+      joursCarousel.push({
+        dateISO: dateStr,
+        jourSemaine: d.getDay(),
+        enVacances,
+        cours: coursDuJour.map((c) => ({
+          coursId: c.id,
+          discipline: c.discipline as string,
+          heureDebut: (c.heure_debut as string).slice(0, 5),
+          heureFin: (c.heure_fin as string).slice(0, 5),
+          inscrits: inscritsParSeance.get(`${c.id}::${dateStr}`) ?? [],
+        })),
+      });
+    }
+  }
+
   return (
     <main style={{ maxWidth: 640, margin: '0 auto', padding: 20 }}>
       <h1>Planning collectif</h1>
@@ -130,60 +169,15 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
       <section style={{ marginBottom: 32 }}>
         <h2>Séances — inscrits</h2>
         <p style={{ fontSize: 13, opacity: 0.7, marginBottom: 12 }}>
-          Visible uniquement par toi. Les élèves ne voient jamais ce nombre. Inclut les {JOURS_PASSES} derniers jours
+          Visible uniquement par toi. Les élèves ne voient jamais ce nombre. Couvre les {JOURS_PASSES} derniers jours
           et les {JOURS_A_VENIR} prochains — tu peux retirer un élève d'une séance passée ou du jour même (sa formule
           est recréditée automatiquement).
         </p>
-        {toutesLesSeances.length === 0 && (
-          <p style={{ fontSize: 13, opacity: 0.5 }}>Aucune séance sur cette période.</p>
-        )}
-        {toutesLesSeances.map((s, i) => (
-          <details
-            key={`${s.dateISO}-${i}`}
-            style={{ padding: '8px 0', borderBottom: '1px solid #333', opacity: s.passee ? 0.6 : 1 }}
-          >
-            <summary style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, fontSize: 13, cursor: 'pointer', listStyle: 'none' }}>
-              <span>
-                {s.passee && <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.5, opacity: 0.6, marginRight: 6 }}>Passée</span>}
-                <span style={{ opacity: 0.6, textTransform: 'capitalize' }}>{s.dateAffichee}</span>
-                {' — '}
-                <strong>{s.discipline}</strong>
-                {' '}
-                <span style={{ opacity: 0.6 }}>{s.heureDebut}-{s.heureFin}</span>
-              </span>
-              <span
-                style={{
-                  fontWeight: 700, fontSize: 12, padding: '3px 10px', borderRadius: 999,
-                  background: s.inscrits.length > 0 ? 'rgba(255,0,170,0.15)' : '#222',
-                  color: s.inscrits.length > 0 ? '#f0a' : '#777',
-                  flexShrink: 0,
-                }}
-              >
-                {s.inscrits.length} inscrit{s.inscrits.length !== 1 ? 's' : ''}
-              </span>
-            </summary>
-            {s.inscrits.length > 0 && (
-              <ul style={{ margin: '8px 0 0', paddingLeft: 0, fontSize: 13, opacity: 0.85, listStyle: 'none' }}>
-                {s.inscrits.map((inscrit, j) => (
-                  <li key={j} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '4px 0' }}>
-                    <span>{inscrit.nom}</span>
-                    <form action={annulerReservationAdmin}>
-                      <input type="hidden" name="eleve_id" value={inscrit.eleveId} />
-                      <input type="hidden" name="cours_id" value={s.coursId} />
-                      <input type="hidden" name="date_seance" value={s.dateISO} />
-                      <button
-                        type="submit"
-                        style={{ fontSize: 11, padding: '3px 10px', borderRadius: 999, border: '1px solid #663', background: 'none', color: '#f88', cursor: 'pointer' }}
-                      >
-                        Retirer
-                      </button>
-                    </form>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </details>
-        ))}
+        <AdminSeancesCarousel
+          jours={joursCarousel}
+          indexAujourdhui={indexAujourdhuiCarousel}
+          annulerReservationAdmin={annulerReservationAdmin}
+        />
       </section>
 
       <section style={{ marginBottom: 32 }}>
