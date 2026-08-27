@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { COULEURS } from '@/lib/theme';
 
-type Ligne = { description: string; prix: string };
+type Ligne = { description: string; prixUnitaire: string; quantite: string };
 type Eleve = { nom: string | null; email: string | null };
 
 export default function FormulaireFactureManuelle({
@@ -13,18 +13,18 @@ export default function FormulaireFactureManuelle({
   creerFactureManuelle: (formData: FormData) => void;
   eleves: Eleve[];
 }) {
-  const [lignes, setLignes] = useState<Ligne[]>([{ description: '', prix: '' }]);
+  const [lignes, setLignes] = useState<Ligne[]>([{ description: '', prixUnitaire: '', quantite: '1' }]);
   const [nomClient, setNomClient] = useState('');
   const [emailClient, setEmailClient] = useState('');
 
-  const total = lignes.reduce((somme, l) => somme + (parseFloat(l.prix) || 0), 0);
+  const total = lignes.reduce((somme, l) => somme + (parseFloat(l.prixUnitaire) || 0) * (parseFloat(l.quantite) || 0), 0);
 
   function modifierLigne(i: number, champ: keyof Ligne, valeur: string) {
     setLignes((prev) => prev.map((l, idx) => (idx === i ? { ...l, [champ]: valeur } : l)));
   }
 
   function ajouterLigne() {
-    setLignes((prev) => [...prev, { description: '', prix: '' }]);
+    setLignes((prev) => [...prev, { description: '', prixUnitaire: '', quantite: '1' }]);
   }
 
   function retirerLigne(i: number) {
@@ -42,8 +42,8 @@ export default function FormulaireFactureManuelle({
 
   function surSoumission(formData: FormData) {
     const lignesValides = lignes
-      .filter((l) => l.description.trim() && parseFloat(l.prix) > 0)
-      .map((l) => ({ description: l.description.trim(), prix: parseFloat(l.prix) }));
+      .filter((l) => l.description.trim() && parseFloat(l.prixUnitaire) > 0 && parseFloat(l.quantite) > 0)
+      .map((l) => ({ description: l.description.trim(), prixUnitaire: parseFloat(l.prixUnitaire), quantite: parseFloat(l.quantite) }));
     formData.set('lignes', JSON.stringify(lignesValides));
     creerFactureManuelle(formData);
   }
@@ -93,15 +93,21 @@ export default function FormulaireFactureManuelle({
       {lignes.map((ligne, i) => (
         <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
           <input
-            placeholder="Description (ex. Atelier calisthenics 2h)"
+            placeholder="Description (ex. Cours de Handstand)"
             value={ligne.description}
             onChange={(e) => modifierLigne(i, 'description', e.target.value)}
             style={{ ...champStyle, flex: 1 }}
           />
           <input
-            type="number" min="0" step="0.01" placeholder="Prix €"
-            value={ligne.prix}
-            onChange={(e) => modifierLigne(i, 'prix', e.target.value)}
+            type="number" min="1" step="1" placeholder="Qté"
+            value={ligne.quantite}
+            onChange={(e) => modifierLigne(i, 'quantite', e.target.value)}
+            style={{ ...champStyle, width: 56 }}
+          />
+          <input
+            type="number" min="0" step="0.01" placeholder="Prix unit. €"
+            value={ligne.prixUnitaire}
+            onChange={(e) => modifierLigne(i, 'prixUnitaire', e.target.value)}
             style={{ ...champStyle, width: 90 }}
           />
           {lignes.length > 1 && (

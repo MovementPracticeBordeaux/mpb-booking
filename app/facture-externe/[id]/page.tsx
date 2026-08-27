@@ -13,7 +13,7 @@ export default async function FactureExternePage({ params }: { params: { id: str
 
   if (!facture) notFound();
 
-  const lignes = facture.lignes as { description: string; prix: number }[];
+  const lignes = facture.lignes as { description: string; prixUnitaire: number; quantite: number }[];
   const numeroFacture = `MPB-${new Date(facture.created_at).getFullYear()}-${facture.id.slice(0, 8).toUpperCase()}`;
 
   return (
@@ -43,6 +43,8 @@ export default async function FactureExternePage({ params }: { params: { id: str
           <thead>
             <tr style={{ borderBottom: '2px solid #111', textAlign: 'left' }}>
               <th style={{ padding: '8px 0' }}>Désignation</th>
+              <th style={{ padding: '8px 0', textAlign: 'right' }}>Qté</th>
+              <th style={{ padding: '8px 0', textAlign: 'right' }}>Prix unitaire</th>
               <th style={{ padding: '8px 0', textAlign: 'right' }}>Montant</th>
             </tr>
           </thead>
@@ -50,7 +52,9 @@ export default async function FactureExternePage({ params }: { params: { id: str
             {lignes.map((l, i) => (
               <tr key={i} style={{ borderBottom: '1px solid #ddd' }}>
                 <td style={{ padding: '8px 0' }}>{l.description}</td>
-                <td style={{ padding: '8px 0', textAlign: 'right' }}>{l.prix.toFixed(2)} €</td>
+                <td style={{ padding: '8px 0', textAlign: 'right' }}>{l.quantite}</td>
+                <td style={{ padding: '8px 0', textAlign: 'right' }}>{l.prixUnitaire.toFixed(2)} €</td>
+                <td style={{ padding: '8px 0', textAlign: 'right' }}>{(l.prixUnitaire * l.quantite).toFixed(2)} €</td>
               </tr>
             ))}
           </tbody>

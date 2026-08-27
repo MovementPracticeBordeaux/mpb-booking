@@ -572,17 +572,19 @@ export async function creerFactureManuelle(formData: FormData) {
   if (!nomClient) echouer('/admin/factures', 'Le nom du client est requis.');
   if (!emailClient && !telephoneClient) echouer('/admin/factures', 'Renseigne au moins un email ou un téléphone pour pouvoir envoyer la facture.');
 
-  let lignes: { description: string; prix: number }[];
+  let lignes: { description: string; prixUnitaire: number; quantite: number }[];
   try {
     lignes = JSON.parse(lignesJson);
   } catch {
     echouer('/admin/factures', 'Lignes de facture invalides.');
     return;
   }
-  lignes = lignes.filter((l) => l.description?.trim() && l.prix > 0);
-  if (lignes.length === 0) echouer('/admin/factures', 'Ajoute au moins une ligne de prestation avec un prix.');
+  lignes = lignes
+    .filter((l) => l.description?.trim() && l.prixUnitaire > 0 && l.quantite > 0)
+    .map((l) => ({ description: l.description.trim(), prixUnitaire: l.prixUnitaire, quantite: l.quantite }));
+  if (lignes.length === 0) echouer('/admin/factures', 'Ajoute au moins une ligne de prestation avec un prix et une quantité.');
 
-  const total = lignes.reduce((somme, l) => somme + l.prix, 0);
+  const total = lignes.reduce((somme, l) => somme + l.prixUnitaire * l.quantite, 0);
 
   const { error } = await admin.from('factures_manuelles').insert({
     nom_client: nomClient,
@@ -607,8 +609,9 @@ export async function envoyerFactureEmail(formData: FormData) {
   if (!facture.email_client) echouer('/admin/factures', "Cette facture n'a pas d'email renseigné.");
 
   const lien = `${process.env.NEXT_PUBLIC_SITE_URL}/facture-externe/${facture.id}`;
-  const lignesHtml = (facture.lignes as { description: string; prix: number }[])
-    .map((l) => `<li>${l.description} — ${l.prix.toFixed(2)} €</li>`).join('');
+  const lignesHtml = (facture.lignes as { description: string; prixUnitaire: number; quantite: number }[])
+    .map((l) => `<li>${l.description}${l.quantite > 1 ? ` — ${l.quantite} × ${l.prixUnitaire.toFixed(2)} €` : ''} — ${(l.prixUnitaire * l.quantite).toFixed(2)} €</li>`)
+    .join('');
 
   try {
     await envoyerEmail(
