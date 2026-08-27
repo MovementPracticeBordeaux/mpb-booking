@@ -556,3 +556,77 @@ export async function annulerReservationAdmin(formData: FormData) {
   revalidatePath('/profil');
   reussir('/admin/planning', 'Élève retiré du cours, formule recréditée.');
 }
+
+// --- Factures manuelles (prestations hors catalogue, ex. interventions à
+// l'extérieur) ---
+
+export async function creerFactureManuelle(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+
+  const nomClient = (formData.get('nom_client') as string)?.trim();
+  const emailClient = ((formData.get('email_client') as string) || '').trim() || null;
+  const telephoneClient = ((formData.get('telephone_client') as string) || '').trim() || null;
+  const lignesJson = formData.get('lignes') as string;
+
+  if (!nomClient) echouer('/admin/factures', 'Le nom du client est requis.');
+  if (!emailClient && !telephoneClient) echouer('/admin/factures', 'Renseigne au moins un email ou un téléphone pour pouvoir envoyer la facture.');
+
+  let lignes: { description: string; prix: number }[];
+  try {
+    lignes = JSON.parse(lignesJson);
+  } catch {
+    echouer('/admin/factures', 'Lignes de facture invalides.');
+    return;
+  }
+  lignes = lignes.filter((l) => l.description?.trim() && l.prix > 0);
+  if (lignes.length === 0) echouer('/admin/factures', 'Ajoute au moins une ligne de prestation avec un prix.');
+
+  const total = lignes.reduce((somme, l) => somme + l.prix, 0);
+
+  const { error } = await admin.from('factures_manuelles').insert({
+    nom_client: nomClient,
+    email_client: emailClient,
+    telephone_client: telephoneClient,
+    lignes,
+    total,
+  });
+  if (error) echouer('/admin/factures', error.message);
+
+  revalidatePath('/admin/factures');
+  reussir('/admin/factures', 'Facture créée.');
+}
+
+export async function envoyerFactureEmail(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+  const factureId = formData.get('facture_id') as string;
+
+  const { data: facture } = await admin.from('factures_manuelles').select('*').eq('id', factureId).single();
+  if (!facture) echouer('/admin/factures', 'Facture introuvable.');
+  if (!facture.email_client) echouer('/admin/factures', "Cette facture n'a pas d'email renseigné.");
+
+  const lien = `${process.env.NEXT_PUBLIC_SITE_URL}/facture-externe/${facture.id}`;
+  const lignesHtml = (facture.lignes as { description: string; prix: number }[])
+    .map((l) => `<li>${l.description} — ${l.prix.toFixed(2)} €</li>`).join('');
+
+  try {
+    await envoyerEmail(
+      facture.email_client,
+      `Facture Movement Practice Bordeaux — ${facture.total.toFixed(2)} €`,
+      `<p>Bonjour ${facture.nom_client},</p>
+       <p>Voici la facture pour la prestation convenue :</p>
+       <ul>${lignesHtml}</ul>
+       <p><strong>Total : ${facture.total.toFixed(2)} €</strong></p>
+       <p><a href="${lien}">Voir et imprimer la facture</a></p>
+       <p>Merci !</p>`
+    );
+  } catch (e: any) {
+    echouer('/admin/factures', `Échec de l'envoi de l'email : ${e.message ?? 'erreur inconnue'}`);
+    return;
+  }
+
+  await admin.from('factures_manuelles').update({ envoyee_le: new Date().toISOString() }).eq('id', factureId);
+  revalidatePath('/admin/factures');
+  reussir('/admin/factures', 'Facture envoyée par email.');
+}
