@@ -2,7 +2,7 @@
 export const ENTREPRISE = {
   nom: 'Movement Practice Bordeaux — Sylvain Noury',
   adresse: '36 rue Édouard Mayaudon, 33100 Bordeaux',
-  siret: '843 213 208 00013',
+  siret: '849 014 196 00018',
   email: 'contact@movementpracticebordeaux.com',
   mentionTva: 'TVA non applicable, art. 293 B du CGI',
 };
