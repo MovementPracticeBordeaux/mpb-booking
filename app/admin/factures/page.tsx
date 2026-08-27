@@ -18,6 +18,15 @@ export default async function AdminFacturesPage({ searchParams }: { searchParams
     .select('*')
     .order('created_at', { ascending: false });
 
+  // Pour l'auto-complétion nom/email dans le formulaire ci-dessous — n'importe
+  // qui de référencé sur le site peut être suggéré, sans empêcher de taper
+  // à la main le nom de quelqu'un qui n'a pas de compte.
+  const { data: eleves } = await admin
+    .from('profiles')
+    .select('nom, email')
+    .not('email', 'is', null)
+    .order('nom');
+
   return (
     <main style={{ maxWidth: 640, margin: '0 auto', padding: 20 }}>
       <h1>Factures</h1>
@@ -34,7 +43,7 @@ export default async function AdminFacturesPage({ searchParams }: { searchParams
       )}
 
       <section style={{ marginBottom: 32 }}>
-        <FormulaireFactureManuelle creerFactureManuelle={creerFactureManuelle} />
+        <FormulaireFactureManuelle creerFactureManuelle={creerFactureManuelle} eleves={eleves ?? []} />
       </section>
 
       <section>

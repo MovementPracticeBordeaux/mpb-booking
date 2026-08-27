@@ -4,13 +4,18 @@ import { useState } from 'react';
 import { COULEURS } from '@/lib/theme';
 
 type Ligne = { description: string; prix: string };
+type Eleve = { nom: string | null; email: string | null };
 
 export default function FormulaireFactureManuelle({
   creerFactureManuelle,
+  eleves,
 }: {
   creerFactureManuelle: (formData: FormData) => void;
+  eleves: Eleve[];
 }) {
   const [lignes, setLignes] = useState<Ligne[]>([{ description: '', prix: '' }]);
+  const [nomClient, setNomClient] = useState('');
+  const [emailClient, setEmailClient] = useState('');
 
   const total = lignes.reduce((somme, l) => somme + (parseFloat(l.prix) || 0), 0);
 
@@ -24,6 +29,15 @@ export default function FormulaireFactureManuelle({
 
   function retirerLigne(i: number) {
     setLignes((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
+  // Si le nom saisi correspond exactement à un élève connu (choisi dans la
+  // liste suggérée), on pré-remplit son email automatiquement — mais on ne
+  // force rien, l'admin peut toujours corriger ou taper autre chose à la main.
+  function surChangementNom(valeur: string) {
+    setNomClient(valeur);
+    const correspondance = eleves.find((e) => e.nom === valeur);
+    if (correspondance?.email) setEmailClient(correspondance.email);
   }
 
   function surSoumission(formData: FormData) {
@@ -46,8 +60,33 @@ export default function FormulaireFactureManuelle({
 
   return (
     <form action={surSoumission} style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 420 }}>
-      <input name="nom_client" placeholder="Nom du client" required style={champStyle} />
-      <input name="email_client" type="email" placeholder="Email (pour l'envoi par email)" style={champStyle} />
+      <input
+        name="nom_client"
+        placeholder="Nom du client"
+        list="suggestions-noms-eleves"
+        value={nomClient}
+        onChange={(e) => surChangementNom(e.target.value)}
+        required
+        style={champStyle}
+      />
+      <input
+        name="email_client"
+        type="email"
+        placeholder="Email (pour l'envoi par email)"
+        list="suggestions-emails-eleves"
+        value={emailClient}
+        onChange={(e) => setEmailClient(e.target.value)}
+        style={champStyle}
+      />
+      {/* Listes de suggestion natives du navigateur : proposent les élèves déjà
+          référencés sur le site, sans jamais empêcher de taper un nom ou un
+          email libre pour quelqu'un qui n'a pas de compte. */}
+      <datalist id="suggestions-noms-eleves">
+        {eleves.filter((e) => e.nom).map((e) => <option key={e.email} value={e.nom!} />)}
+      </datalist>
+      <datalist id="suggestions-emails-eleves">
+        {eleves.filter((e) => e.email).map((e) => <option key={e.email} value={e.email!} />)}
+      </datalist>
       <input name="telephone_client" placeholder="Téléphone (pour l'envoi par WhatsApp, ex. 0612345678)" style={champStyle} />
 
       <p style={{ fontSize: 12, opacity: 0.7, margin: '6px 0 0' }}>Prestations</p>
