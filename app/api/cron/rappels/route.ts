@@ -36,6 +36,49 @@ export async function GET(req: NextRequest) {
       if (resultat.ok) degeles++;
     }
 
+    // Suppression automatique des comptes créés il y a plus de 7 jours et
+    // n'ayant JAMAIS eu ni abonnement ni paiement (spam, curieux jamais
+    // revenus...) — sans ça, la liste des élèves devient interminable avec
+    // le temps. Un compte ayant déjà eu un abonnement ou un paiement, même
+    // expiré/inactif aujourd'hui, n'est JAMAIS supprimé automatiquement
+    // (garde l'historique commercial/comptable, archivable/filtrable
+    // depuis /admin/eleves plutôt que supprimé).
+    const NB_JOURS_AVANT_SUPPRESSION = 7;
+    let comptesSupprimes = 0;
+    try {
+      const seuil = new Date();
+      seuil.setDate(seuil.getDate() - NB_JOURS_AVANT_SUPPRESSION);
+
+      const { data: profilsAnciens } = await admin
+        .from('profiles')
+        .select('id, created_at')
+        .lt('created_at', seuil.toISOString());
+
+      if (profilsAnciens && profilsAnciens.length > 0) {
+        const ids = profilsAnciens.map((p) => p.id);
+        const { data: abosExistants } = await admin.from('abonnements').select('eleve_id').in('eleve_id', ids);
+        const { data: paiementsExistants } = await admin.from('paiements').select('eleve_id').in('eleve_id', ids);
+        const idsAvecHistorique = new Set([
+          ...(abosExistants ?? []).map((a) => a.eleve_id),
+          ...(paiementsExistants ?? []).map((p) => p.eleve_id),
+        ]);
+
+        for (const profil of profilsAnciens) {
+          if (idsAvecHistorique.has(profil.id)) continue;
+          // Supprime le compte auth (cascade automatiquement vers profiles
+          // et toute donnée liée par clé étrangère) plutôt qu'un simple
+          // delete sur profiles, pour ne laisser aucun compte orphelin.
+          const { error: erreurSuppression } = await admin.auth.admin.deleteUser(profil.id);
+          if (!erreurSuppression) comptesSupprimes++;
+        }
+      }
+    } catch (e: any) {
+      await alerterAdmin(
+        'Le nettoyage des comptes fantômes a échoué',
+        `Erreur : ${e?.message ?? 'inconnue'}. Aucun compte n'a été supprimé cette fois, à vérifier.`
+      );
+    }
+
     const demain = new Date();
     demain.setDate(demain.getDate() + 1);
     const demainStr = demain.toISOString().slice(0, 10);
@@ -132,7 +175,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({ envoyes, echecs, eleves: parEleve.size, reservations: (reservations ?? []).length, degeles });
+    return NextResponse.json({ envoyes, echecs, eleves: parEleve.size, reservations: (reservations ?? []).length, degeles, comptesSupprimes });
   } catch (e: any) {
     await alerterAdmin(
       'Le cron des rappels a planté',

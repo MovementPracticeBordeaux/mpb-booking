@@ -11,8 +11,8 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
 
   const { data: eleves } = await admin
     .from('profiles')
-    .select('id, nom, email')
-    .order('email');
+    .select('id, nom, email, created_at')
+    .order('nom', { ascending: true, nullsFirst: false });
 
   // Un élève peut avoir plusieurs abonnements actifs (planning + coaching +
   // mentorat en parallèle) — chaque ligne d'abonnements représente une
@@ -22,6 +22,18 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
     .select('*')
     .eq('abonnement_actif', true)
     .order('categorie');
+
+  // Pour classer chaque élève (jamais eu de formule / ancien client sans
+  // rien d'actif / actif) — nécessaire pour les filtres de la liste et le
+  // nettoyage automatique des comptes fantômes. On ne récupère que les
+  // eleve_id, pas les lignes complètes, pour rester léger même avec
+  // beaucoup d'inscrits.
+  const { data: tousAbonnementsIds } = await admin.from('abonnements').select('eleve_id');
+  const { data: tousPaiementsIds } = await admin.from('paiements').select('eleve_id');
+  const idsAyantDejaEuFormule = new Set([
+    ...(tousAbonnementsIds ?? []).map((a) => a.eleve_id),
+    ...(tousPaiementsIds ?? []).map((p) => p.eleve_id),
+  ]);
 
   const { data: paiements } = await admin
     .from('paiements')
@@ -111,11 +123,12 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
 
       <section style={{ marginBottom: 32 }}>
         <ListeElevesRepliable
-          eleves={(eleves ?? []).map((e) => ({ id: e.id, nom: e.nom, email: e.email }))}
+          eleves={(eleves ?? []).map((e) => ({ id: e.id, nom: e.nom, email: e.email, createdAt: e.created_at }))}
           abonnements={(abonnementsBrut ?? []).map((a) => ({
             ...a,
             formuleAffichage: FORMULES[a.formule_nom] ?? null,
           }))}
+          idsAyantDejaEuFormule={[...idsAyantDejaEuFormule]}
           suspendreAcces={suspendreAcces}
           modifierQuotaRestant={modifierQuotaRestant}
           modifierExpiration={modifierExpiration}

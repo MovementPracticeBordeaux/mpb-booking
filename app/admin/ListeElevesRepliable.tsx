@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-type Eleve = { id: string; nom: string | null; email: string };
+type Eleve = { id: string; nom: string | null; email: string; createdAt: string };
 
 // Reçoit les abonnements déjà enrichis de leur formule (nom, unité, quota,
 // catégorie) pour ne pas avoir à repasser tout le catalogue FORMULES en prop.
@@ -32,6 +32,7 @@ const LIBELLE_CATEGORIE: Record<string, string> = {
 export default function ListeElevesRepliable({
   eleves,
   abonnements,
+  idsAyantDejaEuFormule,
   suspendreAcces,
   modifierQuotaRestant,
   modifierExpiration,
@@ -42,6 +43,7 @@ export default function ListeElevesRepliable({
 }: {
   eleves: Eleve[];
   abonnements: Abonnement[];
+  idsAyantDejaEuFormule: string[];
   suspendreAcces: (formData: FormData) => void;
   modifierQuotaRestant: (formData: FormData) => void;
   modifierExpiration: (formData: FormData) => void;
@@ -52,6 +54,9 @@ export default function ListeElevesRepliable({
 }) {
   const [ouvert, setOuvert] = useState(false);
   const [recherche, setRecherche] = useState('');
+  const [filtreStatut, setFiltreStatut] = useState<'actifs' | 'geles' | 'anciens' | 'jamais' | 'tous'>('actifs');
+
+  const ensembleDejaEuFormule = new Set(idsAyantDejaEuFormule);
 
   // Un élève peut désormais avoir plusieurs abonnements actifs en même
   // temps (planning + coaching + mentorat) — on les regroupe par élève
@@ -63,10 +68,37 @@ export default function ListeElevesRepliable({
     abosParEleve.set(a.eleve_id, liste);
   }
 
+  function statutEleve(e: Eleve): 'actifs' | 'geles' | 'anciens' | 'jamais' {
+    const abos = abosParEleve.get(e.id) ?? [];
+    if (abos.some((a) => a.gele)) return 'geles';
+    if (abos.length > 0) return 'actifs';
+    if (ensembleDejaEuFormule.has(e.id)) return 'anciens';
+    return 'jamais';
+  }
+
+  const NB_JOURS_AVANT_SUPPRESSION_AUTO = 7;
+  function joursDepuisCreation(e: Eleve): number {
+    return Math.floor((Date.now() - new Date(e.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+  }
+
+  const compteurs = { actifs: 0, geles: 0, anciens: 0, jamais: 0 };
+  for (const e of eleves) compteurs[statutEleve(e)]++;
+
   const filtres = eleves.filter((e) => {
+    if (filtreStatut !== 'tous' && statutEleve(e) !== filtreStatut) return false;
     const abos = abosParEleve.get(e.id) ?? [];
     const cible = `${e.nom ?? ''} ${e.email} ${abos.map((a) => a.formuleAffichage?.nom ?? '').join(' ')}`.toLowerCase();
     return cible.includes(recherche.toLowerCase());
+  });
+
+  const boutonFiltre = (valeur: typeof filtreStatut, label: string, count?: number): React.CSSProperties => ({
+    background: filtreStatut === valeur ? '#f0a' : 'none',
+    color: filtreStatut === valeur ? 'white' : 'inherit',
+    border: '1px solid #444',
+    borderRadius: 999,
+    padding: '4px 10px',
+    fontSize: 12,
+    cursor: 'pointer',
   });
 
   return (
@@ -80,6 +112,23 @@ export default function ListeElevesRepliable({
 
       {ouvert && (
         <div style={{ marginTop: 10 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+            <button type="button" onClick={() => setFiltreStatut('actifs')} style={boutonFiltre('actifs', 'Actifs')}>
+              Actifs ({compteurs.actifs})
+            </button>
+            <button type="button" onClick={() => setFiltreStatut('geles')} style={boutonFiltre('geles', 'Gelés')}>
+              Gelés ({compteurs.geles})
+            </button>
+            <button type="button" onClick={() => setFiltreStatut('anciens')} style={boutonFiltre('anciens', 'Anciens clients')}>
+              Anciens clients ({compteurs.anciens})
+            </button>
+            <button type="button" onClick={() => setFiltreStatut('jamais')} style={boutonFiltre('jamais', 'Jamais de formule')}>
+              Jamais de formule ({compteurs.jamais})
+            </button>
+            <button type="button" onClick={() => setFiltreStatut('tous')} style={boutonFiltre('tous', 'Tous')}>
+              Tous ({eleves.length})
+            </button>
+          </div>
           <input
             type="text"
             placeholder="Rechercher un élève (nom, email, formule)..."
@@ -87,16 +136,26 @@ export default function ListeElevesRepliable({
             onChange={(e) => setRecherche(e.target.value)}
             style={{ width: '100%', maxWidth: 320, marginBottom: 10, padding: '6px 10px', fontSize: 13 }}
           />
+          {filtreStatut === 'jamais' && (
+            <p style={{ fontSize: 12, opacity: 0.6, marginTop: -4, marginBottom: 10 }}>
+              Ces comptes sont supprimés automatiquement au bout de {NB_JOURS_AVANT_SUPPRESSION_AUTO} jours s'ils
+              n'ont toujours pris aucune formule.
+            </p>
+          )}
           {filtres.length === 0 && <p style={{ fontSize: 13, opacity: 0.6 }}>Aucun élève ne correspond.</p>}
           {filtres.map((e) => {
             const abos = abosParEleve.get(e.id) ?? [];
             const resume = abos.length === 0
               ? 'aucune formule active'
               : abos.map((a) => `${LIBELLE_CATEGORIE[a.categorie] ?? a.categorie}: ${a.formuleAffichage?.nom ?? a.formule_nom}`).join(' + ');
+            const joursRestants = statutEleve(e) === 'jamais' ? Math.max(0, NB_JOURS_AVANT_SUPPRESSION_AUTO - joursDepuisCreation(e)) : null;
             return (
               <details key={e.id} style={{ borderBottom: '1px solid #333', padding: 8 }}>
                 <summary style={{ fontSize: 14, cursor: 'pointer' }}>
                   {e.nom ?? e.email} — {resume}
+                  {joursRestants !== null && (
+                    <span style={{ fontSize: 11, opacity: 0.5 }}> · suppression auto dans {joursRestants} j</span>
+                  )}
                 </summary>
 
                 <div style={{ marginTop: 10 }}>
