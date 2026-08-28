@@ -114,6 +114,11 @@ export async function POST(req: NextRequest) {
                ${formule.categorie === 'coaching'
                  ? '<p>Sylvain va te contacter pour caler ton créneau.</p>'
                  : '<p>Tu peux dès maintenant réserver tes cours depuis le planning.</p>'}
+               ${formuleNom === 'cours_decouverte'
+                 ? `<p>👋 C'est ta première séance avec nous ? On te recommande de contacter Sylvain avant
+                    de venir, pour avoir les infos pratiques (lieu exact, ce qu'il faut prévoir/apporter) :
+                    <a href="https://wa.me/33620477064">le contacter sur WhatsApp</a>.</p>`
+                 : ''}
                <p>Tu retrouveras cette facture à tout moment dans ton espace personnel.</p>`
             );
           }

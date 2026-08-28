@@ -88,6 +88,13 @@ export default async function ProfilPage() {
                       : 'Accès illimité'}
                     {' · '}valable jusqu'au {abo.date_expiration}
                   </p>
+                  {abo.formule_nom === 'cours_decouverte' && (
+                    <p style={{ marginTop: 12, marginBottom: 0, fontSize: 13 }}>
+                      👋 Première fois avec nous ? On te recommande de{' '}
+                      <a href="https://wa.me/33620477064" style={{ color: '#f0a' }}>contacter Sylvain sur WhatsApp</a>{' '}
+                      avant de venir, pour avoir le lieu exact et ce qu'il faut prévoir.
+                    </p>
+                  )}
                   {abo.categorie === 'coaching' && (
                     <>
                       <p style={{ marginTop: 16, marginBottom: 4 }}>Pour caler ton créneau, contacte directement Sylvain :</p>
