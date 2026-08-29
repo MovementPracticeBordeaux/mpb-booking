@@ -633,3 +633,38 @@ export async function envoyerFactureEmail(formData: FormData) {
   revalidatePath('/admin/factures');
   reussir('/admin/factures', 'Facture envoyée par email.');
 }
+
+// --- Défi du mois (partagé par tous les élèves ayant un abonnement actif,
+// quel que soit le forfait — pas de version "difficile" réservée aux
+// abonnés illimité, volontairement : la difficulté payée ne reflète pas le
+// niveau physique de l'élève). L'envoi de la vidéo se fait par WhatsApp
+// comme d'habitude, l'app se contente d'afficher le défi en cours.
+
+export async function creerDefiMensuel(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+
+  const titre = (formData.get('titre') as string)?.trim();
+  const description = (formData.get('description') as string)?.trim();
+  if (!titre || !description) echouer('/admin/defis', 'Titre et description sont requis.');
+
+  const { error } = await admin.from('defis_mensuels').insert({ titre, description });
+  if (error) echouer('/admin/defis', error.message);
+
+  revalidatePath('/admin/defis');
+  revalidatePath('/profil');
+  reussir('/admin/defis', 'Nouveau défi publié — visible immédiatement sur le profil des élèves.');
+}
+
+export async function supprimerDefiMensuel(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+  const defiId = formData.get('defi_id') as string;
+
+  const { error } = await admin.from('defis_mensuels').delete().eq('id', defiId);
+  if (error) echouer('/admin/defis', error.message);
+
+  revalidatePath('/admin/defis');
+  revalidatePath('/profil');
+  reussir('/admin/defis', 'Défi supprimé.');
+}

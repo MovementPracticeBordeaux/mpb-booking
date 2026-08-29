@@ -7,6 +7,7 @@ const LIENS = [
   { href: '/admin/planning', label: 'Planning collectif' },
   { href: '/admin/eleves', label: 'Élèves & paiements' },
   { href: '/admin/factures', label: 'Factures' },
+  { href: '/admin/defis', label: 'Défi du mois' },
   { href: '/admin/statistiques', label: 'Statistiques' },
   { href: '/admin/mentorship', label: 'Mentorat' },
   { href: '/admin/objectifs', label: 'Objectifs' },
