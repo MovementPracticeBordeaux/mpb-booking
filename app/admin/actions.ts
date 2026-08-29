@@ -645,15 +645,31 @@ export async function creerDefiMensuel(formData: FormData) {
   const admin = supabaseAdmin();
 
   const titre = (formData.get('titre') as string)?.trim();
-  const description = (formData.get('description') as string)?.trim();
-  if (!titre || !description) echouer('/admin/defis', 'Titre et description sont requis.');
+  const questionNiveau = (formData.get('question_niveau') as string)?.trim();
+  const descriptionFacile = (formData.get('description_facile') as string)?.trim();
+  const descriptionMoyen = (formData.get('description_moyen') as string)?.trim();
+  const descriptionDur = (formData.get('description_dur') as string)?.trim();
 
-  const { error } = await admin.from('defis_mensuels').insert({ titre, description });
+  if (!titre || !questionNiveau || !descriptionFacile || !descriptionMoyen || !descriptionDur) {
+    echouer('/admin/defis', 'Titre, question et les 3 niveaux de description sont requis.');
+  }
+
+  const { error } = await admin.from('defis_mensuels').insert({
+    titre,
+    question_niveau: questionNiveau,
+    description_facile: descriptionFacile,
+    description_moyen: descriptionMoyen,
+    description_dur: descriptionDur,
+    // Colonne historique conservée pour compatibilité, jamais réaffichée
+    // depuis l'introduction des 3 niveaux.
+    description: descriptionMoyen,
+  });
   if (error) echouer('/admin/defis', error.message);
 
   revalidatePath('/admin/defis');
+  revalidatePath('/defi');
   revalidatePath('/profil');
-  reussir('/admin/defis', 'Nouveau défi publié — visible immédiatement sur le profil des élèves.');
+  reussir('/admin/defis', 'Nouveau défi publié — visible immédiatement sur le site.');
 }
 
 export async function supprimerDefiMensuel(formData: FormData) {
@@ -665,6 +681,43 @@ export async function supprimerDefiMensuel(formData: FormData) {
   if (error) echouer('/admin/defis', error.message);
 
   revalidatePath('/admin/defis');
+  revalidatePath('/defi');
   revalidatePath('/profil');
   reussir('/admin/defis', 'Défi supprimé.');
+}
+
+// Valide la participation d'un élève à un défi (après vérification de la
+// vidéo reçue par WhatsApp) : lui attribue son étoile, de la couleur
+// correspondant au niveau qu'il avait choisi.
+export async function validerParticipationDefi(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+  const participationId = formData.get('participation_id') as string;
+
+  const { error } = await admin
+    .from('defi_participations')
+    .update({ valide: true, valide_le: new Date().toISOString() })
+    .eq('id', participationId);
+  if (error) echouer('/admin/defis', error.message);
+
+  revalidatePath('/admin/defis');
+  revalidatePath('/defi');
+  reussir('/admin/defis', 'Participation validée — étoile attribuée.');
+}
+
+// Annule une validation faite par erreur (retire l'étoile correspondante).
+export async function invaliderParticipationDefi(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+  const participationId = formData.get('participation_id') as string;
+
+  const { error } = await admin
+    .from('defi_participations')
+    .update({ valide: false, valide_le: null })
+    .eq('id', participationId);
+  if (error) echouer('/admin/defis', error.message);
+
+  revalidatePath('/admin/defis');
+  revalidatePath('/defi');
+  reussir('/admin/defis', 'Validation annulée.');
 }
