@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabaseBrowser } from '@/lib/supabase-browser';
 
@@ -28,6 +28,19 @@ export default function LoginPage() {
   const [code, setCode] = useState('');
   const [verification, setVerification] = useState(false);
   const [erreur, setErreur] = useState('');
+  // Piège anti-bot : un champ invisible pour les humains (masqué en CSS),
+  // que la plupart des bots remplissent quand même car ils remplissent
+  // tout ce qu'ils trouvent. + une garde de temps : un envoi en moins de 2
+  // secondes après l'affichage du formulaire est quasi toujours un bot
+  // (aucun humain ne lit et remplit un champ email aussi vite). Aucun
+  // service externe requis, gratuit, mais moins robuste qu'un vrai
+  // CAPTCHA — voir la note pour Sylvain sur Cloudflare Turnstile.
+  const [piege, setPiege] = useState('');
+  const heureAffichage = useRef(Date.now());
+
+  useEffect(() => {
+    heureAffichage.current = Date.now();
+  }, []);
 
   useEffect(() => {
     // Le lien magique reçu par email a expiré, a déjà été utilisé, ou
@@ -42,6 +55,20 @@ export default function LoginPage() {
   async function envoyerLien(e: React.FormEvent) {
     e.preventDefault();
     setErreur('');
+
+    // Piège rempli = bot presque certain, on ne fait rien (mais on affiche
+    // quand même "envoyé" pour ne pas révéler au bot que son inscription a
+    // été bloquée, ce qui l'inciterait à s'adapter).
+    if (piege) {
+      setEnvoye(true);
+      return;
+    }
+    // Formulaire soumis trop vite pour être humain.
+    if (Date.now() - heureAffichage.current < 2000) {
+      setEnvoye(true);
+      return;
+    }
+
     const supabase = supabaseBrowser();
     const { error } = await supabase.auth.signInWithOtp({
       email,
@@ -91,6 +118,16 @@ export default function LoginPage() {
         </>
       ) : (
         <form onSubmit={envoyerLien}>
+          <input
+            type="text"
+            name="site_web"
+            value={piege}
+            onChange={(e) => setPiege(e.target.value)}
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+            style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }}
+          />
           <input
             type="email"
             required

@@ -6,7 +6,12 @@ export const dynamic = 'force-dynamic';
 
 // Construit un lien WhatsApp pré-rempli (pas d'envoi automatique : ouvre
 // WhatsApp avec le message déjà écrit, prêt à être vérifié puis envoyé).
-function lienWhatsApp(telephone: string, message: string): string {
+// Sans numéro connu (facture créée sans téléphone), ouvre quand même
+// WhatsApp avec le message prêt et laisse choisir le contact à la main -
+// indispensable pour garder ce canal disponible même si seul l'email
+// avait été renseigné au départ (voir le cas d'Anne Laudoyer).
+function lienWhatsApp(telephone: string | null, message: string): string {
+  if (!telephone) return `https://wa.me/?text=${encodeURIComponent(message)}`;
   const numero = telephone.replace(/[^0-9+]/g, '').replace(/^0/, '33'); // suppose un numéro français
   return `https://wa.me/${numero}?text=${encodeURIComponent(message)}`;
 }
@@ -78,6 +83,17 @@ export default async function AdminFacturesPage({ searchParams }: { searchParams
                     style={{ fontSize: 12, padding: '5px 12px', borderRadius: 999, border: '1px solid #333', color: 'inherit', textDecoration: 'none' }}
                   >
                     Envoyer par WhatsApp
+                  </a>
+                )}
+                {!f.telephone_client && (
+                  <a
+                    href={lienWhatsApp(null, messageWhatsApp)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Aucun téléphone enregistré pour cette facture : choisis le contact directement dans WhatsApp"
+                    style={{ fontSize: 12, padding: '5px 12px', borderRadius: 999, border: '1px dashed #555', color: '#999', textDecoration: 'none' }}
+                  >
+                    Envoyer par WhatsApp (choisir le contact)
                   </a>
                 )}
               </div>

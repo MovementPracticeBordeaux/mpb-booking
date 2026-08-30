@@ -58,13 +58,13 @@ export default async function DefiPage() {
     }
   }
 
-  // Classement public : tout le monde ayant déjà été validé sur au moins un
-  // défi, avec le détail coloré de chaque étoile gagnée. Lecture en tant
+  // Classement : tout le monde ayant déjà été validé sur au moins un défi,
+  // avec le détail coloré de chaque étoile gagnée. Lecture en tant
   // qu'admin (RLS sur profiles empêcherait sinon de voir le nom des autres
   // élèves) — on ne projette que le strict nécessaire à l'affichage.
   const { data: participationsValidees } = await admin
     .from('defi_participations')
-    .select('eleve_id, niveau, valide_le, defis_mensuels(titre)')
+    .select('eleve_id, niveau, defi_id, valide_le, defis_mensuels(titre)')
     .eq('valide', true)
     .order('valide_le', { ascending: true });
 
@@ -75,16 +75,80 @@ export default async function DefiPage() {
   const nomParId = new Map((profilsGagnants ?? []).map((p) => [p.id, p.nom || 'Élève']));
 
   type LigneClassement = { eleveId: string; nom: string; etoiles: { niveau: string; titre: string }[] };
-  const classementMap = new Map<string, LigneClassement>();
-  for (const p of participationsValidees ?? []) {
-    const ligne: LigneClassement = classementMap.get(p.eleve_id) ?? { eleveId: p.eleve_id, nom: nomParId.get(p.eleve_id) ?? 'Élève', etoiles: [] };
-    ligne.etoiles.push({ niveau: p.niveau, titre: (p.defis_mensuels as any)?.titre ?? '' });
-    classementMap.set(p.eleve_id, ligne);
+
+  // Trie par réussite : d'abord le nombre d'étoiles du plus haut niveau
+  // (or), puis argent, puis bronze en cas d'égalité — pas juste le total
+  // brut, pour valoriser la difficulté plutôt que la seule quantité.
+  function trierParNiveauPuisTotal(lignes: LigneClassement[]): LigneClassement[] {
+    return lignes.sort((a, b) => {
+      for (const niv of ['dur', 'moyen', 'facile'] as const) {
+        const diff = b.etoiles.filter((e) => e.niveau === niv).length - a.etoiles.filter((e) => e.niveau === niv).length;
+        if (diff !== 0) return diff;
+      }
+      return 0;
+    });
   }
-  const classement = [...classementMap.values()].sort((a, b) => b.etoiles.length - a.etoiles.length);
+
+  function construireClassement(participations: typeof participationsValidees): LigneClassement[] {
+    const map = new Map<string, LigneClassement>();
+    for (const p of participations ?? []) {
+      const ligne: LigneClassement = map.get(p.eleve_id) ?? { eleveId: p.eleve_id, nom: nomParId.get(p.eleve_id) ?? 'Élève', etoiles: [] };
+      ligne.etoiles.push({ niveau: p.niveau, titre: (p.defis_mensuels as any)?.titre ?? '' });
+      map.set(p.eleve_id, ligne);
+    }
+    return trierParNiveauPuisTotal([...map.values()]);
+  }
+
+  // Deux classements distincts : celui du défi affiché en ce moment (pour
+  // voir qui performe sur CE défi précis), et le cumul de toutes les
+  // étoiles gagnées depuis le début (pour garder une continuité du travail
+  // de fond d'un défi à l'autre).
+  const classementDefiActuel = defiActuel
+    ? construireClassement((participationsValidees ?? []).filter((p) => p.defi_id === defiActuel.id))
+    : [];
+  const classementTotal = construireClassement(participationsValidees);
+
+  const SEUIL_MYTHIQUE = 3; // nombre d'étoiles or à partir duquel le prénom scintille
+
+  function ClassementListe({ lignes }: { lignes: LigneClassement[] }) {
+    return (
+      <>
+        {lignes.length === 0 && <p style={{ fontSize: 13, opacity: 0.5 }}>Personne n'a encore validé de défi — sois le premier !</p>}
+        {lignes.map((ligne, i) => {
+          const nbOr = ligne.etoiles.filter((e) => e.niveau === 'dur').length;
+          const estMythique = nbOr >= SEUIL_MYTHIQUE;
+          return (
+            <div key={ligne.eleveId} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid #2a2a2a' }}>
+              <span style={{ width: 22, textAlign: 'right', opacity: 0.5, fontSize: 13 }}>{i + 1}.</span>
+              <span
+                style={{
+                  flex: 1, fontSize: 14,
+                  ...(estMythique
+                    ? { color: '#f0f', fontWeight: 700, animation: 'glow-defi-mythique 2.4s ease-in-out infinite' }
+                    : {}),
+                }}
+              >
+                {ligne.nom}{estMythique && ' ✨'}
+              </span>
+              <span style={{ display: 'flex', gap: 2 }}>
+                {ligne.etoiles.map((e, j) => <Etoile key={j} couleur={COULEUR_NIVEAU[e.niveau]} taille={16} />)}
+              </span>
+              <span style={{ fontSize: 12, opacity: 0.6, minWidth: 20, textAlign: 'right' }}>{ligne.etoiles.length}</span>
+            </div>
+          );
+        })}
+      </>
+    );
+  }
 
   return (
     <main style={{ maxWidth: 560, margin: '0 auto', padding: 20 }}>
+      <style>{`
+        @keyframes glow-defi-mythique {
+          0%, 100% { text-shadow: 0 0 4px #FF3B30bb, 0 0 8px #FF2D78bb, 0 0 14px #8B5CF6aa; }
+          50% { text-shadow: 0 0 8px #FF3B30dd, 0 0 16px #FF2D78dd, 0 0 26px #8B5CF6dd; }
+        }
+      `}</style>
       <h1>🏆 Défi du mois</h1>
 
       {!defiActuel && <p style={{ opacity: 0.7 }}>Aucun défi en cours pour le moment — reviens bientôt !</p>}
@@ -227,21 +291,18 @@ export default async function DefiPage() {
         </div>
       )}
 
-      <h2>Classement des étoiles</h2>
+      <h2>Classement — ce défi</h2>
       <p style={{ fontSize: 13, opacity: 0.6, marginTop: -8 }}>
-        🥉 Bronze · 🥈 Argent · 🥇 Or — une étoile par défi validé, colorée selon le niveau relevé.
+        🥉 Bronze · 🥈 Argent · 🥇 Or — trié par niveau de réussite, du plus dur au plus accessible.
       </p>
-      {classement.length === 0 && <p style={{ fontSize: 13, opacity: 0.5 }}>Personne n'a encore validé de défi — sois le premier !</p>}
-      {classement.map((ligne, i) => (
-        <div key={ligne.eleveId} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid #2a2a2a' }}>
-          <span style={{ width: 22, textAlign: 'right', opacity: 0.5, fontSize: 13 }}>{i + 1}.</span>
-          <span style={{ flex: 1, fontSize: 14 }}>{ligne.nom}</span>
-          <span style={{ display: 'flex', gap: 2 }}>
-            {ligne.etoiles.map((e, j) => <Etoile key={j} couleur={COULEUR_NIVEAU[e.niveau]} taille={16} />)}
-          </span>
-          <span style={{ fontSize: 12, opacity: 0.6, minWidth: 20, textAlign: 'right' }}>{ligne.etoiles.length}</span>
-        </div>
-      ))}
+      <ClassementListe lignes={classementDefiActuel} />
+
+      <h2 style={{ marginTop: 32 }}>Classement total (toutes étoiles cumulées)</h2>
+      <p style={{ fontSize: 13, opacity: 0.6, marginTop: -8 }}>
+        Le cumul de tous les défis depuis le début — pour suivre ta progression dans la durée, pas juste ce mois-ci.
+        {' '}À partir de {SEUIL_MYTHIQUE} étoiles or, ton prénom scintille ✨
+      </p>
+      <ClassementListe lignes={classementTotal} />
     </main>
   );
 }
