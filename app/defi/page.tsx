@@ -34,6 +34,7 @@ export default async function DefiPage() {
   // pour pouvoir participer, pas juste consulter.
   let aUnAbonnementActif = false;
   let maParticipation: { niveau: string; valide: boolean } | null = null;
+  let monPrenom: string | null = null;
   if (user) {
     const { count } = await admin
       .from('abonnements')
@@ -41,6 +42,9 @@ export default async function DefiPage() {
       .eq('eleve_id', user.id)
       .eq('abonnement_actif', true);
     aUnAbonnementActif = (count ?? 0) > 0;
+
+    const { data: monProfil } = await admin.from('profiles').select('nom').eq('id', user.id).maybeSingle();
+    monPrenom = monProfil?.nom ?? null;
 
     if (defiActuel) {
       const { data } = await admin
@@ -67,7 +71,7 @@ export default async function DefiPage() {
   const { data: profilsGagnants } = idsGagnants.length > 0
     ? await admin.from('profiles').select('id, nom, email').in('id', idsGagnants)
     : { data: [] as { id: string; nom: string | null; email: string }[] };
-  const nomParId = new Map((profilsGagnants ?? []).map((p) => [p.id, p.nom || p.email.split('@')[0]]));
+  const nomParId = new Map((profilsGagnants ?? []).map((p) => [p.id, p.nom || 'Élève']));
 
   type LigneClassement = { eleveId: string; nom: string; etoiles: { niveau: string; titre: string }[] };
   const classementMap = new Map<string, LigneClassement>();
@@ -102,9 +106,23 @@ export default async function DefiPage() {
 
           {user && aUnAbonnementActif && !maParticipation && (
             <>
+              {!monPrenom && (
+                <p style={{ fontSize: 12, opacity: 0.75, background: 'rgba(255,255,255,0.05)', padding: '8px 10px', borderRadius: 6, marginBottom: 10 }}>
+                  👋 Le classement affiche des prénoms, jamais d'emails — indique le tien ci-dessous, il sera
+                  enregistré sur ta fiche pour la prochaine fois.
+                </p>
+              )}
               <p style={{ fontWeight: 600 }}>{defiActuel.question_niveau}</p>
               <form action={choisirNiveauDefi} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <input type="hidden" name="defi_id" value={defiActuel.id} />
+                {!monPrenom && (
+                  <input
+                    name="prenom"
+                    placeholder="Ton prénom"
+                    required
+                    style={{ padding: '8px 10px', borderRadius: 6, border: '1px solid #444', background: 'rgba(255,255,255,0.04)', color: 'inherit', fontSize: 13 }}
+                  />
+                )}
                 {(['facile', 'moyen', 'dur'] as const).map((niv) => (
                   <button
                     key={niv}
