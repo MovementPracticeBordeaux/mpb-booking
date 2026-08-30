@@ -27,9 +27,23 @@ export async function choisirNiveauDefi(formData: FormData) {
     await supabase.from('profiles').update({ nom: prenom }).eq('id', user.id);
   }
 
-  await supabase
+  // Pas d'upsert ici : ON CONFLICT DO UPDATE toucherait aussi defi_id et
+  // eleve_id dans sa clause SET (même à valeur inchangée), qui ne sont
+  // plus autorisés en modification depuis le durcissement de sécurité de
+  // cette table (seuls niveau et tentative_superieure le sont) — c'est
+  // exactement ce qui bloquait "changer de niveau" une fois qu'une
+  // participation existait déjà. Update d'abord, insert seulement si rien
+  // n'a été mis à jour (première participation à ce défi).
+  const { data: misAJour } = await supabase
     .from('defi_participations')
-    .upsert({ defi_id: defiId, eleve_id: user.id, niveau }, { onConflict: 'defi_id,eleve_id' });
+    .update({ niveau })
+    .eq('defi_id', defiId)
+    .eq('eleve_id', user.id)
+    .select('id');
+
+  if (!misAJour || misAJour.length === 0) {
+    await supabase.from('defi_participations').insert({ defi_id: defiId, eleve_id: user.id, niveau });
+  }
 
   revalidatePath('/defi');
   revalidatePath('/profil');
