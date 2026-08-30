@@ -677,13 +677,51 @@ export async function supprimerDefiMensuel(formData: FormData) {
   const admin = supabaseAdmin();
   const defiId = formData.get('defi_id') as string;
 
+  // Supprime aussi automatiquement toutes les participations liées (dont
+  // les étoiles déjà gagnées sur ce défi précis) via la contrainte "on
+  // delete cascade" — c'est volontaire, mais il faut que l'admin en soit
+  // conscient (message clair côté interface avant le clic).
   const { error } = await admin.from('defis_mensuels').delete().eq('id', defiId);
   if (error) echouer('/admin/defis', error.message);
 
   revalidatePath('/admin/defis');
   revalidatePath('/defi');
   revalidatePath('/profil');
-  reussir('/admin/defis', 'Défi supprimé.');
+  reussir('/admin/defis', 'Défi supprimé (et les étoiles gagnées dessus avec lui).');
+}
+
+// Corrige un défi déjà publié SANS en recréer un nouveau — important pour
+// ne pas perdre les participations déjà en cours (niveaux choisis, étoiles
+// déjà validées) : elles restent attachées au même defi_id.
+export async function modifierDefiMensuel(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+
+  const defiId = formData.get('defi_id') as string;
+  const titre = (formData.get('titre') as string)?.trim();
+  const questionNiveau = (formData.get('question_niveau') as string)?.trim();
+  const descriptionFacile = (formData.get('description_facile') as string)?.trim();
+  const descriptionMoyen = (formData.get('description_moyen') as string)?.trim();
+  const descriptionDur = (formData.get('description_dur') as string)?.trim();
+
+  if (!titre || !questionNiveau || !descriptionFacile || !descriptionMoyen || !descriptionDur) {
+    echouer('/admin/defis', 'Titre, question et les 3 niveaux de description sont requis.');
+  }
+
+  const { error } = await admin.from('defis_mensuels').update({
+    titre,
+    question_niveau: questionNiveau,
+    description_facile: descriptionFacile,
+    description_moyen: descriptionMoyen,
+    description_dur: descriptionDur,
+    description: descriptionMoyen,
+  }).eq('id', defiId);
+  if (error) echouer('/admin/defis', error.message);
+
+  revalidatePath('/admin/defis');
+  revalidatePath('/defi');
+  revalidatePath('/profil');
+  reussir('/admin/defis', 'Défi modifié — les participations déjà en cours sont conservées.');
 }
 
 // Valide la participation d'un élève à un défi (après vérification de la

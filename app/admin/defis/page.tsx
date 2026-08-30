@@ -1,5 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase-server';
-import { creerDefiMensuel, supprimerDefiMensuel, validerParticipationDefi, invaliderParticipationDefi } from '../actions';
+import { creerDefiMensuel, modifierDefiMensuel, supprimerDefiMensuel, validerParticipationDefi, invaliderParticipationDefi } from '../actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,13 +46,48 @@ export default async function AdminDefisPage({ searchParams }: { searchParams: {
       {defiActuel && (
         <div style={{ border: '1px solid #f0a', borderRadius: 8, padding: 16, marginBottom: 24 }}>
           <p style={{ fontSize: 11, letterSpacing: 1, opacity: 0.6, margin: '0 0 6px', textTransform: 'uppercase' }}>
-            Défi actuellement affiché
+            Défi actuellement affiché — {(participationsBrut ?? []).length} participation{(participationsBrut ?? []).length !== 1 ? 's' : ''} en cours
           </p>
+
+          <details style={{ marginBottom: 12 }}>
+            <summary style={{ fontSize: 13, cursor: 'pointer', color: '#f0a' }}>✏️ Modifier ce défi</summary>
+            <form action={modifierDefiMensuel} style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 460, marginTop: 10 }}>
+              <input type="hidden" name="defi_id" value={defiActuel.id} />
+              <input name="titre" defaultValue={defiActuel.titre} required />
+              <input name="question_niveau" defaultValue={defiActuel.question_niveau} required />
+              <label style={{ fontSize: 12, opacity: 0.7 }}>🥉 Version accessible</label>
+              <textarea name="description_facile" defaultValue={defiActuel.description_facile} rows={2} required style={{ fontFamily: 'inherit', fontSize: 14, padding: 8 }} />
+              <label style={{ fontSize: 12, opacity: 0.7 }}>🥈 Version intermédiaire</label>
+              <textarea name="description_moyen" defaultValue={defiActuel.description_moyen} rows={2} required style={{ fontFamily: 'inherit', fontSize: 14, padding: 8 }} />
+              <label style={{ fontSize: 12, opacity: 0.7 }}>🥇 Version corsée</label>
+              <textarea name="description_dur" defaultValue={defiActuel.description_dur} rows={2} required style={{ fontFamily: 'inherit', fontSize: 14, padding: 8 }} />
+              <p style={{ fontSize: 11, opacity: 0.5, margin: 0 }}>
+                Les niveaux déjà choisis et les étoiles déjà validées par les élèves sont conservés — seul le texte change.
+              </p>
+              <button type="submit">Enregistrer les modifications</button>
+            </form>
+          </details>
+
           <h3 style={{ margin: '0 0 6px' }}>{defiActuel.titre}</h3>
           <p style={{ fontSize: 13, opacity: 0.7, margin: '0 0 10px', fontStyle: 'italic' }}>{defiActuel.question_niveau}</p>
           <p style={{ fontSize: 12, margin: '4px 0' }}><strong>🥉 Bronze :</strong> {defiActuel.description_facile}</p>
           <p style={{ fontSize: 12, margin: '4px 0' }}><strong>🥈 Argent :</strong> {defiActuel.description_moyen}</p>
           <p style={{ fontSize: 12, margin: '4px 0' }}><strong>🥇 Or :</strong> {defiActuel.description_dur}</p>
+
+          <details style={{ marginTop: 12 }}>
+            <summary style={{ fontSize: 12, cursor: 'pointer', color: '#f88' }}>🗑️ Supprimer ce défi</summary>
+            <p style={{ fontSize: 12, opacity: 0.7, margin: '8px 0' }}>
+              ⚠️ Supprime aussi définitivement les {(participationsBrut ?? []).length} participation{(participationsBrut ?? []).length !== 1 ? 's' : ''}
+              {' '}liée{(participationsBrut ?? []).length !== 1 ? 's' : ''} à ce défi, y compris les étoiles déjà validées. Si tu veux juste corriger
+              une faute, utilise plutôt "Modifier ce défi" ci-dessus.
+            </p>
+            <form action={supprimerDefiMensuel}>
+              <input type="hidden" name="defi_id" value={defiActuel.id} />
+              <button type="submit" style={{ fontSize: 12, padding: '4px 10px', borderRadius: 999, border: '1px solid #a44', background: 'none', color: '#f88', cursor: 'pointer' }}>
+                Confirmer la suppression définitive
+              </button>
+            </form>
+          </details>
 
           <h4 style={{ marginTop: 16, marginBottom: 8 }}>En attente de validation ({enAttente.length})</h4>
           {enAttente.length === 0 && <p style={{ fontSize: 12, opacity: 0.5 }}>Personne pour l'instant.</p>}
