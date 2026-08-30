@@ -58,9 +58,23 @@ export async function GET(req: NextRequest) {
         const ids = profilsAnciens.map((p) => p.id);
         const { data: abosExistants } = await admin.from('abonnements').select('eleve_id').in('eleve_id', ids);
         const { data: paiementsExistants } = await admin.from('paiements').select('eleve_id').in('eleve_id', ids);
+        // Un contact qui a reçu une facture manuelle (intervention à
+        // l'extérieur, prestation ponctuelle...) doit être épargné même
+        // s'il n'a jamais pris de formule classique — découvert le
+        // 30/08/2026 : Anne Laudoyer (Le Bivouac) supprimée par erreur
+        // lors d'un nettoyage manuel avant ce correctif, sans impact réel
+        // car sa facture ne dépend pas de son compte (page publique par
+        // id), mais son compte de connexion avait bien été perdu.
+        const { data: emailsAncienProfils } = await admin.from('profiles').select('id, email').in('id', ids);
+        const { data: emailsFactures } = await admin.from('factures_manuelles').select('email_client');
+        const emailsFacturesSet = new Set((emailsFactures ?? []).map((f) => f.email_client?.toLowerCase()).filter(Boolean));
+        const idsAvecFacture = new Set(
+          (emailsAncienProfils ?? []).filter((p) => p.email && emailsFacturesSet.has(p.email.toLowerCase())).map((p) => p.id)
+        );
         const idsAvecHistorique = new Set([
           ...(abosExistants ?? []).map((a) => a.eleve_id),
           ...(paiementsExistants ?? []).map((p) => p.eleve_id),
+          ...idsAvecFacture,
         ]);
 
         for (const profil of profilsAnciens) {
