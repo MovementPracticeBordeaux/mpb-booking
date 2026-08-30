@@ -8,9 +8,10 @@ const COULEUR_NIVEAU: Record<string, string> = {
   facile: '#CD7F32', // bronze
   moyen: '#C0C0C0', // argent
   dur: '#FFD700', // or
+  beast: '#FF2D78', // au-dessus de l'or : scintille immédiatement (voir EstMythique)
 };
-const LABEL_NIVEAU: Record<string, string> = { facile: 'Bronze', moyen: 'Argent', dur: 'Or' };
-const ORDRE_NIVEAU: Record<string, number> = { facile: 0, moyen: 1, dur: 2 };
+const LABEL_NIVEAU: Record<string, string> = { facile: 'Bronze', moyen: 'Argent', dur: 'Or', beast: 'Beast' };
+const ORDRE_NIVEAU: Record<string, number> = { facile: 0, moyen: 1, dur: 2, beast: 3 };
 const SEUIL_MYTHIQUE = 3; // nombre d'étoiles or à partir duquel le prénom scintille
 
 function Etoile({ couleur, taille = 20 }: { couleur: string; taille?: number }) {
@@ -29,7 +30,11 @@ function ClassementListe({ lignes }: { lignes: LigneClassement[] }) {
       {lignes.length === 0 && <p style={{ fontSize: 13, opacity: 0.5 }}>Personne n'a encore validé de défi — sois le premier !</p>}
       {lignes.map((ligne, i) => {
         const nbOr = ligne.etoiles.filter((e) => e.niveau === 'dur').length;
-        const estMythique = nbOr >= SEUIL_MYTHIQUE;
+        const nbBeast = ligne.etoiles.filter((e) => e.niveau === 'beast').length;
+        // Une seule étoile Beast suffit à scintiller immédiatement (elle
+        // représente déjà un dépassement du niveau or) ; sinon, il faut
+        // accumuler plusieurs étoiles or pour le même effet.
+        const estMythique = nbOr >= SEUIL_MYTHIQUE || nbBeast >= 1;
         return (
           <div key={ligne.eleveId} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid #2a2a2a' }}>
             <span style={{ width: 22, textAlign: 'right', opacity: 0.5, fontSize: 13 }}>{i + 1}.</span>
@@ -171,9 +176,18 @@ export default async function DefiPage() {
           )}
 
           {!user && (
-            <p style={{ fontSize: 14 }}>
-              <a href="/login" style={{ color: '#f0a' }}>Connecte-toi</a> pour participer et gagner ton étoile.
-            </p>
+            <div style={{ fontSize: 13, opacity: 0.9, background: 'rgba(255,255,255,0.04)', padding: 12, borderRadius: 8, marginBottom: 10 }}>
+              <p style={{ margin: '0 0 8px' }}>
+                Chaque mois, Sylvain propose un défi ouvert à tous les élèves ayant un <strong>abonnement actif</strong>.
+                Trois niveaux au choix selon ta régularité (bronze/argent/or), une étoile gagnée à chaque validation,
+                et un classement pour suivre ta progression dans la durée. Les plus assidus peuvent même viser le
+                mode 🔥 Beast, réservé à ceux qui dépassent le niveau or.
+              </p>
+              <p style={{ margin: 0 }}>
+                <a href="/login" style={{ color: '#f0a' }}>Connecte-toi</a> si tu as déjà une formule, ou{' '}
+                <a href="/tarifs" style={{ color: '#f0a' }}>découvre nos formules</a> pour pouvoir participer.
+              </p>
+            </div>
           )}
 
           {user && !aUnAbonnementActif && (
@@ -229,13 +243,16 @@ export default async function DefiPage() {
                 <Etoile couleur={COULEUR_NIVEAU[maParticipation.niveau]} />
                 <span style={{ fontSize: 12, opacity: 0.7 }}>
                   Niveau {LABEL_NIVEAU[maParticipation.niveau]}
-                  {maParticipation.valide ? ' · ✅ Validé, étoile gagnée !' : ' · en attente de validation'}
+                  {maParticipation.valide
+                    ? (maParticipation.niveau === 'beast' ? ' · 🔥 Validé, tu scintilles dans le classement !' : ' · ✅ Validé, étoile gagnée !')
+                    : ' · en attente de validation'}
                 </span>
               </div>
               <p style={{ fontSize: 14, whiteSpace: 'pre-wrap' }}>
                 {maParticipation.niveau === 'facile' && defiActuel.description_facile}
                 {maParticipation.niveau === 'moyen' && defiActuel.description_moyen}
                 {maParticipation.niveau === 'dur' && defiActuel.description_dur}
+                {maParticipation.niveau === 'beast' && defiActuel.description_beast}
               </p>
               {!maParticipation.valide && (
                 <>
@@ -267,7 +284,8 @@ export default async function DefiPage() {
                 </>
               )}
 
-              {maParticipation.valide && maParticipation.niveau !== 'dur' && (
+              {maParticipation.valide && maParticipation.niveau !== 'beast'
+                && (maParticipation.niveau !== 'dur' || defiActuel.description_beast) && (
                 <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px dashed #444' }}>
                   {maParticipation.tentative_superieure ? (
                     <p style={{ fontSize: 12, opacity: 0.75 }}>
@@ -277,12 +295,15 @@ export default async function DefiPage() {
                   ) : (
                     <>
                       <p style={{ fontSize: 12, opacity: 0.75, marginBottom: 8 }}>
-                        Envie d'aller plus loin ? Tu peux tenter un niveau supérieur sans perdre l'étoile que tu as déjà.
+                        {maParticipation.niveau === 'dur'
+                          ? "Tu es déjà à l'or — envie de tenter le mode Beast et scintiller directement dans le classement ?"
+                          : "Envie d'aller plus loin ? Tu peux tenter un niveau supérieur sans perdre l'étoile que tu as déjà."}
                       </p>
                       <form action={tenterNiveauSuperieur} style={{ display: 'flex', gap: 6 }}>
                         <input type="hidden" name="defi_id" value={defiActuel.id} />
-                        {(['facile', 'moyen', 'dur'] as const)
+                        {(['facile', 'moyen', 'dur', 'beast'] as const)
                           .filter((niv) => ORDRE_NIVEAU[niv] > ORDRE_NIVEAU[maParticipation.niveau])
+                          .filter((niv) => niv !== 'beast' || defiActuel.description_beast)
                           .map((niv) => (
                             <button
                               key={niv}
@@ -291,7 +312,7 @@ export default async function DefiPage() {
                               value={niv}
                               style={{ fontSize: 11, padding: '4px 10px', borderRadius: 999, border: `1px solid ${COULEUR_NIVEAU[niv]}`, background: 'none', color: 'inherit', cursor: 'pointer' }}
                             >
-                              Tenter {LABEL_NIVEAU[niv]}
+                              {niv === 'beast' ? '🔥 ' : ''}Tenter {LABEL_NIVEAU[niv]}
                             </button>
                           ))}
                       </form>

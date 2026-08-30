@@ -649,6 +649,7 @@ export async function creerDefiMensuel(formData: FormData) {
   const descriptionFacile = (formData.get('description_facile') as string)?.trim();
   const descriptionMoyen = (formData.get('description_moyen') as string)?.trim();
   const descriptionDur = (formData.get('description_dur') as string)?.trim();
+  const descriptionBeast = (formData.get('description_beast') as string)?.trim() || null;
   const explication = (formData.get('explication') as string)?.trim() || null;
   const regressions = (formData.get('regressions') as string)?.trim() || null;
 
@@ -662,6 +663,7 @@ export async function creerDefiMensuel(formData: FormData) {
     description_facile: descriptionFacile,
     description_moyen: descriptionMoyen,
     description_dur: descriptionDur,
+    description_beast: descriptionBeast,
     explication,
     regressions,
     // Colonne historique conservée pour compatibilité, jamais réaffichée
@@ -707,6 +709,7 @@ export async function modifierDefiMensuel(formData: FormData) {
   const descriptionFacile = (formData.get('description_facile') as string)?.trim();
   const descriptionMoyen = (formData.get('description_moyen') as string)?.trim();
   const descriptionDur = (formData.get('description_dur') as string)?.trim();
+  const descriptionBeast = (formData.get('description_beast') as string)?.trim() || null;
   const explication = (formData.get('explication') as string)?.trim() || null;
   const regressions = (formData.get('regressions') as string)?.trim() || null;
 
@@ -720,6 +723,7 @@ export async function modifierDefiMensuel(formData: FormData) {
     description_facile: descriptionFacile,
     description_moyen: descriptionMoyen,
     description_dur: descriptionDur,
+    description_beast: descriptionBeast,
     explication,
     regressions,
     description: descriptionMoyen,
@@ -765,7 +769,7 @@ async function notifierValidationDefi(participation: any) {
   const { data: profil } = await admin.from('profiles').select('email, nom').eq('id', participation.eleve_id).single();
   if (!profil?.email) return;
 
-  const LABEL: Record<string, string> = { facile: 'Bronze 🥉', moyen: 'Argent 🥈', dur: 'Or 🥇' };
+  const LABEL: Record<string, string> = { facile: 'Bronze 🥉', moyen: 'Argent 🥈', dur: 'Or 🥇', beast: 'Beast 🔥' };
   const titre = participation.defis_mensuels?.titre ?? 'le défi';
   const peutTenterPlus = participation.niveau !== 'dur';
 
@@ -818,7 +822,7 @@ export async function surclasserNiveauParticipation(formData: FormData) {
   const admin = supabaseAdmin();
   const participationId = formData.get('participation_id') as string;
   const nouveauNiveau = formData.get('niveau') as string;
-  if (!['facile', 'moyen', 'dur'].includes(nouveauNiveau)) echouer('/admin/defis', 'Niveau invalide.');
+  if (!['facile', 'moyen', 'dur', 'beast'].includes(nouveauNiveau)) echouer('/admin/defis', 'Niveau invalide.');
 
   const { data: participation, error } = await admin
     .from('defi_participations')

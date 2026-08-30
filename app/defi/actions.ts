@@ -21,7 +21,7 @@ export async function choisirNiveauDefi(formData: FormData) {
   const defiId = formData.get('defi_id') as string;
   const niveau = formData.get('niveau') as string;
   const prenom = (formData.get('prenom') as string)?.trim();
-  if (!['facile', 'moyen', 'dur'].includes(niveau)) return;
+  if (!['facile', 'moyen', 'dur', 'beast'].includes(niveau)) return;
 
   if (prenom) {
     await supabase.from('profiles').update({ nom: prenom }).eq('id', user.id);
@@ -46,7 +46,7 @@ export async function tenterNiveauSuperieur(formData: FormData) {
 
   const defiId = formData.get('defi_id') as string;
   const niveauVise = formData.get('niveau') as string;
-  if (!['facile', 'moyen', 'dur'].includes(niveauVise)) return;
+  if (!['facile', 'moyen', 'dur', 'beast'].includes(niveauVise)) return;
 
   await supabase
     .from('defi_participations')
