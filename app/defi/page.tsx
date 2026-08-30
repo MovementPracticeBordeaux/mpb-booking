@@ -1,5 +1,6 @@
 import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { choisirNiveauDefi, tenterNiveauSuperieur } from './actions';
+import DefiOnglets from './DefiOnglets';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,12 +11,46 @@ const COULEUR_NIVEAU: Record<string, string> = {
 };
 const LABEL_NIVEAU: Record<string, string> = { facile: 'Bronze', moyen: 'Argent', dur: 'Or' };
 const ORDRE_NIVEAU: Record<string, number> = { facile: 0, moyen: 1, dur: 2 };
+const SEUIL_MYTHIQUE = 3; // nombre d'étoiles or à partir duquel le prénom scintille
 
 function Etoile({ couleur, taille = 20 }: { couleur: string; taille?: number }) {
   return (
     <svg width={taille} height={taille} viewBox="0 0 24 24" fill={couleur} style={{ filter: `drop-shadow(0 0 3px ${couleur}66)` }}>
       <path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7-6.2-3.7-6.2 3.7 1.6-7L2 9.2l7.1-.6z" />
     </svg>
+  );
+}
+
+type LigneClassement = { eleveId: string; nom: string; etoiles: { niveau: string; titre: string }[] };
+
+function ClassementListe({ lignes }: { lignes: LigneClassement[] }) {
+  return (
+    <>
+      {lignes.length === 0 && <p style={{ fontSize: 13, opacity: 0.5 }}>Personne n'a encore validé de défi — sois le premier !</p>}
+      {lignes.map((ligne, i) => {
+        const nbOr = ligne.etoiles.filter((e) => e.niveau === 'dur').length;
+        const estMythique = nbOr >= SEUIL_MYTHIQUE;
+        return (
+          <div key={ligne.eleveId} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid #2a2a2a' }}>
+            <span style={{ width: 22, textAlign: 'right', opacity: 0.5, fontSize: 13 }}>{i + 1}.</span>
+            <span
+              style={{
+                flex: 1, fontSize: 14,
+                ...(estMythique
+                  ? { color: '#f0f', fontWeight: 700, animation: 'glow-defi-mythique 2.4s ease-in-out infinite' }
+                  : {}),
+              }}
+            >
+              {ligne.nom}{estMythique && ' ✨'}
+            </span>
+            <span style={{ display: 'flex', gap: 2 }}>
+              {ligne.etoiles.map((e, j) => <Etoile key={j} couleur={COULEUR_NIVEAU[e.niveau]} taille={16} />)}
+            </span>
+            <span style={{ fontSize: 12, opacity: 0.6, minWidth: 20, textAlign: 'right' }}>{ligne.etoiles.length}</span>
+          </div>
+        );
+      })}
+    </>
   );
 }
 
@@ -74,8 +109,6 @@ export default async function DefiPage() {
     : { data: [] as { id: string; nom: string | null; email: string }[] };
   const nomParId = new Map((profilsGagnants ?? []).map((p) => [p.id, p.nom || 'Élève']));
 
-  type LigneClassement = { eleveId: string; nom: string; etoiles: { niveau: string; titre: string }[] };
-
   // Trie par réussite : d'abord le nombre d'étoiles du plus haut niveau
   // (or), puis argent, puis bronze en cas d'égalité — pas juste le total
   // brut, pour valoriser la difficulté plutôt que la seule quantité.
@@ -102,60 +135,40 @@ export default async function DefiPage() {
   // Deux classements distincts : celui du défi affiché en ce moment (pour
   // voir qui performe sur CE défi précis), et le cumul de toutes les
   // étoiles gagnées depuis le début (pour garder une continuité du travail
-  // de fond d'un défi à l'autre).
+  // de fond d'un défi à l'autre) — chacun dans son propre onglet.
   const classementDefiActuel = defiActuel
     ? construireClassement((participationsValidees ?? []).filter((p) => p.defi_id === defiActuel.id))
     : [];
   const classementTotal = construireClassement(participationsValidees);
 
-  const SEUIL_MYTHIQUE = 3; // nombre d'étoiles or à partir duquel le prénom scintille
-
-  function ClassementListe({ lignes }: { lignes: LigneClassement[] }) {
-    return (
-      <>
-        {lignes.length === 0 && <p style={{ fontSize: 13, opacity: 0.5 }}>Personne n'a encore validé de défi — sois le premier !</p>}
-        {lignes.map((ligne, i) => {
-          const nbOr = ligne.etoiles.filter((e) => e.niveau === 'dur').length;
-          const estMythique = nbOr >= SEUIL_MYTHIQUE;
-          return (
-            <div key={ligne.eleveId} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid #2a2a2a' }}>
-              <span style={{ width: 22, textAlign: 'right', opacity: 0.5, fontSize: 13 }}>{i + 1}.</span>
-              <span
-                style={{
-                  flex: 1, fontSize: 14,
-                  ...(estMythique
-                    ? { color: '#f0f', fontWeight: 700, animation: 'glow-defi-mythique 2.4s ease-in-out infinite' }
-                    : {}),
-                }}
-              >
-                {ligne.nom}{estMythique && ' ✨'}
-              </span>
-              <span style={{ display: 'flex', gap: 2 }}>
-                {ligne.etoiles.map((e, j) => <Etoile key={j} couleur={COULEUR_NIVEAU[e.niveau]} taille={16} />)}
-              </span>
-              <span style={{ fontSize: 12, opacity: 0.6, minWidth: 20, textAlign: 'right' }}>{ligne.etoiles.length}</span>
-            </div>
-          );
-        })}
-      </>
-    );
-  }
-
-  return (
-    <main style={{ maxWidth: 560, margin: '0 auto', padding: 20 }}>
-      <style>{`
-        @keyframes glow-defi-mythique {
-          0%, 100% { text-shadow: 0 0 4px #FF3B30bb, 0 0 8px #FF2D78bb, 0 0 14px #8B5CF6aa; }
-          50% { text-shadow: 0 0 8px #FF3B30dd, 0 0 16px #FF2D78dd, 0 0 26px #8B5CF6dd; }
-        }
-      `}</style>
-      <h1>🏆 Défi du mois</h1>
-
+  const ongletDefi = (
+    <>
       {!defiActuel && <p style={{ opacity: 0.7 }}>Aucun défi en cours pour le moment — reviens bientôt !</p>}
 
       {defiActuel && (
-        <div style={{ border: '1px solid #f0a', borderRadius: 12, padding: 20, marginBottom: 32, background: 'rgba(255,0,170,0.06)' }}>
+        <div style={{ border: '1px solid #f0a', borderRadius: 12, padding: 20, marginBottom: 24, background: 'rgba(255,0,170,0.06)' }}>
           <h2 style={{ marginTop: 0 }}>{defiActuel.titre}</h2>
+
+          {(defiActuel.explication || defiActuel.regressions) && (
+            <details style={{ marginBottom: 14 }}>
+              <summary style={{ fontSize: 12, color: '#f0a', cursor: 'pointer' }}>
+                📖 Pourquoi ce défi, et comment l'adapter si besoin ?
+              </summary>
+              <div style={{ marginTop: 10, fontSize: 13, opacity: 0.85, lineHeight: 1.5 }}>
+                {defiActuel.explication && (
+                  <p style={{ whiteSpace: 'pre-wrap', marginTop: 0 }}>{defiActuel.explication}</p>
+                )}
+                {defiActuel.regressions && (
+                  <>
+                    <p style={{ fontSize: 11, letterSpacing: 0.5, opacity: 0.6, textTransform: 'uppercase', marginBottom: 4 }}>
+                      🩹 Si c'est douloureux ou trop difficile
+                    </p>
+                    <p style={{ whiteSpace: 'pre-wrap', marginTop: 0 }}>{defiActuel.regressions}</p>
+                  </>
+                )}
+              </div>
+            </details>
+          )}
 
           {!user && (
             <p style={{ fontSize: 14 }}>
@@ -296,13 +309,29 @@ export default async function DefiPage() {
         🥉 Bronze · 🥈 Argent · 🥇 Or — trié par niveau de réussite, du plus dur au plus accessible.
       </p>
       <ClassementListe lignes={classementDefiActuel} />
+    </>
+  );
 
-      <h2 style={{ marginTop: 32 }}>Classement total (toutes étoiles cumulées)</h2>
-      <p style={{ fontSize: 13, opacity: 0.6, marginTop: -8 }}>
-        Le cumul de tous les défis depuis le début — pour suivre ta progression dans la durée, pas juste ce mois-ci.
+  const ongletClassement = (
+    <>
+      <p style={{ fontSize: 13, opacity: 0.6, marginTop: -4 }}>
+        Le cumul de tous les défis validés depuis le début — pour suivre ta progression dans la durée, pas juste ce mois-ci.
         {' '}À partir de {SEUIL_MYTHIQUE} étoiles or, ton prénom scintille ✨
       </p>
       <ClassementListe lignes={classementTotal} />
+    </>
+  );
+
+  return (
+    <main style={{ maxWidth: 560, margin: '0 auto', padding: 20 }}>
+      <style>{`
+        @keyframes glow-defi-mythique {
+          0%, 100% { text-shadow: 0 0 4px #FF3B30bb, 0 0 8px #FF2D78bb, 0 0 14px #8B5CF6aa; }
+          50% { text-shadow: 0 0 8px #FF3B30dd, 0 0 16px #FF2D78dd, 0 0 26px #8B5CF6dd; }
+        }
+      `}</style>
+      <h1>🏆 Défis</h1>
+      <DefiOnglets ongletDefi={ongletDefi} ongletClassement={ongletClassement} />
     </main>
   );
 }

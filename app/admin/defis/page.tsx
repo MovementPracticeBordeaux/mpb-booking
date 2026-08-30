@@ -61,6 +61,10 @@ export default async function AdminDefisPage({ searchParams }: { searchParams: {
               <textarea name="description_moyen" defaultValue={defiActuel.description_moyen} rows={2} required style={{ fontFamily: 'inherit', fontSize: 14, padding: 8 }} />
               <label style={{ fontSize: 12, opacity: 0.7 }}>🥇 Version corsée</label>
               <textarea name="description_dur" defaultValue={defiActuel.description_dur} rows={2} required style={{ fontFamily: 'inherit', fontSize: 14, padding: 8 }} />
+              <label style={{ fontSize: 12, opacity: 0.7 }}>📖 Explication approfondie (pourquoi ce défi, bienfaits...) — optionnel</label>
+              <textarea name="explication" defaultValue={defiActuel.explication ?? ''} rows={4} style={{ fontFamily: 'inherit', fontSize: 14, padding: 8 }} />
+              <label style={{ fontSize: 12, opacity: 0.7 }}>🩹 Régressions (si douleur/limitation) — optionnel</label>
+              <textarea name="regressions" defaultValue={defiActuel.regressions ?? ''} rows={3} style={{ fontFamily: 'inherit', fontSize: 14, padding: 8 }} />
               <p style={{ fontSize: 11, opacity: 0.5, margin: 0 }}>
                 Les niveaux déjà choisis et les étoiles déjà validées par les élèves sont conservés — seul le texte change.
               </p>
@@ -156,6 +160,10 @@ export default async function AdminDefisPage({ searchParams }: { searchParams: {
           <textarea name="description_moyen" placeholder="ex. Tiens 60 secondes en suspension à la barre" rows={2} required style={{ fontFamily: 'inherit', fontSize: 14, padding: 8 }} />
           <label style={{ fontSize: 12, opacity: 0.7 }}>🥇 Version corsée (très régulier)</label>
           <textarea name="description_dur" placeholder="ex. Tiens 90 secondes en suspension à la barre" rows={2} required style={{ fontFamily: 'inherit', fontSize: 14, padding: 8 }} />
+          <label style={{ fontSize: 12, opacity: 0.7 }}>📖 Explication approfondie (pourquoi ce défi, bienfaits...) — optionnel</label>
+          <textarea name="explication" placeholder="ex. La suspension passive décompresse la colonne vertébrale, relâche les épaules..." rows={4} style={{ fontFamily: 'inherit', fontSize: 14, padding: 8 }} />
+          <label style={{ fontSize: 12, opacity: 0.7 }}>🩹 Régressions (si douleur/limitation) — optionnel</label>
+          <textarea name="regressions" placeholder="ex. Si c'est douloureux : garde les pieds au sol et allège la charge progressivement" rows={3} style={{ fontFamily: 'inherit', fontSize: 14, padding: 8 }} />
           <button type="submit">Publier ce défi</button>
         </form>
       </section>

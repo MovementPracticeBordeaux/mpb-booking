@@ -649,6 +649,8 @@ export async function creerDefiMensuel(formData: FormData) {
   const descriptionFacile = (formData.get('description_facile') as string)?.trim();
   const descriptionMoyen = (formData.get('description_moyen') as string)?.trim();
   const descriptionDur = (formData.get('description_dur') as string)?.trim();
+  const explication = (formData.get('explication') as string)?.trim() || null;
+  const regressions = (formData.get('regressions') as string)?.trim() || null;
 
   if (!titre || !questionNiveau || !descriptionFacile || !descriptionMoyen || !descriptionDur) {
     echouer('/admin/defis', 'Titre, question et les 3 niveaux de description sont requis.');
@@ -660,6 +662,8 @@ export async function creerDefiMensuel(formData: FormData) {
     description_facile: descriptionFacile,
     description_moyen: descriptionMoyen,
     description_dur: descriptionDur,
+    explication,
+    regressions,
     // Colonne historique conservée pour compatibilité, jamais réaffichée
     // depuis l'introduction des 3 niveaux.
     description: descriptionMoyen,
@@ -703,6 +707,8 @@ export async function modifierDefiMensuel(formData: FormData) {
   const descriptionFacile = (formData.get('description_facile') as string)?.trim();
   const descriptionMoyen = (formData.get('description_moyen') as string)?.trim();
   const descriptionDur = (formData.get('description_dur') as string)?.trim();
+  const explication = (formData.get('explication') as string)?.trim() || null;
+  const regressions = (formData.get('regressions') as string)?.trim() || null;
 
   if (!titre || !questionNiveau || !descriptionFacile || !descriptionMoyen || !descriptionDur) {
     echouer('/admin/defis', 'Titre, question et les 3 niveaux de description sont requis.');
@@ -714,6 +720,8 @@ export async function modifierDefiMensuel(formData: FormData) {
     description_facile: descriptionFacile,
     description_moyen: descriptionMoyen,
     description_dur: descriptionDur,
+    explication,
+    regressions,
     description: descriptionMoyen,
   }).eq('id', defiId);
   if (error) echouer('/admin/defis', error.message);
