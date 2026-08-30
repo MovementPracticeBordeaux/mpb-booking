@@ -1,5 +1,5 @@
 import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
-import { choisirNiveauDefi } from './actions';
+import { choisirNiveauDefi, tenterNiveauSuperieur } from './actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,6 +9,7 @@ const COULEUR_NIVEAU: Record<string, string> = {
   dur: '#FFD700', // or
 };
 const LABEL_NIVEAU: Record<string, string> = { facile: 'Bronze', moyen: 'Argent', dur: 'Or' };
+const ORDRE_NIVEAU: Record<string, number> = { facile: 0, moyen: 1, dur: 2 };
 
 function Etoile({ couleur, taille = 20 }: { couleur: string; taille?: number }) {
   return (
@@ -33,7 +34,7 @@ export default async function DefiPage() {
   // A-t-il un abonnement actif (n'importe quelle catégorie) ? Nécessaire
   // pour pouvoir participer, pas juste consulter.
   let aUnAbonnementActif = false;
-  let maParticipation: { niveau: string; valide: boolean } | null = null;
+  let maParticipation: { niveau: string; valide: boolean; tentative_superieure: string | null } | null = null;
   let monPrenom: string | null = null;
   if (user) {
     const { count } = await admin
@@ -49,7 +50,7 @@ export default async function DefiPage() {
     if (defiActuel) {
       const { data } = await admin
         .from('defi_participations')
-        .select('niveau, valide')
+        .select('niveau, valide, tentative_superieure')
         .eq('defi_id', defiActuel.id)
         .eq('eleve_id', user.id)
         .maybeSingle();
@@ -187,6 +188,39 @@ export default async function DefiPage() {
                     </details>
                   </form>
                 </>
+              )}
+
+              {maParticipation.valide && maParticipation.niveau !== 'dur' && (
+                <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px dashed #444' }}>
+                  {maParticipation.tentative_superieure ? (
+                    <p style={{ fontSize: 12, opacity: 0.75 }}>
+                      🎯 Tentative niveau {LABEL_NIVEAU[maParticipation.tentative_superieure]} en attente de validation —
+                      ton étoile {LABEL_NIVEAU[maParticipation.niveau]} reste acquise en attendant, tu ne peux pas la perdre.
+                    </p>
+                  ) : (
+                    <>
+                      <p style={{ fontSize: 12, opacity: 0.75, marginBottom: 8 }}>
+                        Envie d'aller plus loin ? Tu peux tenter un niveau supérieur sans perdre l'étoile que tu as déjà.
+                      </p>
+                      <form action={tenterNiveauSuperieur} style={{ display: 'flex', gap: 6 }}>
+                        <input type="hidden" name="defi_id" value={defiActuel.id} />
+                        {(['facile', 'moyen', 'dur'] as const)
+                          .filter((niv) => ORDRE_NIVEAU[niv] > ORDRE_NIVEAU[maParticipation.niveau])
+                          .map((niv) => (
+                            <button
+                              key={niv}
+                              type="submit"
+                              name="niveau"
+                              value={niv}
+                              style={{ fontSize: 11, padding: '4px 10px', borderRadius: 999, border: `1px solid ${COULEUR_NIVEAU[niv]}`, background: 'none', color: 'inherit', cursor: 'pointer' }}
+                            >
+                              Tenter {LABEL_NIVEAU[niv]}
+                            </button>
+                          ))}
+                      </form>
+                    </>
+                  )}
+                </div>
               )}
             </>
           )}

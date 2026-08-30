@@ -107,24 +107,38 @@ export default async function AdminDefisPage({ searchParams }: { searchParams: {
           <h4 style={{ marginTop: 16, marginBottom: 8 }}>Validés ({validees.length})</h4>
           {validees.length === 0 && <p style={{ fontSize: 12, opacity: 0.5 }}>Personne pour l'instant.</p>}
           {validees.map((p) => (
-            <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: '1px solid #333', flexWrap: 'wrap' }}>
-              <span style={{ flex: 1, fontSize: 13 }}>{p.profiles?.nom || p.profiles?.email}</span>
-              <span style={{ fontSize: 12 }}>{LABEL_NIVEAU[p.niveau]}</span>
-              {(['facile', 'moyen', 'dur'] as const).filter((n) => n !== p.niveau).map((n) => (
-                <form action={surclasserNiveauParticipation} key={n}>
+            <div key={p.id} style={{ padding: '6px 0', borderBottom: '1px solid #333' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <span style={{ flex: 1, fontSize: 13 }}>{p.profiles?.nom || p.profiles?.email}</span>
+                <span style={{ fontSize: 12 }}>{LABEL_NIVEAU[p.niveau]}</span>
+                {(['facile', 'moyen', 'dur'] as const).filter((n) => n !== p.niveau).map((n) => (
+                  <form action={surclasserNiveauParticipation} key={n}>
+                    <input type="hidden" name="participation_id" value={p.id} />
+                    <input type="hidden" name="niveau" value={n} />
+                    <button type="submit" title={`A en fait réussi le niveau ${LABEL_NIVEAU[n]}`} style={{ fontSize: 10, padding: '3px 8px', borderRadius: 999, border: '1px solid #555', background: 'none', color: '#aaa', cursor: 'pointer' }}>
+                      → {LABEL_NIVEAU[n]}
+                    </button>
+                  </form>
+                ))}
+                <form action={invaliderParticipationDefi}>
                   <input type="hidden" name="participation_id" value={p.id} />
-                  <input type="hidden" name="niveau" value={n} />
-                  <button type="submit" title={`A en fait réussi le niveau ${LABEL_NIVEAU[n]}`} style={{ fontSize: 10, padding: '3px 8px', borderRadius: 999, border: '1px solid #555', background: 'none', color: '#aaa', cursor: 'pointer' }}>
-                    → {LABEL_NIVEAU[n]}
+                  <button type="submit" style={{ fontSize: 11, padding: '4px 10px', borderRadius: 999, border: '1px solid #666', background: 'none', color: '#999', cursor: 'pointer' }}>
+                    Annuler
                   </button>
                 </form>
-              ))}
-              <form action={invaliderParticipationDefi}>
-                <input type="hidden" name="participation_id" value={p.id} />
-                <button type="submit" style={{ fontSize: 11, padding: '4px 10px', borderRadius: 999, border: '1px solid #666', background: 'none', color: '#999', cursor: 'pointer' }}>
-                  Annuler
-                </button>
-              </form>
+              </div>
+              {p.tentative_superieure && (
+                <div style={{ marginTop: 6, fontSize: 12, color: '#fc6', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  🎯 Tente le niveau {LABEL_NIVEAU[p.tentative_superieure]} — vidéo à vérifier
+                  <form action={surclasserNiveauParticipation}>
+                    <input type="hidden" name="participation_id" value={p.id} />
+                    <input type="hidden" name="niveau" value={p.tentative_superieure} />
+                    <button type="submit" style={{ fontSize: 11, padding: '3px 10px', borderRadius: 999, border: '1px solid #4a4', background: 'none', color: '#8f8', cursor: 'pointer' }}>
+                      ✓ Confirmer le surclassement
+                    </button>
+                  </form>
+                </div>
+              )}
             </div>
           ))}
         </div>

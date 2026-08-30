@@ -732,15 +732,56 @@ export async function validerParticipationDefi(formData: FormData) {
   const admin = supabaseAdmin();
   const participationId = formData.get('participation_id') as string;
 
-  const { error } = await admin
+  const { data: participation, error } = await admin
     .from('defi_participations')
-    .update({ valide: true, valide_le: new Date().toISOString() })
-    .eq('id', participationId);
+    .update({ valide: true, valide_le: new Date().toISOString(), tentative_superieure: null })
+    .eq('id', participationId)
+    .select('eleve_id, niveau, defi_id, defis_mensuels(titre)')
+    .single();
   if (error) echouer('/admin/defis', error.message);
+
+  await notifierValidationDefi(participation);
 
   revalidatePath('/admin/defis');
   revalidatePath('/defi');
-  reussir('/admin/defis', 'Participation validée — étoile attribuée.');
+  reussir('/admin/defis', 'Participation validée — étoile attribuée, élève prévenu.');
+}
+
+// Prévient l'élève par email + push qu'il vient de gagner son étoile, et
+// l'invite à tenter le niveau supérieur s'il n'est pas déjà au maximum
+// (sans qu'il perde l'étoile déjà acquise en attendant, voir
+// tenterNiveauSuperieur côté élève).
+async function notifierValidationDefi(participation: any) {
+  if (!participation) return;
+  const admin = supabaseAdmin();
+  const { data: profil } = await admin.from('profiles').select('email, nom').eq('id', participation.eleve_id).single();
+  if (!profil?.email) return;
+
+  const LABEL: Record<string, string> = { facile: 'Bronze 🥉', moyen: 'Argent 🥈', dur: 'Or 🥇' };
+  const titre = participation.defis_mensuels?.titre ?? 'le défi';
+  const peutTenterPlus = participation.niveau !== 'dur';
+
+  try {
+    await envoyerEmail(
+      profil.email,
+      `🏆 Défi validé : ${LABEL[participation.niveau]}`,
+      `<p>Bravo ${profil.nom ?? ''} !</p>
+       <p>Ton défi "${titre}" est validé au niveau <strong>${LABEL[participation.niveau]}</strong> — ton étoile est ajoutée au classement.</p>
+       ${peutTenterPlus
+         ? `<p>Envie d'aller plus loin ? Tu peux tenter le niveau supérieur quand tu veux, sans perdre l'étoile que tu viens de gagner en attendant. Rendez-vous sur ta page <a href="${process.env.NEXT_PUBLIC_SITE_URL}/defi">Défi du mois</a>.</p>`
+         : ''}`
+    );
+  } catch {
+    // Non bloquant : l'étoile est déjà attribuée, un email qui ne part pas
+    // ne doit pas remettre ça en cause.
+  }
+
+  await envoyerPushAEleve(
+    participation.eleve_id,
+    '🏆 Défi validé !',
+    `Niveau ${LABEL[participation.niveau]} ajouté à ton classement.`,
+    '/defi'
+  );
 }
 
 // Annule une validation faite par erreur (retire l'étoile correspondante).
@@ -771,13 +812,17 @@ export async function surclasserNiveauParticipation(formData: FormData) {
   const nouveauNiveau = formData.get('niveau') as string;
   if (!['facile', 'moyen', 'dur'].includes(nouveauNiveau)) echouer('/admin/defis', 'Niveau invalide.');
 
-  const { error } = await admin
+  const { data: participation, error } = await admin
     .from('defi_participations')
-    .update({ niveau: nouveauNiveau })
-    .eq('id', participationId);
+    .update({ niveau: nouveauNiveau, tentative_superieure: null })
+    .eq('id', participationId)
+    .select('eleve_id, niveau, defi_id, defis_mensuels(titre)')
+    .single();
   if (error) echouer('/admin/defis', error.message);
+
+  await notifierValidationDefi(participation);
 
   revalidatePath('/admin/defis');
   revalidatePath('/defi');
-  reussir('/admin/defis', 'Niveau mis à jour — étoile surclassée.');
+  reussir('/admin/defis', 'Niveau mis à jour — étoile surclassée, élève prévenu.');
 }

@@ -34,3 +34,25 @@ export async function choisirNiveauDefi(formData: FormData) {
   revalidatePath('/defi');
   revalidatePath('/profil');
 }
+
+// Un élève déjà validé signale qu'il tente le niveau supérieur, sans
+// perdre son étoile actuelle en attendant (le champ "niveau" validé ne
+// bouge pas tant que l'admin n'a pas confirmé la tentative, via
+// surclasserNiveauParticipation qui vide ce champ au passage).
+export async function tenterNiveauSuperieur(formData: FormData) {
+  const supabase = supabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/login');
+
+  const defiId = formData.get('defi_id') as string;
+  const niveauVise = formData.get('niveau') as string;
+  if (!['facile', 'moyen', 'dur'].includes(niveauVise)) return;
+
+  await supabase
+    .from('defi_participations')
+    .update({ tentative_superieure: niveauVise })
+    .eq('defi_id', defiId)
+    .eq('eleve_id', user.id);
+
+  revalidatePath('/defi');
+}
