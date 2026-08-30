@@ -759,3 +759,25 @@ export async function invaliderParticipationDefi(formData: FormData) {
   revalidatePath('/defi');
   reussir('/admin/defis', 'Validation annulée.');
 }
+
+// Surclasse le niveau d'une participation déjà validée (ex. l'élève avait
+// été validé en bronze, mais a depuis réussi la version or du même défi) :
+// l'étoile affichée dans le classement passe automatiquement à la couleur
+// du nouveau niveau, sans repasser par "en attente de validation".
+export async function surclasserNiveauParticipation(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+  const participationId = formData.get('participation_id') as string;
+  const nouveauNiveau = formData.get('niveau') as string;
+  if (!['facile', 'moyen', 'dur'].includes(nouveauNiveau)) echouer('/admin/defis', 'Niveau invalide.');
+
+  const { error } = await admin
+    .from('defi_participations')
+    .update({ niveau: nouveauNiveau })
+    .eq('id', participationId);
+  if (error) echouer('/admin/defis', error.message);
+
+  revalidatePath('/admin/defis');
+  revalidatePath('/defi');
+  reussir('/admin/defis', 'Niveau mis à jour — étoile surclassée.');
+}
