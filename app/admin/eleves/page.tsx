@@ -11,7 +11,7 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
 
   const { data: eleves } = await admin
     .from('profiles')
-    .select('id, nom, email, created_at')
+    .select('id, nom, email, telephone, created_at')
     .order('nom', { ascending: true, nullsFirst: false });
 
   // Un élève peut avoir plusieurs abonnements actifs (planning + coaching +
@@ -123,7 +123,7 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
 
       <section style={{ marginBottom: 32 }}>
         <ListeElevesRepliable
-          eleves={(eleves ?? []).map((e) => ({ id: e.id, nom: e.nom, email: e.email, createdAt: e.created_at }))}
+          eleves={(eleves ?? []).map((e) => ({ id: e.id, nom: e.nom, email: e.email, telephone: e.telephone, createdAt: e.created_at }))}
           abonnements={(abonnementsBrut ?? []).map((a) => ({
             ...a,
             formuleAffichage: FORMULES[a.formule_nom] ?? null,

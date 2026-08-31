@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import BoutonDeconnexion from '../components/BoutonDeconnexion';
 import NotificationsToggle from './NotificationsToggle';
 import EmailPreferences from './EmailPreferences';
-import { modifierMonPrenom } from './actions';
+import { modifierMonPrenom, modifierMonTelephone } from './actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,6 +61,24 @@ export default async function ProfilPage() {
           </form>
           <p style={{ fontSize: 11, opacity: 0.5, margin: '6px 0 0' }}>
             Affiché notamment dans le classement du <a href="/defi" style={{ color: '#f0a' }}>défi du mois</a>, jamais ton email.
+          </p>
+        </details>
+        <details style={{ marginTop: 10 }}>
+          <summary style={{ fontSize: 12, opacity: 0.6, cursor: 'pointer' }}>
+            {profil?.telephone ? 'Modifier mon téléphone' : '📱 Ajouter mon téléphone'}
+          </summary>
+          <form action={modifierMonTelephone} style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+            <input
+              name="telephone"
+              type="tel"
+              defaultValue={profil?.telephone ?? ''}
+              placeholder="06 12 34 56 78"
+              style={{ flex: 1, padding: '6px 10px', borderRadius: 6, border: '1px solid #444', background: 'rgba(255,255,255,0.04)', color: 'inherit', fontSize: 13 }}
+            />
+            <button type="submit" style={{ fontSize: 12, padding: '6px 12px', borderRadius: 6 }}>Enregistrer</button>
+          </form>
+          <p style={{ fontSize: 11, opacity: 0.5, margin: '6px 0 0' }}>
+            Facultatif — pour que Sylvain puisse te contacter directement si besoin.
           </p>
         </details>
       </div>

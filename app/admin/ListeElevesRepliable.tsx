@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-type Eleve = { id: string; nom: string | null; email: string; createdAt: string };
+type Eleve = { id: string; nom: string | null; email: string; telephone: string | null; createdAt: string };
 
 // Reçoit les abonnements déjà enrichis de leur formule (nom, unité, quota,
 // catégorie) pour ne pas avoir à repasser tout le catalogue FORMULES en prop.
@@ -153,6 +153,11 @@ export default function ListeElevesRepliable({
               <details key={e.id} style={{ borderBottom: '1px solid #333', padding: 8 }}>
                 <summary style={{ fontSize: 14, cursor: 'pointer' }}>
                   {e.nom ?? e.email} — {resume}
+                  {e.telephone && (
+                    <a href={`https://wa.me/${e.telephone.replace(/[^0-9+]/g, '').replace(/^0/, '33')}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#f0a', marginLeft: 6 }}>
+                      📱 {e.telephone}
+                    </a>
+                  )}
                   {joursRestants !== null && (
                     <span style={{ fontSize: 11, opacity: 0.5 }}> · suppression auto dans {joursRestants} j</span>
                   )}

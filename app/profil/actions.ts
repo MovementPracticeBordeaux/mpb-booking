@@ -21,3 +21,18 @@ export async function modifierMonPrenom(formData: FormData) {
   revalidatePath('/profil');
   revalidatePath('/defi');
 }
+
+// L'élève renseigne ou modifie son propre téléphone, pour que Sylvain
+// puisse le contacter si besoin. Même principe que le prénom : le GRANT en
+// base restreint cette action à la seule colonne "telephone".
+export async function modifierMonTelephone(formData: FormData) {
+  const supabase = supabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/login');
+
+  const telephone = (formData.get('telephone') as string)?.trim();
+
+  await supabase.from('profiles').update({ telephone: telephone || null }).eq('id', user.id);
+
+  revalidatePath('/profil');
+}
