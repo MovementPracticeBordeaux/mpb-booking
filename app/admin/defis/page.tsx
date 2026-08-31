@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase-server';
 import { creerDefiMensuel, modifierDefiMensuel, supprimerDefiMensuel, validerParticipationDefi, invaliderParticipationDefi, surclasserNiveauParticipation } from '../actions';
+import EmojiBeast from '../../defi/EmojiBeast';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +29,12 @@ export default async function AdminDefisPage({ searchParams }: { searchParams: {
 
   return (
     <main style={{ maxWidth: 560, margin: '0 auto', padding: 20 }}>
+      <style>{`
+        @keyframes glow-defi-mythique {
+          0%, 100% { text-shadow: 0 0 4px #FF3B30bb, 0 0 8px #FF2D78bb, 0 0 14px #8B5CF6aa; }
+          50% { text-shadow: 0 0 8px #FF3B30dd, 0 0 16px #FF2D78dd, 0 0 26px #8B5CF6dd; }
+        }
+      `}</style>
       <h1>Défi du mois</h1>
       <p style={{ fontSize: 13, opacity: 0.7 }}>
         Un défi partagé par tous, avec 3 niveaux de difficulté que chaque élève choisit lui-même selon sa
@@ -61,7 +68,7 @@ export default async function AdminDefisPage({ searchParams }: { searchParams: {
               <textarea name="description_moyen" defaultValue={defiActuel.description_moyen} rows={2} required style={{ fontFamily: 'inherit', fontSize: 14, padding: 8 }} />
               <label style={{ fontSize: 12, opacity: 0.7 }}>🥇 Version corsée</label>
               <textarea name="description_dur" defaultValue={defiActuel.description_dur} rows={2} required style={{ fontFamily: 'inherit', fontSize: 14, padding: 8 }} />
-              <label style={{ fontSize: 12, opacity: 0.7 }}>😈 Mode Beast (dépasser l'or) — optionnel, laisser vide pour ne pas proposer ce niveau</label>
+              <label style={{ fontSize: 12, opacity: 0.7 }}><EmojiBeast /> Mode Beast (dépasser l'or) — optionnel, laisser vide pour ne pas proposer ce niveau</label>
               <textarea name="description_beast" defaultValue={defiActuel.description_beast ?? ''} rows={2} style={{ fontFamily: 'inherit', fontSize: 14, padding: 8 }} />
               <label style={{ fontSize: 12, opacity: 0.7 }}>📖 Explication approfondie (pourquoi ce défi, bienfaits...) — optionnel</label>
               <textarea name="explication" defaultValue={defiActuel.explication ?? ''} rows={4} style={{ fontFamily: 'inherit', fontSize: 14, padding: 8 }} />
@@ -80,7 +87,7 @@ export default async function AdminDefisPage({ searchParams }: { searchParams: {
           <p style={{ fontSize: 12, margin: '4px 0' }}><strong>🥈 Argent :</strong> {defiActuel.description_moyen}</p>
           <p style={{ fontSize: 12, margin: '4px 0' }}><strong>🥇 Or :</strong> {defiActuel.description_dur}</p>
           {defiActuel.description_beast && (
-            <p style={{ fontSize: 12, margin: '4px 0' }}><strong>😈 Beast :</strong> {defiActuel.description_beast}</p>
+            <p style={{ fontSize: 12, margin: '4px 0' }}><strong><EmojiBeast /> Beast :</strong> {defiActuel.description_beast}</p>
           )}
 
           <details style={{ marginTop: 12 }}>
@@ -165,7 +172,7 @@ export default async function AdminDefisPage({ searchParams }: { searchParams: {
           <textarea name="description_moyen" placeholder="ex. Tiens 60 secondes en suspension à la barre" rows={2} required style={{ fontFamily: 'inherit', fontSize: 14, padding: 8 }} />
           <label style={{ fontSize: 12, opacity: 0.7 }}>🥇 Version corsée (très régulier)</label>
           <textarea name="description_dur" placeholder="ex. Tiens 90 secondes en suspension à la barre" rows={2} required style={{ fontFamily: 'inherit', fontSize: 14, padding: 8 }} />
-          <label style={{ fontSize: 12, opacity: 0.7 }}>😈 Mode Beast (dépasser l'or) — optionnel</label>
+          <label style={{ fontSize: 12, opacity: 0.7 }}><EmojiBeast /> Mode Beast (dépasser l'or) — optionnel</label>
           <textarea name="description_beast" placeholder="ex. Dépasse les 90 secondes, aussi longtemps que tu peux tenir" rows={2} style={{ fontFamily: 'inherit', fontSize: 14, padding: 8 }} />
           <label style={{ fontSize: 12, opacity: 0.7 }}>📖 Explication approfondie (pourquoi ce défi, bienfaits...) — optionnel</label>
           <textarea name="explication" placeholder="ex. La suspension passive décompresse la colonne vertébrale, relâche les épaules..." rows={4} style={{ fontFamily: 'inherit', fontSize: 14, padding: 8 }} />
@@ -187,7 +194,7 @@ export default async function AdminDefisPage({ searchParams }: { searchParams: {
             <p style={{ fontSize: 12, margin: '8px 0 4px' }}>🥉 {d.description_facile}</p>
             <p style={{ fontSize: 12, margin: '4px 0' }}>🥈 {d.description_moyen}</p>
             <p style={{ fontSize: 12, margin: '4px 0 8px' }}>🥇 {d.description_dur}</p>
-            {d.description_beast && <p style={{ fontSize: 12, margin: '4px 0 8px' }}>😈 {d.description_beast}</p>}
+            {d.description_beast && <p style={{ fontSize: 12, margin: '4px 0 8px' }}><EmojiBeast /> {d.description_beast}</p>}
             {i !== 0 && (
               <form action={supprimerDefiMensuel}>
                 <input type="hidden" name="defi_id" value={d.id} />
