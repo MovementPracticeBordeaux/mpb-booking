@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { COULEURS, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
 
 export type Inscrit = { eleveId: string; nom: string };
+export type Eleve = { id: string; nom: string | null; email: string };
 
 export type CoursDuJour = {
   coursId: string;
@@ -30,10 +31,14 @@ function formaterDate(dateISO: string) {
 export default function AdminSeancesCarousel({
   jours,
   indexAujourdhui,
+  eleves,
+  reserverCoursPourEleve,
   annulerReservationAdmin,
 }: {
   jours: JourAdmin[];
   indexAujourdhui: number;
+  eleves: Eleve[];
+  reserverCoursPourEleve: (formData: FormData) => void;
   annulerReservationAdmin: (formData: FormData) => void;
 }) {
   const carrouselRef = useRef<HTMLDivElement>(null);
@@ -199,6 +204,30 @@ export default function AdminSeancesCarousel({
                         ))}
                       </ul>
                     )}
+                    <details>
+                      <summary style={{ fontSize: 10, color: COULEURS.texteAtt, cursor: 'pointer', marginTop: c.inscrits.length > 0 ? 6 : 0 }}>
+                        + Ajouter un élève
+                      </summary>
+                      <form action={reserverCoursPourEleve} style={{ display: 'flex', gap: 4, marginTop: 6 }}>
+                        <input type="hidden" name="seance" value={`${c.coursId}::${j.dateISO}`} />
+                        <select
+                          name="eleve_id"
+                          required
+                          style={{ flex: 1, fontSize: 10, padding: '4px 6px', borderRadius: 6, border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surfaceForte, color: COULEURS.texte }}
+                        >
+                          <option value="">-- Élève --</option>
+                          {eleves.map((e) => (
+                            <option key={e.id} value={e.id}>{e.nom ?? e.email}</option>
+                          ))}
+                        </select>
+                        <button
+                          type="submit"
+                          style={{ fontSize: 10, padding: '4px 10px', borderRadius: 6, border: '1px solid #4a4', background: 'none', color: '#8f8', cursor: 'pointer', flexShrink: 0 }}
+                        >
+                          Réserver
+                        </button>
+                      </form>
+                    </details>
                   </div>
                 ))
               )}

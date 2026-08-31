@@ -22,7 +22,8 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
     .order('semaine')
     .order('jour_semaine');
 
-  // Pour le formulaire "Réserver pour un élève" un peu plus bas.
+  // Pour le sélecteur "+ Ajouter un élève" sur chaque séance, dans le
+  // carrousel plus bas.
   const { data: eleves } = await admin.from('profiles').select('id, nom, email').order('email');
 
   // --- Séances datées (passées et à venir) + inscrits nommés (admin uniquement) ---
@@ -49,45 +50,6 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
     liste.push({ eleveId: r.eleve_id, nom: nomParEleveId.get(r.eleve_id) ?? 'Élève' });
     inscritsParSeance.set(cle, liste);
   }
-
-  type SeanceAVenir = {
-    coursId: string;
-    dateISO: string;
-    dateAffichee: string;
-    discipline: string;
-    heureDebut: string;
-    heureFin: string;
-    inscrits: Inscrit[];
-    passee: boolean;
-  };
-  const toutesLesSeances: SeanceAVenir[] = [];
-  if (ref) {
-    const lundiRef = new Date(ref.date_lundi_reference);
-    const periodesVacancesActives = periodesVacances ?? [];
-    const aujourdhuiISO = new Date().toISOString().slice(0, 10);
-    for (let i = -JOURS_PASSES; i < JOURS_A_VENIR; i++) {
-      const d = new Date();
-      d.setDate(d.getDate() + i);
-      const dateStr = d.toISOString().slice(0, 10);
-      const enVacances = periodesVacancesActives.some((v) => dateStr >= v.date_debut && dateStr <= v.date_fin);
-      if (enVacances) continue;
-      const semaine = calculerSemaine(d, lundiRef, ref.semaine_ce_lundi);
-      const coursDuJour = (coursListe ?? []).filter((c) => c.jour_semaine === d.getDay() && c.semaine === semaine);
-      for (const c of coursDuJour) {
-        toutesLesSeances.push({
-          coursId: c.id,
-          dateISO: dateStr,
-          dateAffichee: d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }),
-          discipline: c.discipline as string,
-          heureDebut: (c.heure_debut as string).slice(0, 5),
-          heureFin: (c.heure_fin as string).slice(0, 5),
-          inscrits: inscritsParSeance.get(`${c.id}::${dateStr}`) ?? [],
-          passee: dateStr < aujourdhuiISO,
-        });
-      }
-    }
-  }
-  const seancesAVenir = toutesLesSeances.filter((s) => !s.passee);
 
   // Regroupe les séances par jour pour le carrousel admin (même principe
   // visuel que le planning public, en un seul jour à la fois plutôt qu'une
@@ -142,40 +104,18 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
       )}
 
       <section style={{ marginBottom: 32 }}>
-        <h2>Réserver une séance pour un élève</h2>
-        <p style={{ fontSize: 13, opacity: 0.7, marginBottom: 12 }}>
-          Utile pour un élève qui réserve en direct au studio, ou pour corriger un oubli. Applique les mêmes règles
-          que la réservation normale (pass actif, quota, gel...).
-        </p>
-        <form action={reserverCoursPourEleve} style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 360 }}>
-          <select name="eleve_id" required>
-            <option value="">-- Choisir un élève --</option>
-            {(eleves ?? []).map((e) => (
-              <option key={e.id} value={e.id}>{e.nom ?? e.email}</option>
-            ))}
-          </select>
-          <select name="seance" required>
-            <option value="">-- Choisir une séance --</option>
-            {seancesAVenir.map((s, i) => (
-              <option key={i} value={`${s.coursId}::${s.dateISO}`}>
-                {s.dateAffichee} — {s.discipline} {s.heureDebut}-{s.heureFin} ({s.inscrits.length} inscrit{s.inscrits.length !== 1 ? 's' : ''})
-              </option>
-            ))}
-          </select>
-          <button type="submit">Réserver</button>
-        </form>
-      </section>
-
-      <section style={{ marginBottom: 32 }}>
         <h2>Séances — inscrits</h2>
         <p style={{ fontSize: 13, opacity: 0.7, marginBottom: 12 }}>
           Visible uniquement par toi. Les élèves ne voient jamais ce nombre. Couvre les {JOURS_PASSES} derniers jours
           et les {JOURS_A_VENIR} prochains — tu peux retirer un élève d'une séance passée ou du jour même (sa formule
-          est recréditée automatiquement).
+          est recréditée automatiquement), ou en ajouter un directement sur la séance concernée via "+ Ajouter un
+          élève" (mêmes règles que la réservation normale : pass actif, quota, gel...).
         </p>
         <AdminSeancesCarousel
           jours={joursCarousel}
           indexAujourdhui={indexAujourdhuiCarousel}
+          eleves={(eleves ?? []).map((e) => ({ id: e.id, nom: e.nom, email: e.email }))}
+          reserverCoursPourEleve={reserverCoursPourEleve}
           annulerReservationAdmin={annulerReservationAdmin}
         />
       </section>
