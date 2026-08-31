@@ -4,34 +4,38 @@ import { useState } from 'react';
 import { COULEURS, GRADIENT, POLICE_DISPLAY } from '@/lib/theme';
 import { trouverMeilleureReponse } from '@/lib/chat-faq';
 
-type Message = { auteur: 'moi' | 'bot'; texte: string; proposerEmail?: boolean };
+type Message = { auteur: 'moi' | 'bot'; texte: string; proposerEmail?: boolean; proposerWhatsApp?: boolean };
 
-const MESSAGE_ACCUEIL: Message = {
-  auteur: 'bot',
-  texte: "Salut, je suis l'assistant de Movement Practice Bordeaux 👋 Pose-moi une question (lieu, horaires, tarifs, réservation...) ou écris directement à Sylvain.",
-};
+function messageAccueil(aUneFormuleActive: boolean): Message {
+  return {
+    auteur: 'bot',
+    texte: aUneFormuleActive
+      ? "Salut, je suis l'assistant de Movement Practice Bordeaux 👋 Pose-moi une question (lieu, horaires, tarifs, réservation...), ou contacte directement Sylvain sur WhatsApp si besoin."
+      : "Salut, je suis l'assistant de Movement Practice Bordeaux 👋 Pose-moi une question (lieu, horaires, tarifs, réservation...) ou écris directement à Sylvain.",
+  };
+}
 
-function trouverReponse(question: string): Message {
+function trouverReponse(question: string, aUneFormuleActive: boolean): Message {
   const resultat = trouverMeilleureReponse(question);
   if (resultat.trouve) {
     return { auteur: 'bot', texte: resultat.reponse };
   }
-  return {
-    auteur: 'bot',
-    texte: "Je n'ai pas de réponse toute prête pour ça. Le mieux est d'écrire directement à Sylvain :",
-    proposerEmail: true,
-  };
+  // Pour un élève déjà abonné, WhatsApp est plus direct que l'email — il
+  // a déjà ce canal pour ses factures/défis, autant rester cohérent.
+  return aUneFormuleActive
+    ? { auteur: 'bot', texte: "Je n'ai pas de réponse toute prête pour ça. Le plus rapide, c'est de contacter Sylvain sur WhatsApp :", proposerWhatsApp: true }
+    : { auteur: 'bot', texte: "Je n'ai pas de réponse toute prête pour ça. Le mieux est d'écrire directement à Sylvain :", proposerEmail: true };
 }
 
-export default function ChatWidget() {
+export default function ChatWidget({ aUneFormuleActive }: { aUneFormuleActive: boolean }) {
   const [ouvert, setOuvert] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([MESSAGE_ACCUEIL]);
+  const [messages, setMessages] = useState<Message[]>([messageAccueil(aUneFormuleActive)]);
   const [saisie, setSaisie] = useState('');
 
   const envoyer = () => {
     const texte = saisie.trim();
     if (!texte) return;
-    const reponse = trouverReponse(texte);
+    const reponse = trouverReponse(texte, aUneFormuleActive);
     setMessages((m) => [...m, { auteur: 'moi', texte }, reponse]);
     setSaisie('');
   };
@@ -87,6 +91,16 @@ export default function ChatWidget() {
                     style={{ display: 'inline-block', marginTop: 6, fontSize: 13, color: '#FF2D78', textDecoration: 'none', fontWeight: 600 }}
                   >
                     ✉️ Écrire à Sylvain
+                  </a>
+                )}
+                {m.proposerWhatsApp && (
+                  <a
+                    href="https://wa.me/33620477064"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ display: 'inline-block', marginTop: 6, fontSize: 13, color: '#FF2D78', textDecoration: 'none', fontWeight: 600 }}
+                  >
+                    💬 Contacter Sylvain sur WhatsApp
                   </a>
                 )}
               </div>

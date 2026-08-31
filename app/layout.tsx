@@ -58,9 +58,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const supabase = supabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
   let estAdmin = false;
+  let aUneFormuleActive = false;
   if (user) {
     const { data: profil } = await supabase.from('profiles').select('role').eq('id', user.id).single();
     estAdmin = profil?.role === 'admin';
+    const { count } = await supabase
+      .from('abonnements')
+      .select('id', { count: 'exact', head: true })
+      .eq('eleve_id', user.id)
+      .eq('abonnement_actif', true);
+    aUneFormuleActive = (count ?? 0) > 0;
   }
 
   return (
@@ -83,7 +90,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         }} />
         <NavBar liens={LIENS} estAdmin={estAdmin} userEmail={user?.email ?? null} />
         {children}
-        <ChatWidget />
+        <ChatWidget aUneFormuleActive={aUneFormuleActive} />
         <PwaRegister />
       </body>
     </html>
