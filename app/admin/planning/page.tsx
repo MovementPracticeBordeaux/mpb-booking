@@ -1,5 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase-server';
-import { ajouterCours, desactiverCours, definirSemaineReference, ajouterVacances, supprimerVacances, reserverCoursPourEleve, annulerReservationAdmin } from '../actions';
+import { ajouterCours, desactiverCours, modifierCours, definirSemaineReference, ajouterVacances, supprimerVacances, reserverCoursPourEleve, annulerReservationAdmin } from '../actions';
 import { calculerSemaine } from '@/lib/semaine';
 import AdminSeancesCarousel from '../AdminSeancesCarousel';
 
@@ -239,10 +239,24 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
                         <div key={c.id} style={{ border: '1px solid #333', borderRadius: 8, padding: 8, marginBottom: 6, fontSize: 12 }}>
                           <strong style={{ display: 'block' }}>{c.discipline}</strong>
                           <span style={{ opacity: 0.7 }}>{c.heure_debut.slice(0, 5)}-{c.heure_fin.slice(0, 5)}</span>
-                          <form action={desactiverCours} style={{ marginTop: 4 }}>
-                            <input type="hidden" name="id" value={c.id} />
-                            <button type="submit" style={{ fontSize: 11 }}>Désactiver</button>
-                          </form>
+                          <div style={{ display: 'flex', gap: 8, marginTop: 4, alignItems: 'center' }}>
+                            <details>
+                              <summary style={{ fontSize: 11, cursor: 'pointer' }}>✏️ Modifier</summary>
+                              <form action={modifierCours} style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 6, minWidth: 140 }}>
+                                <input type="hidden" name="id" value={c.id} />
+                                <input name="discipline" defaultValue={c.discipline} required style={{ fontSize: 11, padding: 4 }} />
+                                <input name="lieu" defaultValue={c.lieu ?? ''} placeholder="Lieu" style={{ fontSize: 11, padding: 4 }} />
+                                <button type="submit" style={{ fontSize: 11 }}>Enregistrer</button>
+                                <span style={{ fontSize: 10, opacity: 0.5 }}>
+                                  Les élèves déjà inscrits sur ce créneau le restent.
+                                </span>
+                              </form>
+                            </details>
+                            <form action={desactiverCours}>
+                              <input type="hidden" name="id" value={c.id} />
+                              <button type="submit" style={{ fontSize: 11 }}>Désactiver</button>
+                            </form>
+                          </div>
                         </div>
                       ))}
                     </div>

@@ -62,6 +62,27 @@ export async function desactiverCours(formData: FormData) {
   reussir('/admin/planning', 'Créneau désactivé.');
 }
 
+// Change la thématique (et le lieu) d'un créneau EXISTANT, sans en créer
+// un nouveau : comme les réservations pointent vers le même id de cours,
+// tous les élèves déjà inscrits sur ce créneau (passés ou à venir) restent
+// inscrits automatiquement, seul le libellé affiché change. Le jour, la
+// semaine (A/B) et l'horaire ne changent volontairement pas ici : c'est
+// littéralement le même créneau, juste un autre contenu dessus.
+export async function modifierCours(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+  const id = formData.get('id') as string;
+  const discipline = (formData.get('discipline') as string)?.trim();
+  const lieu = (formData.get('lieu') as string)?.trim();
+  if (!discipline) echouer('/admin/planning', 'La discipline est requise.');
+
+  const { error } = await admin.from('cours').update({ discipline, lieu }).eq('id', id);
+  if (error) echouer('/admin/planning', error.message);
+  revalidatePath('/admin/planning');
+  revalidatePath('/planning');
+  reussir('/admin/planning', 'Créneau modifié — les élèves déjà inscrits sur ce créneau le restent.');
+}
+
 export async function definirSemaineReference(formData: FormData) {
   await verifierAdmin();
   const admin = supabaseAdmin();
