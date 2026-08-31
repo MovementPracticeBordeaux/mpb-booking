@@ -3,6 +3,7 @@ import { ajouterCours, desactiverCours, modifierCours, definirSemaineReference, 
 import { calculerSemaine } from '@/lib/semaine';
 import AdminSeancesCarousel from '../AdminSeancesCarousel';
 import SelecteurDiscipline from '../SelecteurDiscipline';
+import { COULEURS, POLICE_DISPLAY } from '@/lib/theme';
 
 export const dynamic = 'force-dynamic';
 
@@ -212,50 +213,75 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
       </section>
 
       <section>
-        <h2>Créneaux actifs</h2>
-        <p style={{ fontSize: 13, opacity: 0.7, marginBottom: 12 }}>
+        <h2 style={{ fontFamily: POLICE_DISPLAY, letterSpacing: 0.5 }}>Créneaux actifs</h2>
+        <p style={{ fontSize: 13, color: COULEURS.texteAtt, marginBottom: 16 }}>
           Repère-toi comme sur le planning public : un bloc par semaine (A/B), une colonne par jour.
         </p>
         {(['A', 'B'] as const).map((sem) => {
           const coursSemaine = (coursListe ?? []).filter((c) => c.semaine === sem);
           const disciplinesSemaine = [...new Set(coursSemaine.map((c) => c.discipline))];
           return (
-            <div key={sem} style={{ marginBottom: 24, borderLeft: `3px solid ${COULEUR_SEMAINE[sem]}`, paddingLeft: 12 }}>
-              <p style={{ fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: COULEUR_SEMAINE[sem], marginBottom: 2 }}>
-                ● Semaine {sem}
-              </p>
-              <p style={{ fontSize: 12, opacity: 0.6, marginBottom: 8 }}>
+            <div
+              key={sem}
+              style={{
+                marginBottom: 20,
+                border: `1px solid ${COULEUR_SEMAINE[sem]}44`,
+                borderRadius: 16,
+                padding: 16,
+                background: COULEURS.surface,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                <span
+                  style={{
+                    fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1,
+                    padding: '3px 10px', borderRadius: 999,
+                    background: `${COULEUR_SEMAINE[sem]}22`, color: COULEUR_SEMAINE[sem],
+                  }}
+                >
+                  ● Semaine {sem}
+                </span>
+              </div>
+              <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 12 }}>
                 {disciplinesSemaine.length > 0 ? disciplinesSemaine.join(' · ') : 'Aucun créneau'}
               </p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10 }}>
                 {JOURS.map((nomJour, i) => {
                   const coursDuJour = coursSemaine.filter((c) => c.jour_semaine === i);
                   if (coursDuJour.length === 0) return null;
                   return (
                     <div key={i}>
-                      <p style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, opacity: 0.6, marginBottom: 6 }}>
+                      <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, color: COULEURS.texteFaible, marginBottom: 6 }}>
                         {nomJour}
                       </p>
                       {coursDuJour.map((c) => (
-                        <div key={c.id} style={{ border: '1px solid #333', borderRadius: 8, padding: 8, marginBottom: 6, fontSize: 12 }}>
-                          <strong style={{ display: 'block' }}>{c.discipline}</strong>
-                          <span style={{ opacity: 0.7 }}>{c.heure_debut.slice(0, 5)}-{c.heure_fin.slice(0, 5)}</span>
-                          <div style={{ display: 'flex', gap: 8, marginTop: 4, alignItems: 'center' }}>
+                        <div
+                          key={c.id}
+                          style={{
+                            border: `1px solid ${COULEURS.bordure}`, borderRadius: 10, padding: 10, marginBottom: 8,
+                            fontSize: 12, background: COULEURS.surfaceForte,
+                          }}
+                        >
+                          <strong style={{ display: 'block', fontFamily: POLICE_DISPLAY, fontSize: 14, letterSpacing: 0.3, color: COULEURS.texte }}>
+                            {c.discipline}
+                          </strong>
+                          <span style={{ color: COULEURS.texteAtt }}>{c.heure_debut.slice(0, 5)}-{c.heure_fin.slice(0, 5)}</span>
+                          <div style={{ display: 'flex', gap: 10, marginTop: 6, alignItems: 'center' }}>
                             <details>
-                              <summary style={{ fontSize: 11, cursor: 'pointer' }}>✏️ Modifier</summary>
+                              <summary style={{ fontSize: 11, cursor: 'pointer', color: '#f0a' }}>✏️ Modifier</summary>
                               <form action={modifierCours} style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 6, minWidth: 140 }}>
                                 <input type="hidden" name="id" value={c.id} />
                                 <input name="discipline" defaultValue={c.discipline} required style={{ fontSize: 11, padding: 4 }} />
                                 <input name="lieu" defaultValue={c.lieu ?? ''} placeholder="Lieu" style={{ fontSize: 11, padding: 4 }} />
                                 <button type="submit" style={{ fontSize: 11 }}>Enregistrer</button>
-                                <span style={{ fontSize: 10, opacity: 0.5 }}>
+                                <span style={{ fontSize: 10, color: COULEURS.texteFaible }}>
                                   Les élèves déjà inscrits sur ce créneau le restent.
                                 </span>
                               </form>
                             </details>
                             <form action={desactiverCours}>
                               <input type="hidden" name="id" value={c.id} />
-                              <button type="submit" style={{ fontSize: 11 }}>Désactiver</button>
+                              <button type="submit" style={{ fontSize: 11, color: '#f88' }}>Désactiver</button>
                             </form>
                           </div>
                         </div>
