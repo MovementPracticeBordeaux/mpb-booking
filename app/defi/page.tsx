@@ -288,10 +288,21 @@ export default async function DefiPage() {
                 && (maParticipation.niveau !== 'dur' || defiActuel.description_beast) && (
                 <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px dashed #444' }}>
                   {maParticipation.tentative_superieure ? (
-                    <p style={{ fontSize: 12, opacity: 0.75 }}>
-                      🎯 Tentative niveau {LABEL_NIVEAU[maParticipation.tentative_superieure]} en attente de validation —
-                      ton étoile {LABEL_NIVEAU[maParticipation.niveau]} reste acquise en attendant, tu ne peux pas la perdre.
-                    </p>
+                    <>
+                      <p style={{ fontSize: 12, opacity: 0.75 }}>
+                        🎯 Tentative niveau {LABEL_NIVEAU[maParticipation.tentative_superieure]} en attente de validation —
+                        ton étoile {LABEL_NIVEAU[maParticipation.niveau]} reste acquise en attendant, tu ne peux pas la perdre.
+                      </p>
+                      <p style={{ fontSize: 14, whiteSpace: 'pre-wrap', marginTop: 8 }}>
+                        {maParticipation.tentative_superieure === 'facile' && defiActuel.description_facile}
+                        {maParticipation.tentative_superieure === 'moyen' && defiActuel.description_moyen}
+                        {maParticipation.tentative_superieure === 'dur' && defiActuel.description_dur}
+                        {maParticipation.tentative_superieure === 'beast' && defiActuel.description_beast}
+                      </p>
+                      <a href="https://wa.me/33620477064" style={{ fontSize: 13, color: '#f0a' }}>
+                        Envoyer ma vidéo sur WhatsApp →
+                      </a>
+                    </>
                   ) : (
                     <>
                       <p style={{ fontSize: 12, opacity: 0.75, marginBottom: 8 }}>
