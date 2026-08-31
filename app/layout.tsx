@@ -56,17 +56,39 @@ const LIENS = [
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const supabase = supabaseServer();
-  const { data: { user } } = await supabase.auth.getUser();
+
+  // Filet de sécurité important (même principe que sur middleware.ts après
+  // l'incident du 504 MIDDLEWARE_INVOCATION_TIMEOUT) : tout ce bloc
+  // s'exécute dans la mise en page racine, donc bloque l'affichage de
+  // TOUTE page tant qu'il n'a pas fini. Sans timeout, un simple
+  // ralentissement réseau ou base de données suffit à faire tourner le
+  // site en boucle indéfiniment pour la personne connectée (site "qui ne
+  // s'ouvre plus" signalé le 31/08/2026, corrige ce point précis).
+  async function avecTimeout<T>(promesse: PromiseLike<T>, repli: T, ms = 4000): Promise<T> {
+    try {
+      return await Promise.race([
+        Promise.resolve(promesse),
+        new Promise<T>((resolve) => setTimeout(() => resolve(repli), ms)),
+      ]);
+    } catch {
+      return repli;
+    }
+  }
+
+  const { data: { user } } = await avecTimeout(supabase.auth.getUser(), { data: { user: null } } as any);
   let estAdmin = false;
   let aUneFormuleActive = false;
+
   if (user) {
-    const { data: profil } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+    const { data: profil } = await avecTimeout(
+      supabase.from('profiles').select('role').eq('id', user.id).single(),
+      { data: null } as any
+    );
     estAdmin = profil?.role === 'admin';
-    const { count } = await supabase
-      .from('abonnements')
-      .select('id', { count: 'exact', head: true })
-      .eq('eleve_id', user.id)
-      .eq('abonnement_actif', true);
+    const { count } = await avecTimeout(
+      supabase.from('abonnements').select('id', { count: 'exact', head: true }).eq('eleve_id', user.id).eq('abonnement_actif', true),
+      { count: 0 } as any
+    );
     aUneFormuleActive = (count ?? 0) > 0;
   }
 
