@@ -790,7 +790,7 @@ async function notifierValidationDefi(participation: any) {
   const { data: profil } = await admin.from('profiles').select('email, nom').eq('id', participation.eleve_id).single();
   if (!profil?.email) return;
 
-  const LABEL: Record<string, string> = { facile: 'Bronze 🥉', moyen: 'Argent 🥈', dur: 'Or 🥇', beast: 'Beast 🔥' };
+  const LABEL: Record<string, string> = { facile: 'Bronze 🥉', moyen: 'Argent 🥈', dur: 'Or 🥇', beast: 'Beast 😈' };
   const titre = participation.defis_mensuels?.titre ?? 'le défi';
   const peutTenterPlus = participation.niveau !== 'dur';
 

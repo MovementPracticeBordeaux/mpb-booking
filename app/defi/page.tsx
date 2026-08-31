@@ -181,7 +181,7 @@ export default async function DefiPage() {
                 Chaque mois, Sylvain propose un défi ouvert à tous les élèves ayant un <strong>abonnement actif</strong>.
                 Trois niveaux au choix selon ta régularité (bronze/argent/or), une étoile gagnée à chaque validation,
                 et un classement pour suivre ta progression dans la durée. Les plus assidus peuvent même viser le
-                mode 🔥 Beast, réservé à ceux qui dépassent le niveau or.
+                mode 😈 Beast, réservé à ceux qui dépassent le niveau or.
               </p>
               <p style={{ margin: 0 }}>
                 <a href="/login" style={{ color: '#f0a' }}>Connecte-toi</a> si tu as déjà une formule, ou{' '}
@@ -244,7 +244,7 @@ export default async function DefiPage() {
                 <span style={{ fontSize: 12, opacity: 0.7 }}>
                   Niveau {LABEL_NIVEAU[maParticipation.niveau]}
                   {maParticipation.valide
-                    ? (maParticipation.niveau === 'beast' ? ' · 🔥 Validé, tu scintilles dans le classement !' : ' · ✅ Validé, étoile gagnée !')
+                    ? (maParticipation.niveau === 'beast' ? ' · 😈 Validé, tu scintilles dans le classement !' : ' · ✅ Validé, étoile gagnée !')
                     : ' · en attente de validation'}
                 </span>
               </div>
@@ -323,7 +323,7 @@ export default async function DefiPage() {
                               value={niv}
                               style={{ fontSize: 11, padding: '4px 10px', borderRadius: 999, border: `1px solid ${COULEUR_NIVEAU[niv]}`, background: 'none', color: 'inherit', cursor: 'pointer' }}
                             >
-                              {niv === 'beast' ? '🔥 ' : ''}Tenter {LABEL_NIVEAU[niv]}
+                              {niv === 'beast' ? '😈 ' : ''}Tenter {LABEL_NIVEAU[niv]}
                             </button>
                           ))}
                       </form>
@@ -338,7 +338,7 @@ export default async function DefiPage() {
 
       <h2>Classement — ce défi</h2>
       <p style={{ fontSize: 13, opacity: 0.6, marginTop: -8 }}>
-        🥉 Bronze · 🥈 Argent · 🥇 Or — trié par niveau de réussite, du plus dur au plus accessible.
+        🥉 Bronze · 🥈 Argent · 🥇 Or · 😈 Beast — trié par niveau de réussite, du plus dur au plus accessible.
       </p>
       <ClassementListe lignes={classementDefiActuel} />
     </>
@@ -348,7 +348,7 @@ export default async function DefiPage() {
     <>
       <p style={{ fontSize: 13, opacity: 0.6, marginTop: -4 }}>
         Le cumul de tous les défis validés depuis le début — pour suivre ta progression dans la durée, pas juste ce mois-ci.
-        {' '}À partir de {SEUIL_MYTHIQUE} étoiles or, ton prénom scintille ✨
+        {' '}À partir de {SEUIL_MYTHIQUE} étoiles or (ou une seule étoile 😈 Beast), ton prénom scintille ✨
       </p>
       <ClassementListe lignes={classementTotal} />
     </>
