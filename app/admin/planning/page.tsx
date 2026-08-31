@@ -22,7 +22,8 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
     .select('*')
     .eq('actif', true)
     .order('semaine')
-    .order('jour_semaine');
+    .order('jour_semaine')
+    .order('heure_debut');
 
   // Réutilisé pour le sélecteur de discipline, aussi bien à la création
   // qu'à la modification d'un créneau — une seule liste, jamais dupliquée.

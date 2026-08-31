@@ -20,7 +20,7 @@ export default async function AdminStatistiquesPage() {
   // Un élève peut avoir plusieurs abonnements actifs à la fois — ces
   // compteurs comptent des ABONNEMENTS, pas des élèves distincts.
   const { data: abonnements } = await admin.from('abonnements').select('categorie, formule_nom').eq('abonnement_actif', true);
-  const { data: coursListe } = await admin.from('cours').select('*').eq('actif', true).order('semaine').order('jour_semaine');
+  const { data: coursListe } = await admin.from('cours').select('*').eq('actif', true).order('semaine').order('jour_semaine').order('heure_debut');
   const { data: paiementsTous } = await admin.from('paiements').select('montant, created_at, paye, rembourse');
   const { data: reservationsTotales } = await admin.from('reservations').select('cours_id').eq('statut', 'confirmee');
 
