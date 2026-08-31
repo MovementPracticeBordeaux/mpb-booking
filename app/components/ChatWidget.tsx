@@ -12,6 +12,7 @@ function messageAccueil(aUneFormuleActive: boolean): Message {
     texte: aUneFormuleActive
       ? "Salut, je suis l'assistant de Movement Practice Bordeaux 👋 Pose-moi une question (lieu, horaires, tarifs, réservation...), ou contacte directement Sylvain sur WhatsApp si besoin."
       : "Salut, je suis l'assistant de Movement Practice Bordeaux 👋 Pose-moi une question (lieu, horaires, tarifs, réservation...) ou écris directement à Sylvain.",
+    proposerWhatsApp: aUneFormuleActive,
   };
 }
 
