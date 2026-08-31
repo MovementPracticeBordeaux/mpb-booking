@@ -24,6 +24,10 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
     .order('semaine')
     .order('jour_semaine');
 
+  // Réutilisé pour le sélecteur de discipline, aussi bien à la création
+  // qu'à la modification d'un créneau — une seule liste, jamais dupliquée.
+  const disciplinesExistantes = [...new Set((coursListe ?? []).map((c) => c.discipline as string))].sort();
+
   // Pour le sélecteur "+ Ajouter un élève" sur chaque séance, dans le
   // carrousel plus bas.
   const { data: eleves } = await admin.from('profiles').select('id, nom, email').order('email');
@@ -191,7 +195,7 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
       <section style={{ marginBottom: 32 }}>
         <h2>Ajouter un créneau</h2>
         <form action={ajouterCours} style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 300 }}>
-          <SelecteurDiscipline disciplinesExistantes={[...new Set((coursListe ?? []).map((c) => c.discipline as string))].sort()} />
+          <SelecteurDiscipline disciplinesExistantes={disciplinesExistantes} />
           <select name="semaine" defaultValue="A">
             <option value="A">Semaine A</option>
             <option value="B">Semaine B</option>
@@ -271,7 +275,7 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
                               <summary style={{ fontSize: 11, cursor: 'pointer', color: '#f0a' }}>✏️ Modifier</summary>
                               <form action={modifierCours} style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 6, minWidth: 140 }}>
                                 <input type="hidden" name="id" value={c.id} />
-                                <input name="discipline" defaultValue={c.discipline} required style={{ fontSize: 11, padding: 4 }} />
+                                <SelecteurDiscipline disciplinesExistantes={disciplinesExistantes} valeurInitiale={c.discipline} />
                                 <input name="lieu" defaultValue={c.lieu ?? ''} placeholder="Lieu" style={{ fontSize: 11, padding: 4 }} />
                                 <button type="submit" style={{ fontSize: 11 }}>Enregistrer</button>
                                 <span style={{ fontSize: 10, color: COULEURS.texteFaible }}>
