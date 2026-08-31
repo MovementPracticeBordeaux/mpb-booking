@@ -2,6 +2,7 @@ import { supabaseAdmin } from '@/lib/supabase-server';
 import { ajouterCours, desactiverCours, modifierCours, definirSemaineReference, ajouterVacances, supprimerVacances, reserverCoursPourEleve, annulerReservationAdmin } from '../actions';
 import { calculerSemaine } from '@/lib/semaine';
 import AdminSeancesCarousel from '../AdminSeancesCarousel';
+import SelecteurDiscipline from '../SelecteurDiscipline';
 
 export const dynamic = 'force-dynamic';
 
@@ -189,7 +190,7 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
       <section style={{ marginBottom: 32 }}>
         <h2>Ajouter un créneau</h2>
         <form action={ajouterCours} style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 300 }}>
-          <input name="discipline" placeholder="Discipline (ex: Handstand)" required />
+          <SelecteurDiscipline disciplinesExistantes={[...new Set((coursListe ?? []).map((c) => c.discipline as string))].sort()} />
           <select name="semaine" defaultValue="A">
             <option value="A">Semaine A</option>
             <option value="B">Semaine B</option>
