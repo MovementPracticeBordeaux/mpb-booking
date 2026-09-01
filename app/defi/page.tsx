@@ -265,15 +265,17 @@ export default async function DefiPage() {
                     <input type="hidden" name="defi_id" value={defiActuel.id} />
                     <details>
                       <summary style={{ fontSize: 12, opacity: 0.6, cursor: 'pointer' }}>Changer de niveau</summary>
-                      <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-                        {(['facile', 'moyen', 'dur'] as const).map((niv) => (
+                      <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+                        {(['facile', 'moyen', 'dur', 'beast'] as const)
+                          .filter((niv) => niv !== 'beast' || defiActuel.description_beast)
+                          .map((niv) => (
                           <BoutonNiveau
                             key={niv}
                             name="niveau"
                             value={niv}
                             style={{ fontSize: 12, padding: '10px 14px', minHeight: 40, borderRadius: 999, border: `1px solid ${COULEUR_NIVEAU[niv]}`, background: 'none', color: 'inherit', cursor: 'pointer' }}
                           >
-                            {LABEL_NIVEAU[niv]}
+                            {niv === 'beast' && <EmojiBeast />}{niv === 'beast' ? ' ' : ''}{LABEL_NIVEAU[niv]}
                           </BoutonNiveau>
                         ))}
                       </div>
