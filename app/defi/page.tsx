@@ -214,7 +214,7 @@ export default async function DefiPage() {
                     name="prenom"
                     placeholder="Ton prénom"
                     required
-                    style={{ padding: '8px 10px', borderRadius: 6, border: '1px solid #444', background: 'rgba(255,255,255,0.04)', color: 'inherit', fontSize: 13 }}
+                    style={{ padding: '8px 10px', borderRadius: 6, border: '1px solid #444', background: 'rgba(255,255,255,0.04)', color: 'inherit', fontSize: 16 }}
                   />
                 )}
                 {(['facile', 'moyen', 'dur'] as const).map((niv) => (
@@ -271,7 +271,7 @@ export default async function DefiPage() {
                             key={niv}
                             name="niveau"
                             value={niv}
-                            style={{ fontSize: 11, padding: '4px 10px', borderRadius: 999, border: `1px solid ${COULEUR_NIVEAU[niv]}`, background: 'none', color: 'inherit', cursor: 'pointer' }}
+                            style={{ fontSize: 12, padding: '10px 14px', minHeight: 40, borderRadius: 999, border: `1px solid ${COULEUR_NIVEAU[niv]}`, background: 'none', color: 'inherit', cursor: 'pointer' }}
                           >
                             {LABEL_NIVEAU[niv]}
                           </BoutonNiveau>
@@ -321,7 +321,7 @@ export default async function DefiPage() {
                               key={niv}
                               name="niveau"
                               value={niv}
-                              style={{ fontSize: 11, padding: '4px 10px', borderRadius: 999, border: `1px solid ${COULEUR_NIVEAU[niv]}`, background: 'none', color: 'inherit', cursor: 'pointer' }}
+                              style={{ fontSize: 12, padding: '10px 14px', minHeight: 40, borderRadius: 999, border: `1px solid ${COULEUR_NIVEAU[niv]}`, background: 'none', color: 'inherit', cursor: 'pointer' }}
                             >
                               {niv === 'beast' && <EmojiBeast />}{niv === 'beast' ? ' ' : ''}Tenter {LABEL_NIVEAU[niv]}
                             </BoutonNiveau>

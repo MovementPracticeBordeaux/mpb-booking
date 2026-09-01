@@ -55,9 +55,9 @@ export default async function ProfilPage() {
               defaultValue={profil?.nom ?? ''}
               placeholder="Ton prénom"
               required
-              style={{ flex: 1, padding: '6px 10px', borderRadius: 6, border: '1px solid #444', background: 'rgba(255,255,255,0.04)', color: 'inherit', fontSize: 13 }}
+              style={{ flex: 1, padding: '6px 10px', borderRadius: 6, border: '1px solid #444', background: 'rgba(255,255,255,0.04)', color: 'inherit', fontSize: 16 }}
             />
-            <button type="submit" style={{ fontSize: 12, padding: '6px 12px', borderRadius: 6 }}>Enregistrer</button>
+            <button type="submit" style={{ fontSize: 13, padding: '10px 14px', minHeight: 40, borderRadius: 6 }}>Enregistrer</button>
           </form>
           <p style={{ fontSize: 11, opacity: 0.5, margin: '6px 0 0' }}>
             Affiché notamment dans le classement du <a href="/defi" style={{ color: '#f0a' }}>défi du mois</a>, jamais ton email.
@@ -73,9 +73,9 @@ export default async function ProfilPage() {
               type="tel"
               defaultValue={profil?.telephone ?? ''}
               placeholder="06 12 34 56 78"
-              style={{ flex: 1, padding: '6px 10px', borderRadius: 6, border: '1px solid #444', background: 'rgba(255,255,255,0.04)', color: 'inherit', fontSize: 13 }}
+              style={{ flex: 1, padding: '6px 10px', borderRadius: 6, border: '1px solid #444', background: 'rgba(255,255,255,0.04)', color: 'inherit', fontSize: 16 }}
             />
-            <button type="submit" style={{ fontSize: 12, padding: '6px 12px', borderRadius: 6 }}>Enregistrer</button>
+            <button type="submit" style={{ fontSize: 13, padding: '10px 14px', minHeight: 40, borderRadius: 6 }}>Enregistrer</button>
           </form>
           <p style={{ fontSize: 11, opacity: 0.5, margin: '6px 0 0' }}>
             Facultatif — pour que Sylvain puisse te contacter directement si besoin.
