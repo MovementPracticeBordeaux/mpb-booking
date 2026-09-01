@@ -282,8 +282,7 @@ export default async function DefiPage() {
                 </>
               )}
 
-              {maParticipation.valide && maParticipation.niveau !== 'beast'
-                && (maParticipation.niveau !== 'dur' || defiActuel.description_beast) && (
+              {maParticipation.valide && (
                 <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px dashed #444' }}>
                   {maParticipation.tentative_superieure ? (
                     <div style={{ background: 'rgba(255,45,120,0.12)', border: '1px solid #f0a', borderRadius: 10, padding: 12 }}>
@@ -307,14 +306,13 @@ export default async function DefiPage() {
                   ) : (
                     <>
                       <p style={{ fontSize: 12, opacity: 0.75, marginBottom: 8 }}>
-                        {maParticipation.niveau === 'dur'
-                          ? "Tu es déjà à l'or — envie de tenter le mode Beast et scintiller directement dans le classement ?"
-                          : "Envie d'aller plus loin ? Tu peux tenter un niveau supérieur sans perdre l'étoile que tu as déjà."}
+                        Envie de tenter un autre niveau — plus dur, plus facile, ou même Beast ? Tu peux changer
+                        librement, sans jamais perdre l'étoile {LABEL_NIVEAU[maParticipation.niveau]} que tu as déjà.
                       </p>
-                      <form action={tenterNiveauSuperieur} style={{ display: 'flex', gap: 6 }}>
+                      <form action={tenterNiveauSuperieur} style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                         <input type="hidden" name="defi_id" value={defiActuel.id} />
                         {(['facile', 'moyen', 'dur', 'beast'] as const)
-                          .filter((niv) => ORDRE_NIVEAU[niv] > ORDRE_NIVEAU[maParticipation.niveau])
+                          .filter((niv) => niv !== maParticipation.niveau)
                           .filter((niv) => niv !== 'beast' || defiActuel.description_beast)
                           .map((niv) => (
                             <BoutonNiveau

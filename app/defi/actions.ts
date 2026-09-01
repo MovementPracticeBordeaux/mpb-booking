@@ -49,10 +49,11 @@ export async function choisirNiveauDefi(formData: FormData) {
   revalidatePath('/profil');
 }
 
-// Un élève déjà validé signale qu'il tente le niveau supérieur, sans
-// perdre son étoile actuelle en attendant (le champ "niveau" validé ne
-// bouge pas tant que l'admin n'a pas confirmé la tentative, via
-// surclasserNiveauParticipation qui vide ce champ au passage).
+// Un élève déjà validé signale qu'il tente un AUTRE niveau (plus dur, plus
+// facile, peu importe — libre à lui de changer d'avis), sans perdre son
+// étoile actuelle en attendant (le champ "niveau" validé ne bouge pas tant
+// que l'admin n'a pas confirmé la tentative, via surclasserNiveauParticipation
+// qui vide ce champ au passage).
 export async function tenterNiveauSuperieur(formData: FormData) {
   const supabase = supabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
