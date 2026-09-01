@@ -2,6 +2,7 @@ import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { choisirNiveauDefi, tenterNiveauSuperieur } from './actions';
 import DefiOnglets from './DefiOnglets';
 import EmojiBeast from './EmojiBeast';
+import BoutonNiveau from './BoutonNiveau';
 
 export const dynamic = 'force-dynamic';
 
@@ -217,9 +218,8 @@ export default async function DefiPage() {
                   />
                 )}
                 {(['facile', 'moyen', 'dur'] as const).map((niv) => (
-                  <button
+                  <BoutonNiveau
                     key={niv}
-                    type="submit"
                     name="niveau"
                     value={niv}
                     style={{
@@ -232,7 +232,7 @@ export default async function DefiPage() {
                     {niv === 'facile' && 'Pas trop souvent — je tente la version accessible'}
                     {niv === 'moyen' && "Assez régulièrement — je tente la version intermédiaire"}
                     {niv === 'dur' && 'Très régulièrement — je tente la version corsée'}
-                  </button>
+                  </BoutonNiveau>
                 ))}
               </form>
             </>
@@ -267,16 +267,14 @@ export default async function DefiPage() {
                       <summary style={{ fontSize: 12, opacity: 0.6, cursor: 'pointer' }}>Changer de niveau</summary>
                       <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
                         {(['facile', 'moyen', 'dur'] as const).map((niv) => (
-                          <button
+                          <BoutonNiveau
                             key={niv}
-                            type="submit"
                             name="niveau"
                             value={niv}
-                            formAction={choisirNiveauDefi}
                             style={{ fontSize: 11, padding: '4px 10px', borderRadius: 999, border: `1px solid ${COULEUR_NIVEAU[niv]}`, background: 'none', color: 'inherit', cursor: 'pointer' }}
                           >
                             {LABEL_NIVEAU[niv]}
-                          </button>
+                          </BoutonNiveau>
                         ))}
                       </div>
                     </details>
@@ -288,21 +286,24 @@ export default async function DefiPage() {
                 && (maParticipation.niveau !== 'dur' || defiActuel.description_beast) && (
                 <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px dashed #444' }}>
                   {maParticipation.tentative_superieure ? (
-                    <>
-                      <p style={{ fontSize: 12, opacity: 0.75 }}>
-                        🎯 Tentative niveau {LABEL_NIVEAU[maParticipation.tentative_superieure]} en attente de validation —
-                        ton étoile {LABEL_NIVEAU[maParticipation.niveau]} reste acquise en attendant, tu ne peux pas la perdre.
+                    <div style={{ background: 'rgba(255,45,120,0.12)', border: '1px solid #f0a', borderRadius: 10, padding: 12 }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: '#f0a', margin: '0 0 6px' }}>
+                        ✅ C'est enregistré ! Tentative niveau {LABEL_NIVEAU[maParticipation.tentative_superieure]}
                       </p>
-                      <p style={{ fontSize: 14, whiteSpace: 'pre-wrap', marginTop: 8 }}>
+                      <p style={{ fontSize: 12, opacity: 0.85, margin: '0 0 8px' }}>
+                        En attente de validation par Sylvain — ton étoile {LABEL_NIVEAU[maParticipation.niveau]} reste
+                        acquise pendant ce temps, tu ne peux pas la perdre.
+                      </p>
+                      <p style={{ fontSize: 14, whiteSpace: 'pre-wrap', margin: '0 0 8px' }}>
                         {maParticipation.tentative_superieure === 'facile' && defiActuel.description_facile}
                         {maParticipation.tentative_superieure === 'moyen' && defiActuel.description_moyen}
                         {maParticipation.tentative_superieure === 'dur' && defiActuel.description_dur}
                         {maParticipation.tentative_superieure === 'beast' && defiActuel.description_beast}
                       </p>
-                      <a href="https://wa.me/33620477064" style={{ fontSize: 13, color: '#f0a' }}>
+                      <a href="https://wa.me/33620477064" style={{ fontSize: 13, color: '#f0a', fontWeight: 600 }}>
                         Envoyer ma vidéo sur WhatsApp →
                       </a>
-                    </>
+                    </div>
                   ) : (
                     <>
                       <p style={{ fontSize: 12, opacity: 0.75, marginBottom: 8 }}>
@@ -316,15 +317,14 @@ export default async function DefiPage() {
                           .filter((niv) => ORDRE_NIVEAU[niv] > ORDRE_NIVEAU[maParticipation.niveau])
                           .filter((niv) => niv !== 'beast' || defiActuel.description_beast)
                           .map((niv) => (
-                            <button
+                            <BoutonNiveau
                               key={niv}
-                              type="submit"
                               name="niveau"
                               value={niv}
                               style={{ fontSize: 11, padding: '4px 10px', borderRadius: 999, border: `1px solid ${COULEUR_NIVEAU[niv]}`, background: 'none', color: 'inherit', cursor: 'pointer' }}
                             >
                               {niv === 'beast' && <EmojiBeast />}{niv === 'beast' ? ' ' : ''}Tenter {LABEL_NIVEAU[niv]}
-                            </button>
+                            </BoutonNiveau>
                           ))}
                       </form>
                     </>
