@@ -263,7 +263,6 @@ export default async function DefiPage() {
                   <br />
                   <form action={choisirNiveauDefi}>
                     <input type="hidden" name="defi_id" value={defiActuel.id} />
-                    <input type="hidden" name="niveau" value="facile" />
                     <details>
                       <summary style={{ fontSize: 12, opacity: 0.6, cursor: 'pointer' }}>Changer de niveau</summary>
                       <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
