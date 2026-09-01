@@ -90,18 +90,45 @@ export default async function AdminStatistiquesPage() {
       </div>
 
       <p style={{ fontSize: 13, fontWeight: 600, opacity: 0.8, marginBottom: 4 }}>Élèves actifs par formule</p>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 20 }}>
-        {Object.entries(FORMULES).map(([cle, f]) => {
-          const n = eleveParFormule.get(cle) ?? 0;
-          if (n === 0) return null;
-          return (
-            <span key={cle} style={{ border: '1px solid #333', borderRadius: 999, padding: '4px 10px', fontSize: 12 }}>
-              {f.nom} · {n}
-            </span>
-          );
-        })}
-        {eleveParFormule.size === 0 && <p style={{ fontSize: 12, opacity: 0.6 }}>Aucun abonnement actif pour le moment.</p>}
-      </div>
+      {(() => {
+        const donnees = Object.entries(FORMULES)
+          .map(([cle, f]) => ({ nom: f.nom, n: eleveParFormule.get(cle) ?? 0 }))
+          .filter((d) => d.n > 0)
+          .sort((a, b) => b.n - a.n);
+
+        if (donnees.length === 0) {
+          return <p style={{ fontSize: 12, opacity: 0.6, marginBottom: 20 }}>Aucun abonnement actif pour le moment.</p>;
+        }
+
+        const maxN = Math.max(...donnees.map((d) => d.n));
+        const hauteurBarre = 26, espace = 8;
+        const svgWBarres = 600, padGBarres = 140, padDBarres = 40;
+        const svgHBarres = donnees.length * (hauteurBarre + espace);
+
+        return (
+          <div style={{ marginBottom: 20 }}>
+            <svg viewBox={`0 0 ${svgWBarres} ${svgHBarres}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
+              {donnees.map((d, i) => {
+                const y = i * (hauteurBarre + espace);
+                const largeurMax = svgWBarres - padGBarres - padDBarres;
+                const largeur = maxN > 0 ? (d.n / maxN) * largeurMax : 0;
+                return (
+                  <g key={d.nom}>
+                    <text x={padGBarres - 10} y={y + hauteurBarre / 2} textAnchor="end" dominantBaseline="middle" fontSize="13" fill="#ccc">
+                      {d.nom}
+                    </text>
+                    <rect x={padGBarres} y={y} width={largeurMax} height={hauteurBarre} rx={4} fill="#222" />
+                    <rect x={padGBarres} y={y} width={largeur} height={hauteurBarre} rx={4} fill="#f0a" />
+                    <text x={padGBarres + largeur + 8} y={y + hauteurBarre / 2} dominantBaseline="middle" fontSize="13" fontWeight="700" fill="#fff">
+                      {d.n}
+                    </text>
+                  </g>
+                );
+              })}
+            </svg>
+          </div>
+        );
+      })()}
 
       <p style={{ fontSize: 13, fontWeight: 600, opacity: 0.8, marginBottom: 4 }}>Évolution des revenus mensuels (encaissé, hors remboursements)</p>
       {moisTries.length === 0 ? (
