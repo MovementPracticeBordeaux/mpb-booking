@@ -265,17 +265,15 @@ export default async function DefiPage() {
                     <input type="hidden" name="defi_id" value={defiActuel.id} />
                     <details>
                       <summary style={{ fontSize: 12, opacity: 0.6, cursor: 'pointer' }}>Changer de niveau</summary>
-                      <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
-                        {(['facile', 'moyen', 'dur', 'beast'] as const)
-                          .filter((niv) => niv !== 'beast' || defiActuel.description_beast)
-                          .map((niv) => (
+                      <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+                        {(['facile', 'moyen', 'dur'] as const).map((niv) => (
                           <BoutonNiveau
                             key={niv}
                             name="niveau"
                             value={niv}
                             style={{ fontSize: 12, padding: '10px 14px', minHeight: 40, borderRadius: 999, border: `1px solid ${COULEUR_NIVEAU[niv]}`, background: 'none', color: 'inherit', cursor: 'pointer' }}
                           >
-                            {niv === 'beast' && <EmojiBeast />}{niv === 'beast' ? ' ' : ''}{LABEL_NIVEAU[niv]}
+                            {LABEL_NIVEAU[niv]}
                           </BoutonNiveau>
                         ))}
                       </div>
@@ -308,14 +306,20 @@ export default async function DefiPage() {
                   ) : (
                     <>
                       <p style={{ fontSize: 12, opacity: 0.75, marginBottom: 8 }}>
-                        Envie de tenter un autre niveau — plus dur, plus facile, ou même Beast ? Tu peux changer
-                        librement, sans jamais perdre l'étoile {LABEL_NIVEAU[maParticipation.niveau]} que tu as déjà.
+                        Envie de tenter un autre niveau — plus dur ou plus facile ? Tu peux changer librement, sans
+                        jamais perdre l'étoile {LABEL_NIVEAU[maParticipation.niveau]} que tu as déjà.
+                        {maParticipation.niveau === 'dur' && defiActuel.description_beast && (
+                          <> Et comme tu es déjà à l'or, le mode Beast s'offre aussi à toi 😈</>
+                        )}
                       </p>
                       <form action={tenterNiveauSuperieur} style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                         <input type="hidden" name="defi_id" value={defiActuel.id} />
                         {(['facile', 'moyen', 'dur', 'beast'] as const)
                           .filter((niv) => niv !== maParticipation.niveau)
-                          .filter((niv) => niv !== 'beast' || defiActuel.description_beast)
+                          // Le mode Beast n'est proposé qu'à ceux ayant déjà
+                          // validé l'or — pas accessible directement depuis
+                          // bronze ou argent, même après validation.
+                          .filter((niv) => niv !== 'beast' || (maParticipation.niveau === 'dur' && defiActuel.description_beast))
                           .map((niv) => (
                             <BoutonNiveau
                               key={niv}
