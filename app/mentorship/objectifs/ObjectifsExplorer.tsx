@@ -43,10 +43,6 @@ export default function ObjectifsExplorer({ objectifs, relations }: { objectifs:
   if (selection) {
     const sertA = relations.filter((r) => r.type === 'sert_a' && r.objectif_source_id === selection.id).map((r) => parId.get(r.objectif_cible_id)).filter(Boolean) as Objectif[];
     const reposeSur = relations.filter((r) => r.type === 'sert_a' && r.objectif_cible_id === selection.id).map((r) => parId.get(r.objectif_source_id)).filter(Boolean) as Objectif[];
-    const complementaires = relations
-      .filter((r) => r.type === 'complementaire' && (r.objectif_source_id === selection.id || r.objectif_cible_id === selection.id))
-      .map((r) => parId.get(r.objectif_source_id === selection.id ? r.objectif_cible_id : r.objectif_source_id))
-      .filter(Boolean) as Objectif[];
     const yt = selection.video_url ? idYoutube(selection.video_url) : null;
 
     return (
@@ -106,20 +102,7 @@ export default function ObjectifsExplorer({ objectifs, relations }: { objectifs:
           </div>
         )}
 
-        {complementaires.length > 0 && (
-          <div style={{ marginBottom: 16 }}>
-            <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 8px' }}>Complémentaire à</p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {complementaires.map((o) => (
-                <button key={o.id} type="button" onClick={() => choisir(o.id)} style={{ fontSize: 12, padding: '6px 12px', borderRadius: 999, border: '1px solid #8B5CF6', background: 'rgba(139,92,246,0.08)', color: '#8B5CF6', cursor: 'pointer' }}>
-                  ↔ {o.titre}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {reposeSur.length === 0 && sertA.length === 0 && complementaires.length === 0 && (
+        {reposeSur.length === 0 && sertA.length === 0 && (
           <p style={{ fontSize: 12, color: COULEURS.texteFaible }}>Pas encore de lien renseigné pour cet objectif.</p>
         )}
       </main>

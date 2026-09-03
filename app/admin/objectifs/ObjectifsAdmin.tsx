@@ -19,7 +19,7 @@ function SelecteurCible({
   objectifs: Objectif[];
   excludeId: string;
   idCourant: string;
-  direction: 'sertA' | 'reposeSur' | 'complementaire';
+  direction: 'sertA' | 'reposeSur';
   ajouterRelation: (formData: FormData) => Promise<{ ok: boolean; erreur?: string }>;
 }) {
   const [recherche, setRecherche] = useState('');
@@ -34,19 +34,14 @@ function SelecteurCible({
   const objetChoisi = cibleId ? objectifs.find((o) => o.id === cibleId) : null;
 
   if (objetChoisi) {
-    // Pour 'complementaire', peu importe quel id va dans source/cible
-    // (relation symétrique, affichée dans les deux sens) ; pour les deux
-    // autres, l'ordre porte le sens de la progression.
     const sourceId = direction === 'reposeSur' ? objetChoisi.id : idCourant;
     const finalCibleId = direction === 'reposeSur' ? idCourant : objetChoisi.id;
-    const type = direction === 'complementaire' ? 'complementaire' : 'sert_a';
 
     async function confirmer() {
       setEnCours(true);
       const formData = new FormData();
       formData.set('source_id', sourceId);
       formData.set('cible_id', finalCibleId);
-      formData.set('type', type);
       await ajouterRelation(formData);
       // Réinitialise après l'ajout : sans ça, le champ reste bloqué sur
       // "objectif choisi / changer" au lieu de redevenir une barre de
@@ -121,9 +116,6 @@ export default function ObjectifsAdmin({
         {filtres.map((o) => {
           const sertA = relations.filter((r) => r.type === 'sert_a' && r.objectif_source_id === o.id);
           const reposeSur = relations.filter((r) => r.type === 'sert_a' && r.objectif_cible_id === o.id);
-          // Symétrique : peu importe de quel côté (source/cible) la paire a
-          // été enregistrée, on affiche toujours "l'autre" objectif.
-          const complementaires = relations.filter((r) => r.type === 'complementaire' && (r.objectif_source_id === o.id || r.objectif_cible_id === o.id));
           const ouvert = ouvertId === o.id;
 
           return (
@@ -135,8 +127,8 @@ export default function ObjectifsAdmin({
                 <span style={{ fontSize: 11, opacity: 0.5 }}>{o.branche} {o.sous_groupe ? `· ${o.sous_groupe}` : ''}{!o.video_url ? ' · ⚠️ pas de vidéo' : ''}</span>
                 <br />
                 <strong>{o.titre}</strong>
-                {(sertA.length > 0 || reposeSur.length > 0 || complementaires.length > 0) && (
-                  <span style={{ fontSize: 11, opacity: 0.6 }}> — {reposeSur.length} en amont, {sertA.length} en aval, {complementaires.length} complémentaire{complementaires.length !== 1 ? 's' : ''}</span>
+                {(sertA.length > 0 || reposeSur.length > 0) && (
+                  <span style={{ fontSize: 11, opacity: 0.6 }}> — {reposeSur.length} en amont, {sertA.length} en aval</span>
                 )}
               </button>
 
@@ -172,23 +164,6 @@ export default function ObjectifsAdmin({
                       </div>
                     ))}
                     <SelecteurCible objectifs={objectifs} excludeId={o.id} idCourant={o.id} direction="sertA" ajouterRelation={ajouterRelation} />
-                  </div>
-
-                  <div>
-                    <p style={{ fontSize: 12, fontWeight: 600, margin: '0 0 4px' }}>Complémentaire à</p>
-                    {complementaires.map((r) => {
-                      const autreId = r.objectif_source_id === o.id ? r.objectif_cible_id : r.objectif_source_id;
-                      return (
-                        <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, margin: '2px 0' }}>
-                          <span>↔ {parId.get(autreId)?.titre ?? '?'}</span>
-                          <form action={supprimerRelation}>
-                            <input type="hidden" name="relation_id" value={r.id} />
-                            <button type="submit" style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: 11 }}>✕</button>
-                          </form>
-                        </div>
-                      );
-                    })}
-                    <SelecteurCible objectifs={objectifs} excludeId={o.id} idCourant={o.id} direction="complementaire" ajouterRelation={ajouterRelation} />
                   </div>
 
                   <form action={mettreAJourObjectif} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
