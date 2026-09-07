@@ -527,8 +527,15 @@ export default function ArbreCompetences({
     }
     if (!troncComplet) return false;
     if (noeud.niveau === 1) return true;
-    const precedent = branches.find((n) => n.domaine === noeud.domaine && n.niveau === noeud.niveau - 1);
-    return precedent ? idsAcquis.has(precedent.id) : true;
+    // Verrouillage global (toutes branches) : le niveau N d'une branche ne
+    // se débloque que lorsque le niveau N-1 est acquis dans les 5 branches
+    // à la fois — chaque palier avance ensemble, comme dans
+    // estNoeudDeverrouille (lib/mentorship-modules.ts), dont ceci est la
+    // version côté client (NoeudMentorshipPublic, sans les réponses).
+    return ORDRE_DOMAINES.every((domaine) => {
+      const precedent = branches.find((n) => n.domaine === domaine && n.niveau === noeud.niveau - 1);
+      return precedent ? idsAcquis.has(precedent.id) : true;
+    });
   }
 
   function statutAffiche(noeud: NoeudMentorshipPublic): StatutAffiche {
@@ -819,7 +826,7 @@ export default function ArbreCompetences({
                           ))}
                           {(noeud.progressionBonus?.length ?? 0) > 0 && (
                             <div style={{ marginTop: 14 }}>
-                              <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>🔥 Bonus (facultatif)</p>
+                              <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>✦ Quête secondaire (facultative)</p>
                               {noeud.progressionBonus!.map((ex) => (
                                 <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} />
                               ))}
@@ -1844,7 +1851,7 @@ function PanneauNoeud({
           {(noeud.progressionBonus?.length ?? 0) > 0 && (
             <div style={{ marginTop: 16 }}>
               <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                🔥 Progression bonus (facultatif, dépassement)
+                ✦ Quête secondaire (facultative, dépassement)
               </p>
               {noeud.progressionBonus!.map((ex) => (
                 <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progressionMap.get(moduleIdExercice(noeud, ex))} estBonus estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverte({ url, titre })} />

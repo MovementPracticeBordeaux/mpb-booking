@@ -667,8 +667,14 @@ export function estNoeudDeverrouille(noeud: NoeudMentorship, idsAcquis: Set<stri
   // Nœud d'une branche : verrouillé tant que le tronc n'est pas complet.
   if (!troncComplet(idsAcquis)) return false;
   if (noeud.niveau === 1) return true;
-  const precedent = BRANCHES.find((n) => n.domaine === noeud.domaine && n.niveau === noeud.niveau - 1);
-  return precedent ? idsAcquis.has(precedent.id) : true;
+  // Verrouillage global (toutes branches) : le niveau N d'une branche ne se
+  // débloque que lorsque le niveau N-1 est acquis dans les 5 branches à la
+  // fois, pas seulement dans celle-ci — chaque palier avance ensemble,
+  // plutôt qu'une branche pouvant filer devant les autres.
+  return ORDRE_DOMAINES.every((domaine) => {
+    const precedent = BRANCHES.find((n) => n.domaine === domaine && n.niveau === noeud.niveau - 1);
+    return precedent ? idsAcquis.has(precedent.id) : true;
+  });
 }
 
 // --- Points Mouvement (XP) et niveau global ------------------------------

@@ -47,7 +47,7 @@ export default async function AdminMentorshipPage({ searchParams }: { searchPara
     if (!exercice) return { titre: noeud.titre, sousTitre: `${label} niveau ${noeud.niveau}` };
     return {
       titre: exercice.nom,
-      sousTitre: `${label} niveau ${noeud.niveau} · ${noeud.titre}${exerciceBonus ? ' · Progression bonus 🔥' : ''}`,
+      sousTitre: `${label} niveau ${noeud.niveau} · ${noeud.titre}${exerciceBonus ? ' · Quête secondaire ✦' : ''}`,
     };
   }
 
