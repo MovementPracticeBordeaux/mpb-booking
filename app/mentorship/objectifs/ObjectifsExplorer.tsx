@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { COULEURS, GRADIENT, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
 
 type Objectif = {
   id: string; titre: string; branche: string; sous_groupe: string | null;
   video_url: string | null; mots_cles: string | null; note: string | null;
+  famille: string | null; niveau: number | null;
 };
 type Relation = { id: string; objectif_source_id: string; objectif_cible_id: string; type: string };
 
@@ -14,12 +16,90 @@ function idYoutube(url: string): string | null {
   return m ? m[1] : null;
 }
 
+// Position d'un objectif au sein de sa famille — volontairement minimaliste
+// par défaut (juste avant/après), la chaîne complète restant repliée. Un
+// élève qui cherche à savoir "par quoi je continue" n'a pas besoin qu'on
+// lui déballe 10 vidéos d'un coup.
+function PositionDansFamille({ selection, objectifs, choisir }: { selection: Objectif; objectifs: Objectif[]; choisir: (id: string) => void }) {
+  const [ouvert, setOuvert] = useState(false);
+
+  const memeFamille = useMemo(() => {
+    if (!selection.famille) return [];
+    return objectifs
+      .filter((o) => o.branche === selection.branche && o.famille === selection.famille)
+      .sort((a, b) => (a.niveau ?? 0) - (b.niveau ?? 0));
+  }, [selection, objectifs]);
+
+  if (memeFamille.length <= 1) return null;
+
+  const index = memeFamille.findIndex((o) => o.id === selection.id);
+  const precedent = index > 0 ? memeFamille[index - 1] : null;
+  const suivant = index < memeFamille.length - 1 ? memeFamille[index + 1] : null;
+  const niveauMax = Math.max(...memeFamille.map((o) => o.niveau ?? 0));
+
+  return (
+    <div style={{ background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
+      <p style={{ fontSize: 11, opacity: 0.6, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+        {selection.famille}{selection.niveau ? ` — Niveau ${selection.niveau}/${niveauMax}` : ''}
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {precedent && (
+          <button type="button" onClick={() => choisir(precedent.id)} style={{ textAlign: 'left', fontSize: 13, background: 'none', border: 'none', color: COULEURS.texteAtt, cursor: 'pointer', padding: 0 }}>
+            ← Vient de : {precedent.titre}
+          </button>
+        )}
+        {suivant && (
+          <button type="button" onClick={() => choisir(suivant.id)} style={{ textAlign: 'left', fontSize: 13, background: 'none', border: 'none', color: '#f0a', cursor: 'pointer', padding: 0, fontWeight: 600 }}>
+            Mène à : {suivant.titre} →
+          </button>
+        )}
+        {!precedent && !suivant && <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: 0 }}>Seul objectif de cette famille pour l'instant.</p>}
+      </div>
+
+      <button
+        type="button" onClick={() => setOuvert((o) => !o)}
+        style={{ marginTop: 10, fontSize: 11, background: 'none', border: 'none', color: COULEURS.texteFaible, cursor: 'pointer', padding: 0, textDecoration: 'underline', textUnderlineOffset: 2 }}
+      >
+        {ouvert ? 'Replier' : `Voir toute la progression (${memeFamille.length})`}
+      </button>
+
+      {ouvert && (
+        <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {memeFamille.map((o) => (
+            <button
+              key={o.id} type="button" onClick={() => choisir(o.id)}
+              disabled={o.id === selection.id}
+              style={{
+                textAlign: 'left', fontSize: 12, padding: '4px 0', background: 'none', border: 'none',
+                color: o.id === selection.id ? COULEURS.texte : COULEURS.texteAtt,
+                fontWeight: o.id === selection.id ? 700 : 400,
+                cursor: o.id === selection.id ? 'default' : 'pointer',
+              }}
+            >
+              {o.niveau ? `${o.niveau}. ` : ''}{o.titre}{o.id === selection.id ? ' (ici)' : ''}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ObjectifsExplorer({ objectifs, relations }: { objectifs: Objectif[]; relations: Relation[] }) {
+  const searchParams = useSearchParams();
   const [recherche, setRecherche] = useState('');
   const [selectionId, setSelectionId] = useState<string | null>(null);
 
   const parId = useMemo(() => new Map(objectifs.map((o) => [o.id, o])), [objectifs]);
   const selection = selectionId ? parId.get(selectionId) : null;
+
+  // Arrivée directe depuis une quête de l'arbre ("Éclairer le chemin") :
+  // ouvre directement la bonne fiche sans repasser par la recherche.
+  useEffect(() => {
+    const id = searchParams.get('id');
+    if (id && parId.has(id)) setSelectionId(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   // Recherche volontairement stricte (sous-chaîne, pas de recherche floue) :
   // ne matche que sur le titre et les mots-clés que Sylvain a lui-même
@@ -76,6 +156,8 @@ export default function ObjectifsExplorer({ objectifs, relations }: { objectifs:
           </div>
         )}
 
+        <PositionDansFamille key={selection.id} selection={selection} objectifs={objectifs} choisir={choisir} />
+
         {reposeSur.length > 0 && (
           <div style={{ marginBottom: 16 }}>
             <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 8px' }}>Repose sur</p>
@@ -102,7 +184,7 @@ export default function ObjectifsExplorer({ objectifs, relations }: { objectifs:
           </div>
         )}
 
-        {reposeSur.length === 0 && sertA.length === 0 && (
+        {reposeSur.length === 0 && sertA.length === 0 && !selection.famille && (
           <p style={{ fontSize: 12, color: COULEURS.texteFaible }}>Pas encore de lien renseigné pour cet objectif.</p>
         )}
       </main>

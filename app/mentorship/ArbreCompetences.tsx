@@ -418,6 +418,7 @@ export default function ArbreCompetences({
   defisValidesAujourdhui,
   courbeXP,
   statsProgression,
+  objectifIdParUrl,
   structureSeance,
   estAdmin,
   branchesAutorisees,
@@ -432,6 +433,7 @@ export default function ArbreCompetences({
   defisValidesAujourdhui: Set<string>;
   courbeXP: { jour: string; xp: number }[];
   statsProgression: StatsProgression;
+  objectifIdParUrl: Record<string, string>;
   structureSeance: readonly { etape: string; detail: string }[];
   estAdmin?: boolean;
   // Branches couvertes par la formule Mentorat de l'élève (ex. ['force',
@@ -822,13 +824,13 @@ export default function ArbreCompetences({
                             {noeud.exercices!.filter((ex) => progression.get(moduleIdExercice(noeud, ex))?.statut === 'acquis').length}/{noeud.exercices!.length} validés
                           </p>
                           {noeud.exercices!.map((ex) => (
-                            <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} />
+                            <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} />
                           ))}
                           {(noeud.progressionBonus?.length ?? 0) > 0 && (
                             <div style={{ marginTop: 14 }}>
                               <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>✦ Quête secondaire (facultative)</p>
                               {noeud.progressionBonus!.map((ex) => (
-                                <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} />
+                                <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} />
                               ))}
                             </div>
                           )}
@@ -1384,6 +1386,7 @@ export default function ArbreCompetences({
           estAdmin={estAdmin}
           brancheNonIncluse={!brancheIncluse(noeudSelectionne.domaine)}
           onFermer={() => setSelection(null)}
+          objectifIdParUrl={objectifIdParUrl}
         />
       )}
     </div>
@@ -1739,7 +1742,7 @@ function LecteurVideoModal({ url, titre, onFermer }: { url: string; titre: strin
 // Un exercice indépendant (obligatoire ou progression bonus), avec son
 // propre statut et son propre formulaire de soumission vidéo.
 function BlocExercice({
-  noeud, exercice, prog, estBonus, estAdmin, onOuvrirVideo,
+  noeud, exercice, prog, estBonus, estAdmin, onOuvrirVideo, objectifIdParUrl,
 }: {
   noeud: NoeudMentorshipPublic;
   exercice: ExerciceMentorship;
@@ -1747,9 +1750,11 @@ function BlocExercice({
   estBonus: boolean;
   estAdmin?: boolean;
   onOuvrirVideo: (url: string, titre: string) => void;
+  objectifIdParUrl: Record<string, string>;
 }) {
   const statutEx: 'a_faire' | 'en_attente' | 'acquis' | 'refuse' =
     prog?.statut === 'acquis' ? 'acquis' : prog?.statut === 'refuse' ? 'refuse' : prog?.statut === 'en_attente' ? 'en_attente' : 'a_faire';
+  const objectifId = exercice.videoUrl ? objectifIdParUrl[exercice.videoUrl] : undefined;
 
   return (
     <div style={{ background: COULEURS.surface, borderRadius: 8, padding: '10px 14px', marginBottom: 8 }}>
@@ -1757,14 +1762,24 @@ function BlocExercice({
         <div>
           <p style={{ margin: 0, fontSize: 13, color: COULEURS.texte }}>{exercice.nom}{estBonus ? ' 🔥' : ''}</p>
           {exercice.note && <p style={{ margin: '2px 0 0', fontSize: 11, color: COULEURS.texteFaible, fontStyle: 'italic' }}>{exercice.note}</p>}
-          {exercice.videoUrl && (
-            <button
-              onClick={() => onOuvrirVideo(exercice.videoUrl, exercice.nom)}
-              style={{ fontSize: 11, color: '#f0a', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 2 }}
-            >
-              ▶ Voir la référence
-            </button>
-          )}
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            {exercice.videoUrl && (
+              <button
+                onClick={() => onOuvrirVideo(exercice.videoUrl, exercice.nom)}
+                style={{ fontSize: 11, color: '#f0a', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 2 }}
+              >
+                ▶ Voir la référence
+              </button>
+            )}
+            {objectifId && (
+              <a
+                href={`/mentorship/objectifs?id=${objectifId}`}
+                style={{ fontSize: 11, color: '#8B5CF6', textDecoration: 'underline', textUnderlineOffset: 2 }}
+              >
+                🧭 Éclairer le chemin
+              </a>
+            )}
+          </div>
         </div>
         <StatutExercicePastille statut={statutEx} />
       </div>
@@ -1793,7 +1808,7 @@ function BlocExercice({
 }
 
 function PanneauNoeud({
-  noeud, statut, progression, progressionMap, couleur, reponsesQCM, setReponsesQCM, estAdmin, brancheNonIncluse, onFermer,
+  noeud, statut, progression, progressionMap, couleur, reponsesQCM, setReponsesQCM, estAdmin, brancheNonIncluse, onFermer, objectifIdParUrl,
 }: {
   noeud: NoeudMentorshipPublic;
   statut: string;
@@ -1805,6 +1820,7 @@ function PanneauNoeud({
   estAdmin?: boolean;
   brancheNonIncluse?: boolean;
   onFermer: () => void;
+  objectifIdParUrl: Record<string, string>;
 }) {
   const label = noeud.domaine === 'tronc' ? 'Armure Organique' : DOMAINE_LABELS[noeud.domaine as Domaine];
   const aDesExercices = (noeud.exercices?.length ?? 0) > 0;
@@ -1844,7 +1860,7 @@ function PanneauNoeud({
               Exercices à valider ({noeud.exercices!.filter((ex) => progressionMap.get(moduleIdExercice(noeud, ex))?.statut === 'acquis').length}/{noeud.exercices!.length})
             </p>
             {noeud.exercices!.map((ex) => (
-              <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progressionMap.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverte({ url, titre })} />
+              <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progressionMap.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverte({ url, titre })} objectifIdParUrl={objectifIdParUrl} />
             ))}
           </div>
 
@@ -1854,7 +1870,7 @@ function PanneauNoeud({
                 ✦ Quête secondaire (facultative, dépassement)
               </p>
               {noeud.progressionBonus!.map((ex) => (
-                <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progressionMap.get(moduleIdExercice(noeud, ex))} estBonus estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverte({ url, titre })} />
+                <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progressionMap.get(moduleIdExercice(noeud, ex))} estBonus estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverte({ url, titre })} objectifIdParUrl={objectifIdParUrl} />
               ))}
             </div>
           )}

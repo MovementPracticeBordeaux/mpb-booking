@@ -121,6 +121,20 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
     historiqueLocomotion ?? []
   );
 
+  // Liaison quêtes de l'arbre <-> bibliothèque d'objectifs : faite par
+  // correspondance d'URL vidéo au moment de l'affichage (jamais stockée en
+  // dur dans mentorship-modules.ts) — reste à jour automatiquement si la
+  // bibliothèque évolue, et évite de modifier ce gros fichier généré à la
+  // main. Seuls id + video_url sont nécessaires ici, pas besoin du reste.
+  const { data: objectifsUrls } = await supabase
+    .from('objectifs_mentorship')
+    .select('id, video_url')
+    .not('video_url', 'is', null);
+  const objectifIdParUrl: Record<string, string> = {};
+  for (const o of objectifsUrls ?? []) {
+    if (o.video_url) objectifIdParUrl[o.video_url] = o.id;
+  }
+
   // Badge élève (dépassement) : % de nœuds acquis dont la flamme est
   // Légendaire ou plus — recalculé en continu à chaque affichage.
   const noeudsAcquis = TOUS_LES_NOEUDS.filter((n) => estNoeudAcquisDepuisProgression(n, estModuleAcquis));
@@ -157,6 +171,7 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
         defisValidesAujourdhui={defisValidesAujourdhui}
         courbeXP={courbeXP}
         statsProgression={statsProgression}
+        objectifIdParUrl={objectifIdParUrl}
         structureSeance={STRUCTURE_SEANCE}
         estAdmin={profil?.role === 'admin'}
         branchesAutorisees={aboMentorat?.branches ? (aboMentorat.branches.split(',') as any) : null}

@@ -30,7 +30,7 @@ export default async function ObjectifsPage() {
 
   const { data: objectifs } = await supabase
     .from('objectifs_mentorship')
-    .select('id, titre, branche, sous_groupe, video_url, mots_cles, note')
+    .select('id, titre, branche, sous_groupe, video_url, mots_cles, note, famille, niveau')
     .order('titre');
   const { data: relations } = await supabase
     .from('objectifs_relations')
