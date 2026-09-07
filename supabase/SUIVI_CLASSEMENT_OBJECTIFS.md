@@ -37,14 +37,30 @@ plutôt que via l'interface admin.
 
 ## Reste à faire
 
-- **Armure Organique** (95 vidéos, la plus grosse branche) — structure
-  différente prévue : plusieurs objectifs/tags possibles par vidéo, pas un
-  simple famille+niveau linéaire comme les autres branches (une vidéo de
-  mobilité d'épaule peut servir plusieurs objectifs à la fois — santé,
-  préparation handstand, préparation poussée...).
-- Champ `bras_tendu` (booléen) ajouté au schéma mais jamais renseigné — prévu
-  comme étiquette secondaire pour Force/Tirer (bras tendu vs bras fléchi),
-  pas encore utilisé en pratique.
-- Plusieurs vidéos volontairement laissées hors classement (doublons,
-  vidéos "routine"/compilation, contenus jugés peu utiles) — repérables via
-  `famille is null and note is not null`.
+- Rien ! Les 333 objectifs des 7 branches sont classés (Force, Locomotion,
+  Figures, Connexion, Flexibilité, Armure Organique). "Hybride" (9 vidéos)
+  n'a jamais fait partie du périmètre visé, laissé de côté volontairement.
+- Champ `bras_tendu` (booléen) ajouté au schéma mais jamais renseigné —
+  prévu comme étiquette secondaire pour Force/Tirer, pas encore utilisé
+  en pratique.
+- Plusieurs vidéos volontairement laissées hors classement dans chaque
+  branche (doublons, vidéos "routine"/compilation, contenus jugés peu
+  utiles) — repérables via `famille is null and note is not null`.
+
+## Armure Organique — structure spécifique
+
+Contrairement aux autres branches (famille + niveau = chaîne de
+progression linéaire), Armure Organique utilise un système de tags
+multiples par vidéo (`famille` = région du corps concernée : Épaules, Bas
+du corps, Scapula, Colonne vertébrale, Avant-bras, Respiration/système
+nerveux, Haut du corps ; `tags` = objectifs transversaux qu'une vidéo sert,
+séparés par des virgules — ex. "Santé, Préparation Handstand, Préparation
+Locomotion"). Une même vidéo peut donc servir plusieurs objectifs à la
+fois, contrairement au modèle famille+niveau strict des autres branches.
+
+Plusieurs vidéos ont été transférées entre branches au fil du classement
+quand leur contenu correspondait mieux ailleurs (ex. Rowing bûcheron,
+Suspension un bras, Front squat → Armure Organique depuis Force ; Fermeture
+flexibilité, GM Unilatéral → Flexibilité/Jefferson curl depuis Armure
+Organique ; Cossack, Dragon squat, Split squat, Sissy squat → Locomotion/
+Bipédie depuis Flexibilité).
