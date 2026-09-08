@@ -443,7 +443,7 @@ export default function ArbreCompetences({
 }) {
   const [selection, setSelection] = useState<string | null>(null);
   // Vue isolée d'une branche (chemin vertical) — null = vue globale (dashboard).
-  const [vueBranche, setVueBranche] = useState<Domaine | null>(null);
+  const [vueBranche, setVueBranche] = useState<Domaine | 'tronc' | null>(null);
   const [noeudPanneauId, setNoeudPanneauId] = useState<string | null>(null);
   const [videoOuverteChemin, setVideoOuverteChemin] = useState<{ url: string; titre: string } | null>(null);
   const refNoeudCourant = useRef<HTMLDivElement | null>(null);
@@ -575,6 +575,7 @@ export default function ArbreCompetences({
   // utilisé dans l'arbre global (bas = fondation, haut = progression).
   const noeudsChemin = useMemo(() => {
     if (!vueBranche) return [];
+    if (vueBranche === 'tronc') return [...tronc].sort((a, b) => b.niveau - a.niveau);
     const brancheOrdonnee = branches.filter((n) => n.domaine === vueBranche).sort((a, b) => b.niveau - a.niveau);
     const troncOrdonne = [...tronc].sort((a, b) => b.niveau - a.niveau);
     return [...brancheOrdonnee, ...troncOrdonne];
@@ -582,10 +583,12 @@ export default function ArbreCompetences({
 
   // Le nœud "courant" : le premier, dans l'ordre chronologique réel
   // (tronc 1→3 puis branche 1→3), qui n'est pas encore acquis. Si tout est
-  // acquis, on centre sur le dernier (branche niveau 3).
+  // acquis, on centre sur le dernier (branche niveau 3, ou tronc niveau 3
+  // en vue tronc seule).
   const noeudCourantId = useMemo(() => {
     if (!vueBranche) return null;
-    const chrono = [...[...tronc].sort((a, b) => a.niveau - b.niveau), ...branches.filter((n) => n.domaine === vueBranche).sort((a, b) => a.niveau - b.niveau)];
+    const troncTri = [...tronc].sort((a, b) => a.niveau - b.niveau);
+    const chrono = vueBranche === 'tronc' ? troncTri : [...troncTri, ...branches.filter((n) => n.domaine === vueBranche).sort((a, b) => a.niveau - b.niveau)];
     const premierNonAcquis = chrono.find((n) => !idsAcquis.has(n.id));
     return (premierNonAcquis ?? chrono[chrono.length - 1])?.id ?? null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -599,8 +602,9 @@ export default function ArbreCompetences({
     }
   }, [vueBranche, noeudCourantId]);
 
-  function entrerBranche(d: Domaine) {
-    if (brancheIncluse(d) || estAdmin) {
+  function entrerBranche(d: Domaine | 'tronc') {
+    // Le tronc est toujours accessible, quelle que soit la formule.
+    if (d === 'tronc' || brancheIncluse(d) || estAdmin) {
       setVueBranche(d);
     } else {
       // Branche non incluse dans la formule : on garde l'ancien comportement
@@ -711,7 +715,9 @@ export default function ArbreCompetences({
               ← Vue globale
             </button>
             <span style={{ color: COULEURS.texteFaible }}>/</span>
-            <span style={{ color: DOMAINE_COULEURS[vueBranche], fontWeight: 600 }}>{DOMAINE_LABELS[vueBranche]}</span>
+            <span style={{ color: vueBranche === 'tronc' ? COULEUR_TRONC : DOMAINE_COULEURS[vueBranche], fontWeight: 600 }}>
+              {vueBranche === 'tronc' ? 'Armure Organique' : DOMAINE_LABELS[vueBranche]}
+            </span>
           </div>
 
           <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
@@ -1013,7 +1019,7 @@ export default function ArbreCompetences({
               })
             )}
 
-            {/* Nœuds du tronc (les 2 premiers, en montant) */}
+            {/* Nœuds du tronc (les 2 premiers, en montant) — cliquer entre dans le chemin isolé du tronc, comme pour une branche */}
             {tronc.filter((n) => n.niveau < 3).map((noeud) => (
               <Noeud
                 key={noeud.id}
@@ -1022,7 +1028,7 @@ export default function ArbreCompetences({
                 couleur={COULEUR_TRONC}
                 domaine="tronc"
                 image={noeud.image}
-                onClick={() => setSelection(noeud.id)}
+                onClick={() => entrerBranche('tronc')}
               />
             ))}
 
@@ -1032,7 +1038,7 @@ export default function ArbreCompetences({
               pourcentage={pourcentageTronc}
               statut={statutAffiche(tronc.find((n) => n.niveau === 3)!)}
               image={tronc.find((n) => n.niveau === 3)!.image}
-              onClick={() => setSelection(tronc.find((n) => n.niveau === 3)!.id)}
+              onClick={() => entrerBranche('tronc')}
             />
           </div>
           <p style={{ textAlign: 'center', fontFamily: POLICE_DISPLAY, fontSize: 12, letterSpacing: '0.05em', textTransform: 'uppercase', color: '#ff00aa', marginTop: 8 }}>
