@@ -1,6 +1,11 @@
 import { supabaseAdmin } from '@/lib/supabase-server';
-import { creerDefiMensuel, modifierDefiMensuel, supprimerDefiMensuel, validerParticipationDefi, invaliderParticipationDefi, surclasserNiveauParticipation } from '../actions';
+import { creerDefiMensuel, modifierDefiMensuel, supprimerDefiMensuel, validerParticipationDefi, invaliderParticipationDefi, surclasserNiveauParticipation, ajouterParticipationDefiAdmin } from '../actions';
 import EmojiBeast from '../../defi/EmojiBeast';
+
+const styleSelect: React.CSSProperties = {
+  fontSize: 13, padding: '6px 8px', borderRadius: 6,
+  background: '#1a1a1a', color: '#eee', border: '1px solid #444',
+};
 
 export const dynamic = 'force-dynamic';
 
@@ -23,6 +28,12 @@ export default async function AdminDefisPage({ searchParams }: { searchParams: {
         .eq('defi_id', defiActuel.id)
         .order('created_at', { ascending: true })
     : { data: [] as any[] };
+
+  // Pour le formulaire "Ajouter un élève" plus bas — quelqu'un qui a
+  // relevé le défi en direct, sans passer par /defi lui-même.
+  const idsDejaParticipants = new Set((participationsBrut ?? []).map((p) => p.eleve_id));
+  const { data: elevesBrut } = await admin.from('profiles').select('id, nom, email').order('nom');
+  const elevesSansParticipation = (elevesBrut ?? []).filter((e) => !idsDejaParticipants.has(e.id));
 
   const enAttente = (participationsBrut ?? []).filter((p) => !p.valide);
   const validees = (participationsBrut ?? []).filter((p) => p.valide);
@@ -105,6 +116,31 @@ export default async function AdminDefisPage({ searchParams }: { searchParams: {
             </form>
           </details>
 
+          <h4 style={{ marginTop: 16, marginBottom: 8 }}>Ajouter un élève</h4>
+          <p style={{ fontSize: 11, opacity: 0.5, marginTop: -4, marginBottom: 8 }}>
+            Pour quelqu'un qui a relevé le défi en direct pendant le cours, sans passer par le site.
+          </p>
+          {defiActuel && (
+            <form action={ajouterParticipationDefiAdmin} style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
+              <input type="hidden" name="defi_id" value={defiActuel.id} />
+              <select name="eleve_id" required style={styleSelect}>
+                <option value="">-- Élève --</option>
+                {elevesSansParticipation.map((e) => (
+                  <option key={e.id} value={e.id}>{e.nom || e.email}</option>
+                ))}
+              </select>
+              <select name="niveau" defaultValue="dur" style={styleSelect}>
+                <option value="facile">🥉 Bronze</option>
+                <option value="moyen">🥈 Argent</option>
+                <option value="dur">🥇 Or</option>
+                {defiActuel.description_beast && <option value="beast">😈 Beast</option>}
+              </select>
+              <button type="submit" style={{ fontSize: 12, padding: '6px 14px', borderRadius: 999, border: '1px solid #4a4', background: 'none', color: '#8f8', cursor: 'pointer' }}>
+                Ajouter et valider
+              </button>
+            </form>
+          )}
+
           <h4 style={{ marginTop: 16, marginBottom: 8 }}>En attente de validation ({enAttente.length})</h4>
           <p style={{ fontSize: 11, opacity: 0.5, marginTop: -4, marginBottom: 8 }}>
             Le niveau présélectionné est celui choisi par l'élève — change-le si besoin avant de valider.
@@ -118,7 +154,7 @@ export default async function AdminDefisPage({ searchParams }: { searchParams: {
             >
               <input type="hidden" name="participation_id" value={p.id} />
               <span style={{ flex: 1, fontSize: 13 }}>{p.profiles?.nom || p.profiles?.email}</span>
-              <select name="niveau" defaultValue={p.niveau} style={{ fontSize: 13, padding: '4px 6px' }}>
+              <select name="niveau" defaultValue={p.niveau} style={styleSelect}>
                 <option value="facile">🥉 Bronze</option>
                 <option value="moyen">🥈 Argent</option>
                 <option value="dur">🥇 Or</option>
@@ -137,7 +173,7 @@ export default async function AdminDefisPage({ searchParams }: { searchParams: {
               <form action={surclasserNiveauParticipation} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <input type="hidden" name="participation_id" value={p.id} />
                 <span style={{ flex: 1, fontSize: 13 }}>{p.profiles?.nom || p.profiles?.email}</span>
-                <select name="niveau" defaultValue={p.niveau} style={{ fontSize: 13, padding: '4px 6px' }}>
+                <select name="niveau" defaultValue={p.niveau} style={styleSelect}>
                   <option value="facile">🥉 Bronze</option>
                   <option value="moyen">🥈 Argent</option>
                   <option value="dur">🥇 Or</option>

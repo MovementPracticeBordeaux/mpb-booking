@@ -757,9 +757,40 @@ export async function modifierDefiMensuel(formData: FormData) {
   reussir('/admin/defis', 'Défi modifié — les participations déjà en cours sont conservées.');
 }
 
-// Valide la participation d'un élève à un défi (après vérification de la
-// vidéo reçue par WhatsApp) : lui attribue son étoile, de la couleur
-// correspondant au niveau qu'il avait choisi.
+// Ajoute directement un élève au défi (et le valide dans la foulée) sans
+// qu'il soit passé lui-même par /defi — utile pour quelqu'un qui a
+// relevé le défi en cours, en direct, sans avoir choisi de niveau sur le
+// site au préalable.
+export async function ajouterParticipationDefiAdmin(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+  const defiId = formData.get('defi_id') as string;
+  const eleveId = formData.get('eleve_id') as string;
+  const niveau = formData.get('niveau') as string;
+  if (!eleveId) echouer('/admin/defis', 'Choisis un élève.');
+  if (!['facile', 'moyen', 'dur', 'beast'].includes(niveau)) echouer('/admin/defis', 'Niveau invalide.');
+
+  const { data: participation, error } = await admin
+    .from('defi_participations')
+    .upsert(
+      { defi_id: defiId, eleve_id: eleveId, niveau, valide: true, valide_le: new Date().toISOString(), tentative_superieure: null },
+      { onConflict: 'defi_id,eleve_id' }
+    )
+    .select('eleve_id, niveau, defi_id, defis_mensuels(titre)')
+    .single();
+  if (error) echouer('/admin/defis', error.message);
+
+  await notifierValidationDefi(participation);
+
+  revalidatePath('/admin/defis');
+  revalidatePath('/defi');
+  reussir('/admin/defis', 'Élève ajouté et validé — étoile attribuée.');
+}
+
+// Prévient l'élève par email + push qu'il vient de gagner son étoile, et
+// l'invite à tenter le niveau supérieur s'il n'est pas déjà au maximum
+// (sans qu'il perde l'étoile déjà acquise en attendant, voir
+// tenterNiveauSuperieur côté élève).
 export async function validerParticipationDefi(formData: FormData) {
   await verifierAdmin();
   const admin = supabaseAdmin();

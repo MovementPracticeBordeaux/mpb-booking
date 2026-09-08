@@ -121,11 +121,17 @@ export default async function DefiPage() {
   // brut, pour valoriser la difficulté plutôt que la seule quantité.
   function trierParNiveauPuisTotal(lignes: LigneClassement[]): LigneClassement[] {
     return lignes.sort((a, b) => {
-      for (const niv of ['dur', 'moyen', 'facile'] as const) {
+      // Priorité stricte au niveau le plus haut atteint (Beast > Or > Argent
+      // > Bronze), le nombre d'étoiles à ce niveau départageant ensuite —
+      // Beast manquait complètement ici, ce qui faisait ignorer ces étoiles
+      // dans le classement.
+      for (const niv of ['beast', 'dur', 'moyen', 'facile'] as const) {
         const diff = b.etoiles.filter((e) => e.niveau === niv).length - a.etoiles.filter((e) => e.niveau === niv).length;
         if (diff !== 0) return diff;
       }
-      return 0;
+      // Ultime départage si tout est identique niveau par niveau (cas très
+      // rare) : le nombre total d'étoiles, tous niveaux confondus.
+      return b.etoiles.length - a.etoiles.length;
     });
   }
 
