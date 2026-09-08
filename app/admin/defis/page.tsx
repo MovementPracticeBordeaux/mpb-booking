@@ -126,13 +126,17 @@ export default async function AdminDefisPage({ searchParams }: { searchParams: {
                     <input type="hidden" name="niveau" value={n} />
                     <button
                       type="submit"
-                      style={{
-                        fontSize: 11, padding: '5px 10px', borderRadius: 999, cursor: 'pointer',
-                        border: n === p.niveau ? '1px solid #4a4' : '1px solid #555',
-                        background: 'none', color: n === p.niveau ? '#8f8' : '#aaa',
-                      }}
+                      style={
+                        n === 'beast'
+                          ? { fontSize: 12, fontWeight: 700, padding: '6px 12px', borderRadius: 999, cursor: 'pointer', border: '1px solid #FF2D78', background: 'rgba(255,45,120,0.15)', color: '#FF2D78' }
+                          : {
+                              fontSize: 11, padding: '5px 10px', borderRadius: 999, cursor: 'pointer',
+                              border: n === p.niveau ? '1px solid #4a4' : '1px solid #555',
+                              background: 'none', color: n === p.niveau ? '#8f8' : '#aaa',
+                            }
+                      }
                     >
-                      ✓ {LABEL_NIVEAU[n]}
+                      {n === 'beast' ? <>✓ <EmojiBeast /> Beast</> : `✓ ${LABEL_NIVEAU[n]}`}
                     </button>
                   </form>
                 ))}
