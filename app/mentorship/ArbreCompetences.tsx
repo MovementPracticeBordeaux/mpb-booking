@@ -1762,6 +1762,8 @@ function BlocExercice({
         <div>
           <p style={{ margin: 0, fontSize: 13, color: COULEURS.texte }}>{exercice.nom}{estBonus ? ' 🔥' : ''}</p>
           {exercice.note && <p style={{ margin: '2px 0 0', fontSize: 11, color: COULEURS.texteFaible, fontStyle: 'italic' }}>{exercice.note}</p>}
+          {exercice.consigne && <p style={{ margin: '4px 0 0', fontSize: 11.5, color: COULEURS.texteAtt }}>{exercice.consigne}</p>}
+          {exercice.critereValidation && <p style={{ margin: '2px 0 0', fontSize: 11, color: '#f0a', fontWeight: 600 }}>✓ {exercice.critereValidation}</p>}
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             {exercice.videoUrl && (
               <button

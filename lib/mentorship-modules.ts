@@ -103,6 +103,8 @@ export type ExerciceMentorship = {
   nom: string;
   videoUrl: string;
   note?: string; // précision libre (ex. "à filmer", variante retenue, etc.)
+  consigne?: string; // comment exécuter l'exercice — affiché à l'élève
+  critereValidation?: string; // ce qui doit être visible pour que le coach valide — affiché à l'élève ET au coach
 };
 
 export type NoeudMentorship = {
@@ -156,18 +158,55 @@ export const TRONC: NoeudMentorship[] = [
       },
       {
         titre: "L'armure organique",
-        texte: "Dans la quête de maîtrise et d'excellence en matière de mouvement, l'« armure organique » émerge comme une métaphore puissante. Elle symbolise l'ensemble des outils et routines articulaires et musculaires utiles dans un but donné — forgée non pas de métal, mais de muscles, d'os, de tendons, et d'une conscience aiguë du corps. Ce premier niveau pose les toutes premières pièces de cette armure : la mobilité de base et la capacité à sentir son corps.",
+        texte: "Dans la quête de maîtrise et d'excellence en matière de mouvement, l'« armure organique » émerge comme une métaphore puissante. Elle symbolise l'ensemble des outils et routines articulaires et musculaires utiles dans un but donné — forgée non pas de métal, mais de muscles, d'os, de tendons, et d'une conscience aiguë du corps. Cinq qualités la composent : la Structure (densité osseuse, muscles profonds), l'Équilibre (une masse musculaire utile, une tenségrité harmonieuse), la Flexibilité (un corps capable de se déformer sans dommage), la Résilience (résister à une contrainte puis retrouver son état) et la Connexion (chaque partie du corps disponible, ressentie, utilisable). Ce premier niveau pose les toutes premières pièces de cette armure : la mobilité de base et la capacité à sentir son corps.",
       },
       {
         titre: "La Mouvolution, phase de l'étudiant",
-        texte: "La démarche d'apprentissage — la « Mouvolution » — se divise en trois phases. Ce premier niveau du tronc correspond à la phase de l'étudiant : étudier et pratiquer chaque secteur du Mouvement de manière isolée pour en comprendre les fondamentaux, en adoptant l'état d'esprit du débutant (le soshin), ouvert et avide d'expériences. Réalisée avec conscience et analyse, la répétition permet d'améliorer progressivement la qualité recherchée dans l'exécution d'une tâche.",
+        texte: "La démarche d'apprentissage — la « Mouvolution » — se divise en trois phases. Ce premier niveau du tronc correspond à la phase de l'étudiant : étudier et pratiquer chaque secteur du Mouvement de manière isolée pour en comprendre les fondamentaux, en adoptant l'état d'esprit du débutant (le soshin), ouvert et avide d'expériences. Un débutant ne se juge pas et ne devrait pas se juger lui-même : une réussite se construit et sera toujours le fruit d'un travail, donc de nombreuses erreurs. Réalisée avec conscience et analyse, la répétition permet d'améliorer progressivement la qualité recherchée dans l'exécution d'une tâche — c'est ce qu'on appelle le travail en profondeur (deep work).",
       },
     ],
     programmation: [
       {
-        cible: 'Routine de mobilité articulaire complète (colonne, épaules, hanches, chevilles), 10 à 15 minutes',
-        regression: 'Isoler 2-3 articulations par séance plutôt que la routine complète, à faible amplitude',
-        progression: 'Ajouter du temps sous tension sur les fins d\'amplitude, ralentir chaque mouvement',
+        cible: "Routine complète (santé des épaules, élastique) + un exercice de respiration, chaque jour — 10 à 15 minutes",
+        regression: "Isoler 2-3 exercices de la routine plutôt que l'ensemble, à faible amplitude",
+        progression: "Ajouter du temps sous tension sur les fins d'amplitude, ralentir chaque mouvement",
+      },
+    ],
+    exercices: [
+      {
+        id: 'standing-actif-1', nom: 'Standing actif 1', videoUrl: 'https://youtu.be/Vfc57qvPhQo',
+        consigne: "Position debout, ancré, en réalisant les transitions et engagements proposés dans la vidéo avec lenteur et contrôle — sans précipitation.",
+        critereValidation: "Tenue stable sur toute la séquence, sans perte d'équilibre ni précipitation dans les transitions.",
+      },
+      {
+        id: 'perfect-breath', nom: 'The perfect breath', videoUrl: 'https://youtu.be/EuTvBdpUbWc',
+        consigne: "Respiration diaphragmatique lente, inspiration par le nez, expiration longue et contrôlée. Rechercher le calme, pas la performance.",
+        critereValidation: "5 minutes de pratique continue, respiration fluide et régulière, sans tension au niveau des épaules ou du cou.",
+      },
+      {
+        id: 'floor-mobility-intro', nom: 'Floor mobility training - introduction', videoUrl: 'https://youtu.be/6ETL4STnuJM',
+        consigne: "Suivre chaque transition au sol proposée en gardant un contact conscient avec le sol — pas de mouvement parasite, pas de précipitation.",
+        critereValidation: "Séquence complète réalisée sans interruption ni perte de contrôle sur les transitions.",
+      },
+      {
+        id: 'routine-bas-du-corps', nom: 'Routine bas du corps', videoUrl: 'https://youtu.be/MQcmU9BQAGY',
+        consigne: "Routine complète, en insistant sur l'amplitude du squat plutôt que sur la vitesse d'exécution.",
+        critereValidation: "Routine réalisée en entier, squat en amplitude complète et contrôlée, sans douleur articulaire.",
+      },
+      {
+        id: 'sante-epaules', nom: 'Renforcement et santé des épaules', videoUrl: 'https://youtu.be/gdIxt_m35VE',
+        consigne: "Routine élastique complète, tension légère à modérée — l'objectif est la qualité de l'engagement musculaire, pas la charge.",
+        critereValidation: "Routine réalisée en entier avec un engagement senti et contrôlé sur chaque mouvement, sans à-coups.",
+      },
+      {
+        id: 'pushup-genoux', nom: 'Push up excentrique genoux', videoUrl: 'https://youtu.be/lmGSzEfYHkE',
+        consigne: "Genoux au sol, descente lente et contrôlée (3 à 4 secondes), corps aligné de la tête aux genoux, pas de cambrure du bas du dos.",
+        critereValidation: "8 répétitions, descente contrôlée sur toute l'amplitude, alignement maintenu sans affaissement des hanches.",
+      },
+      {
+        id: 'rowing-bucheron', nom: 'Rowing bûcheron', videoUrl: 'https://youtu.be/SNBddEEl1UE',
+        consigne: "Tirage contrôlé sans à-coups, en gardant le buste stable — le mouvement vient du dos, pas d'un balancement du corps.",
+        critereValidation: "8 répétitions par côté, sans balancement du buste pour compenser, contrôle en phase de retour.",
       },
     ],
     qcm: [
@@ -179,8 +218,8 @@ export const TRONC: NoeudMentorship[] = [
       },
       {
         id: 'armure1-q2',
-        question: "Que symbolise l'« armure organique » ?",
-        choix: ["Une protection statique et figée", "L'ensemble des outils et routines qu'on développe, en constante évolution", "Une seule routine fixe à répéter à vie"],
+        question: "Quelles sont les 5 qualités de l'armure organique ?",
+        choix: ["Vitesse, puissance, endurance, agilité, souplesse", "Structure, Équilibre, Flexibilité, Résilience, Connexion", "Force, poids, taille, âge, expérience"],
         bonneReponse: 1,
       },
     ],
@@ -193,22 +232,88 @@ export const TRONC: NoeudMentorship[] = [
     niveau: 2,
     titre: 'Consolidation',
     resume: "Le travail de fond devient méthodique : le cycle d'apprentissage structure la progression.",
-    objectifPedagogique: 'Passer du subjectif (ce qui me convient) vers l\'objectif (ce qui est mesurable et progressif).',
+    objectifPedagogique: "Passer du subjectif (ce qui me convient) vers l'objectif (ce qui est mesurable et progressif).",
     theorie: [
       {
         titre: 'Le travail de fond : du subjectif vers l\'objectif',
-        texte: "L'importance du travail de fond dans une pratique de mouvement est capitale pour construire l'armure organique, visant la santé et la protection physique sur le long terme. Ce travail est d'abord subjectif, s'adaptant aux besoins et capacités individuelles de chacun. Par la suite, un travail plus objectif prend place, orienté vers des objectifs cibles personnels : le pratiquant commence à explorer le mouvement dans toute sa diversité, en fonction de ses projets.",
+        texte: "L'importance du travail de fond dans une pratique de mouvement est capitale pour construire l'armure organique, visant la santé et la protection physique sur le long terme. Ce travail est d'abord subjectif, s'adaptant aux besoins et capacités individuelles de chacun — comme l'œuvre qui se transforme sous les mains du forgeron, à force de répétition. Par la suite, un travail plus objectif prend place, orienté vers des objectifs cibles personnels : le pratiquant commence à explorer le mouvement dans toute sa diversité, en fonction de ses projets.",
       },
       {
         titre: "Le cycle d'apprentissage",
-        texte: "Le cycle se déroule en quatre temps. Fragmenter, c'est diviser un mouvement en fragments, chacun représentant une qualité sollicitée par son exécution, pour un travail isolé et ciblé. Assembler, c'est recréer des liens entre ces fragments, de la plus simple à la plus complexe combinaison. Injecter, c'est intégrer une compétence acquise dans la Locomotion, où elle devient réellement utilisable. Amplifier, c'est ajouter un cran de complexité par le jeu ou l'augmentation du niveau d'exigence.",
+        texte: "Le cycle se déroule en quatre temps. Fragmenter, c'est diviser un mouvement en fragments, chacun représentant une qualité sollicitée par son exécution, pour un travail isolé et ciblé — à l'échelle micro (une qualité au sein d'un même mouvement) ou macro (chaque fragment étant un mouvement différent à apprendre isolément). Assembler, c'est recréer des liens entre ces fragments : soit en les fusionnant en un « chunk » (2 à 3 mouvements combinés en un seul), soit en les enchaînant en séquence. Injecter, c'est intégrer une compétence acquise dans un contexte plus large — la Locomotion notamment — où elle devient réellement utilisable. Amplifier, c'est ajouter un cran de complexité par le jeu, l'espace, le rythme ou l'augmentation du niveau d'exigence.",
+      },
+      {
+        titre: 'Une bibliothèque qui grandit',
+        texte: "À ce niveau, ta pratique de récupération et de bien-être s'enrichit : chaque nouvel outil rejoint ceux déjà acquis, pour te constituer une véritable bibliothèque de routines mobilisables selon ton besoin du moment — pas un remplacement du travail précédent, mais un ajout.",
       },
     ],
     programmation: [
       {
-        cible: 'Appliquer le cycle Fragmenter/Assembler sur une compétence personnelle au choix, sur 2 semaines',
-        regression: 'Se limiter à Fragmenter seul (isoler et travailler une qualité) sans chercher à assembler encore',
-        progression: 'Aller jusqu\'à Injecter : intégrer la compétence fragmentée dans un mouvement de locomotion libre',
+        cible: "Ajouter les nouveaux outils (bâton, balancier, routine assise) à ta pratique quotidienne existante, sur 2 semaines",
+        regression: "Se limiter à intégrer un seul nouvel outil à la fois plutôt que tous simultanément",
+        progression: "Enchaîner deux outils différents sans pause entre eux (chunk), en gardant la qualité d'exécution",
+      },
+    ],
+    exercices: [
+      {
+        id: 'balancier', nom: 'Balancier', videoUrl: 'https://youtu.be/vHKC_KQsRWE',
+        consigne: "Mouvement de balancier contrôlé, en gardant le tronc stable — l'amplitude vient des épaules et des hanches, pas d'un déséquilibre du corps.",
+        critereValidation: "Séquence réalisée avec fluidité, sans perte de contrôle ni compensation du bas du dos.",
+      },
+      {
+        id: 'fragment-stretch-actif', nom: 'Fragment stretch actif', videoUrl: 'https://youtu.be/rRXI-rQXMBc',
+        consigne: "Chaque position tenue activement (le muscle travaille pour maintenir l'amplitude, pas juste relâché) — respiration continue pendant la tenue.",
+        critereValidation: "Chaque position tenue au moins 15 secondes en restant actif, sans tremblement excessif ni retenue du souffle.",
+      },
+      {
+        id: 'routine-assise-complete', nom: 'Routine assise complète', videoUrl: 'https://youtu.be/x2hWwXRc8tA',
+        consigne: "Routine complète au sol, transitions fluides, en gardant un contact conscient avec le sol à chaque instant.",
+        critereValidation: "Routine réalisée en entier sans interruption, transitions maîtrisées.",
+      },
+      {
+        id: 'dislocation-baton-allonge', nom: 'Dislocation d\'épaules au bâton allongé', videoUrl: 'https://youtu.be/PY4XdnoPWaM',
+        consigne: "Prise large au départ, mouvement lent et contrôlé, sans jamais forcer dans la douleur — élargir la prise si nécessaire.",
+        critereValidation: "10 répétitions fluides, sans à-coup ni pincement douloureux dans l'épaule.",
+      },
+      {
+        id: 'lu-raise-wall', nom: 'LU raise wall', videoUrl: 'https://youtu.be/pRaD7ypSONs',
+        consigne: "Dos au mur, mouvement lent en L puis en Y, en gardant le bas du dos en contact avec le mur (pas de cambrure).",
+        critereValidation: "8 répétitions par côté, bas du dos qui reste au contact du mur sur tout le mouvement.",
+      },
+      {
+        id: 'elevation-laterale-haltere-sol', nom: 'Elevation latérale haltère au sol', videoUrl: 'https://youtu.be/U-R8rIaQs84',
+        consigne: "Charge légère, mouvement contrôlé sans élan, amplitude complète mais sans hausser l'épaule en fin de mouvement.",
+        critereValidation: "10 répétitions, mouvement contrôlé sans élan ni haussement d'épaule parasite.",
+      },
+      {
+        id: 'trap-raise-45', nom: 'Trap raise 3 - 45°', videoUrl: 'https://youtu.be/FjzjHU2BrvA',
+        consigne: "Charge légère, mouvement lent, en sentant le travail se concentrer entre les omoplates plutôt que dans le haut du trapèze.",
+        critereValidation: "10 répétitions contrôlées, sans élan du buste pour compenser le manque de force.",
+      },
+      {
+        id: 'rotation-cubaine', nom: 'Rotation cubaine', videoUrl: 'https://youtu.be/FjnxcbgCy_8',
+        consigne: "Coudes fixes à hauteur d'épaule tout au long du mouvement — seul l'avant-bras tourne.",
+        critereValidation: "10 répétitions, coudes qui ne bougent pas de leur position pendant la rotation.",
+      },
+      {
+        id: 'angola-pu', nom: 'Angola PU', videoUrl: 'https://youtu.be/1jRXZLwnO7A',
+        consigne: "Variante de push-up plus exigeante que la version genoux — amplitude complète, corps aligné, descente contrôlée.",
+        critereValidation: "6 répétitions consécutives, amplitude complète, alignement du corps maintenu sans affaissement des hanches.",
+      },
+      {
+        id: 'hollow-hold', nom: 'Hollow hold', videoUrl: 'https://youtu.be/axUNfJyWgWc',
+        consigne: "Bas du dos plaqué au sol en permanence, jambes et bras tendus et légèrement décollés — respirer sans relâcher la position.",
+        critereValidation: "20 secondes de maintien, bas du dos qui ne décolle jamais du sol.",
+      },
+      {
+        id: 'parachutiste', nom: 'Parachutiste', videoUrl: 'https://youtu.be/VKYkH9mjj2I',
+        consigne: "Allongé sur le ventre, extension contrôlée du buste et des membres, sans à-coup ni hyperextension brutale du bas du dos.",
+        critereValidation: "8 répétitions lentes et contrôlées, sans à-coup en fin de mouvement.",
+      },
+      {
+        id: 'dips-scap-barre', nom: 'Dips scap à la barre', videoUrl: 'https://youtu.be/-LgdBltlUvY',
+        consigne: "Bras tendus en appui, mouvement isolé au niveau des omoplates (protraction/rétraction), sans plier les coudes.",
+        critereValidation: "8 répétitions, mouvement localisé aux omoplates, coudes qui restent tendus tout du long.",
       },
     ],
     qcm: [
@@ -216,6 +321,12 @@ export const TRONC: NoeudMentorship[] = [
         id: 'armure2-q1',
         question: "Dans le cycle d'apprentissage, que signifie « Fragmenter » ?",
         choix: ["Répéter un mouvement complet en boucle", "Diviser un mouvement en qualités isolées à travailler spécifiquement", "Passer directement à la compétition"],
+        bonneReponse: 1,
+      },
+      {
+        id: 'armure2-q2',
+        question: "Qu'est-ce qu'un « chunk » dans le cycle d'apprentissage ?",
+        choix: ["Un mouvement isolé travaillé seul", "La fusion de 2 à 3 mouvements en une seule unité", "Un exercice de respiration"],
         bonneReponse: 1,
       },
     ],
@@ -227,23 +338,84 @@ export const TRONC: NoeudMentorship[] = [
     domaine: 'tronc',
     niveau: 3,
     titre: 'Intégration',
-    resume: "L'armure organique devient un système vivant : chaque compétence se relie aux autres.",
-    objectifPedagogique: 'Entrer dans la phase de l\'artisan : relier les domaines plutôt que les juxtaposer.',
+    resume: "L'armure organique devient un système vivant : chaque compétence se relie aux autres, et ouvre la porte aux cinq branches.",
+    objectifPedagogique: "Entrer dans la phase de l'artisan : relier les domaines, et se préparer concrètement à l'entrée dans les branches spécialisées.",
     theorie: [
       {
-        titre: 'La Mouvolution, phase du chercheur puis de l\'artisan',
-        texte: "Dans la phase du chercheur, on établit des liens et des connexions entre chacun des domaines étudiés précédemment. Puis vient la phase de l'artisan, qui entremêle complètement les compétences et les secteurs, en pratiquant pleinement la transversalité, avec une dimension plus libre et artistique.",
+        titre: "La Mouvolution, phase du chercheur puis de l'artisan",
+        texte: "Dans la phase du chercheur, on établit des liens et des connexions entre chacun des domaines étudiés précédemment — Force, Flexibilité, Locomotion, Connexion. Puis vient la phase de l'artisan, qui entremêle complètement les compétences et les secteurs, en pratiquant pleinement la transversalité, avec une dimension plus libre et artistique.",
       },
       {
         titre: 'La fabrique du multivers',
-        texte: "À ce stade, l'armure organique s'inscrit dans une perspective globale où chaque compétence acquise devient une brique dans la construction d'un multivers de mouvements, favorisant le dépassement de soi, le transfert de compétences et la créativité. C'est ce niveau d'intégration qui rend accessibles les cinq branches spécialisées.",
+        texte: "À ce stade, l'armure organique s'inscrit dans une perspective globale où chaque compétence acquise devient une brique dans la construction d'un multivers de mouvements, favorisant le dépassement de soi, le transfert de compétences et la créativité.",
+      },
+      {
+        titre: 'Ouvrir des portes',
+        texte: "L'armure organique a pour but d'ouvrir des portes. L'exploration commence par l'acquisition de compétences fondamentales, des tremplins vers des objectifs plus avancés — les « Grandes Portes » de ton parcours. Ce niveau termine cette phase : il rend abordables, en même temps, les premiers objectifs des cinq branches. C'est pour cela qu'une fois l'armure organique complète, tu débloques le niveau 1 de Force, Figures, Flexibilité, Locomotion et Connexion en même temps — pas une branche après l'autre.",
       },
     ],
     programmation: [
       {
-        cible: 'Séance libre de 20 minutes reliant au moins 3 qualités travaillées aux niveaux 1 et 2 (mobilité + une compétence fragmentée + un enchaînement libre)',
-        regression: 'Relier seulement 2 qualités plutôt que 3, avec des transitions guidées',
-        progression: 'Improviser l\'enchaînement sans plan préétabli, en s\'adaptant en temps réel',
+        cible: "Routine complète (bien-être + force + mobilité) enchaînée en une seule séance de 25-30 minutes, sans pause entre les blocs",
+        regression: "Garder une courte pause entre chaque bloc (bien-être / force / mobilité)",
+        progression: "Enchaîner deux exercices de blocs différents sans transition (chunk), en gardant la qualité d'exécution",
+      },
+    ],
+    exercices: [
+      {
+        id: 'uddiyana-bandha', nom: 'Uddiyana bandha', videoUrl: 'https://youtu.be/8wxUZdLyYBY',
+        consigne: "À jeun de préférence, expiration complète puis rétraction abdominale — jamais en force, jamais en apnée prolongée si inconfort.",
+        critereValidation: "Technique maîtrisée et confortable, sans vertige ni gêne — la régularité prime sur la durée.",
+      },
+      {
+        id: 'play-with-routine-assise', nom: 'Play with : routine assise', videoUrl: 'https://youtu.be/5eFKp3f8OXY',
+        consigne: "Reprendre le vocabulaire de la routine assise en l'enchaînant avec fluidité et un peu de liberté d'exploration, sans figer le mouvement.",
+        critereValidation: "Séquence enchaînée avec fluidité, transitions non figées, sans temps mort entre les éléments.",
+      },
+      {
+        id: 'routine-stretch-actif-full', nom: 'Routine stretch actif 1 full', videoUrl: 'https://youtu.be/0XyyLXF1tAo',
+        consigne: "Routine complète, chaque position tenue activement avec un engagement musculaire réel, pas juste relâché en bout d'amplitude.",
+        critereValidation: "Routine réalisée en entier, chaque position tenue activement, sans tremblement excessif.",
+      },
+      {
+        id: 'front-squat', nom: 'Front squat', videoUrl: 'https://youtu.be/A-XHzbJnP7E',
+        consigne: "Barre ou charge en position avant, descente contrôlée jusqu'en dessous de la parallèle si la mobilité le permet, dos neutre.",
+        critereValidation: "3 séries de 8 répétitions à 60% du poids du corps, technique parfaite, amplitude complète.",
+      },
+      {
+        id: 'dislocation-baton-leste', nom: 'Dislocation au bâton allongé - lesté', videoUrl: 'https://youtu.be/J7PLv32LKM8',
+        consigne: "Même mouvement que la version non lestée, avec une légère charge ajoutée — ne pas réduire l'amplitude pour compenser le poids.",
+        critereValidation: "10 répétitions fluides avec la charge, amplitude complète maintenue, sans douleur.",
+      },
+      {
+        id: 'trap-raise-90', nom: 'Trap raise 3 90°', videoUrl: 'https://youtu.be/BeTsJhg6JXI',
+        consigne: "Variante plus exigeante du trap raise 45° — même exigence de contrôle, amplitude plus grande.",
+        critereValidation: "10 répétitions contrôlées, sans élan du buste, amplitude complète.",
+      },
+      {
+        id: 'push-up-clean', nom: 'Push up clean (triceps push up)', videoUrl: 'https://youtu.be/ODwUMicVonw',
+        consigne: "Le vrai push-up complet : mains sous les épaules, corps aligné de la tête aux pieds, amplitude complète (poitrine proche du sol).",
+        critereValidation: "1 série de 15 répétitions, technique d'exécution parfaite, amplitude complète, alignement maintenu du début à la fin.",
+      },
+      {
+        id: 'rowing-circle-inside', nom: 'Rowing circle - inside', videoUrl: 'https://youtu.be/Ksd3whqPvZ0',
+        consigne: "Tirage contrôlé en trajectoire circulaire, buste stable, sans élan du corps pour aider le mouvement.",
+        critereValidation: "3 séries de 5 répétitions, technique d'exécution parfaite, sans élan.",
+      },
+      {
+        id: 'rotateurs-ext-sleeper', nom: 'Rotateurs ext sleeper', videoUrl: 'https://youtu.be/Yc_Z1A0lyj0',
+        consigne: "Allongé sur le côté, épaule stabilisée, rotation contrôlée de l'avant-bras uniquement — pas de compensation du buste.",
+        critereValidation: "10 répétitions par côté, mouvement isolé à l'avant-bras, sans compensation du tronc.",
+      },
+      {
+        id: 'iso-dips-anneaux', nom: 'Iso dips (anneaux)', videoUrl: 'https://youtu.be/6Ols9v6UA0I',
+        consigne: "Maintien isométrique en position basse de dips aux anneaux, épaules stables, anneaux tournés vers l'extérieur.",
+        critereValidation: "10 secondes de maintien, épaules stables, sans oscillation excessive des anneaux.",
+      },
+      {
+        id: 'quadrupedie-basic-work', nom: 'Quadrupédie - basic work', videoUrl: 'https://youtu.be/YjzgKF-855o',
+        consigne: "Déplacements de base à quatre appuis, en gardant les hanches basses et le dos neutre — préparation directe à la Locomotion.",
+        critereValidation: "Séquence complète réalisée avec fluidité, hanches qui restent basses, sans à-coups dans les transitions d'appuis.",
       },
     ],
     qcm: [
@@ -251,6 +423,12 @@ export const TRONC: NoeudMentorship[] = [
         id: 'armure3-q1',
         question: "Que caractérise la phase de l'artisan dans la Mouvolution ?",
         choix: ["L'étude isolée de chaque secteur", "La transversalité et l'expression libre et créative", "L'arrêt de la pratique une fois les bases acquises"],
+        bonneReponse: 1,
+      },
+      {
+        id: 'armure3-q2',
+        question: "Une fois l'armure organique complète, que se passe-t-il ?",
+        choix: ["Une seule branche se débloque, au choix", "Le niveau 1 des cinq branches se débloque en même temps", "Il faut attendre encore un niveau supplémentaire"],
         bonneReponse: 1,
       },
     ],
