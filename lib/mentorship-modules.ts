@@ -153,16 +153,16 @@ export const TRONC: NoeudMentorship[] = [
     objectifPedagogique: "Préparer le corps et poser la posture d'apprentissage avant toute spécialisation.",
     theorie: [
       {
-        titre: 'Pourquoi le Mouvement ?',
-        texte: "Le Mouvement est une quête, une démarche de recherche et de développement personnel, un point de vue et une stratégie à la fois physique et mentale, axée sur l'apprentissage et l'acquisition d'expérience. Il n'existe pas de bon ou de mauvais mouvement dans l'absolu — seulement des mouvements que l'on est prêt à réaliser, et d'autres non. Le corps humain a été façonné par plusieurs millions d'années d'évolution en pleine nature, contre seulement quelques milliers d'années de vie sédentaire : il a conservé en mémoire l'ensemble de ses capacités originelles. La pratique du Mouvement freine notre inévitable dégénérescence, à condition d'être menée avec intelligence, dans une logique d'harmonie et de santé sur le long terme — ce qui n'est pas contradictoire avec la performance.",
+        titre: 'Qu\'est-ce que le Mouvement ?',
+        texte: "Le Mouvement est une quête, une démarche de recherche et de développement personnel, un point de vue et une stratégie originale à la fois physique et mentale, axée sur l'apprentissage et l'acquisition d'expérience. Il n'existe pas de bon ou de mauvais mouvement dans l'absolu : il peut arriver que l'intention soit mauvaise, ou que les outils employés soient en inadéquation avec l'objectif — mais en toute logique, il n'existe que des mouvements que nous sommes prêts à réaliser, et d'autres non.",
+      },
+      {
+        titre: 'Pourquoi bouger ?',
+        texte: "Nos émotions nous poussent à agir — le mot lui-même vient du latin motere, « mouvoir ». Mais les stimulus qui poussaient nos ancêtres à agir ne sont plus d'actualité pour la plupart d'entre nous aujourd'hui, ce qui crée une perte de repères aux conséquences autant mentales (gestion émotionnelle, troubles de l'apprentissage) que physiques (sédentarité, pathologies articulaires précoces). Notre corps a pourtant été façonné par plusieurs millions d'années d'évolution en pleine nature, contre seulement quelques centaines d'années de vie moderne : il a conservé en mémoire l'ensemble de ses capacités originelles. Comme le résume Ido Portal : « Move because you can ! »",
       },
       {
         titre: "L'armure organique",
-        texte: "Dans la quête de maîtrise et d'excellence en matière de mouvement, l'« armure organique » émerge comme une métaphore puissante. Elle symbolise l'ensemble des outils et routines articulaires et musculaires utiles dans un but donné — forgée non pas de métal, mais de muscles, d'os, de tendons, et d'une conscience aiguë du corps. Cinq qualités la composent : la Structure (densité osseuse, muscles profonds), l'Équilibre (une masse musculaire utile, une tenségrité harmonieuse), la Flexibilité (un corps capable de se déformer sans dommage), la Résilience (résister à une contrainte puis retrouver son état) et la Connexion (chaque partie du corps disponible, ressentie, utilisable). Ce premier niveau pose les toutes premières pièces de cette armure : la mobilité de base et la capacité à sentir son corps.",
-      },
-      {
-        titre: "La Mouvolution, phase de l'étudiant",
-        texte: "La démarche d'apprentissage — la « Mouvolution » — se divise en trois phases. Ce premier niveau du tronc correspond à la phase de l'étudiant : étudier et pratiquer chaque secteur du Mouvement de manière isolée pour en comprendre les fondamentaux, en adoptant l'état d'esprit du débutant (le soshin), ouvert et avide d'expériences. Un débutant ne se juge pas et ne devrait pas se juger lui-même : une réussite se construit et sera toujours le fruit d'un travail, donc de nombreuses erreurs. Réalisée avec conscience et analyse, la répétition permet d'améliorer progressivement la qualité recherchée dans l'exécution d'une tâche — c'est ce qu'on appelle le travail en profondeur (deep work).",
+        texte: "Dans la quête de maîtrise et d'excellence en matière de mouvement, l'« armure organique » émerge comme une métaphore puissante. Elle symbolise l'ensemble des outils et routines articulaires et musculaires utiles dans un but donné — forgée non pas de métal, mais de muscles, d'os, de tendons, et d'une conscience aiguë du corps. Cinq qualités la composent : la Structure (densité osseuse, muscles profonds), l'Équilibre (une masse musculaire utile, une tenségrité harmonieuse), la Flexibilité (un corps capable de se déformer sans dommage), la Résilience (résister à une contrainte puis retrouver son état) et la Connexion (chaque partie du corps disponible, ressentie, utilisable). Ce premier niveau pose les toutes premières pièces de cette armure.",
       },
     ],
     programmation: [
@@ -235,12 +235,12 @@ export const TRONC: NoeudMentorship[] = [
     objectifPedagogique: "Passer du subjectif (ce qui me convient) vers l'objectif (ce qui est mesurable et progressif).",
     theorie: [
       {
-        titre: 'Le travail de fond : du subjectif vers l\'objectif',
-        texte: "L'importance du travail de fond dans une pratique de mouvement est capitale pour construire l'armure organique, visant la santé et la protection physique sur le long terme. Ce travail est d'abord subjectif, s'adaptant aux besoins et capacités individuelles de chacun — comme l'œuvre qui se transforme sous les mains du forgeron, à force de répétition. Par la suite, un travail plus objectif prend place, orienté vers des objectifs cibles personnels : le pratiquant commence à explorer le mouvement dans toute sa diversité, en fonction de ses projets.",
+        titre: 'Le travail en profondeur',
+        texte: "Quel est le point commun entre un musicien professionnel, un sportif de haut niveau et un artiste peintre ? Le travail approfondi. Bâtir des compétences solides fait appel à un procédé inspiré de l'évolution biologique elle-même : la répétition (test/erreur/test/erreur…). Réalisée avec conscience et analyse, elle permet d'améliorer progressivement la qualité recherchée dans l'exécution d'une tâche — on parle de myélinisation des réseaux nerveux sollicités par l'action répétée. Une pratique désorganisée et irrégulière n'a jamais entraîné de résultats probants.",
       },
       {
-        titre: "Le cycle d'apprentissage",
-        texte: "Le cycle se déroule en quatre temps. Fragmenter, c'est diviser un mouvement en fragments, chacun représentant une qualité sollicitée par son exécution, pour un travail isolé et ciblé — à l'échelle micro (une qualité au sein d'un même mouvement) ou macro (chaque fragment étant un mouvement différent à apprendre isolément). Assembler, c'est recréer des liens entre ces fragments : soit en les fusionnant en un « chunk » (2 à 3 mouvements combinés en un seul), soit en les enchaînant en séquence. Injecter, c'est intégrer une compétence acquise dans un contexte plus large — la Locomotion notamment — où elle devient réellement utilisable. Amplifier, c'est ajouter un cran de complexité par le jeu, l'espace, le rythme ou l'augmentation du niveau d'exigence.",
+        titre: "L'état d'esprit du débutant",
+        texte: "L'état d'esprit du débutant (le soshin), ouvert et avide d'expériences, doit rester actif dans ta manière d'aborder la pratique. De même qu'on ne juge pas un débutant en apprentissage, un débutant ne devrait pas se juger lui-même et oublier d'où il vient. Une réussite se construit et sera toujours le fruit d'un travail — donc de nombreuses erreurs.",
       },
       {
         titre: 'Une bibliothèque qui grandit',

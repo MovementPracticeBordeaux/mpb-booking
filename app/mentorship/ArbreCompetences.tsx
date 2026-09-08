@@ -445,6 +445,7 @@ export default function ArbreCompetences({
   // Vue isolée d'une branche (chemin vertical) — null = vue globale (dashboard).
   const [vueBranche, setVueBranche] = useState<Domaine | 'tronc' | null>(null);
   const [noeudPanneauId, setNoeudPanneauId] = useState<string | null>(null);
+  const [ongletNoeud, setOngletNoeud] = useState<'theorie' | 'pratique' | 'outil' | 'journal'>('pratique');
   const [videoOuverteChemin, setVideoOuverteChemin] = useState<{ url: string; titre: string } | null>(null);
   const refNoeudCourant = useRef<HTMLDivElement | null>(null);
   const [reponsesQCM, setReponsesQCM] = useState<Record<string, number>>({});
@@ -596,7 +597,7 @@ export default function ArbreCompetences({
 
   useEffect(() => {
     if (vueBranche) {
-      setNoeudPanneauId(noeudCourantId);
+      setNoeudPanneauId(noeudCourantId); setOngletNoeud('pratique');
       // Laisse le DOM se peindre avant de scroller (le rail vient d'apparaître).
       requestAnimationFrame(() => refNoeudCourant.current?.scrollIntoView({ block: 'center', behavior: 'auto' }));
     }
@@ -733,7 +734,7 @@ export default function ArbreCompetences({
                   <div key={noeud.id} ref={estCourant ? refNoeudCourant : undefined} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     {i > 0 && <div style={{ width: 2, height: 20, background: inerte ? COULEURS.bordure : `${couleur}66` }} />}
                     <button
-                      onClick={() => { if (!inerte) setNoeudPanneauId(noeud.id); }}
+                      onClick={() => { if (!inerte) { setNoeudPanneauId(noeud.id); setOngletNoeud('pratique'); } }}
                       aria-label={noeud.titre}
                       style={{
                         width: estSelectionne ? 60 : 50, height: estSelectionne ? 60 : 50, borderRadius: '50%', flexShrink: 0,
@@ -772,6 +773,7 @@ export default function ArbreCompetences({
                 const label = noeud.domaine === 'tronc' ? 'Armure Organique' : DOMAINE_LABELS[noeud.domaine as Domaine];
                 const couleur = noeud.domaine === 'tronc' ? COULEUR_TRONC : DOMAINE_COULEURS[noeud.domaine as Domaine];
                 const aDesExercices = (noeud.exercices?.length ?? 0) > 0;
+                const outil = noeud.domaine !== 'tronc' ? OUTIL_PAR_BRANCHE[noeud.domaine as Domaine] : undefined;
                 const progUnique = progression.get(noeud.id);
 
                 if (statut === 'locked') {
@@ -791,132 +793,172 @@ export default function ArbreCompetences({
                     )}
                     <span style={{ fontSize: 11, color: couleur, letterSpacing: 1, fontWeight: 600 }}>{label.toUpperCase()} · NIVEAU {noeud.niveau}</span>
                     <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 20, margin: '2px 0 4px', color: COULEURS.texte }}>{noeud.titre}</h2>
-                    <p style={{ color: COULEURS.texteAtt, fontSize: 13, lineHeight: 1.6, margin: '4px 0 8px' }}>{noeud.resume}</p>
-                    {noeud.contenuDefini && noeud.theorie.length > 0 && (
-                      <button
-                        type="button" onClick={() => setOnglet('theorie')}
-                        style={{ fontSize: 12, color: couleur, background: 'none', border: 'none', padding: 0, marginBottom: 16, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 2 }}
-                      >
-                        📖 Relire la théorie de ce niveau
-                      </button>
-                    )}
+                    <p style={{ color: COULEURS.texteAtt, fontSize: 13, lineHeight: 1.6, margin: '4px 0 14px' }}>{noeud.resume}</p>
 
-                    {/* Le cœur du panneau : ce qu'il y a à faire ici, directement visible
-                        — pas caché derrière un clic, contrairement à la théorie/aux outils
-                        qui ont chacun leur propre onglet dédié plus haut. */}
-                    <p style={{ fontSize: 13, fontWeight: 600, color: COULEURS.texte, margin: '0 0 10px' }}>🎯 Quêtes à valider</p>
-                    {aDesExercices ? (
-                      <>
-                        <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                          {noeud.exercices!.filter((ex) => progression.get(moduleIdExercice(noeud, ex))?.statut === 'acquis').length}/{noeud.exercices!.length} validés
-                        </p>
-                        {noeud.exercices!.map((ex) => (
-                          <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} />
-                        ))}
-                        {(noeud.progressionBonus?.length ?? 0) > 0 && (
-                          <div style={{ marginTop: 14 }}>
-                            <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>✦ Quête secondaire (facultative)</p>
-                            {noeud.progressionBonus!.map((ex) => (
-                              <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} />
-                            ))}
-                          </div>
-                        )}
-                      </>
-                    ) : !estAdmin ? (
-                      <>
-                        {statut === 'acquis' && <p style={{ fontSize: 13, color: '#9ef29e', margin: 0 }}>Niveau validé par Sylvain — bravo !</p>}
-                        {statut === 'en_attente' && (
-                          <p style={{ fontSize: 13, color: COULEURS.texteAtt, margin: 0 }}>
-                            Ta vidéo a été envoyée, Sylvain la regarde bientôt.{' '}
-                            <a href={progUnique?.video_url ?? '#'} target="_blank" rel="noopener noreferrer" style={{ color: '#f0a' }}>Revoir</a>
-                          </p>
-                        )}
-                        {(statut === 'qcm_reussi' || statut === 'refuse') && (
+                    {/* Sous-onglets propres à ce nœud — restent cliquables en haut,
+                        une seule vue à la fois, plutôt que tout empilé en accordéons. */}
+                    <div style={{ display: 'flex', gap: 4, marginBottom: 14, borderBottom: `1px solid ${COULEURS.bordure}`, position: 'sticky', top: 0, background: COULEURS.fond, zIndex: 1, paddingTop: 2 }}>
+                      {([
+                        ['pratique', '🎯 Pratique'],
+                        ['theorie', '📖 Théorie'],
+                        ['outil', '🛠️ Outil'],
+                        ['journal', '📓 Journal'],
+                      ] as const).map(([id, titreOnglet]) => (
+                        <button
+                          key={id} type="button" onClick={() => setOngletNoeud(id)}
+                          style={{
+                            fontSize: 12, padding: '8px 10px', background: 'none', border: 'none', cursor: 'pointer',
+                            color: ongletNoeud === id ? couleur : COULEURS.texteFaible,
+                            fontWeight: ongletNoeud === id ? 700 : 400,
+                            borderBottom: ongletNoeud === id ? `2px solid ${couleur}` : '2px solid transparent',
+                            marginBottom: -1,
+                          }}
+                        >
+                          {titreOnglet}
+                        </button>
+                      ))}
+                    </div>
+
+                    {ongletNoeud === 'pratique' && (
+                      <div>
+                        {aDesExercices ? (
                           <>
-                            {statut === 'refuse' && progUnique?.commentaire_coach && (
-                              <p style={{ fontSize: 13, color: '#ff6b6b', marginBottom: 10 }}>Retour de Sylvain : {progUnique.commentaire_coach}</p>
-                            )}
-                            {statut === 'qcm_reussi' && (
-                              <p style={{ fontSize: 13, color: '#9ef29e', marginBottom: 10 }}>QCM réussi ({progUnique?.quiz_score}%) — envoie ta vidéo.</p>
-                            )}
-                            <form action={soumettreVideo} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                              <input type="hidden" name="noeud_id" value={noeud.id} />
-                              <input type="url" name="video_url" required placeholder="Lien de ta vidéo"
-                                style={{ flexGrow: 1, minWidth: 160, fontSize: 13, padding: '9px 12px', borderRadius: 8, border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surfaceForte, color: COULEURS.texte }} />
-                              <button type="submit" style={{ fontSize: 13, padding: '9px 16px', borderRadius: 999, border: '1px solid #f0a', background: 'rgba(255,0,170,0.1)', color: '#f0a', cursor: 'pointer' }}>
-                                {statut === 'refuse' ? 'Renvoyer' : 'Soumettre'}
-                              </button>
-                            </form>
-                          </>
-                        )}
-                        {statut === 'unlocked' && noeud.qcm.length > 0 && (
-                          <form action={repondreQCM}>
-                            <input type="hidden" name="noeud_id" value={noeud.id} />
-                            <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 10 }}>QCM — réussis-le pour débloquer l'envoi vidéo</p>
-                            {noeud.qcm.map((q, i) => (
-                              <div key={q.id} style={{ marginBottom: 14 }}>
-                                <p style={{ fontSize: 13, marginBottom: 6, color: COULEURS.texte }}>{i + 1}. {q.question}</p>
-                                {q.choix.map((choix, idx) => (
-                                  <label key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: COULEURS.texteAtt, marginBottom: 4, cursor: 'pointer' }}>
-                                    <input type="radio" name={`reponse-${q.id}`} value={idx} required onChange={() => setReponsesQCM((r) => ({ ...r, [q.id]: idx }))} />
-                                    {choix}
-                                  </label>
+                            <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                              {noeud.exercices!.filter((ex) => progression.get(moduleIdExercice(noeud, ex))?.statut === 'acquis').length}/{noeud.exercices!.length} validés — clique un exercice pour le détail
+                            </p>
+                            {noeud.exercices!.map((ex) => (
+                              <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} />
+                            ))}
+                            {(noeud.progressionBonus?.length ?? 0) > 0 && (
+                              <div style={{ marginTop: 14 }}>
+                                <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>✦ Quête secondaire (facultative)</p>
+                                {noeud.progressionBonus!.map((ex) => (
+                                  <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} />
                                 ))}
                               </div>
-                            ))}
-                            <button type="submit" style={{ fontSize: 13, padding: '9px 16px', borderRadius: 999, border: '1px solid #f0a', background: 'rgba(255,0,170,0.1)', color: '#f0a', cursor: 'pointer' }}>
-                              Valider mes réponses
-                            </button>
-                          </form>
+                            )}
+
+                            <Accordeon titre="📹 Avant / Après">
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                                {[...(noeud.exercices ?? []), ...(noeud.progressionBonus ?? [])].map((ex) => {
+                                  const p = progression.get(moduleIdExercice(noeud, ex));
+                                  if (!p?.premiere_video_url) return null;
+                                  return (
+                                    <ComparaisonVideo
+                                      key={ex.id}
+                                      titre={ex.nom}
+                                      premiereUrl={p.premiere_video_url}
+                                      premiereDate={p.premiere_video_date}
+                                      derniereUrl={p.video_url}
+                                      onOuvrir={(url, titre) => setVideoOuverteChemin({ url, titre })}
+                                    />
+                                  );
+                                })}
+                                {[...(noeud.exercices ?? []), ...(noeud.progressionBonus ?? [])].every((ex) => !progression.get(moduleIdExercice(noeud, ex))?.premiere_video_url) && (
+                                  <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: 0 }}>Pas encore de vidéo soumise sur ce niveau.</p>
+                                )}
+                              </div>
+                            </Accordeon>
+                          </>
+                        ) : !estAdmin ? (
+                          <>
+                            {statut === 'acquis' && <p style={{ fontSize: 13, color: '#9ef29e', margin: 0 }}>Niveau validé par Sylvain — bravo !</p>}
+                            {statut === 'en_attente' && (
+                              <p style={{ fontSize: 13, color: COULEURS.texteAtt, margin: 0 }}>
+                                Ta vidéo a été envoyée, Sylvain la regarde bientôt.{' '}
+                                <a href={progUnique?.video_url ?? '#'} target="_blank" rel="noopener noreferrer" style={{ color: '#f0a' }}>Revoir</a>
+                              </p>
+                            )}
+                            {(statut === 'qcm_reussi' || statut === 'refuse') && (
+                              <>
+                                {statut === 'refuse' && progUnique?.commentaire_coach && (
+                                  <p style={{ fontSize: 13, color: '#ff6b6b', marginBottom: 10 }}>Retour de Sylvain : {progUnique.commentaire_coach}</p>
+                                )}
+                                {statut === 'qcm_reussi' && (
+                                  <p style={{ fontSize: 13, color: '#9ef29e', marginBottom: 10 }}>QCM réussi ({progUnique?.quiz_score}%) — envoie ta vidéo.</p>
+                                )}
+                                <form action={soumettreVideo} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                                  <input type="hidden" name="noeud_id" value={noeud.id} />
+                                  <input type="url" name="video_url" required placeholder="Lien de ta vidéo"
+                                    style={{ flexGrow: 1, minWidth: 160, fontSize: 13, padding: '9px 12px', borderRadius: 8, border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surfaceForte, color: COULEURS.texte }} />
+                                  <button type="submit" style={{ fontSize: 13, padding: '9px 16px', borderRadius: 999, border: '1px solid #f0a', background: 'rgba(255,0,170,0.1)', color: '#f0a', cursor: 'pointer' }}>
+                                    {statut === 'refuse' ? 'Renvoyer' : 'Soumettre'}
+                                  </button>
+                                </form>
+                              </>
+                            )}
+                            {statut === 'unlocked' && noeud.qcm.length > 0 && (
+                              <form action={repondreQCM}>
+                                <input type="hidden" name="noeud_id" value={noeud.id} />
+                                <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 10 }}>QCM — réussis-le pour débloquer l'envoi vidéo</p>
+                                {noeud.qcm.map((q, i) => (
+                                  <div key={q.id} style={{ marginBottom: 14 }}>
+                                    <p style={{ fontSize: 13, marginBottom: 6, color: COULEURS.texte }}>{i + 1}. {q.question}</p>
+                                    {q.choix.map((choix, idx) => (
+                                      <label key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: COULEURS.texteAtt, marginBottom: 4, cursor: 'pointer' }}>
+                                        <input type="radio" name={`reponse-${q.id}`} value={idx} required onChange={() => setReponsesQCM((r) => ({ ...r, [q.id]: idx }))} />
+                                        {choix}
+                                      </label>
+                                    ))}
+                                  </div>
+                                ))}
+                                <button type="submit" style={{ fontSize: 13, padding: '9px 16px', borderRadius: 999, border: '1px solid #f0a', background: 'rgba(255,0,170,0.1)', color: '#f0a', cursor: 'pointer' }}>
+                                  Valider mes réponses
+                                </button>
+                              </form>
+                            )}
+                            {statut === 'unlocked' && noeud.qcm.length === 0 && (
+                              <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: 0 }}>Pas encore de QCM — contenu à venir.</p>
+                            )}
+                          </>
+                        ) : (
+                          <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: 0 }}>(Vue admin — actions élève masquées)</p>
                         )}
-                        {statut === 'unlocked' && noeud.qcm.length === 0 && (
-                          <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: 0 }}>Pas encore de QCM — contenu à venir.</p>
-                        )}
-                      </>
-                    ) : (
-                      <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: 0 }}>(Vue admin — actions élève masquées)</p>
+                      </div>
                     )}
 
-                    <Accordeon titre="📹 Avant / Après">
-                      {aDesExercices ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-                          {[...(noeud.exercices ?? []), ...(noeud.progressionBonus ?? [])].map((ex) => {
-                            const p = progression.get(moduleIdExercice(noeud, ex));
-                            if (!p?.premiere_video_url) return null;
-                            return (
-                              <ComparaisonVideo
-                                key={ex.id}
-                                titre={ex.nom}
-                                premiereUrl={p.premiere_video_url}
-                                premiereDate={p.premiere_video_date}
-                                derniereUrl={p.video_url}
-                                onOuvrir={(url, titre) => setVideoOuverteChemin({ url, titre })}
-                              />
-                            );
-                          })}
-                          {[...(noeud.exercices ?? []), ...(noeud.progressionBonus ?? [])].every((ex) => !progression.get(moduleIdExercice(noeud, ex))?.premiere_video_url) && (
-                            <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: 0 }}>Pas encore de vidéo soumise sur ce niveau.</p>
-                          )}
-                        </div>
-                      ) : progUnique?.premiere_video_url ? (
-                        <ComparaisonVideo
-                          titre={noeud.titre}
-                          premiereUrl={progUnique.premiere_video_url}
-                          premiereDate={progUnique.premiere_video_date}
-                          derniereUrl={progUnique.video_url}
-                          onOuvrir={(url, titre) => setVideoOuverteChemin({ url, titre })}
-                        />
-                      ) : (
-                        <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: 0 }}>Pas encore de vidéo soumise sur ce niveau.</p>
-                      )}
-                    </Accordeon>
+                    {ongletNoeud === 'theorie' && (
+                      <div>
+                        {!noeud.contenuDefini && noeud.theorie.length === 0 ? (
+                          <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: 0 }}>Théorie à venir pour ce niveau.</p>
+                        ) : (
+                          <>
+                            {noeud.objectifPedagogique && (
+                              <p style={{ fontSize: 13, color: COULEURS.texteFaible, fontStyle: 'italic', margin: '0 0 12px' }}>Objectif : {noeud.objectifPedagogique}</p>
+                            )}
+                            {noeud.theorie.map((t) => (
+                              <div key={t.titre} style={{ marginBottom: 12, borderLeft: `2px solid ${couleur}`, paddingLeft: 12 }}>
+                                <p style={{ fontSize: 13, fontWeight: 600, margin: 0, color: COULEURS.texte }}>{t.titre}</p>
+                                <p style={{ fontSize: 13, color: COULEURS.texteAtt, lineHeight: 1.7, margin: '4px 0 0' }}>{t.texte}</p>
+                              </div>
+                            ))}
+                          </>
+                        )}
+                      </div>
+                    )}
 
-                    <Accordeon titre="📓 Mon journal d'entraînement">
-                      <JournalDuNoeud noeudId={noeud.id} branche={noeud.domaine} />
-                    </Accordeon>
+                    {ongletNoeud === 'outil' && (
+                      <div>
+                        {outil ? (
+                          <a href={outil.href} style={{ display: 'inline-block', fontSize: 13, color: '#f0a', textDecoration: 'none', fontWeight: 600 }}>
+                            {outil.label} →
+                          </a>
+                        ) : (
+                          <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: 0 }}>
+                            {noeud.domaine === 'tronc' ? "Pas d'outil dédié pour le tronc commun — l'outil Objectifs (dans l'onglet Outils) reste utile ici aussi." : "Outil dédié à cette branche à venir."}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {ongletNoeud === 'journal' && (
+                      <div>
+                        <JournalDuNoeud noeudId={noeud.id} branche={noeud.domaine} />
+                      </div>
+                    )}
 
                     {!estAdmin && statut !== 'acquis' && (
-                      <div style={{ marginTop: 4 }}>
+                      <div style={{ marginTop: 16 }}>
                         <ChecklistNoeud noeudId={noeud.id} />
                       </div>
                     )}
@@ -1672,12 +1714,20 @@ function BlocExercice({
   const statutEx: 'a_faire' | 'en_attente' | 'acquis' | 'refuse' =
     prog?.statut === 'acquis' ? 'acquis' : prog?.statut === 'refuse' ? 'refuse' : prog?.statut === 'en_attente' ? 'en_attente' : 'a_faire';
   const objectifId = exercice.videoUrl ? objectifIdParUrl[exercice.videoUrl] : undefined;
+  const [ouvert, setOuvert] = useState(false);
 
   return (
     <div style={{ background: COULEURS.surface, borderRadius: 8, padding: '10px 14px', marginBottom: 8 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <div>
-          <p style={{ margin: 0, fontSize: 13, color: COULEURS.texte }}>{exercice.nom}{estBonus ? ' 🔥' : ''}</p>
+      <button
+        type="button" onClick={() => setOuvert((o) => !o)}
+        style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
+      >
+        <span style={{ fontSize: 13, color: COULEURS.texte }}>{ouvert ? '▾' : '▸'} {exercice.nom}{estBonus ? ' 🔥' : ''}</span>
+        <StatutExercicePastille statut={statutEx} />
+      </button>
+
+      {ouvert && (
+        <div style={{ marginTop: 8 }}>
           {exercice.note && <p style={{ margin: '2px 0 0', fontSize: 11, color: COULEURS.texteFaible, fontStyle: 'italic' }}>{exercice.note}</p>}
           {exercice.consigne && <p style={{ margin: '4px 0 0', fontSize: 11.5, color: COULEURS.texteAtt }}>{exercice.consigne}</p>}
           {exercice.critereValidation && <p style={{ margin: '2px 0 0', fontSize: 11, color: '#f0a', fontWeight: 600 }}>✓ {exercice.critereValidation}</p>}
@@ -1699,28 +1749,27 @@ function BlocExercice({
               </a>
             )}
           </div>
-        </div>
-        <StatutExercicePastille statut={statutEx} />
-      </div>
 
-      {!estAdmin && statutEx === 'refuse' && prog?.commentaire_coach && (
-        <p style={{ fontSize: 12, color: '#ff6b6b', margin: '8px 0 0' }}>Retour de Sylvain : {prog.commentaire_coach}</p>
-      )}
-      {!estAdmin && statutEx === 'en_attente' && (
-        <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: '8px 0 0' }}>
-          Envoyée —{' '}<a href={prog?.video_url ?? '#'} target="_blank" rel="noopener noreferrer" style={{ color: '#f0a' }}>revoir ce que tu as envoyé</a>
-        </p>
-      )}
-      {!estAdmin && (statutEx === 'a_faire' || statutEx === 'refuse') && (
-        <form action={soumettreVideoExercice} style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
-          <input type="hidden" name="noeud_id" value={noeud.id} />
-          <input type="hidden" name="exercice_id" value={exercice.id} />
-          <input type="url" name="video_url" required placeholder="Lien de ta vidéo"
-            style={{ flexGrow: 1, minWidth: 160, fontSize: 12, padding: '7px 10px', borderRadius: 8, border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surfaceForte, color: COULEURS.texte }} />
-          <button type="submit" style={{ fontSize: 12, padding: '7px 12px', borderRadius: 999, border: '1px solid #f0a', background: 'rgba(255,0,170,0.1)', color: '#f0a', cursor: 'pointer' }}>
-            {statutEx === 'refuse' ? 'Renvoyer' : 'Envoyer'}
-          </button>
-        </form>
+          {!estAdmin && statutEx === 'refuse' && prog?.commentaire_coach && (
+            <p style={{ fontSize: 12, color: '#ff6b6b', margin: '8px 0 0' }}>Retour de Sylvain : {prog.commentaire_coach}</p>
+          )}
+          {!estAdmin && statutEx === 'en_attente' && (
+            <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: '8px 0 0' }}>
+              Envoyée —{' '}<a href={prog?.video_url ?? '#'} target="_blank" rel="noopener noreferrer" style={{ color: '#f0a' }}>revoir ce que tu as envoyé</a>
+            </p>
+          )}
+          {!estAdmin && (statutEx === 'a_faire' || statutEx === 'refuse') && (
+            <form action={soumettreVideoExercice} style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+              <input type="hidden" name="noeud_id" value={noeud.id} />
+              <input type="hidden" name="exercice_id" value={exercice.id} />
+              <input type="url" name="video_url" required placeholder="Lien de ta vidéo"
+                style={{ flexGrow: 1, minWidth: 160, fontSize: 12, padding: '7px 10px', borderRadius: 8, border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surfaceForte, color: COULEURS.texte }} />
+              <button type="submit" style={{ fontSize: 12, padding: '7px 12px', borderRadius: 999, border: '1px solid #f0a', background: 'rgba(255,0,170,0.1)', color: '#f0a', cursor: 'pointer' }}>
+                {statutEx === 'refuse' ? 'Renvoyer' : 'Envoyer'}
+              </button>
+            </form>
+          )}
+        </div>
       )}
     </div>
   );
