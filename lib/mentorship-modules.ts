@@ -413,6 +413,11 @@ export const TRONC: NoeudMentorship[] = [
         critereValidation: "10 secondes de maintien, épaules stables, sans oscillation excessive des anneaux.",
       },
       {
+        id: 'rowing-anneaux', nom: 'Rowing anneaux', videoUrl: 'https://youtu.be/XzIFzhI-lrU',
+        consigne: "Tirage aux anneaux, buste stable, sans élan du corps — l'instabilité des anneaux exige un gainage actif tout du long.",
+        critereValidation: "8 répétitions, sans oscillation excessive des anneaux ni élan du buste pour compenser.",
+      },
+      {
         id: 'quadrupedie-basic-work', nom: 'Quadrupédie - basic work', videoUrl: 'https://youtu.be/YjzgKF-855o',
         consigne: "Déplacements de base à quatre appuis, en gardant les hanches basses et le dos neutre — préparation directe à la Locomotion.",
         critereValidation: "Séquence complète réalisée avec fluidité, hanches qui restent basses, sans à-coups dans les transitions d'appuis.",
