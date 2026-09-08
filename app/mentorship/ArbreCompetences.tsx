@@ -825,9 +825,17 @@ export default function ArbreCompetences({
                           <>
                             {(() => {
                               const exercicesValides = noeud.exercices!.filter((ex) => ex.theme !== 'recuperation');
-                              const exercicesRecup = noeud.exercices!.filter((ex) => ex.theme === 'recuperation');
                               const parTheme = (theme: 'force' | 'mobilite') => exercicesValides.filter((ex) => ex.theme === theme);
                               const sansTheme = exercicesValides.filter((ex) => !ex.theme);
+                              // Récupération cumulative : la bibliothèque d'outils santé grandit avec
+                              // l'avancée dans le domaine (tronc ou branche) -- on affiche donc aussi
+                              // ceux déjà débloqués aux niveaux précédents, pas seulement ceux propres
+                              // à ce nœud. moduleIdExercice a besoin du nœud D'ORIGINE de chaque
+                              // exercice pour calculer la bonne clé de progression.
+                              const noeudsDomaine = noeud.domaine === 'tronc' ? tronc : branches.filter((n) => n.domaine === noeud.domaine);
+                              const exercicesRecupCumules = noeudsDomaine
+                                .filter((n) => n.niveau <= noeud.niveau)
+                                .flatMap((n) => (n.exercices ?? []).filter((ex) => ex.theme === 'recuperation').map((ex) => ({ ex, noeudSource: n })));
                               return (
                                 <>
                                   <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 }}>
@@ -852,12 +860,12 @@ export default function ArbreCompetences({
                                   {sansTheme.map((ex) => (
                                     <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} />
                                   ))}
-                                  {exercicesRecup.length > 0 && (
+                                  {exercicesRecupCumules.length > 0 && (
                                     <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${COULEURS.bordure}` }}>
                                       <p style={{ fontSize: 11, color: COULEURS.texteFaible, fontWeight: 700, letterSpacing: 0.5, margin: '0 0 4px' }}>🌬️ RÉCUPÉRATION</p>
-                                      <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 6px', fontStyle: 'italic' }}>Outils santé à disposition, non soumis à validation.</p>
-                                      {exercicesRecup.map((ex) => (
-                                        <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} />
+                                      <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 6px', fontStyle: 'italic' }}>Bibliothèque d'outils santé accumulée au fil de ta progression, non soumise à validation.</p>
+                                      {exercicesRecupCumules.map(({ ex, noeudSource }) => (
+                                        <BlocExercice key={ex.id} noeud={noeudSource} exercice={ex} prog={progression.get(moduleIdExercice(noeudSource, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} />
                                       ))}
                                     </div>
                                   )}
