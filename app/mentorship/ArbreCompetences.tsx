@@ -823,12 +823,47 @@ export default function ArbreCompetences({
                       <div>
                         {aDesExercices ? (
                           <>
-                            <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                              {noeud.exercices!.filter((ex) => progression.get(moduleIdExercice(noeud, ex))?.statut === 'acquis').length}/{noeud.exercices!.length} validés — clique un exercice pour le détail
-                            </p>
-                            {noeud.exercices!.map((ex) => (
-                              <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} />
-                            ))}
+                            {(() => {
+                              const exercicesValides = noeud.exercices!.filter((ex) => ex.theme !== 'recuperation');
+                              const exercicesRecup = noeud.exercices!.filter((ex) => ex.theme === 'recuperation');
+                              const parTheme = (theme: 'force' | 'mobilite') => exercicesValides.filter((ex) => ex.theme === theme);
+                              const sansTheme = exercicesValides.filter((ex) => !ex.theme);
+                              return (
+                                <>
+                                  <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                                    {exercicesValides.filter((ex) => progression.get(moduleIdExercice(noeud, ex))?.statut === 'acquis').length}/{exercicesValides.length} validés — clique un exercice pour le détail
+                                  </p>
+                                  {parTheme('force').length > 0 && (
+                                    <div style={{ marginBottom: 14 }}>
+                                      <p style={{ fontSize: 11, color: couleur, fontWeight: 700, letterSpacing: 0.5, margin: '0 0 6px' }}>💪 FORCE</p>
+                                      {parTheme('force').map((ex) => (
+                                        <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} />
+                                      ))}
+                                    </div>
+                                  )}
+                                  {parTheme('mobilite').length > 0 && (
+                                    <div style={{ marginBottom: 14 }}>
+                                      <p style={{ fontSize: 11, color: couleur, fontWeight: 700, letterSpacing: 0.5, margin: '0 0 6px' }}>🤸 MOBILITÉ</p>
+                                      {parTheme('mobilite').map((ex) => (
+                                        <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} />
+                                      ))}
+                                    </div>
+                                  )}
+                                  {sansTheme.map((ex) => (
+                                    <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} />
+                                  ))}
+                                  {exercicesRecup.length > 0 && (
+                                    <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${COULEURS.bordure}` }}>
+                                      <p style={{ fontSize: 11, color: COULEURS.texteFaible, fontWeight: 700, letterSpacing: 0.5, margin: '0 0 4px' }}>🌬️ RÉCUPÉRATION</p>
+                                      <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 6px', fontStyle: 'italic' }}>Outils santé à disposition, non soumis à validation.</p>
+                                      {exercicesRecup.map((ex) => (
+                                        <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} />
+                                      ))}
+                                    </div>
+                                  )}
+                                </>
+                              );
+                            })()}
                             {(noeud.progressionBonus?.length ?? 0) > 0 && (
                               <div style={{ marginTop: 14 }}>
                                 <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>✦ Quête secondaire (facultative)</p>
@@ -1715,6 +1750,7 @@ function BlocExercice({
     prog?.statut === 'acquis' ? 'acquis' : prog?.statut === 'refuse' ? 'refuse' : prog?.statut === 'en_attente' ? 'en_attente' : 'a_faire';
   const objectifId = exercice.videoUrl ? objectifIdParUrl[exercice.videoUrl] : undefined;
   const [ouvert, setOuvert] = useState(false);
+  const estOutilSante = exercice.theme === 'recuperation';
 
   return (
     <div style={{ background: COULEURS.surface, borderRadius: 8, padding: '10px 14px', marginBottom: 8 }}>
@@ -1723,14 +1759,18 @@ function BlocExercice({
         style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
       >
         <span style={{ fontSize: 13, color: COULEURS.texte }}>{ouvert ? '▾' : '▸'} {exercice.nom}{estBonus ? ' 🔥' : ''}</span>
-        <StatutExercicePastille statut={statutEx} />
+        {!estOutilSante && <StatutExercicePastille statut={statutEx} />}
       </button>
 
       {ouvert && (
         <div style={{ marginTop: 8 }}>
           {exercice.note && <p style={{ margin: '2px 0 0', fontSize: 11, color: COULEURS.texteFaible, fontStyle: 'italic' }}>{exercice.note}</p>}
           {exercice.consigne && <p style={{ margin: '4px 0 0', fontSize: 11.5, color: COULEURS.texteAtt }}>{exercice.consigne}</p>}
-          {exercice.critereValidation && <p style={{ margin: '2px 0 0', fontSize: 11, color: '#f0a', fontWeight: 600 }}>✓ {exercice.critereValidation}</p>}
+          {exercice.critereValidation && (
+            <p style={{ margin: '2px 0 0', fontSize: 11, color: estOutilSante ? COULEURS.texteFaible : '#f0a', fontWeight: estOutilSante ? 400 : 600 }}>
+              {estOutilSante ? '' : '✓ '}{exercice.critereValidation}
+            </p>
+          )}
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             {exercice.videoUrl && (
               <button
@@ -1750,15 +1790,15 @@ function BlocExercice({
             )}
           </div>
 
-          {!estAdmin && statutEx === 'refuse' && prog?.commentaire_coach && (
+          {!estOutilSante && !estAdmin && statutEx === 'refuse' && prog?.commentaire_coach && (
             <p style={{ fontSize: 12, color: '#ff6b6b', margin: '8px 0 0' }}>Retour de Sylvain : {prog.commentaire_coach}</p>
           )}
-          {!estAdmin && statutEx === 'en_attente' && (
+          {!estOutilSante && !estAdmin && statutEx === 'en_attente' && (
             <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: '8px 0 0' }}>
               Envoyée —{' '}<a href={prog?.video_url ?? '#'} target="_blank" rel="noopener noreferrer" style={{ color: '#f0a' }}>revoir ce que tu as envoyé</a>
             </p>
           )}
-          {!estAdmin && (statutEx === 'a_faire' || statutEx === 'refuse') && (
+          {!estOutilSante && !estAdmin && (statutEx === 'a_faire' || statutEx === 'refuse') && (
             <form action={soumettreVideoExercice} style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
               <input type="hidden" name="noeud_id" value={noeud.id} />
               <input type="hidden" name="exercice_id" value={exercice.id} />
