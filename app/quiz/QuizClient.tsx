@@ -37,12 +37,12 @@ const OBJECTIFS = [
 ] as const;
 
 const DISCIPLINES: Record<string, { titre: string; description: string }> = {
-  Handstand: { titre: 'Handstand', description: 'Équilibre sur les mains — technique fine, progression méthodique.' },
-  'Arm Balance': { titre: 'Arm Balance', description: 'Équilibres sur les bras — force, précision, contrôle.' },
-  Calisthenics: { titre: 'Calisthenics', description: 'Construction de force au poids du corps, structurée et progressive.' },
-  Locomotion: { titre: 'Locomotion', description: 'Déplacements au sol — exploration et créativité du mouvement.' },
-  Altinha: { titre: 'Altinha', description: 'Jeux de balle au pied — coordination, plaisir du jeu, esprit d\'équipe.' },
-  Mobilité: { titre: 'Mobilité', description: 'Stretch actif et renforcement en grande amplitude — exigeant et énergivore, loin d\'un cours doux.' },
+  Handstand: { titre: 'Handstand', description: 'Développe l\'équilibre, la proprioception et un gainage solide des épaules — pour une posture plus stable et un mental plus calme sous pression.' },
+  'Arm Balance': { titre: 'Arm Balance', description: 'Développe la force des bras et des épaules avec un centrage précis du corps — pour un tronc solide et un meilleur contrôle de soi.' },
+  Calisthenics: { titre: 'Calisthenics', description: 'Développe une force fonctionnelle au poids du corps, du dos aux jambes — pour un corps plus fort et plus autonome au quotidien.' },
+  Locomotion: { titre: 'Locomotion', description: 'Développe la coordination et l\'aisance à bouger au sol dans toutes les directions — pour un corps plus libre et plus créatif dans ses mouvements.' },
+  Altinha: { titre: 'Altinha', description: 'Développe les réflexes, la coordination pied-œil et l\'esprit de jeu collectif — pour relâcher la pression et retrouver le plaisir de bouger ensemble.' },
+  Mobilité: { titre: 'Mobilité', description: 'Développe la mobilité et la force sur de grandes amplitudes de mouvement — pour retrouver des articulations fonctionnelles et résilientes au quotidien.' },
 };
 
 const SCORE_GOUTS: Record<string, Record<string, number>> = {

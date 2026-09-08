@@ -764,10 +764,19 @@ export async function validerParticipationDefi(formData: FormData) {
   await verifierAdmin();
   const admin = supabaseAdmin();
   const participationId = formData.get('participation_id') as string;
+  // Optionnel : permet de valider directement à un niveau différent de
+  // celui choisi par l'élève (ex. il avait mis "bronze" par prudence,
+  // mais la vidéo montre clairement un niveau "or") — sans ça, l'admin ne
+  // pouvait que confirmer tel quel le choix de l'élève, jamais le corriger.
+  const niveauChoisi = formData.get('niveau') as string | null;
+  const misAJour: Record<string, any> = { valide: true, valide_le: new Date().toISOString(), tentative_superieure: null };
+  if (niveauChoisi && ['facile', 'moyen', 'dur', 'beast'].includes(niveauChoisi)) {
+    misAJour.niveau = niveauChoisi;
+  }
 
   const { data: participation, error } = await admin
     .from('defi_participations')
-    .update({ valide: true, valide_le: new Date().toISOString(), tentative_superieure: null })
+    .update(misAJour)
     .eq('id', participationId)
     .select('eleve_id, niveau, defi_id, defis_mensuels(titre)')
     .single();

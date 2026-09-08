@@ -106,17 +106,36 @@ export default async function AdminDefisPage({ searchParams }: { searchParams: {
           </details>
 
           <h4 style={{ marginTop: 16, marginBottom: 8 }}>En attente de validation ({enAttente.length})</h4>
+          <p style={{ fontSize: 11, opacity: 0.5, marginTop: -4, marginBottom: 8 }}>
+            Le niveau affiché est celui choisi par l'élève — clique sur le niveau que tu valides réellement après
+            avoir vu la vidéo, ça peut être différent de son choix initial.
+          </p>
           {enAttente.length === 0 && <p style={{ fontSize: 12, opacity: 0.5 }}>Personne pour l'instant.</p>}
           {enAttente.map((p) => (
-            <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: '1px solid #333' }}>
-              <span style={{ flex: 1, fontSize: 13 }}>{p.profiles?.nom || p.profiles?.email}</span>
-              <span style={{ fontSize: 12 }}>{LABEL_NIVEAU[p.niveau]}</span>
-              <form action={validerParticipationDefi}>
-                <input type="hidden" name="participation_id" value={p.id} />
-                <button type="submit" style={{ fontSize: 12, padding: '4px 10px', borderRadius: 999, border: '1px solid #4a4', background: 'none', color: '#8f8', cursor: 'pointer' }}>
-                  ✓ Valider
-                </button>
-              </form>
+            <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 0', borderBottom: '1px solid #333', flexWrap: 'wrap' }}>
+              <span style={{ flex: 1, fontSize: 13, minWidth: 100 }}>
+                {p.profiles?.nom || p.profiles?.email}
+                <br />
+                <span style={{ fontSize: 11, opacity: 0.6 }}>a choisi {LABEL_NIVEAU[p.niveau]}</span>
+              </span>
+              {(['facile', 'moyen', 'dur', 'beast'] as const)
+                .filter((n) => n !== 'beast' || defiActuel?.description_beast)
+                .map((n) => (
+                  <form action={validerParticipationDefi} key={n}>
+                    <input type="hidden" name="participation_id" value={p.id} />
+                    <input type="hidden" name="niveau" value={n} />
+                    <button
+                      type="submit"
+                      style={{
+                        fontSize: 11, padding: '5px 10px', borderRadius: 999, cursor: 'pointer',
+                        border: n === p.niveau ? '1px solid #4a4' : '1px solid #555',
+                        background: 'none', color: n === p.niveau ? '#8f8' : '#aaa',
+                      }}
+                    >
+                      ✓ {LABEL_NIVEAU[n]}
+                    </button>
+                  </form>
+                ))}
             </div>
           ))}
 
