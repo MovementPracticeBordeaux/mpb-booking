@@ -39,6 +39,7 @@ export default function ListeElevesRepliable({
   gelerPass,
   degelerPass,
   definirDateReprise,
+  modifierPrenomEleveAdmin,
   decompterCoaching,
 }: {
   eleves: Eleve[];
@@ -50,6 +51,7 @@ export default function ListeElevesRepliable({
   gelerPass: (formData: FormData) => void;
   degelerPass: (formData: FormData) => void;
   definirDateReprise: (formData: FormData) => void;
+  modifierPrenomEleveAdmin: (formData: FormData) => void;
   decompterCoaching: (formData: FormData) => void;
 }) {
   const [ouvert, setOuvert] = useState(false);
@@ -164,6 +166,18 @@ export default function ListeElevesRepliable({
                 </summary>
 
                 <div style={{ marginTop: 10 }}>
+                  <form action={modifierPrenomEleveAdmin} style={{ display: 'flex', gap: 6, marginBottom: 12, alignItems: 'center' }}>
+                    <input type="hidden" name="eleve_id" value={e.id} />
+                    <input
+                      name="prenom"
+                      defaultValue={e.nom ?? ''}
+                      placeholder="Prénom de l'élève"
+                      style={{ flex: 1, maxWidth: 220, padding: '6px 10px', borderRadius: 6, border: '1px solid #444', background: '#1a1a1a', color: '#eee', fontSize: 13 }}
+                    />
+                    <button type="submit" style={{ fontSize: 12, padding: '6px 12px', borderRadius: 6, border: '1px solid #555', background: 'none', color: '#ccc', cursor: 'pointer' }}>
+                      {e.nom ? 'Modifier' : 'Enregistrer le prénom'}
+                    </button>
+                  </form>
                   {abos.length === 0 && <p style={{ fontSize: 13, opacity: 0.6 }}>Aucun abonnement actif pour cet élève.</p>}
                   {abos.map((a) => {
                     const formule = a.formuleAffichage;

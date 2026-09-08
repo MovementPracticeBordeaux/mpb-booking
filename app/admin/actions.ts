@@ -422,6 +422,26 @@ export async function gelerPass(formData: FormData) {
   reussir('/admin/eleves', 'Pass gelé.');
 }
 
+// Permet à l'admin de corriger/renseigner le prénom d'un élève à sa place
+// — utile notamment pour quelqu'un ajouté directement à un défi via
+// ajouterParticipationDefiAdmin, qui n'est jamais passé par le parcours
+// normal (/defi) demandant son prénom, et se retrouvait affiché comme
+// "Élève" générique dans le classement public.
+export async function modifierPrenomEleveAdmin(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+  const eleveId = formData.get('eleve_id') as string;
+  const prenom = (formData.get('prenom') as string)?.trim();
+  if (!prenom) echouer('/admin/eleves', 'Le prénom ne peut pas être vide.');
+
+  const { error } = await admin.from('profiles').update({ nom: prenom }).eq('id', eleveId);
+  if (error) echouer('/admin/eleves', error.message);
+
+  revalidatePath('/admin/eleves');
+  revalidatePath('/defi');
+  reussir('/admin/eleves', 'Prénom mis à jour.');
+}
+
 // Corrige/renseigne la date de reprise d'un abonnement déjà gelé, sans le
 // re-geler (contrairement à gelerPass qui réinitialiserait date_gel_debut
 // à aujourd'hui). Sert notamment pour les pass gelés importés de l'ancien
