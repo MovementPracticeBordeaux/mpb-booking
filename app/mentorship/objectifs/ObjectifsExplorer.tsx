@@ -16,10 +16,22 @@ function idYoutube(url: string): string | null {
   return m ? m[1] : null;
 }
 
+// Un mot du titre/mots-clés DOIT COMMENCER par la recherche pour matcher —
+// pas juste la contenir n'importe où. Sans ça, chercher "traction" ressort
+// aussi "PROtraction", ce qui n'a aucun sens pour l'élève.
+function motCorrespond(texte: string, q: string): boolean {
+  return texte
+    .toLowerCase()
+    .split(/[^a-zàâäéèêëïîôöùûüç0-9]+/)
+    .some((mot) => mot.startsWith(q));
+}
+
 // Position d'un objectif au sein de sa famille — volontairement minimaliste
 // par défaut (juste avant/après), la chaîne complète restant repliée. Un
 // élève qui cherche à savoir "par quoi je continue" n'a pas besoin qu'on
-// lui déballe 10 vidéos d'un coup.
+// lui déballe 10 vidéos d'un coup. Disposition en 3 colonnes (avant / ici /
+// après) pour que la séquence soit lisible d'un coup d'œil, pas juste
+// déductible du texte.
 function PositionDansFamille({ selection, objectifs, choisir }: { selection: Objectif; objectifs: Objectif[]; choisir: (id: string) => void }) {
   const [ouvert, setOuvert] = useState(false);
 
@@ -39,21 +51,38 @@ function PositionDansFamille({ selection, objectifs, choisir }: { selection: Obj
 
   return (
     <div style={{ background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
-      <p style={{ fontSize: 11, opacity: 0.6, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+      <p style={{ fontSize: 11, opacity: 0.6, margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: 0.5 }}>
         {selection.famille}{selection.niveau ? ` — Niveau ${selection.niveau}/${niveauMax}` : ''}
       </p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        {precedent && (
-          <button type="button" onClick={() => choisir(precedent.id)} style={{ textAlign: 'left', fontSize: 13, background: 'none', border: 'none', color: COULEURS.texteAtt, cursor: 'pointer', padding: 0 }}>
-            ← Vient de : {precedent.titre}
-          </button>
-        )}
-        {suivant && (
-          <button type="button" onClick={() => choisir(suivant.id)} style={{ textAlign: 'left', fontSize: 13, background: 'none', border: 'none', color: '#f0a', cursor: 'pointer', padding: 0, fontWeight: 600 }}>
-            Mène à : {suivant.titre} →
-          </button>
-        )}
-        {!precedent && !suivant && <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: 0 }}>Seul objectif de cette famille pour l'instant.</p>}
+
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 4 }}>
+        <button
+          type="button" onClick={() => precedent && choisir(precedent.id)} disabled={!precedent}
+          style={{
+            textAlign: 'left', fontSize: 12.5, padding: '9px 12px', borderRadius: 8, minHeight: 40,
+            border: `1px solid ${COULEURS.bordure}`, background: precedent ? COULEURS.surfaceForte : 'transparent',
+            color: precedent ? COULEURS.texteAtt : COULEURS.texteFaible, cursor: precedent ? 'pointer' : 'default',
+            opacity: precedent ? 1 : 0.4,
+          }}
+        >
+          {precedent ? `↑ ${precedent.titre}` : '↑ — début de la famille —'}
+        </button>
+
+        <div style={{ textAlign: 'center', fontSize: 13, padding: '10px 12px', borderRadius: 8, border: `1px solid #f0a`, background: 'rgba(255,0,170,0.1)', color: COULEURS.texte, fontWeight: 700 }}>
+          {selection.titre} <span style={{ fontWeight: 400, opacity: 0.6 }}>(ici)</span>
+        </div>
+
+        <button
+          type="button" onClick={() => suivant && choisir(suivant.id)} disabled={!suivant}
+          style={{
+            textAlign: 'left', fontSize: 12.5, padding: '9px 12px', borderRadius: 8, minHeight: 40,
+            border: `1px solid ${suivant ? '#f0a' : COULEURS.bordure}`, background: suivant ? 'rgba(255,0,170,0.06)' : 'transparent',
+            color: suivant ? '#f0a' : COULEURS.texteFaible, cursor: suivant ? 'pointer' : 'default', fontWeight: suivant ? 600 : 400,
+            opacity: suivant ? 1 : 0.4,
+          }}
+        >
+          {suivant ? `↓ ${suivant.titre}` : '↓ — fin de la famille —'}
+        </button>
       </div>
 
       <button
@@ -106,12 +135,9 @@ export default function ObjectifsExplorer({ objectifs, relations }: { objectifs:
   // validés pour chaque objectif — pas de suggestion inventée.
   const resultats = useMemo(() => {
     if (!recherche.trim()) return [];
-    const q = recherche.toLowerCase();
+    const q = recherche.toLowerCase().trim();
     return objectifs
-      .filter((o) => {
-        const motsCles = (o.mots_cles ?? '').toLowerCase();
-        return o.titre.toLowerCase().includes(q) || motsCles.includes(q);
-      })
+      .filter((o) => motCorrespond(o.titre, q) || motCorrespond(o.mots_cles ?? '', q))
       .slice(0, 25);
   }, [recherche, objectifs]);
 

@@ -772,7 +772,6 @@ export default function ArbreCompetences({
                 const label = noeud.domaine === 'tronc' ? 'Armure Organique' : DOMAINE_LABELS[noeud.domaine as Domaine];
                 const couleur = noeud.domaine === 'tronc' ? COULEUR_TRONC : DOMAINE_COULEURS[noeud.domaine as Domaine];
                 const aDesExercices = (noeud.exercices?.length ?? 0) > 0;
-                const outil = noeud.domaine !== 'tronc' ? OUTIL_PAR_BRANCHE[noeud.domaine as Domaine] : undefined;
                 const progUnique = progression.get(noeud.id);
 
                 if (statut === 'locked') {
@@ -792,110 +791,91 @@ export default function ArbreCompetences({
                     )}
                     <span style={{ fontSize: 11, color: couleur, letterSpacing: 1, fontWeight: 600 }}>{label.toUpperCase()} · NIVEAU {noeud.niveau}</span>
                     <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 20, margin: '2px 0 4px', color: COULEURS.texte }}>{noeud.titre}</h2>
-                    <p style={{ color: COULEURS.texteAtt, fontSize: 13, lineHeight: 1.6, margin: '4px 0 16px' }}>{noeud.resume}</p>
+                    <p style={{ color: COULEURS.texteAtt, fontSize: 13, lineHeight: 1.6, margin: '4px 0 8px' }}>{noeud.resume}</p>
+                    {noeud.contenuDefini && noeud.theorie.length > 0 && (
+                      <button
+                        type="button" onClick={() => setOnglet('theorie')}
+                        style={{ fontSize: 12, color: couleur, background: 'none', border: 'none', padding: 0, marginBottom: 16, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 2 }}
+                      >
+                        📖 Relire la théorie de ce niveau
+                      </button>
+                    )}
 
-                    <Accordeon titre="📖 Contenu théorique" ouvertParDefaut>
-                      {!noeud.contenuDefini && noeud.theorie.length === 0 ? (
-                        <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: 0 }}>Théorie à venir pour ce niveau.</p>
-                      ) : (
-                        <>
-                          {noeud.objectifPedagogique && (
-                            <p style={{ fontSize: 13, color: COULEURS.texteFaible, fontStyle: 'italic', margin: '0 0 12px' }}>Objectif : {noeud.objectifPedagogique}</p>
-                          )}
-                          {noeud.theorie.map((t) => (
-                            <div key={t.titre} style={{ marginBottom: 12, borderLeft: `2px solid ${couleur}`, paddingLeft: 12 }}>
-                              <p style={{ fontSize: 13, fontWeight: 600, margin: 0, color: COULEURS.texte }}>{t.titre}</p>
-                              <p style={{ fontSize: 13, color: COULEURS.texteAtt, lineHeight: 1.7, margin: '4px 0 0' }}>{t.texte}</p>
-                            </div>
-                          ))}
-                          {noeud.programmation.length > 0 && (
-                            <div style={{ marginTop: 12 }}>
-                              {noeud.programmation.map((p, i) => (
-                                <div key={i} style={{ background: COULEURS.surfaceForte, borderRadius: 8, padding: '10px 14px', marginBottom: 8, fontSize: 13, lineHeight: 1.6 }}>
-                                  <p style={{ margin: 0 }}><strong>Cible :</strong> {p.cible}</p>
-                                  <p style={{ margin: '4px 0 0', color: COULEURS.texteAtt }}><strong>Régression :</strong> {p.regression}</p>
-                                  <p style={{ margin: '4px 0 0', color: COULEURS.texteAtt }}><strong>Progression :</strong> {p.progression}</p>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </Accordeon>
-
-                    <Accordeon titre="🎯 Entraînement (exercices à valider)">
-                      {aDesExercices ? (
-                        <>
-                          <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                            {noeud.exercices!.filter((ex) => progression.get(moduleIdExercice(noeud, ex))?.statut === 'acquis').length}/{noeud.exercices!.length} validés
+                    {/* Le cœur du panneau : ce qu'il y a à faire ici, directement visible
+                        — pas caché derrière un clic, contrairement à la théorie/aux outils
+                        qui ont chacun leur propre onglet dédié plus haut. */}
+                    <p style={{ fontSize: 13, fontWeight: 600, color: COULEURS.texte, margin: '0 0 10px' }}>🎯 Quêtes à valider</p>
+                    {aDesExercices ? (
+                      <>
+                        <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                          {noeud.exercices!.filter((ex) => progression.get(moduleIdExercice(noeud, ex))?.statut === 'acquis').length}/{noeud.exercices!.length} validés
+                        </p>
+                        {noeud.exercices!.map((ex) => (
+                          <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} />
+                        ))}
+                        {(noeud.progressionBonus?.length ?? 0) > 0 && (
+                          <div style={{ marginTop: 14 }}>
+                            <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>✦ Quête secondaire (facultative)</p>
+                            {noeud.progressionBonus!.map((ex) => (
+                              <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} />
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    ) : !estAdmin ? (
+                      <>
+                        {statut === 'acquis' && <p style={{ fontSize: 13, color: '#9ef29e', margin: 0 }}>Niveau validé par Sylvain — bravo !</p>}
+                        {statut === 'en_attente' && (
+                          <p style={{ fontSize: 13, color: COULEURS.texteAtt, margin: 0 }}>
+                            Ta vidéo a été envoyée, Sylvain la regarde bientôt.{' '}
+                            <a href={progUnique?.video_url ?? '#'} target="_blank" rel="noopener noreferrer" style={{ color: '#f0a' }}>Revoir</a>
                           </p>
-                          {noeud.exercices!.map((ex) => (
-                            <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} />
-                          ))}
-                          {(noeud.progressionBonus?.length ?? 0) > 0 && (
-                            <div style={{ marginTop: 14 }}>
-                              <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>✦ Quête secondaire (facultative)</p>
-                              {noeud.progressionBonus!.map((ex) => (
-                                <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} />
-                              ))}
-                            </div>
-                          )}
-                        </>
-                      ) : !estAdmin ? (
-                        <>
-                          {statut === 'acquis' && <p style={{ fontSize: 13, color: '#9ef29e', margin: 0 }}>Niveau validé par Sylvain — bravo !</p>}
-                          {statut === 'en_attente' && (
-                            <p style={{ fontSize: 13, color: COULEURS.texteAtt, margin: 0 }}>
-                              Ta vidéo a été envoyée, Sylvain la regarde bientôt.{' '}
-                              <a href={progUnique?.video_url ?? '#'} target="_blank" rel="noopener noreferrer" style={{ color: '#f0a' }}>Revoir</a>
-                            </p>
-                          )}
-                          {(statut === 'qcm_reussi' || statut === 'refuse') && (
-                            <>
-                              {statut === 'refuse' && progUnique?.commentaire_coach && (
-                                <p style={{ fontSize: 13, color: '#ff6b6b', marginBottom: 10 }}>Retour de Sylvain : {progUnique.commentaire_coach}</p>
-                              )}
-                              {statut === 'qcm_reussi' && (
-                                <p style={{ fontSize: 13, color: '#9ef29e', marginBottom: 10 }}>QCM réussi ({progUnique?.quiz_score}%) — envoie ta vidéo.</p>
-                              )}
-                              <form action={soumettreVideo} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                                <input type="hidden" name="noeud_id" value={noeud.id} />
-                                <input type="url" name="video_url" required placeholder="Lien de ta vidéo"
-                                  style={{ flexGrow: 1, minWidth: 160, fontSize: 13, padding: '9px 12px', borderRadius: 8, border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surfaceForte, color: COULEURS.texte }} />
-                                <button type="submit" style={{ fontSize: 13, padding: '9px 16px', borderRadius: 999, border: '1px solid #f0a', background: 'rgba(255,0,170,0.1)', color: '#f0a', cursor: 'pointer' }}>
-                                  {statut === 'refuse' ? 'Renvoyer' : 'Soumettre'}
-                                </button>
-                              </form>
-                            </>
-                          )}
-                          {statut === 'unlocked' && noeud.qcm.length > 0 && (
-                            <form action={repondreQCM}>
+                        )}
+                        {(statut === 'qcm_reussi' || statut === 'refuse') && (
+                          <>
+                            {statut === 'refuse' && progUnique?.commentaire_coach && (
+                              <p style={{ fontSize: 13, color: '#ff6b6b', marginBottom: 10 }}>Retour de Sylvain : {progUnique.commentaire_coach}</p>
+                            )}
+                            {statut === 'qcm_reussi' && (
+                              <p style={{ fontSize: 13, color: '#9ef29e', marginBottom: 10 }}>QCM réussi ({progUnique?.quiz_score}%) — envoie ta vidéo.</p>
+                            )}
+                            <form action={soumettreVideo} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                               <input type="hidden" name="noeud_id" value={noeud.id} />
-                              <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 10 }}>QCM — réussis-le pour débloquer l'envoi vidéo</p>
-                              {noeud.qcm.map((q, i) => (
-                                <div key={q.id} style={{ marginBottom: 14 }}>
-                                  <p style={{ fontSize: 13, marginBottom: 6, color: COULEURS.texte }}>{i + 1}. {q.question}</p>
-                                  {q.choix.map((choix, idx) => (
-                                    <label key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: COULEURS.texteAtt, marginBottom: 4, cursor: 'pointer' }}>
-                                      <input type="radio" name={`reponse-${q.id}`} value={idx} required onChange={() => setReponsesQCM((r) => ({ ...r, [q.id]: idx }))} />
-                                      {choix}
-                                    </label>
-                                  ))}
-                                </div>
-                              ))}
+                              <input type="url" name="video_url" required placeholder="Lien de ta vidéo"
+                                style={{ flexGrow: 1, minWidth: 160, fontSize: 13, padding: '9px 12px', borderRadius: 8, border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surfaceForte, color: COULEURS.texte }} />
                               <button type="submit" style={{ fontSize: 13, padding: '9px 16px', borderRadius: 999, border: '1px solid #f0a', background: 'rgba(255,0,170,0.1)', color: '#f0a', cursor: 'pointer' }}>
-                                Valider mes réponses
+                                {statut === 'refuse' ? 'Renvoyer' : 'Soumettre'}
                               </button>
                             </form>
-                          )}
-                          {statut === 'unlocked' && noeud.qcm.length === 0 && (
-                            <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: 0 }}>Pas encore de QCM — contenu à venir.</p>
-                          )}
-                        </>
-                      ) : (
-                        <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: 0 }}>(Vue admin — actions élève masquées)</p>
-                      )}
-                    </Accordeon>
+                          </>
+                        )}
+                        {statut === 'unlocked' && noeud.qcm.length > 0 && (
+                          <form action={repondreQCM}>
+                            <input type="hidden" name="noeud_id" value={noeud.id} />
+                            <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 10 }}>QCM — réussis-le pour débloquer l'envoi vidéo</p>
+                            {noeud.qcm.map((q, i) => (
+                              <div key={q.id} style={{ marginBottom: 14 }}>
+                                <p style={{ fontSize: 13, marginBottom: 6, color: COULEURS.texte }}>{i + 1}. {q.question}</p>
+                                {q.choix.map((choix, idx) => (
+                                  <label key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: COULEURS.texteAtt, marginBottom: 4, cursor: 'pointer' }}>
+                                    <input type="radio" name={`reponse-${q.id}`} value={idx} required onChange={() => setReponsesQCM((r) => ({ ...r, [q.id]: idx }))} />
+                                    {choix}
+                                  </label>
+                                ))}
+                              </div>
+                            ))}
+                            <button type="submit" style={{ fontSize: 13, padding: '9px 16px', borderRadius: 999, border: '1px solid #f0a', background: 'rgba(255,0,170,0.1)', color: '#f0a', cursor: 'pointer' }}>
+                              Valider mes réponses
+                            </button>
+                          </form>
+                        )}
+                        {statut === 'unlocked' && noeud.qcm.length === 0 && (
+                          <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: 0 }}>Pas encore de QCM — contenu à venir.</p>
+                        )}
+                      </>
+                    ) : (
+                      <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: 0 }}>(Vue admin — actions élève masquées)</p>
+                    )}
 
                     <Accordeon titre="📹 Avant / Après">
                       {aDesExercices ? (
@@ -933,18 +913,6 @@ export default function ArbreCompetences({
 
                     <Accordeon titre="📓 Mon journal d'entraînement">
                       <JournalDuNoeud noeudId={noeud.id} branche={noeud.domaine} />
-                    </Accordeon>
-
-                    <Accordeon titre="🛠️ Outil">
-                      {outil ? (
-                        <a href={outil.href} style={{ display: 'inline-block', fontSize: 13, color: '#f0a', textDecoration: 'none', fontWeight: 600 }}>
-                          {outil.label} →
-                        </a>
-                      ) : (
-                        <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: 0 }}>
-                          {noeud.domaine === 'tronc' ? "Pas d'outil dédié pour le tronc commun." : "Outil dédié à cette branche à venir."}
-                        </p>
-                      )}
                     </Accordeon>
 
                     {!estAdmin && statut !== 'acquis' && (
@@ -1019,8 +987,8 @@ export default function ArbreCompetences({
               })
             )}
 
-            {/* Nœuds du tronc (les 2 premiers, en montant) — cliquer entre dans le chemin isolé du tronc, comme pour une branche */}
-            {tronc.filter((n) => n.niveau < 3).map((noeud) => (
+            {/* Nœuds du tronc — même rendu standard que les branches, sur les 3 niveaux */}
+            {tronc.map((noeud) => (
               <Noeud
                 key={noeud.id}
                 x={TRUNK_X} y={TRUNK_LEVEL_Y[noeud.niveau]}
@@ -1031,15 +999,6 @@ export default function ArbreCompetences({
                 onClick={() => entrerBranche('tronc')}
               />
             ))}
-
-            {/* Tronc niveau 3 : le grand rond qui se remplit selon l'avancement global du tronc */}
-            <NoeudTroncPrincipal
-              x={TRUNK_X} y={TRUNK_LEVEL_Y[3]}
-              pourcentage={pourcentageTronc}
-              statut={statutAffiche(tronc.find((n) => n.niveau === 3)!)}
-              image={tronc.find((n) => n.niveau === 3)!.image}
-              onClick={() => entrerBranche('tronc')}
-            />
           </div>
           <p style={{ textAlign: 'center', fontFamily: POLICE_DISPLAY, fontSize: 12, letterSpacing: '0.05em', textTransform: 'uppercase', color: '#ff00aa', marginTop: 8 }}>
             Armure Organique
@@ -1488,54 +1447,6 @@ function Noeud({ x, y, statut, couleur, domaine, flamme, image, onClick }: { x: 
       ) : (
         <Pictogramme domaine={domaine} taille={22} couleur={statut === 'unlocked' ? couleur : meta.border} />
       )}
-    </button>
-  );
-}
-
-// Le grand rond du tronc (niveau 3) : se remplit en anneau selon le
-// pourcentage d'avancement global de l'Armure Organique.
-function NoeudTroncPrincipal({ x, y, pourcentage, statut, image, onClick }: { x: number; y: number; pourcentage: number; statut: StatutAffiche; image?: string; onClick: () => void }) {
-  const rayon = 15.5;
-  const circonference = 2 * Math.PI * rayon;
-  const acquis = statut === 'acquis';
-  const locked = statut === 'locked';
-  const pulse = statut === 'en_attente';
-  return (
-    <button onClick={onClick} aria-label="Armure Organique — niveau 3" style={{ position: 'absolute', left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)', width: 58, height: 58, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
-      <svg width="58" height="58" viewBox="0 0 40 40" style={{ animation: pulse ? 'pulse-noeud 1.8s ease-in-out infinite' : 'none' }}>
-        <defs>
-          <clipPath id="clip-tronc-principal"><circle cx="20" cy="20" r={rayon - 1.5} /></clipPath>
-        </defs>
-        <circle cx="20" cy="20" r={rayon} fill={image ? '#0b0b0d' : acquis ? COULEUR_TRONC : locked ? '#131316' : '#17171b'} />
-        {image && (
-          <image
-            href={image} x={20 - rayon} y={20 - rayon} width={rayon * 2} height={rayon * 2}
-            clipPath="url(#clip-tronc-principal)" preserveAspectRatio="xMidYMid slice"
-            opacity={locked ? 0.4 : acquis ? 1 : 0.9}
-            style={locked ? { filter: 'brightness(0.5)' } : undefined}
-          />
-        )}
-        <circle cx="20" cy="20" r={rayon} fill="none" stroke={locked ? `${COULEUR_TRONC}55` : COULEURS.bordure} strokeWidth="2.5" strokeDasharray={locked ? '2 2' : undefined} />
-        {!locked && (
-          <circle
-            cx="20" cy="20" r={rayon} fill="none" stroke={COULEUR_TRONC} strokeWidth="2.5"
-            strokeDasharray={circonference} strokeDashoffset={circonference * (1 - pourcentage / 100)}
-            strokeLinecap="round" transform="rotate(-90 20 20)"
-            style={{ transition: 'stroke-dashoffset 0.6s ease', filter: pourcentage > 0 ? `drop-shadow(0 0 4px ${COULEUR_TRONC})` : 'none' }}
-          />
-        )}
-        {image ? null : acquis ? (
-          <path d="M13 20l5 5 10-10" stroke="#0b0b0d" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-        ) : locked ? (
-          <g transform="translate(13,13)" opacity={0.75}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={COULEUR_TRONC} strokeWidth={2}>
-              <rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V7a4 4 0 018 0v4" />
-            </svg>
-          </g>
-        ) : (
-          <g transform="translate(11.5,11.5) scale(0.7)"><Pictogramme domaine="tronc" taille={17} couleur={COULEUR_TRONC} /></g>
-        )}
-      </svg>
     </button>
   );
 }
