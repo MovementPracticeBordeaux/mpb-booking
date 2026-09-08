@@ -7,18 +7,55 @@ import BoutonNiveau from './BoutonNiveau';
 export const dynamic = 'force-dynamic';
 
 const COULEUR_NIVEAU: Record<string, string> = {
-  facile: '#CD7F32', // bronze
-  moyen: '#C0C0C0', // argent
-  dur: '#FFD700', // or
+  facile: '#CD7F32', // bronze (repli si le dégradé n'est pas dispo, ex. bordures de bouton)
+  moyen: '#E8E8E8', // argent (repli)
+  dur: '#FFD700', // or (repli)
   beast: '#FF2D78', // au-dessus de l'or : scintille immédiatement (voir EstMythique)
 };
+const GRADIENT_NIVEAU: Record<string, string> = { facile: 'grad-bronze', moyen: 'grad-argent', dur: 'grad-or', beast: 'grad-beast' };
 const LABEL_NIVEAU: Record<string, string> = { facile: 'Bronze', moyen: 'Argent', dur: 'Or', beast: 'Beast' };
 const ORDRE_NIVEAU: Record<string, number> = { facile: 0, moyen: 1, dur: 2, beast: 3 };
 const SEUIL_MYTHIQUE = 3; // nombre d'étoiles or à partir duquel le prénom scintille
 
-function Etoile({ couleur, taille = 20 }: { couleur: string; taille?: number }) {
+// Dégradés "chromés" avec reflet, plutôt qu'un simple aplat de couleur —
+// un seul jeu de <defs> partagé par toutes les étoiles de la page.
+function DefsEtoiles() {
   return (
-    <svg width={taille} height={taille} viewBox="0 0 24 24" fill={couleur} style={{ filter: `drop-shadow(0 0 3px ${couleur}66)` }}>
+    <svg width="0" height="0" style={{ position: 'absolute' }}>
+      <defs>
+        <linearGradient id="grad-bronze" x1="20%" y1="0%" x2="80%" y2="100%">
+          <stop offset="0%" stopColor="#F0C199" />
+          <stop offset="35%" stopColor="#CD7F32" />
+          <stop offset="70%" stopColor="#8C5323" />
+          <stop offset="100%" stopColor="#B8732E" />
+        </linearGradient>
+        <linearGradient id="grad-argent" x1="20%" y1="0%" x2="80%" y2="100%">
+          <stop offset="0%" stopColor="#FFFFFF" />
+          <stop offset="30%" stopColor="#E8E8E8" />
+          <stop offset="55%" stopColor="#A8A8AC" />
+          <stop offset="80%" stopColor="#DCDCDC" />
+          <stop offset="100%" stopColor="#8E8E92" />
+        </linearGradient>
+        <linearGradient id="grad-or" x1="20%" y1="0%" x2="80%" y2="100%">
+          <stop offset="0%" stopColor="#FFF6C8" />
+          <stop offset="30%" stopColor="#FFD700" />
+          <stop offset="60%" stopColor="#E0A315" />
+          <stop offset="100%" stopColor="#FFC300" />
+        </linearGradient>
+        <linearGradient id="grad-beast" x1="20%" y1="0%" x2="80%" y2="100%">
+          <stop offset="0%" stopColor="#FF7AB8" />
+          <stop offset="45%" stopColor="#FF2D78" />
+          <stop offset="100%" stopColor="#C81E5C" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
+function Etoile({ couleur, niveau, taille = 20 }: { couleur: string; niveau?: string; taille?: number }) {
+  const remplissage = niveau && GRADIENT_NIVEAU[niveau] ? `url(#${GRADIENT_NIVEAU[niveau]})` : couleur;
+  return (
+    <svg width={taille} height={taille} viewBox="0 0 24 24" fill={remplissage} style={{ filter: `drop-shadow(0 0 3px ${couleur}88)` }}>
       <path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7-6.2-3.7-6.2 3.7 1.6-7L2 9.2l7.1-.6z" />
     </svg>
   );
@@ -51,7 +88,7 @@ function ClassementListe({ lignes }: { lignes: LigneClassement[] }) {
               {ligne.nom}{estMythique && ' ✨'}
             </span>
             <span style={{ display: 'flex', gap: 2 }}>
-              {ligne.etoiles.map((e, j) => <Etoile key={j} couleur={COULEUR_NIVEAU[e.niveau]} taille={16} />)}
+              {ligne.etoiles.map((e, j) => <Etoile key={j} couleur={COULEUR_NIVEAU[e.niveau]} niveau={e.niveau} taille={16} />)}
             </span>
             <span style={{ fontSize: 12, opacity: 0.6, minWidth: 20, textAlign: 'right' }}>{ligne.etoiles.length}</span>
           </div>
@@ -234,7 +271,7 @@ export default async function DefiPage() {
                       border: `1px solid ${COULEUR_NIVEAU[niv]}`, background: 'none', color: 'inherit', fontSize: 13,
                     }}
                   >
-                    <Etoile couleur={COULEUR_NIVEAU[niv]} taille={18} />
+                    <Etoile couleur={COULEUR_NIVEAU[niv]} niveau={niv} taille={18} />
                     {niv === 'facile' && 'Pas trop souvent — je tente la version accessible'}
                     {niv === 'moyen' && "Assez régulièrement — je tente la version intermédiaire"}
                     {niv === 'dur' && 'Très régulièrement — je tente la version corsée'}
@@ -247,7 +284,7 @@ export default async function DefiPage() {
           {user && aUnAbonnementActif && maParticipation && (
             <>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                <Etoile couleur={COULEUR_NIVEAU[maParticipation.niveau]} />
+                <Etoile couleur={COULEUR_NIVEAU[maParticipation.niveau]} niveau={maParticipation.niveau} />
                 <span style={{ fontSize: 12, opacity: 0.7 }}>
                   Niveau {LABEL_NIVEAU[maParticipation.niveau]}
                   {maParticipation.valide
@@ -372,6 +409,7 @@ export default async function DefiPage() {
           50% { text-shadow: 0 0 8px #FF3B30dd, 0 0 16px #FF2D78dd, 0 0 26px #8B5CF6dd; }
         }
       `}</style>
+      <DefsEtoiles />
       <h1>🏆 Défis</h1>
       <DefiOnglets ongletDefi={ongletDefi} ongletClassement={ongletClassement} />
     </main>
