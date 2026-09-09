@@ -7,7 +7,7 @@ import { COULEURS, GRADIENT, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme'
 type Objectif = {
   id: string; titre: string; branche: string; sous_groupe: string | null;
   video_url: string | null; mots_cles: string | null; note: string | null;
-  famille: string | null; niveau: number | null; tags: string | null;
+  famille: string | null; niveau: number | null; tags: string | null; descriptif: string | null;
 };
 type Relation = { id: string; objectif_source_id: string; objectif_cible_id: string; type: string };
 
@@ -61,6 +61,46 @@ function elargirRecherche(q: string): string[] {
   return [...elargis];
 }
 
+// "Zones à travailler" (option A, automatique) : pour un objectif donné, on
+// cherche dans la bibliothèque Armure Organique les outils dont un tag
+// correspond à sa famille (ex. famille 'Tirer' -> tag 'Préparation Tirer'),
+// avec repli sur la branche si aucun tag de famille n'existe encore (ex.
+// famille 'Handstand' sans tag dédié -> tag 'Préparation Figures'). Le
+// vocabulaire des tags ne correspond pas toujours mot pour mot au nom de la
+// famille (ex. famille 'Pousser' mais tag 'Préparation Poussée') : cette
+// table fait le pont. Une famille/branche absente de la table, ou sans tag
+// correspondant en base, ressort simplement une liste vide -- honnête,
+// plutôt que de forcer un rapprochement qui n'existe pas encore (Sylvain
+// enrichira au cas par cas plus tard, à la main).
+const ALIAS_FAMILLE_VERS_TAG: Record<string, string[]> = {
+  'Tirer': ['tirer'],
+  'Pousser': ['poussee', 'push-up'],
+  'Pont': ['pont'],
+  'L-sit': ['l-sit'],
+  'Handstand': ['handstand'],
+  'Floor work': ['floor work'],
+  'Squats unilatéraux': ['squat', 'sissy squat'],
+  'Jefferson curl': ['chaine posterieure'],
+  'Stretch actif': ['stretch actif'],
+};
+const ALIAS_BRANCHE_VERS_TAG: Record<string, string[]> = {
+  'Figures': ['figures'],
+  'Locomotion': ['locomotion'],
+  'Flexibilité': ['flexibilite'],
+};
+
+function zonesATravailler(selection: Objectif, objectifs: Objectif[]): Objectif[] {
+  const aliasFamille = selection.famille ? ALIAS_FAMILLE_VERS_TAG[selection.famille] : undefined;
+  const aliasBranche = ALIAS_BRANCHE_VERS_TAG[selection.branche];
+  const motsCles = aliasFamille ?? aliasBranche ?? [];
+  if (motsCles.length === 0) return [];
+  return objectifs.filter((o) => {
+    if (o.branche !== 'Armure Organique' || !o.tags) return false;
+    const tags = sansAccents(o.tags.toLowerCase());
+    return motsCles.some((m) => tags.includes(m));
+  });
+}
+
 // Position d'un objectif au sein de sa famille — volontairement minimaliste
 // par défaut (juste avant/après), la chaîne complète restant repliée. Un
 // élève qui cherche à savoir "par quoi je continue" n'a pas besoin qu'on
@@ -91,33 +131,39 @@ function PositionDansFamille({ selection, objectifs, choisir }: { selection: Obj
       </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 4 }}>
-        <button
-          type="button" onClick={() => precedent && choisir(precedent.id)} disabled={!precedent}
-          style={{
-            textAlign: 'left', fontSize: 12.5, padding: '9px 12px', borderRadius: 8, minHeight: 40,
-            border: `1px solid ${COULEURS.bordure}`, background: precedent ? COULEURS.surfaceForte : 'transparent',
-            color: precedent ? COULEURS.texteAtt : COULEURS.texteFaible, cursor: precedent ? 'pointer' : 'default',
-            opacity: precedent ? 1 : 0.4,
-          }}
-        >
-          {precedent ? `↑ ${precedent.titre}` : '↑ — début de la famille —'}
-        </button>
+        <div>
+          <p style={{ fontSize: 10, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 0.5, margin: '0 0 3px' }}>Régression</p>
+          <button
+            type="button" onClick={() => precedent && choisir(precedent.id)} disabled={!precedent}
+            style={{
+              width: '100%', textAlign: 'left', fontSize: 12.5, padding: '9px 12px', borderRadius: 8, minHeight: 40,
+              border: `1px solid ${COULEURS.bordure}`, background: precedent ? COULEURS.surfaceForte : 'transparent',
+              color: precedent ? COULEURS.texteAtt : COULEURS.texteFaible, cursor: precedent ? 'pointer' : 'default',
+              opacity: precedent ? 1 : 0.4,
+            }}
+          >
+            {precedent ? `↑ ${precedent.titre}` : '↑ — début de la famille —'}
+          </button>
+        </div>
 
         <div style={{ textAlign: 'center', fontSize: 13, padding: '10px 12px', borderRadius: 8, border: `1px solid #f0a`, background: 'rgba(255,0,170,0.1)', color: COULEURS.texte, fontWeight: 700 }}>
           {selection.titre} <span style={{ fontWeight: 400, opacity: 0.6 }}>(ici)</span>
         </div>
 
-        <button
-          type="button" onClick={() => suivant && choisir(suivant.id)} disabled={!suivant}
-          style={{
-            textAlign: 'left', fontSize: 12.5, padding: '9px 12px', borderRadius: 8, minHeight: 40,
-            border: `1px solid ${suivant ? '#f0a' : COULEURS.bordure}`, background: suivant ? 'rgba(255,0,170,0.06)' : 'transparent',
-            color: suivant ? '#f0a' : COULEURS.texteFaible, cursor: suivant ? 'pointer' : 'default', fontWeight: suivant ? 600 : 400,
-            opacity: suivant ? 1 : 0.4,
-          }}
-        >
-          {suivant ? `↓ ${suivant.titre}` : '↓ — fin de la famille —'}
-        </button>
+        <div>
+          <p style={{ fontSize: 10, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 0.5, margin: '3px 0 3px' }}>Progression</p>
+          <button
+            type="button" onClick={() => suivant && choisir(suivant.id)} disabled={!suivant}
+            style={{
+              width: '100%', textAlign: 'left', fontSize: 12.5, padding: '9px 12px', borderRadius: 8, minHeight: 40,
+              border: `1px solid ${suivant ? '#f0a' : COULEURS.bordure}`, background: suivant ? 'rgba(255,0,170,0.06)' : 'transparent',
+              color: suivant ? '#f0a' : COULEURS.texteFaible, cursor: suivant ? 'pointer' : 'default', fontWeight: suivant ? 600 : 400,
+              opacity: suivant ? 1 : 0.4,
+            }}
+          >
+            {suivant ? `↓ ${suivant.titre}` : '↓ — fin de la famille —'}
+          </button>
+        </div>
       </div>
 
       <button
@@ -182,8 +228,7 @@ export default function ObjectifsExplorer({ objectifs, relations }: { objectifs:
   }
 
   if (selection) {
-    const sertA = relations.filter((r) => r.type === 'sert_a' && r.objectif_source_id === selection.id).map((r) => parId.get(r.objectif_cible_id)).filter(Boolean) as Objectif[];
-    const reposeSur = relations.filter((r) => r.type === 'sert_a' && r.objectif_cible_id === selection.id).map((r) => parId.get(r.objectif_source_id)).filter(Boolean) as Objectif[];
+    const zones = zonesATravailler(selection, objectifs);
 
     return (
       <main style={{ maxWidth: 560, margin: '0 auto', padding: '24px 20px' }}>
@@ -194,7 +239,11 @@ export default function ObjectifsExplorer({ objectifs, relations }: { objectifs:
         <p style={{ fontSize: 11, letterSpacing: 1, opacity: 0.5, textTransform: 'uppercase', margin: '0 0 4px' }}>
           {selection.branche}{selection.sous_groupe ? ` · ${selection.sous_groupe}` : ''}
         </p>
-        <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 'clamp(24px, 7vw, 30px)', letterSpacing: 0.3, margin: '0 0 12px' }}>{selection.titre}</h1>
+        <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 'clamp(24px, 7vw, 30px)', letterSpacing: 0.3, margin: '0 0 8px' }}>{selection.titre}</h1>
+
+        {selection.descriptif && (
+          <p style={{ fontSize: 13.5, color: COULEURS.texteAtt, lineHeight: 1.6, margin: '0 0 10px' }}>{selection.descriptif}</p>
+        )}
 
         {selection.video_url && (
           <a
@@ -205,18 +254,7 @@ export default function ObjectifsExplorer({ objectifs, relations }: { objectifs:
           </a>
         )}
 
-        {selection.tags && (
-          <div style={{ background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
-            <p style={{ fontSize: 11, opacity: 0.6, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 0.5 }}>🎯 À quoi ça sert</p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {selection.tags.split(',').map((tag) => (
-                <span key={tag} style={{ fontSize: 12, padding: '5px 11px', borderRadius: 999, border: `1px solid ${COULEURS.bordure}`, color: COULEURS.texteAtt }}>
-                  {tag.trim()}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
+        <PositionDansFamille key={selection.id} selection={selection} objectifs={objectifs} choisir={choisir} />
 
         {selection.note && (
           <div style={{ background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
@@ -225,36 +263,27 @@ export default function ObjectifsExplorer({ objectifs, relations }: { objectifs:
           </div>
         )}
 
-        <PositionDansFamille key={selection.id} selection={selection} objectifs={objectifs} choisir={choisir} />
-
-        {reposeSur.length > 0 && (
+        {zones.length > 0 && (
           <div style={{ marginBottom: 16 }}>
-            <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 8px' }}>Repose sur</p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {reposeSur.map((o) => (
-                <button key={o.id} type="button" onClick={() => choisir(o.id)} style={{ fontSize: 12, padding: '6px 12px', borderRadius: 999, border: `1px solid ${COULEURS.bordure}`, background: 'transparent', color: COULEURS.texteAtt, cursor: 'pointer' }}>
-                  ← {o.titre}
+            <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 4px' }}>🔧 Zones à travailler</p>
+            <p style={{ fontSize: 11.5, color: COULEURS.texteFaible, margin: '0 0 8px' }}>
+              Outils de l'Armure Organique qui soutiennent cet objectif.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {zones.map((o) => (
+                <button
+                  key={o.id} type="button" onClick={() => choisir(o.id)}
+                  style={{ textAlign: 'left', fontSize: 12.5, padding: '8px 12px', borderRadius: 8, border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surface, color: COULEURS.texteAtt, cursor: 'pointer' }}
+                >
+                  {o.titre}
                 </button>
               ))}
             </div>
           </div>
         )}
 
-        {sertA.length > 0 && (
-          <div>
-            <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 8px' }}>Sert à</p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {sertA.map((o) => (
-                <button key={o.id} type="button" onClick={() => choisir(o.id)} style={{ fontSize: 12, padding: '6px 12px', borderRadius: 999, border: '1px solid #f0a', background: 'rgba(255,0,170,0.08)', color: '#f0a', cursor: 'pointer' }}>
-                  {o.titre} →
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {reposeSur.length === 0 && sertA.length === 0 && !selection.tags && selection.niveau === null && (
-          <p style={{ fontSize: 12, color: COULEURS.texteFaible }}>Pas encore de lien renseigné pour cet objectif.</p>
+        {!selection.descriptif && zones.length === 0 && selection.niveau === null && (
+          <p style={{ fontSize: 12, color: COULEURS.texteFaible }}>Pas encore de contenu renseigné pour cet objectif.</p>
         )}
       </main>
     );
