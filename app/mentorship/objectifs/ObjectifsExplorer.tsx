@@ -26,8 +26,11 @@ function motCorrespond(texte: string, q: string): boolean {
 // famille de mots interchangeables pour la recherche ; taper n'importe
 // lequel élargit la recherche à tous les autres du même groupe.
 const GROUPES_SYNONYMES: string[][] = [
-  ['traction', 'tirage', 'chin', 'pull', 'rowing', 'row'],
-  ['poussee', 'pousser', 'push', 'dips', 'dip', 'pompe', 'pompes'],
+  ['traction', 'chin', 'pull'],
+  ['tirage', 'rowing', 'row'],
+  ['poussee', 'pousser', 'push', 'pompe', 'pompes'],
+  ['dips', 'dip'],
+  ['muscle up', 'mu'],
   ['squat', 'accroupi'],
   ['pont', 'bridge'],
   ['handstand', 'poirier', 'atr', 'renversement', 'renverse'],
@@ -46,6 +49,21 @@ const GROUPES_SYNONYMES: string[][] = [
   ['quadrupedie', 'quadrupede'],
   ['bipedie', 'bipede'],
 ];
+
+// Pour certains groupes, il existe UNE réponse canonique -- l'exécution
+// "complète" et représentative du mouvement demandé, distincte de ses
+// régressions/progressions/variantes (elles-mêmes visibles une fois sur la
+// page détail, dans la boîte régression/objectif/progression). Taper
+// "push-up" doit répondre "Push up clean", pas ressortir Push up
+// excentrique genoux, Angola PU etc. en vrac. Clé = un des mots du groupe
+// concerné, valeur = le titre exact en base.
+const REPONSE_CANONIQUE: Record<string, string> = {
+  'push': 'PUSH UP CLEAN',
+  'traction': 'CHIN UP RING',
+  'tirage': 'Rowing circle - inside',
+  'dips': 'Dips bar',
+  'mu': 'MU HORIZONTAL',
+};
 
 // Normalise en enlevant les accents, pour que les synonymes matchent quelle
 // que soit la façon dont l'élève tape sa recherche (élastique / elastique).
@@ -158,7 +176,7 @@ function PositionDansFamille({ selection, objectifs, choisir }: { selection: Obj
   const niveauMax = Math.max(...memeFamille.map((o) => o.niveau ?? 0));
 
   return (
-    <div style={{ background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
+    <div style={{ background: 'rgba(255,0,170,0.04)', border: `1px solid rgba(255,0,170,0.35)`, borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
       <p style={{ fontSize: 11, opacity: 0.6, margin: '0 0 10px', textTransform: 'uppercase', letterSpacing: 0.5 }}>
         {selection.famille}{selection.niveau ? ` — Niveau ${selection.niveau}/${niveauMax}` : ''}
       </p>
@@ -256,12 +274,15 @@ export default function ObjectifsExplorer({ objectifs, relations }: { objectifs:
   // distinction, un outil d'épaule qui mentionne juste "push-up" en mot-clé
   // ressort au même niveau qu'une vraie vidéo de push-up, ce qui noie le
   // résultat que l'élève cherche vraiment.
-  const { correspondances, mentions } = useMemo(() => {
-    if (!recherche.trim()) return { correspondances: [] as Objectif[], mentions: [] as Objectif[] };
+  const { reponsePrincipale, correspondances, mentions } = useMemo(() => {
+    if (!recherche.trim()) return { reponsePrincipale: null as Objectif | null, correspondances: [] as Objectif[], mentions: [] as Objectif[] };
     const termes = elargirRecherche(recherche);
+    const titreCanonique = termes.map((t) => REPONSE_CANONIQUE[t]).find(Boolean);
+    const reponsePrincipale = titreCanonique ? objectifs.find((o) => o.titre === titreCanonique) ?? null : null;
     const correspondances: Objectif[] = [];
     const mentions: Objectif[] = [];
     for (const o of objectifs) {
+      if (reponsePrincipale && o.id === reponsePrincipale.id) continue; // déjà mise en avant, pas la reciter dans la liste
       if (termes.some((q) => motCorrespond(o.titre, q))) correspondances.push(o);
       else if (termes.some((q) => motCorrespond(o.mots_cles ?? '', q))) mentions.push(o);
     }
@@ -272,7 +293,7 @@ export default function ObjectifsExplorer({ objectifs, relations }: { objectifs:
     // mauvaise porte d'entrée pour l'élève.
     const rang = (o: Objectif) => (o.famille && o.niveau !== null ? 0 : o.famille ? 1 : 2);
     correspondances.sort((a, b) => rang(a) - rang(b) || (a.niveau ?? 99) - (b.niveau ?? 99));
-    return { correspondances: correspondances.slice(0, 20), mentions: mentions.slice(0, 10) };
+    return { reponsePrincipale, correspondances: correspondances.slice(0, 20), mentions: mentions.slice(0, 10) };
   }, [recherche, objectifs]);
 
   function choisir(id: string) {
@@ -318,8 +339,8 @@ export default function ObjectifsExplorer({ objectifs, relations }: { objectifs:
         )}
 
         {zones.outils.length > 0 && (
-          <div style={{ background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
-            <p style={labelSection}>Zones à travailler</p>
+          <div style={{ background: 'rgba(139,92,246,0.06)', border: `1px solid #8B5CF6`, borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
+            <p style={{ fontSize: 11, color: '#8B5CF6', textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: 700, margin: '0 0 4px' }}>🧭 Zones à travailler</p>
             {zones.intro && (
               <p style={{ fontSize: 13, color: COULEURS.texteAtt, lineHeight: 1.6, margin: '0 0 10px' }}>{zones.intro}</p>
             )}
@@ -327,7 +348,7 @@ export default function ObjectifsExplorer({ objectifs, relations }: { objectifs:
               {zones.outils.map((o) => (
                 <button
                   key={o.id} type="button" onClick={() => choisir(o.id)}
-                  style={{ fontSize: 12.5, padding: '6px 12px', borderRadius: 999, border: `1px solid ${COULEURS.bordure}`, background: 'transparent', color: COULEURS.texteAtt, cursor: 'pointer' }}
+                  style={{ fontSize: 12.5, padding: '6px 12px', borderRadius: 999, border: `1px solid rgba(139,92,246,0.4)`, background: 'transparent', color: COULEURS.texteAtt, cursor: 'pointer' }}
                 >
                   {formatTitre(o.titre)}
                 </button>
@@ -364,7 +385,16 @@ export default function ObjectifsExplorer({ objectifs, relations }: { objectifs:
 
       {recherche.trim() && (
         <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {correspondances.length === 0 && mentions.length === 0 ? (
+          {reponsePrincipale ? (
+            <button
+              type="button" onClick={() => choisir(reponsePrincipale.id)}
+              style={{ textAlign: 'left', padding: '16px 18px', borderRadius: 10, border: `1px solid #f0a`, background: 'rgba(255,0,170,0.1)', color: COULEURS.texte, cursor: 'pointer' }}
+            >
+              <span style={{ fontSize: 11, color: '#f0a', textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: 700 }}>Réponse</span>
+              <span style={{ display: 'block', fontSize: 18, fontWeight: 700, marginTop: 4 }}>{formatTitre(reponsePrincipale.titre)}</span>
+              <span style={{ display: 'block', fontSize: 12, color: COULEURS.texteFaible, marginTop: 4 }}>Variantes, régressions et progressions sur sa fiche →</span>
+            </button>
+          ) : correspondances.length === 0 && mentions.length === 0 ? (
             <p style={{ fontSize: 13, color: COULEURS.texteFaible }}>
               Rien ne correspond. Tu ne trouves pas ce que tu cherches ? Demande à Sylvain de l'ajouter.
             </p>
