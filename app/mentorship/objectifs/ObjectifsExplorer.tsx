@@ -27,7 +27,7 @@ function motCorrespond(texte: string, q: string): boolean {
 // lequel élargit la recherche à tous les autres du même groupe.
 const GROUPES_SYNONYMES: string[][] = [
   ['traction', 'tirage', 'chin', 'pull', 'rowing', 'row'],
-  ['poussee', 'pousser', 'push', 'dips', 'dip'],
+  ['poussee', 'pousser', 'push', 'dips', 'dip', 'pompe', 'pompes'],
   ['squat', 'accroupi'],
   ['pont', 'bridge'],
   ['handstand', 'poirier', 'atr', 'renversement', 'renverse'],
@@ -146,8 +146,11 @@ function PositionDansFamille({ selection, objectifs, choisir }: { selection: Obj
           </button>
         </div>
 
-        <div style={{ textAlign: 'center', fontSize: 13, padding: '10px 12px', borderRadius: 8, border: `1px solid #f0a`, background: 'rgba(255,0,170,0.1)', color: COULEURS.texte, fontWeight: 700 }}>
-          {selection.titre} <span style={{ fontWeight: 400, opacity: 0.6 }}>(ici)</span>
+        <div>
+          <p style={{ fontSize: 10, color: '#f0a', textTransform: 'uppercase', letterSpacing: 0.5, margin: '3px 0 3px', fontWeight: 700 }}>Objectif</p>
+          <div style={{ textAlign: 'center', fontSize: 13, padding: '10px 12px', borderRadius: 8, border: `1px solid #f0a`, background: 'rgba(255,0,170,0.1)', color: COULEURS.texte, fontWeight: 700 }}>
+            {selection.titre} <span style={{ fontWeight: 400, opacity: 0.6 }}>(ici)</span>
+          </div>
         </div>
 
         <div>
@@ -156,8 +159,8 @@ function PositionDansFamille({ selection, objectifs, choisir }: { selection: Obj
             type="button" onClick={() => suivant && choisir(suivant.id)} disabled={!suivant}
             style={{
               width: '100%', textAlign: 'left', fontSize: 12.5, padding: '9px 12px', borderRadius: 8, minHeight: 40,
-              border: `1px solid ${suivant ? '#f0a' : COULEURS.bordure}`, background: suivant ? 'rgba(255,0,170,0.06)' : 'transparent',
-              color: suivant ? '#f0a' : COULEURS.texteFaible, cursor: suivant ? 'pointer' : 'default', fontWeight: suivant ? 600 : 400,
+              border: `1px solid ${COULEURS.bordure}`, background: suivant ? COULEURS.surfaceForte : 'transparent',
+              color: suivant ? COULEURS.texteAtt : COULEURS.texteFaible, cursor: suivant ? 'pointer' : 'default',
               opacity: suivant ? 1 : 0.4,
             }}
           >
@@ -214,12 +217,22 @@ export default function ObjectifsExplorer({ objectifs, relations }: { objectifs:
   // Recherche volontairement stricte (sous-chaîne, pas de recherche floue) :
   // ne matche que sur le titre et les mots-clés que Sylvain a lui-même
   // validés pour chaque objectif — pas de suggestion inventée.
-  const resultats = useMemo(() => {
-    if (!recherche.trim()) return [];
+  // Deux niveaux : correspondance directe (le titre contient le mot cherché,
+  // c'est de ça que parle l'élève) et mention associée (seulement dans les
+  // mots-clés — un outil qui EN PARLE sans être LE sujet). Sans cette
+  // distinction, un outil d'épaule qui mentionne juste "push-up" en mot-clé
+  // ressort au même niveau qu'une vraie vidéo de push-up, ce qui noie le
+  // résultat que l'élève cherche vraiment.
+  const { correspondances, mentions } = useMemo(() => {
+    if (!recherche.trim()) return { correspondances: [] as Objectif[], mentions: [] as Objectif[] };
     const termes = elargirRecherche(recherche);
-    return objectifs
-      .filter((o) => termes.some((q) => motCorrespond(o.titre, q) || motCorrespond(o.mots_cles ?? '', q)))
-      .slice(0, 25);
+    const correspondances: Objectif[] = [];
+    const mentions: Objectif[] = [];
+    for (const o of objectifs) {
+      if (termes.some((q) => motCorrespond(o.titre, q))) correspondances.push(o);
+      else if (termes.some((q) => motCorrespond(o.mots_cles ?? '', q))) mentions.push(o);
+    }
+    return { correspondances: correspondances.slice(0, 20), mentions: mentions.slice(0, 10) };
   }, [recherche, objectifs]);
 
   function choisir(id: string) {
@@ -273,9 +286,14 @@ export default function ObjectifsExplorer({ objectifs, relations }: { objectifs:
               {zones.map((o) => (
                 <button
                   key={o.id} type="button" onClick={() => choisir(o.id)}
-                  style={{ textAlign: 'left', fontSize: 12.5, padding: '8px 12px', borderRadius: 8, border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surface, color: COULEURS.texteAtt, cursor: 'pointer' }}
+                  style={{ textAlign: 'left', padding: '9px 12px', borderRadius: 8, border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surface, color: COULEURS.texteAtt, cursor: 'pointer' }}
                 >
-                  {o.titre}
+                  <span style={{ fontSize: 12.5, color: COULEURS.texte, fontWeight: 600 }}>{o.titre}</span>
+                  {o.descriptif && (
+                    <span style={{ display: 'block', fontSize: 11.5, color: COULEURS.texteFaible, marginTop: 2, lineHeight: 1.4 }}>
+                      {o.descriptif.length > 110 ? o.descriptif.slice(0, 110).trim() + '…' : o.descriptif}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
@@ -310,20 +328,39 @@ export default function ObjectifsExplorer({ objectifs, relations }: { objectifs:
 
       {recherche.trim() && (
         <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {resultats.length === 0 ? (
+          {correspondances.length === 0 && mentions.length === 0 ? (
             <p style={{ fontSize: 13, color: COULEURS.texteFaible }}>
               Rien ne correspond. Tu ne trouves pas ce que tu cherches ? Demande à Sylvain de l'ajouter.
             </p>
           ) : (
-            resultats.map((o) => (
-              <button
-                key={o.id} type="button" onClick={() => choisir(o.id)}
-                style={{ textAlign: 'left', padding: '10px 14px', borderRadius: 8, border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surface, color: COULEURS.texte, cursor: 'pointer' }}
-              >
-                <span style={{ fontSize: 14 }}>{o.titre}</span>
-                <span style={{ display: 'block', fontSize: 11, color: COULEURS.texteFaible, marginTop: 2 }}>{o.branche}{o.sous_groupe ? ` · ${o.sous_groupe}` : ''}</span>
-              </button>
-            ))
+            <>
+              {correspondances.map((o) => (
+                <button
+                  key={o.id} type="button" onClick={() => choisir(o.id)}
+                  style={{ textAlign: 'left', padding: '10px 14px', borderRadius: 8, border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surface, color: COULEURS.texte, cursor: 'pointer' }}
+                >
+                  <span style={{ fontSize: 14 }}>{o.titre}</span>
+                  <span style={{ display: 'block', fontSize: 11, color: COULEURS.texteFaible, marginTop: 2 }}>{o.branche}{o.sous_groupe ? ` · ${o.sous_groupe}` : ''}</span>
+                </button>
+              ))}
+
+              {mentions.length > 0 && (
+                <>
+                  <p style={{ fontSize: 11, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 0.5, margin: '10px 0 2px' }}>
+                    En parlent aussi
+                  </p>
+                  {mentions.map((o) => (
+                    <button
+                      key={o.id} type="button" onClick={() => choisir(o.id)}
+                      style={{ textAlign: 'left', padding: '8px 14px', borderRadius: 8, border: `1px solid ${COULEURS.bordure}`, background: 'transparent', color: COULEURS.texteAtt, cursor: 'pointer' }}
+                    >
+                      <span style={{ fontSize: 13 }}>{o.titre}</span>
+                      <span style={{ display: 'block', fontSize: 11, color: COULEURS.texteFaible, marginTop: 2 }}>{o.branche}{o.sous_groupe ? ` · ${o.sous_groupe}` : ''}</span>
+                    </button>
+                  ))}
+                </>
+              )}
+            </>
           )}
         </div>
       )}
