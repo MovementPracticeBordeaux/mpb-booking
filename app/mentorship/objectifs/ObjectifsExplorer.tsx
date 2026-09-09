@@ -60,9 +60,11 @@ const GROUPES_SYNONYMES: string[][] = [
 const REPONSE_CANONIQUE: Record<string, string> = {
   'push': 'PUSH UP CLEAN',
   'traction': 'CHIN UP RING',
-  'tirage': 'Rowing circle - inside',
+  'tirage': 'ROWING ANNEAUX',
   'dips': 'Dips bar',
-  'mu': 'MU HORIZONTAL',
+  // 'mu' (muscle up) volontairement absent : la vidéo n'existe pas encore
+  // (Sylvain doit la fournir). Pas de lien tant qu'elle n'est pas là --
+  // la recherche retombe sur la liste normale (MU Horizontal, etc.).
 };
 
 // Normalise en enlevant les accents, pour que les synonymes matchent quelle
