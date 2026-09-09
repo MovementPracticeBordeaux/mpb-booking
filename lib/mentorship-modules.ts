@@ -528,7 +528,7 @@ const FORCE: NoeudMentorship[] = [
     ],
     progressionBonus: [
       { id: 'mu-horizontal', nom: 'MU Horizontal', videoUrl: 'https://youtu.be/FpASYrW6dwA' },
-      { id: 'force-pushup', nom: 'Force - Push Up (régression/référence)', videoUrl: 'https://youtu.be/dvKypiqTkJE' },
+      { id: 'force-pushup', nom: 'Push-up variation (régression/référence)', videoUrl: 'https://youtu.be/dvKypiqTkJE' },
     ],
   },
   {
