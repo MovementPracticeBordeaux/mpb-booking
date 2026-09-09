@@ -232,6 +232,13 @@ export default function ObjectifsExplorer({ objectifs, relations }: { objectifs:
       if (termes.some((q) => motCorrespond(o.titre, q))) correspondances.push(o);
       else if (termes.some((q) => motCorrespond(o.mots_cles ?? '', q))) mentions.push(o);
     }
+    // Priorité aux objectifs qui ont une vraie place dans une progression
+    // (famille + niveau) plutôt qu'aux orphelins et compilations (comme
+    // "FORCE - PUSH UP", explicitement hors progression) qui, sans ce tri,
+    // ne remontaient en tête que par hasard alphabétique -- une très
+    // mauvaise porte d'entrée pour l'élève.
+    const rang = (o: Objectif) => (o.famille && o.niveau !== null ? 0 : o.famille ? 1 : 2);
+    correspondances.sort((a, b) => rang(a) - rang(b) || (a.niveau ?? 99) - (b.niveau ?? 99));
     return { correspondances: correspondances.slice(0, 20), mentions: mentions.slice(0, 10) };
   }, [recherche, objectifs]);
 
