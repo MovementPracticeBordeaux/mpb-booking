@@ -122,6 +122,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Monday', 'Wednesday', 'Friday'], opens: '09:00', closes: '21:00' },
               ],
               sameAs: [
+                'https://www.instagram.com/movement_practice_bordeaux/',
                 'https://www.youtube.com/@movementpracticebordeaux',
                 'https://www.tiktok.com/@movementpracticebordeaux',
               ],
