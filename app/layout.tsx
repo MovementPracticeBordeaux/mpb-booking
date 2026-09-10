@@ -96,6 +96,32 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="fr">
       <head>
         <link rel="stylesheet" href={FONTS_IMPORT_URL} />
+        {/* Données structurées (schema.org) pour le référencement local —
+            aide Google à afficher adresse/téléphone/horaires directement
+            dans les résultats de recherche et sur Google Maps. */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'ExerciseGym',
+              name: 'Movement Practice Bordeaux',
+              description: 'Coaching, cours et ateliers au poids de corps à Bordeaux : calisthenics, handstand, locomotion, mobilité.',
+              url: 'https://www.movementpracticebordeaux.com',
+              telephone: '+33620477064',
+              email: 'contact@movementpracticebordeaux.com',
+              address: {
+                '@type': 'PostalAddress',
+                streetAddress: '37 Quai des Queyries',
+                addressLocality: 'Bordeaux',
+                postalCode: '33100',
+                addressCountry: 'FR',
+              },
+              areaServed: 'Bordeaux',
+              sameAs: [],
+            }),
+          }}
+        />
       </head>
       <body style={{
         fontFamily: POLICE_CORPS, margin: 0, color: COULEURS.texte,

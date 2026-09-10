@@ -4,6 +4,12 @@ import DefiOnglets from './DefiOnglets';
 import EmojiBeast from './EmojiBeast';
 import BoutonNiveau from './BoutonNiveau';
 
+export const metadata = {
+  title: 'Défi du mois — Movement Practice Bordeaux',
+  description: 'Chaque mois, un défi ouvert aux élèves de Movement Practice Bordeaux : bronze, argent, or, et le mode Beast pour les plus motivés.',
+};
+
+
 export const dynamic = 'force-dynamic';
 
 const COULEUR_NIVEAU: Record<string, string> = {

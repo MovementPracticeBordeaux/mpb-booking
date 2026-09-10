@@ -3,6 +3,11 @@ import { COULEURS, GRADIENT, POLICE_DISPLAY } from '@/lib/theme';
 
 export const dynamic = 'force-dynamic';
 
+export const metadata = {
+  title: 'Événements & ateliers — Movement Practice Bordeaux',
+  description: 'Ateliers et stages ponctuels à Bordeaux, en plus des cours réguliers : handstand, calisthenics, mobilité et plus.',
+};
+
 export default async function EvenementsPage() {
   const admin = supabaseAdmin();
   const { data: evenements } = await admin

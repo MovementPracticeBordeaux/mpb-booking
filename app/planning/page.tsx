@@ -6,6 +6,12 @@ import PlanningVue, { JourPlanning } from '../components/PlanningVue';
 
 export const dynamic = 'force-dynamic';
 
+export const metadata = {
+  title: 'Planning des cours — Movement Practice Bordeaux',
+  description:
+    'Planning des cours collectifs à Bordeaux : calisthenics, handstand, mobilité, locomotion, arm balance, altinha. Réservation directe en ligne.',
+};
+
 export default async function PlanningPage({ searchParams }: { searchParams: { erreur?: string } }) {
   const supabase = supabaseServer();
 

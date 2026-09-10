@@ -23,6 +23,8 @@ const FAQ = [
   { q: 'Comment réserver une place ?', r: 'Directement depuis la page Planning : choisis ta formule, ton créneau, tu réserves, c\'est instantané.' },
 ];
 
+export const dynamic = 'force-dynamic';
+
 export default async function AccueilPage() {
   const admin = supabaseAdmin();
   const { data: evenements } = await admin
