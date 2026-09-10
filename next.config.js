@@ -11,6 +11,9 @@ const nextConfig = {
     return [
       { source: '/plans-pricing', destination: '/tarifs', permanent: true },
       { source: '/formation-mentorship', destination: '/mentorat', permanent: true },
+      { source: '/book-online', destination: '/planning', permanent: true },
+      { source: '/listedesprogrammes', destination: '/', permanent: true },
+      { source: '/coaching-mouvement', destination: '/coaching', permanent: true },
       // Toutes les anciennes fiches de cours individuelles (Wix) n'ont pas
       // d'équivalent direct sur le nouveau site, qui les regroupe sur la
       // page d'accueil et /planning — redirigées vers l'accueil.

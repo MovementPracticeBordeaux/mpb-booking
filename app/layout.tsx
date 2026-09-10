@@ -112,13 +112,19 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               email: 'contact@movementpracticebordeaux.com',
               address: {
                 '@type': 'PostalAddress',
-                streetAddress: '37 Quai des Queyries',
+                streetAddress: '87 Quai des Queyries',
                 addressLocality: 'Bordeaux',
                 postalCode: '33100',
                 addressCountry: 'FR',
               },
               areaServed: 'Bordeaux',
-              sameAs: [],
+              openingHoursSpecification: [
+                { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Monday', 'Wednesday', 'Friday'], opens: '09:00', closes: '21:00' },
+              ],
+              sameAs: [
+                'https://www.youtube.com/@movementpracticebordeaux',
+                'https://www.tiktok.com/@movementpracticebordeaux',
+              ],
             }),
           }}
         />
