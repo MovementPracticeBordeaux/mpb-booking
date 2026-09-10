@@ -1,5 +1,6 @@
 import { COULEURS, GRADIENT, GRADIENT_TEXTE, POLICE_DISPLAY, POLICE_CORPS } from '@/lib/theme';
 import { FORMULES } from '@/lib/formules';
+import { supabaseAdmin } from '@/lib/supabase-server';
 import Temoignages from './components/Temoignages';
 import CarteDiscipline from './components/CarteDiscipline';
 
@@ -22,7 +23,17 @@ const FAQ = [
   { q: 'Comment réserver une place ?', r: 'Directement depuis la page Planning : choisis ta formule, ton créneau, tu réserves, c\'est instantané.' },
 ];
 
-export default function AccueilPage() {
+export default async function AccueilPage() {
+  const admin = supabaseAdmin();
+  const { data: evenements } = await admin
+    .from('evenements')
+    .select('id, titre, date_debut, prix')
+    .eq('actif', true)
+    .gte('date_fin', new Date().toISOString())
+    .order('date_debut', { ascending: true })
+    .limit(1);
+  const evenementAVenir = evenements?.[0] ?? null;
+
   return (
     <main>
       <style>{`
@@ -36,7 +47,25 @@ export default function AccueilPage() {
         .img-portrait { width: 220px; height: 280px; display: block; }
         details > summary { cursor: pointer; list-style: none; }
         details > summary::-webkit-details-marker { display: none; }
+        @keyframes pulse-evenement { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
       `}</style>
+
+      {evenementAVenir && (
+        <a
+          href={`/evenements/${evenementAVenir.id}`}
+          style={{
+            display: 'block', textDecoration: 'none', textAlign: 'center',
+            padding: '12px 20px', background: GRADIENT, color: 'white',
+          }}
+        >
+          <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: 0.3 }}>
+            <span style={{ display: 'inline-block', animation: 'pulse-evenement 1.8s ease-in-out infinite' }}>🔴</span>
+            {' '}Prochain événement — {evenementAVenir.titre} ·{' '}
+            {new Date(evenementAVenir.date_debut).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}{' '}
+            · {evenementAVenir.prix} € — Voir les détails →
+          </span>
+        </a>
+      )}
 
       {/* HERO */}
       <section style={{ maxWidth: 720, margin: '0 auto', padding: '64px 20px 40px', textAlign: 'center' }}>

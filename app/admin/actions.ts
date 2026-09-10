@@ -8,6 +8,7 @@ import { joursVacancesDansPeriode, ajouterJours } from '@/lib/vacances';
 import { stripe } from '@/lib/stripe';
 import { envoyerEmail } from '@/lib/resend';
 import { envoyerPushAEleve } from '@/lib/push';
+import { parisVersUTC } from '@/lib/dates-paris';
 
 // Toute erreur dans une action admin redirige vers la page d'où elle vient
 // (avec un message clair), au lieu de crasher (Next.js masque les throw en
@@ -918,4 +919,103 @@ export async function surclasserNiveauParticipation(formData: FormData) {
   revalidatePath('/admin/defis');
   revalidatePath('/defi');
   reussir('/admin/defis', 'Niveau mis à jour — étoile surclassée, élève prévenu.');
+}
+
+// --- Événements ponctuels (ateliers, stages...) ---
+
+export async function creerEvenement(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+
+  const titre = (formData.get('titre') as string)?.trim();
+  const description = (formData.get('description') as string)?.trim();
+  const lieu = (formData.get('lieu') as string)?.trim();
+  const dateDebut = formData.get('date_debut') as string;
+  const dateFin = formData.get('date_fin') as string;
+  const prix = parseFloat(formData.get('prix') as string);
+
+  if (!titre || !description || !lieu || !dateDebut || !dateFin) {
+    echouer('/admin/evenements', 'Tous les champs sont requis.');
+  }
+  if (isNaN(prix) || prix < 0) echouer('/admin/evenements', 'Prix invalide.');
+  if (dateFin <= dateDebut) echouer('/admin/evenements', 'La date de fin doit être après la date de début.');
+
+  const { error } = await admin.from('evenements').insert({
+    titre, description, lieu,
+    date_debut: parisVersUTC(dateDebut), date_fin: parisVersUTC(dateFin), prix,
+  });
+  if (error) echouer('/admin/evenements', error.message);
+
+  revalidatePath('/admin/evenements');
+  revalidatePath('/');
+  revalidatePath('/evenements');
+  reussir('/admin/evenements', 'Événement publié — visible sur la page d\'accueil.');
+}
+
+export async function modifierEvenement(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+
+  const id = formData.get('id') as string;
+  const titre = (formData.get('titre') as string)?.trim();
+  const description = (formData.get('description') as string)?.trim();
+  const lieu = (formData.get('lieu') as string)?.trim();
+  const dateDebut = formData.get('date_debut') as string;
+  const dateFin = formData.get('date_fin') as string;
+  const prix = parseFloat(formData.get('prix') as string);
+
+  if (!titre || !description || !lieu || !dateDebut || !dateFin) {
+    echouer('/admin/evenements', 'Tous les champs sont requis.');
+  }
+  if (isNaN(prix) || prix < 0) echouer('/admin/evenements', 'Prix invalide.');
+  if (dateFin <= dateDebut) echouer('/admin/evenements', 'La date de fin doit être après la date de début.');
+
+  const { error } = await admin.from('evenements').update({
+    titre, description, lieu,
+    date_debut: parisVersUTC(dateDebut), date_fin: parisVersUTC(dateFin), prix,
+  }).eq('id', id);
+  if (error) echouer('/admin/evenements', error.message);
+
+  revalidatePath('/admin/evenements');
+  revalidatePath('/');
+  revalidatePath('/evenements');
+  reussir('/admin/evenements', 'Événement modifié.');
+}
+
+// Masque l'événement (page d'accueil, liste publique) sans le supprimer —
+// garde une trace si des inscriptions/paiements y sont un jour rattachés.
+export async function desactiverEvenement(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+  const id = formData.get('id') as string;
+  const { error } = await admin.from('evenements').update({ actif: false }).eq('id', id);
+  if (error) echouer('/admin/evenements', error.message);
+  revalidatePath('/admin/evenements');
+  revalidatePath('/');
+  revalidatePath('/evenements');
+  reussir('/admin/evenements', 'Événement masqué du site.');
+}
+
+export async function reactiverEvenement(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+  const id = formData.get('id') as string;
+  const { error } = await admin.from('evenements').update({ actif: true }).eq('id', id);
+  if (error) echouer('/admin/evenements', error.message);
+  revalidatePath('/admin/evenements');
+  revalidatePath('/');
+  revalidatePath('/evenements');
+  reussir('/admin/evenements', 'Événement réaffiché sur le site.');
+}
+
+export async function supprimerEvenement(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+  const id = formData.get('id') as string;
+  const { error } = await admin.from('evenements').delete().eq('id', id);
+  if (error) echouer('/admin/evenements', error.message);
+  revalidatePath('/admin/evenements');
+  revalidatePath('/');
+  revalidatePath('/evenements');
+  reussir('/admin/evenements', 'Événement supprimé définitivement.');
 }

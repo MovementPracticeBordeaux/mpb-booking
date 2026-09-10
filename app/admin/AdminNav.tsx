@@ -8,6 +8,7 @@ const LIENS = [
   { href: '/admin/eleves', label: 'Élèves & paiements' },
   { href: '/admin/factures', label: 'Factures' },
   { href: '/admin/defis', label: 'Défi du mois' },
+  { href: '/admin/evenements', label: 'Événements' },
   { href: '/admin/statistiques', label: 'Statistiques' },
   { href: '/admin/mentorship', label: 'Mentorat' },
   { href: '/admin/objectifs', label: 'Objectifs' },
