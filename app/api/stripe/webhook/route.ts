@@ -3,7 +3,7 @@ import { stripe } from '@/lib/stripe';
 import { supabaseAdmin } from '@/lib/supabase-server';
 import { FORMULES } from '@/lib/formules';
 import { envoyerEmail } from '@/lib/resend';
-import { alerterAdmin } from '@/lib/alerte-admin';
+import { alerterAdmin, alerterAdminPush } from '@/lib/alerte-admin';
 import Stripe from 'stripe';
 
 export async function POST(req: NextRequest) {
@@ -78,6 +78,11 @@ export async function POST(req: NextRequest) {
           await alerterAdmin(
             'Nouvelle réservation événement',
             `${nom ?? email} vient de réserver une place pour "${evenement.titre}" (${montant.toFixed(2)} €).`
+          );
+          await alerterAdminPush(
+            '💰 Nouvel achat',
+            `${nom ?? email} — ${evenement.titre} (${montant.toFixed(2)} €)`,
+            '/admin/evenements'
           );
         }
       } else {
@@ -198,6 +203,15 @@ export async function POST(req: NextRequest) {
           // sont déjà enregistrés à ce stade, on ne fait pas échouer le
           // webhook pour un email qui ne part pas.
         }
+
+        // Notification push admin à chaque achat, quel qu'il soit — pour
+        // être au courant en temps réel, sans avoir à consulter l'admin.
+        const emailAcheteur = session.customer_details?.email ?? session.customer_email ?? 'inconnu';
+        await alerterAdminPush(
+          '💰 Nouvel achat',
+          `${emailAcheteur} — ${formule.nom} (${((session.amount_total ?? 0) / 100).toFixed(2)} €)`,
+          '/admin/eleves'
+        );
       }
     } else {
       // userId ou formule manquant/invalide (clé de formule renommée,

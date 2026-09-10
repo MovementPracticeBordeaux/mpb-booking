@@ -36,6 +36,7 @@ async function acheter(
 // Tous en "Achat ponctuel" (aucun n'est récurrent).
 const PRICE_IDS: Record<string, string> = {
   cours_decouverte: 'price_1U0elPA7uUFwYAcPMLZhjc6x',
+  cours_unite: 'price_1UEEqKA7uUFwYAcPLFA44eM9',
   mensuel_4: 'price_1U0fdzA7uUFwYAcPnpkuSxMV',
   mensuel_8: 'price_1U0fegA7uUFwYAcPHADTfVBr',
   illimite: 'price_1U0ffOA7uUFwYAcP4TyQfjQO',
@@ -57,7 +58,7 @@ const PRICE_IDS: Record<string, string> = {
 };
 
 const GROUPES = [
-  { titre: 'Cours collectifs', cles: ['cours_decouverte', 'mensuel_4', 'mensuel_8', 'illimite', 'carnet_5', 'carnet_10'] },
+  { titre: 'Cours collectifs', cles: ['cours_decouverte', 'cours_unite', 'mensuel_4', 'mensuel_8', 'illimite', 'carnet_5', 'carnet_10'] },
   { titre: 'Coaching individuel', cles: ['coaching_unite', 'coaching_carnet_3h', 'coaching_carnet_4h', 'coaching_online'] },
 ];
 

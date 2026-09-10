@@ -49,6 +49,11 @@ export const FORMULES: Record<string, Formule> = {
   carnet_10: { nom: 'Carnet 10 cours', categorie: 'planning', unite: 'séance', quota: 10, validiteMois: 6, prixIndicatif: 149 },
   carnet_5: { nom: 'Carnet 5 cours', categorie: 'planning', unite: 'séance', quota: 5, validiteMois: 3, prixIndicatif: 85 },
   cours_decouverte: { nom: 'Cours découverte', categorie: 'planning', unite: 'séance', quota: 1, validiteMois: 1, prixIndicatif: 10 },
+  // Contrairement au cours découverte (réservé aux nouveaux, 1 seule fois),
+  // celui-ci est réachetable librement — utile pour quelqu'un qui a déjà
+  // consommé son cours découverte et veut continuer à essayer différentes
+  // thématiques avant de s'engager sur un pass plus large.
+  cours_unite: { nom: 'Cours à l\'unité', categorie: 'planning', unite: 'séance', quota: 1, validiteMois: 1, prixIndicatif: 20 },
 
   // --- Coaching individuel & mentorship (pas de réservation de créneau) ---
   coaching_online: { nom: 'Coaching Online', categorie: 'coaching', unite: null, quota: null, validiteMois: 1, prixIndicatif: 80 },
