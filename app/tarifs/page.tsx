@@ -59,13 +59,12 @@ const PRICE_IDS: Record<string, string> = {
 
 const GROUPES = [
   { titre: 'Cours collectifs', cles: ['cours_decouverte', 'mensuel_4', 'mensuel_8', 'illimite', 'carnet_5', 'carnet_10'] },
-  { titre: 'Coaching individuel', cles: ['coaching_unite', 'coaching_carnet_3h', 'coaching_carnet_4h', 'coaching_online'] },
+  { titre: 'Coaching individuel', cles: ['coaching_unite', 'coaching_carnet_3h', 'coaching_carnet_4h'] },
 ];
 
 // Formules mises en avant (badge). Clé -> libellé du badge.
 const MIS_EN_AVANT: Record<string, string> = {
   illimite: 'Le + populaire',
-  coaching_online: 'Le + demandé',
   mentorship_1branche_6: 'Le + choisi',
 };
 

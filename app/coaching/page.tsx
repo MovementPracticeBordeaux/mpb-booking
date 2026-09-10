@@ -24,15 +24,6 @@ const ATOUTS_PRESENTIEL = [
   'Options variées de carnet',
 ];
 
-const ATOUTS_ONLINE = [
-  'Programme adapté à ton niveau, ton temps et tes objectifs',
-  'Entraînements progressifs et thématiques',
-  'Feedback individuel avec corrections techniques',
-  'Planification mensuelle claire',
-  'Validation des compétences (« mastering ») en fin de mois',
-  'Motivation, autonomie et progression durable',
-];
-
 const FAQ_COACHING = [
   { q: "Est-ce adapté aux débutants ?", r: "Oui. Le coaching démarre à ton niveau actuel. Les séances permettent d'apprendre les bases calisthenics, handstand, mobilité et locomotion progressivement." },
   { q: "Quelle est la durée d'un programme ?", r: "Le programme fonctionne mensuellement. Chaque mois, tu reçois un plan d'entraînement adapté, des corrections et des objectifs." },
@@ -122,38 +113,6 @@ export default function CoachingPage() {
               );
             })}
           </div>
-        </div>
-      </section>
-
-      {/* COACHING ONLINE */}
-      <section style={{ maxWidth: 860, margin: '0 auto', padding: '0 20px 64px', display: 'flex', gap: 32, flexWrap: 'wrap-reverse', alignItems: 'center' }}>
-        <img
-          src="/coaching-online.png"
-          alt="Élève suivant un programme de coaching en ligne Movement Practice Bordeaux"
-          className="img-coaching"
-          style={{ objectFit: 'cover', borderRadius: 16, flexShrink: 0 }}
-        />
-        <div style={{ flex: 1, minWidth: 260 }}>
-          <p style={{ fontSize: 12, letterSpacing: 2, color: COULEURS.texteFaible, marginBottom: 10 }}>OÙ QUE TU SOIS</p>
-          <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 28, letterSpacing: 0.5, margin: '0 0 16px' }}>
-            Coaching Online
-          </h2>
-          <p style={{ color: COULEURS.texteAtt, lineHeight: 1.6, marginBottom: 16 }}>
-            Où que tu sois dans le monde, un accompagnement à distance : chaque mois, un programme
-            personnalisé selon ton objectif (remise en forme, mobilité, renforcement, handstand,
-            locomotion), livré via une application dédiée avec tutoriels vidéo et feedback direct.
-          </p>
-          <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {ATOUTS_ONLINE.map((a) => (
-              <li key={a} style={{ color: COULEURS.texteAtt, fontSize: 14, display: 'flex', gap: 8 }}>
-                <span style={GRADIENT_TEXTE}>✓</span> {a}
-              </li>
-            ))}
-          </ul>
-          <a href="/tarifs#coaching_online" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${COULEURS.bordure}`, padding: '8px 0', fontSize: 14, maxWidth: 320, textDecoration: 'none', color: 'inherit' }}>
-            <span>{FORMULES.coaching_online.nom}</span>
-            <span style={{ color: '#FF2D78', fontWeight: 600 }}>{FORMULES.coaching_online.prixIndicatif} € / mois →</span>
-          </a>
         </div>
       </section>
 

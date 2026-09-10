@@ -56,6 +56,10 @@ export const FORMULES: Record<string, Formule> = {
   cours_unite: { nom: 'Cours à l\'unité', categorie: 'planning', unite: 'séance', quota: 1, validiteMois: 1, prixIndicatif: 20 },
 
   // --- Coaching individuel & mentorship (pas de réservation de créneau) ---
+  // coaching_online n'est plus proposé à la vente (retiré de /tarifs le
+  // 11/09/2026) - conservé uniquement pour les élèves qui l'ont déjà en
+  // base (factures, accès en cours), même principe que l'ancienne formule
+  // Mentorship ci-dessous.
   coaching_online: { nom: 'Coaching Online', categorie: 'coaching', unite: null, quota: null, validiteMois: 1, prixIndicatif: 80 },
   coaching_unite: { nom: 'Coaching 1-to-1 à l\'unité', categorie: 'coaching', unite: 'heure', quota: 1, validiteMois: 1, prixIndicatif: 60 },
   coaching_carnet_3h: { nom: 'Carnet coaching 3h', categorie: 'coaching', unite: 'heure', quota: 3, validiteMois: 3, prixIndicatif: 165 },
