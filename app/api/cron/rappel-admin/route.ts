@@ -13,9 +13,18 @@ import { envoyerPushAEleve } from '@/lib/push';
 // Idempotent via la table admin_rappels_envoyes (clé cours_id+date_seance)
 // : peu importe combien de fois cette route est appelée dans la fenêtre,
 // chaque séance ne déclenche qu'UN seul envoi.
-const FENETRE_MIN = 80;  // borne basse (minutes avant le début du cours)
-const FENETRE_MAX = 100; // borne haute — plage de 20 min autour de 90 min,
-                          // pour couvrir un appel toutes les 15 min avec marge
+// Fenêtre de rattrapage plutôt qu'une fenêtre étroite autour de 90 min :
+// GitHub Actions ne respecte pas fiablement un planning "toutes les 15 min"
+// sur un dépôt peu chargé (observé : ~14 exécutions/jour au lieu de 96,
+// GitHub retarde/regroupe les workflows planifiés à haute fréquence). Avec
+// une fenêtre étroite (80-100 min), un retard de plusieurs heures faisait
+// sauter la notification purement et simplement. Ici : dès qu'un cours
+// commence dans MAX_AVANT minutes ou moins, et qu'il n'a pas déjà été
+// notifié (déduplication ci-dessous), on notifie — y compris juste après
+// le début si l'appel arrive très en retard (MARGE_APRES), plutôt que de
+// perdre l'info pour de bon.
+const MAX_AVANT = 100; // notifie dès que le cours démarre dans ≤ 100 min
+const MARGE_APRES = 15; // tolère un appel jusqu'à 15 min après le début
 
 // Renvoie l'heure actuelle à Paris, mais encodée comme si c'était de l'UTC
 // (mêmes composants année/mois/jour/heure/minute) — pour pouvoir la
@@ -73,7 +82,7 @@ export async function GET(req: NextRequest) {
     for (const cours of coursListe ?? []) {
       const debutCours = new Date(`${dateStr}T${cours.heure_debut}Z`);
       const minutesAvant = (debutCours.getTime() - maintenant.getTime()) / 60000;
-      if (minutesAvant < FENETRE_MIN || minutesAvant > FENETRE_MAX) continue;
+      if (minutesAvant > MAX_AVANT || minutesAvant < -MARGE_APRES) continue;
 
       // Marque la séance comme notifiée AVANT d'envoyer (insert avec
       // contrainte d'unicité) : si ça échoue, c'est qu'un appel précédent
@@ -123,7 +132,11 @@ export async function GET(req: NextRequest) {
         aUnDecouverte = (abosDecouverte?.length ?? 0) > 0;
       }
 
-      const titre = `${cours.discipline} dans 1h30`;
+      const minutesArrondi = Math.round(minutesAvant);
+      const quandTexte = minutesArrondi > 0
+        ? (minutesArrondi >= 60 ? `dans ${Math.floor(minutesArrondi / 60)}h${String(minutesArrondi % 60).padStart(2, '0')}` : `dans ${minutesArrondi} min`)
+        : 'a commencé';
+      const titre = `${cours.discipline} ${quandTexte}`;
       const ligneInscrits = nbInscrits > 0
         ? `${nbInscrits} inscrit${nbInscrits !== 1 ? 's' : ''} : ${listePrenoms}`
         : 'Aucun inscrit pour l\'instant';

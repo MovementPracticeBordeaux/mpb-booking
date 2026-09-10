@@ -16,8 +16,6 @@ export default async function EvenementDetailPage({ params }: { params: { id: st
 
   if (!e) notFound();
 
-  const messageWhatsApp = `Bonjour, j'ai une question sur "${e.titre}" le ${new Date(e.date_debut).toLocaleDateString('fr-FR')}.`;
-
   return (
     <main style={{ maxWidth: 560, margin: '0 auto', padding: 20 }}>
       <a href="/evenements" style={{ fontSize: 13, color: COULEURS.texteAtt, textDecoration: 'none' }}>← Tous les événements</a>
@@ -39,15 +37,7 @@ export default async function EvenementDetailPage({ params }: { params: { id: st
       <p style={{ fontSize: 15, lineHeight: 1.6, whiteSpace: 'pre-wrap', marginBottom: 28 }}>{e.description}</p>
 
       {e.stripe_price_id ? (
-        <>
-          <BoutonPayerEvenement evenementId={e.id} prix={e.prix} />
-          <p style={{ fontSize: 12, color: COULEURS.texteFaible, textAlign: 'center', marginTop: 10 }}>
-            Une question avant de réserver ?{' '}
-            <a href={`https://wa.me/33620477064?text=${encodeURIComponent(messageWhatsApp)}`} target="_blank" rel="noopener noreferrer" style={{ color: '#f0a' }}>
-              Contacte Sylvain sur WhatsApp
-            </a>
-          </p>
-        </>
+        <BoutonPayerEvenement evenementId={e.id} prix={e.prix} />
       ) : (
         <a
           href={`https://wa.me/33620477064?text=${encodeURIComponent(`Bonjour, je souhaite réserver ma place pour "${e.titre}" le ${new Date(e.date_debut).toLocaleDateString('fr-FR')} (${e.prix} €).`)}`}
