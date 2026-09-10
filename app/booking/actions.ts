@@ -40,13 +40,13 @@ export async function reserverCours(formData: FormData) {
     case 'ok':
       break;
     case 'pas_abonne':
-      versLesTarifs("Tu n'as pas encore de pass actif — choisis une formule ci-dessous pour pouvoir réserver.");
+      versLesTarifs("Tu n'as pas encore de pass actif — réserve ce cours seul, ou choisis un forfait ci-dessous.");
       return;
     case 'gele':
       echouer('Ton pass est actuellement gelé (contacte Sylvain pour le débloquer).');
       return;
     case 'expire':
-      versLesTarifs('Ton pass a expiré — renouvelle-le ci-dessous pour continuer à réserver.');
+      versLesTarifs('Ton pass a expiré — réserve ce cours seul, ou renouvelle un forfait ci-dessous.');
       return;
     case 'quota_epuise':
       versLesTarifs('Ton pass est épuisé — choisis une nouvelle formule ci-dessous.');

@@ -58,7 +58,7 @@ const PRICE_IDS: Record<string, string> = {
 };
 
 const GROUPES = [
-  { titre: 'Cours collectifs', cles: ['cours_decouverte', 'cours_unite', 'mensuel_4', 'mensuel_8', 'illimite', 'carnet_5', 'carnet_10'] },
+  { titre: 'Cours collectifs', cles: ['cours_decouverte', 'mensuel_4', 'mensuel_8', 'illimite', 'carnet_5', 'carnet_10'] },
   { titre: 'Coaching individuel', cles: ['coaching_unite', 'coaching_carnet_3h', 'coaching_carnet_4h', 'coaching_online'] },
 ];
 
@@ -191,6 +191,33 @@ export default function TarifsPage({ searchParams }: { searchParams: { erreur?: 
           )}
         </div>
       )}
+      {/* Pas un forfait comme les autres : une alternative légère, mise en
+          avant séparément plutôt que noyée parmi les vraies formules
+          ci-dessous — pour quelqu'un qui veut juste essayer un cours en
+          particulier sans s'engager sur un forfait. */}
+      <div
+        style={{
+          display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12, justifyContent: 'space-between',
+          border: `1px dashed ${COULEURS.bordure}`, borderRadius: 14, padding: '16px 20px', marginBottom: 32,
+        }}
+      >
+        <div>
+          <p style={{ margin: '0 0 4px', fontWeight: 700, fontSize: 15 }}>Pas encore prêt·e à choisir un forfait ?</p>
+          <p style={{ margin: 0, fontSize: 13, color: COULEURS.texteAtt }}>
+            Réserve un seul cours, sans engagement — {FORMULES.cours_unite.prixIndicatif} €.
+          </p>
+        </div>
+        <button
+          onClick={() => acheter(PRICE_IDS.cours_unite, 'cours_unite', dateDebut, setErreur)}
+          style={{
+            padding: '10px 18px', borderRadius: 999, border: `1px solid ${COULEURS.bordure}`,
+            background: 'none', color: 'inherit', fontSize: 14, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+          }}
+        >
+          Réserver ce cours seul
+        </button>
+      </div>
+
       {GROUPES.map((groupe) => (
         <section key={groupe.titre} style={{ marginBottom: 36 }}>
           <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 20, letterSpacing: 1, margin: '0 0 16px', ...GRADIENT_TEXTE }}>
