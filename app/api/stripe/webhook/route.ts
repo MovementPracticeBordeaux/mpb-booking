@@ -21,6 +21,77 @@ export async function POST(req: NextRequest) {
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
+    const evenementId = session.metadata?.evenement_id;
+
+    // Paiement d'un événement ponctuel (atelier, stage...) : logique
+    // séparée des formules classiques, pas de compte élève requis.
+    if (evenementId) {
+      const { data: dejaTraite } = await admin
+        .from('evenement_reservations')
+        .select('id')
+        .eq('stripe_session_id', session.id)
+        .maybeSingle();
+
+      if (dejaTraite) {
+        return NextResponse.json({ received: true, deja_traite: true });
+      }
+
+      const { data: evenement } = await admin.from('evenements').select('*').eq('id', evenementId).maybeSingle();
+      const email = session.customer_details?.email ?? session.customer_email;
+      const nom = session.customer_details?.name ?? null;
+      const montant = (session.amount_total ?? 0) / 100;
+
+      if (evenement && email) {
+        const { error: erreurInsert } = await admin.from('evenement_reservations').insert({
+          evenement_id: evenementId,
+          email,
+          nom,
+          montant,
+          stripe_session_id: session.id,
+        });
+
+        // Code 23505 = un autre appel du webhook a déjà inséré la ligne
+        // entre-temps (sécurité anti-doublon), pas une vraie erreur.
+        if (erreurInsert && erreurInsert.code !== '23505') {
+          console.error('Erreur insertion réservation événement:', erreurInsert.message);
+        }
+
+        if (!erreurInsert) {
+          try {
+            await envoyerEmail(
+              email,
+              `Confirmation de ta réservation : ${evenement.titre}`,
+              `<p>Merci pour ta réservation !</p>
+               <p>Ta place pour <strong>${evenement.titre}</strong> est confirmée.</p>
+               <p>📅 ${new Date(evenement.date_debut).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+               de ${new Date(evenement.date_debut).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+               à ${new Date(evenement.date_fin).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</p>
+               <p>📍 ${evenement.lieu}</p>
+               <p>Montant réglé : ${montant.toFixed(2)} €.</p>
+               <p>Une question avant l'événement ? <a href="https://wa.me/33620477064">Contacte Sylvain sur WhatsApp</a>.</p>`
+            );
+          } catch {
+            // Non bloquant : la réservation est déjà enregistrée, un email
+            // qui ne part pas ne doit pas faire échouer le webhook.
+          }
+
+          await alerterAdmin(
+            'Nouvelle réservation événement',
+            `${nom ?? email} vient de réserver une place pour "${evenement.titre}" (${montant.toFixed(2)} €).`
+          );
+        }
+      } else {
+        await alerterAdmin(
+          'Paiement événement non crédité automatiquement',
+          `Un paiement (session ${session.id}, ${montant.toFixed(2)} €) a été reçu pour un événement, ` +
+          `mais n'a pas pu être enregistré : ${!evenement ? 'événement introuvable' : "email de l'acheteur manquant"}. ` +
+          `Vérifie la session dans le dashboard Stripe.`
+        );
+      }
+
+      return NextResponse.json({ received: true });
+    }
+
     const userId = session.metadata?.user_id;
     const formuleNom = session.metadata?.formule_nom;
     const formule = formuleNom ? FORMULES[formuleNom] : null;

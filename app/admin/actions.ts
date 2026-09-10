@@ -933,6 +933,7 @@ export async function creerEvenement(formData: FormData) {
   const dateDebut = formData.get('date_debut') as string;
   const dateFin = formData.get('date_fin') as string;
   const prix = parseFloat(formData.get('prix') as string);
+  const stripePriceId = (formData.get('stripe_price_id') as string)?.trim() || null;
 
   if (!titre || !description || !lieu || !dateDebut || !dateFin) {
     echouer('/admin/evenements', 'Tous les champs sont requis.');
@@ -943,6 +944,7 @@ export async function creerEvenement(formData: FormData) {
   const { error } = await admin.from('evenements').insert({
     titre, description, lieu,
     date_debut: parisVersUTC(dateDebut), date_fin: parisVersUTC(dateFin), prix,
+    stripe_price_id: stripePriceId,
   });
   if (error) echouer('/admin/evenements', error.message);
 
@@ -963,6 +965,7 @@ export async function modifierEvenement(formData: FormData) {
   const dateDebut = formData.get('date_debut') as string;
   const dateFin = formData.get('date_fin') as string;
   const prix = parseFloat(formData.get('prix') as string);
+  const stripePriceId = (formData.get('stripe_price_id') as string)?.trim() || null;
 
   if (!titre || !description || !lieu || !dateDebut || !dateFin) {
     echouer('/admin/evenements', 'Tous les champs sont requis.');
@@ -973,6 +976,7 @@ export async function modifierEvenement(formData: FormData) {
   const { error } = await admin.from('evenements').update({
     titre, description, lieu,
     date_debut: parisVersUTC(dateDebut), date_fin: parisVersUTC(dateFin), prix,
+    stripe_price_id: stripePriceId,
   }).eq('id', id);
   if (error) echouer('/admin/evenements', error.message);
 

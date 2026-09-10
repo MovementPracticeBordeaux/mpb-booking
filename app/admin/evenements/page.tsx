@@ -11,6 +11,17 @@ export default async function AdminEvenementsPage({ searchParams }: { searchPara
     .select('*')
     .order('date_debut', { ascending: true });
 
+  const { data: reservationsBrut } = await admin
+    .from('evenement_reservations')
+    .select('*')
+    .order('created_at', { ascending: false });
+  const reservationsParEvenement = new Map<string, typeof reservationsBrut>();
+  for (const r of reservationsBrut ?? []) {
+    const liste = reservationsParEvenement.get(r.evenement_id) ?? [];
+    liste.push(r);
+    reservationsParEvenement.set(r.evenement_id, liste);
+  }
+
   return (
     <main style={{ maxWidth: 560, margin: '0 auto', padding: 20 }}>
       <h1>Événements</h1>
@@ -38,6 +49,8 @@ export default async function AdminEvenementsPage({ searchParams }: { searchPara
           <input name="date_fin" type="datetime-local" required />
           <label style={{ fontSize: 12, opacity: 0.7 }}>Prix (€)</label>
           <input name="prix" type="number" min="0" step="0.01" placeholder="49" required />
+          <label style={{ fontSize: 12, opacity: 0.7 }}>ID du prix Stripe (créé dans ton dashboard Stripe) — optionnel, sans lui le paiement en ligne n'est pas actif</label>
+          <input name="stripe_price_id" placeholder="price_..." />
           <button type="submit">Publier</button>
         </form>
       </section>
@@ -45,12 +58,27 @@ export default async function AdminEvenementsPage({ searchParams }: { searchPara
       <section>
         <h2>Événements existants</h2>
         {(evenements ?? []).length === 0 && <p style={{ fontSize: 13, opacity: 0.5 }}>Aucun événement pour le moment.</p>}
-        {(evenements ?? []).map((e) => (
+        {(evenements ?? []).map((e) => {
+          const inscrits = reservationsParEvenement.get(e.id) ?? [];
+          return (
           <details key={e.id} style={{ borderBottom: '1px solid #333', padding: '10px 0' }}>
             <summary style={{ fontSize: 13, cursor: 'pointer' }}>
               {new Date(e.date_debut).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })} · {e.titre} · {e.prix} €
+              {' · '}{inscrits.length} inscrit{inscrits.length !== 1 ? 's' : ''}
               {!e.actif && ' · (masqué)'}
+              {!e.stripe_price_id && ' · ⚠️ paiement en ligne non configuré'}
             </summary>
+
+            {inscrits.length > 0 && (
+              <div style={{ margin: '10px 0', fontSize: 12 }}>
+                <p style={{ opacity: 0.6, marginBottom: 4 }}>Inscrits payés :</p>
+                {inscrits.map((r) => (
+                  <p key={r.id} style={{ margin: '2px 0' }}>
+                    {r.nom ? `${r.nom} — ` : ''}{r.email} · {Number(r.montant).toFixed(2)} €
+                  </p>
+                ))}
+              </div>
+            )}
 
             <details style={{ marginTop: 10 }}>
               <summary style={{ fontSize: 12, cursor: 'pointer', color: '#f0a' }}>✏️ Modifier</summary>
@@ -65,6 +93,8 @@ export default async function AdminEvenementsPage({ searchParams }: { searchPara
                 <input name="date_fin" type="datetime-local" defaultValue={utcVersParisInput(e.date_fin)} required />
                 <label style={{ fontSize: 12, opacity: 0.7 }}>Prix (€)</label>
                 <input name="prix" type="number" min="0" step="0.01" defaultValue={e.prix} required />
+                <label style={{ fontSize: 12, opacity: 0.7 }}>ID du prix Stripe — optionnel, sans lui le paiement en ligne n'est pas actif</label>
+                <input name="stripe_price_id" defaultValue={e.stripe_price_id ?? ''} placeholder="price_..." />
                 <button type="submit">Enregistrer les modifications</button>
               </form>
             </details>
@@ -96,7 +126,8 @@ export default async function AdminEvenementsPage({ searchParams }: { searchPara
               </details>
             </div>
           </details>
-        ))}
+          );
+        })}
       </section>
     </main>
   );
