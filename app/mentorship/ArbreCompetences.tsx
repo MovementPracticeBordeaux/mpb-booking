@@ -865,7 +865,7 @@ export default function ArbreCompetences({
                                   ))}
                                   {exercicesRecupCumules.length > 0 && (
                                     <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${COULEURS.bordure}` }}>
-                                      <p style={{ fontSize: 11, color: COULEURS.texteFaible, fontWeight: 700, letterSpacing: 0.5, margin: '0 0 4px' }}>🌬️ RÉCUPÉRATION</p>
+                                      <p style={{ fontSize: 11, color: couleur, fontWeight: 700, letterSpacing: 0.5, margin: '0 0 4px' }}>🌬️ RÉCUPÉRATION</p>
                                       <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 6px', fontStyle: 'italic' }}>Bibliothèque d'outils santé accumulée au fil de ta progression, non soumise à validation.</p>
                                       {exercicesRecupCumules.map(({ ex, noeudSource }) => (
                                         <BlocExercice key={ex.id} noeud={noeudSource} exercice={ex} prog={progression.get(moduleIdExercice(noeudSource, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} />
