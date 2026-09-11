@@ -216,14 +216,14 @@ export const TRONC: NoeudMentorship[] = [
           { nom: 'Routine haut du corps', videoUrl: 'https://youtu.be/V6JDf7t7vPQ' },
           { nom: 'Renforcement et santé des épaules', videoUrl: 'https://youtu.be/gdIxt_m35VE' },
           { nom: 'Push up excentrique genoux', videoUrl: 'https://youtu.be/lmGSzEfYHkE' },
+          { nom: 'Rowing bûcheron', videoUrl: 'https://youtu.be/SNBddEEl1UE' },
         ],
       },
       {
         id: 'hollow-hold', nom: 'Hollow hold', videoUrl: 'https://youtu.be/axUNfJyWgWc',
-        consigne: "Bas du dos plaqué au sol en permanence, jambes et bras tendus et légèrement décollés — respirer sans relâcher la position.",
+        consigne: "Jambes et bras tendus et légèrement décollés, respirer sans relâcher la position. Régression : exécuter jambes fléchies, puis les tendre petit à petit à mesure que le contrôle s'installe — tant que les lombaires restent plaqués au sol, c'est valable.",
         critereValidation: "3 séries de 30 secondes, bas du dos qui ne décolle jamais du sol.",
         theme: 'force',
-        outils: [{ nom: 'Rowing bûcheron', videoUrl: 'https://youtu.be/SNBddEEl1UE' }],
       },
       {
         id: 'suspension-active-passive-1', nom: 'Suspension active / passive', videoUrl: 'https://youtu.be/1lpOQnht9jI',
