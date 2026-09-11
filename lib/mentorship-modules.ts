@@ -160,7 +160,7 @@ export const TRONC: NoeudMentorship[] = [
     theorie: [
       {
         titre: 'Qu\'est-ce que le Mouvement ?',
-        texte: "Le Mouvement est une quête, une démarche de recherche et de développement personnel, un point de vue et une stratégie originale à la fois physique et mentale, axée sur l'apprentissage et l'acquisition d'expérience. Peut-on le qualifier de pratique ou de discipline ? Oui, car il se distingue par sa démarche, sa communauté, et un domaine de pratique fortement identitaire : la Locomotion. Mais il reste aussi difficile à catégoriser, du fait de sa grande diversité de formes et de sa capacité de mutation. Une chose est sûre : il n'existe pas de bon ou de mauvais mouvement dans l'absolu — seulement des mouvements que nous sommes prêts à réaliser, et d'autres non.",
+        texte: "Le Mouvement est une quête, une démarche de recherche et de développement personnel, un point de vue et une stratégie originale à la fois physique et mentale, axée sur l'apprentissage et l'acquisition d'expérience. Peut-on le qualifier de pratique ou de discipline ? Oui, car il se distingue par sa démarche, sa communauté, et un domaine de pratique fortement identitaire. Mais il reste aussi difficile à catégoriser, du fait de sa grande diversité de formes et de sa capacité de mutation. Une chose est sûre : il n'existe pas de bon ou de mauvais mouvement dans l'absolu — seulement des mouvements que nous sommes prêts à réaliser, et d'autres non.",
       },
       {
         titre: 'Pourquoi bouger ?',
@@ -360,7 +360,11 @@ export const TRONC: NoeudMentorship[] = [
     theorie: [
       {
         titre: "La Mouvolution, phase du chercheur puis de l'artisan",
-        texte: "Dans la phase du chercheur, la démarche évolue : on établit des liens et des connexions entre chacun des domaines étudiés précédemment — Force, Flexibilité, Locomotion, Connexion — en explorant comment ces secteurs s'influencent mutuellement et peuvent s'intégrer de manière harmonieuse. Puis vient la phase de l'artisan, qui entremêle complètement les compétences et les secteurs, en pratiquant pleinement la transversalité, avec une dimension plus libre et artistique — jusqu'à interagir de manière fluide avec son corps et son environnement, tout en exprimant librement sa propre identité.",
+        texte: "Dans la phase du chercheur, la démarche évolue : on établit des liens et des connexions entre les domaines étudiés précédemment, en explorant comment les compétences acquises s'influencent mutuellement et peuvent s'intégrer de manière harmonieuse. Puis vient la phase de l'artisan, qui entremêle complètement les compétences, en pratiquant pleinement la transversalité, avec une dimension plus libre et artistique — jusqu'à interagir de manière fluide avec son corps et son environnement, tout en exprimant librement sa propre identité.",
+      },
+      {
+        titre: 'Les avantages de la pratique généraliste',
+        texte: "Sortir de sa zone de confort et développer un large éventail de compétences, au-delà des choix uniquement basés sur ses goûts et ses limites mentales du moment : voilà ce qu'encourage une pratique généraliste. Elle ouvre des perspectives, favorise la transversalité des compétences et la capacité d'adaptation — des atouts majeurs pour la santé, la performance et la longévité dans toute pratique physique.",
       },
       {
         titre: 'La fabrique du multivers',
