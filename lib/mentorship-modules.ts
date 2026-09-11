@@ -108,6 +108,9 @@ export type ExerciceMentorship = {
   theme?: 'recuperation' | 'force' | 'mobilite'; // regroupement visuel dans le panneau. 'recuperation' = outil santé
   // (respiration, système nerveux...), jamais soumis à validation : pas de pastille de statut, pas de formulaire de
   // soumission, non compté dans le X/Y validés. Sans theme, l'exercice reste dans la liste générale validée.
+  outils?: { nom: string; videoUrl: string }[]; // outils de soutien spécifiquement recommandés pour CET objectif
+  // (ex. Deep squat -> Flexion de cheville + Stretch mollet) -- distincts des exercices eux-mêmes : jamais soumis
+  // à validation, juste des liens vidéo affichés en complément pour aider à progresser vers l'objectif.
 };
 
 export type NoeudMentorship = {
@@ -193,33 +196,32 @@ export const TRONC: NoeudMentorship[] = [
         theme: 'recuperation',
       },
       {
-        id: 'floor-mobility-intro', nom: 'Floor mobility training - introduction', videoUrl: 'https://youtu.be/6ETL4STnuJM',
-        consigne: "Suivre chaque transition au sol proposée en gardant un contact conscient avec le sol — pas de mouvement parasite, pas de précipitation.",
-        critereValidation: "Séquence complète réalisée sans interruption ni perte de contrôle sur les transitions.",
+        id: 'deep-squat', nom: 'Deep squat', videoUrl: 'https://youtu.be/9PJymG3sedc',
+        consigne: "Squat complet, talons au sol, buste le plus vertical possible — rester assis dans la position sans forcer.",
+        critereValidation: "3 séries de 5 minutes cumulées en position, talons au sol en permanence, sans douleur articulaire.",
         theme: 'mobilite',
+        outils: [
+          { nom: 'Flexion active de cheville', videoUrl: 'https://youtu.be/Q6CHGnGFJRM' },
+          { nom: 'Mollets - stretch actif', videoUrl: 'https://youtu.be/xM9sP2J1d6E' },
+        ],
       },
       {
-        id: 'routine-bas-du-corps', nom: 'Routine bas du corps', videoUrl: 'https://youtu.be/MQcmU9BQAGY',
-        consigne: "Routine complète, en insistant sur l'amplitude du squat plutôt que sur la vitesse d'exécution.",
-        critereValidation: "Routine réalisée en entier, squat en amplitude complète et contrôlée, sans douleur articulaire.",
-        theme: 'mobilite',
+        id: 'scap-pushup-support', nom: 'Scap push up (protraction) sur support', videoUrl: 'https://youtu.be/GlfSSKJpU-k',
+        consigne: "Bras tendus en appui sur support, mouvement isolé au niveau des omoplates (protraction/rétraction), sans plier les coudes.",
+        critereValidation: "3 séries de 10 répétitions, mouvement localisé aux omoplates, coudes qui restent tendus tout du long.",
+        theme: 'force',
+        outils: [{ nom: 'Routine haut du corps', videoUrl: 'https://youtu.be/V6JDf7t7vPQ' }],
       },
       {
-        id: 'sante-epaules', nom: 'Renforcement et santé des épaules', videoUrl: 'https://youtu.be/gdIxt_m35VE',
-        consigne: "Routine élastique complète, tension légère à modérée — l'objectif est la qualité de l'engagement musculaire, pas la charge.",
-        critereValidation: "Routine réalisée en entier avec un engagement senti et contrôlé sur chaque mouvement, sans à-coups.",
+        id: 'hollow-hold', nom: 'Hollow hold', videoUrl: 'https://youtu.be/axUNfJyWgWc',
+        consigne: "Bas du dos plaqué au sol en permanence, jambes et bras tendus et légèrement décollés — respirer sans relâcher la position.",
+        critereValidation: "3 séries de 30 secondes, bas du dos qui ne décolle jamais du sol.",
         theme: 'force',
       },
       {
-        id: 'pushup-genoux', nom: 'Push up excentrique genoux', videoUrl: 'https://youtu.be/lmGSzEfYHkE',
-        consigne: "Genoux au sol, descente lente et contrôlée (3 à 4 secondes), corps aligné de la tête aux genoux, pas de cambrure du bas du dos.",
-        critereValidation: "8 répétitions, descente contrôlée sur toute l'amplitude, alignement maintenu sans affaissement des hanches.",
-        theme: 'force',
-      },
-      {
-        id: 'rowing-bucheron', nom: 'Rowing bûcheron', videoUrl: 'https://youtu.be/SNBddEEl1UE',
-        consigne: "Tirage contrôlé sans à-coups, en gardant le buste stable — le mouvement vient du dos, pas d'un balancement du corps.",
-        critereValidation: "8 répétitions par côté, sans balancement du buste pour compenser, contrôle en phase de retour.",
+        id: 'suspension-active-passive-1', nom: 'Suspension active / passive', videoUrl: 'https://youtu.be/1lpOQnht9jI',
+        consigne: "Alterner suspension active (épaule engagée) et passive (relâchée), en gardant le contrôle sur les transitions.",
+        critereValidation: "3 séries de 10 répétitions, transitions actif/passif contrôlées, sans à-coup.",
         theme: 'force',
       },
     ],
@@ -284,6 +286,18 @@ export const TRONC: NoeudMentorship[] = [
         theme: 'recuperation',
       },
       {
+        id: 'angola-pu', nom: 'Angola PU', videoUrl: 'https://youtu.be/1jRXZLwnO7A',
+        consigne: "Variante de push-up plus exigeante que la version genoux — amplitude complète, corps aligné, descente contrôlée.",
+        critereValidation: "6 répétitions consécutives, amplitude complète, alignement du corps maintenu sans affaissement des hanches.",
+        theme: 'force',
+      },
+      {
+        id: 'entree-rotation-pont', nom: 'Entrée en rotation sur le pont', videoUrl: 'https://youtu.be/f6-YFDBT2MA',
+        consigne: "Combine l'entrée sur le pont avec la rotation — mouvement fluide, sans à-coup à l'entrée.",
+        critereValidation: "Entrée réalisée avec contrôle, sans chute ni compensation, des deux côtés.",
+        theme: 'mobilite',
+      },
+      {
         id: 'fragment-stretch-actif', nom: 'Fragment stretch actif', videoUrl: 'https://youtu.be/rRXI-rQXMBc',
         consigne: "Chaque position tenue activement (le muscle travaille pour maintenir l'amplitude, pas juste relâché) — respiration continue pendant la tenue.",
         critereValidation: "Chaque position tenue au moins 15 secondes en restant actif, sans tremblement excessif ni retenue du souffle.",
@@ -296,57 +310,9 @@ export const TRONC: NoeudMentorship[] = [
         theme: 'mobilite',
       },
       {
-        id: 'dislocation-baton-allonge', nom: 'Dislocation d\'épaules au bâton allongé', videoUrl: 'https://youtu.be/PY4XdnoPWaM',
-        consigne: "Prise large au départ, mouvement lent et contrôlé, sans jamais forcer dans la douleur — élargir la prise si nécessaire.",
-        critereValidation: "10 répétitions fluides, sans à-coup ni pincement douloureux dans l'épaule.",
-        theme: 'mobilite',
-      },
-      {
-        id: 'lu-raise-wall', nom: 'LU raise wall', videoUrl: 'https://youtu.be/pRaD7ypSONs',
-        consigne: "Dos au mur, mouvement lent en L puis en Y, en gardant le bas du dos en contact avec le mur (pas de cambrure).",
-        critereValidation: "8 répétitions par côté, bas du dos qui reste au contact du mur sur tout le mouvement.",
-        theme: 'force',
-      },
-      {
-        id: 'elevation-laterale-haltere-sol', nom: 'Elevation latérale haltère au sol', videoUrl: 'https://youtu.be/U-R8rIaQs84',
-        consigne: "Charge légère, mouvement contrôlé sans élan, amplitude complète mais sans hausser l'épaule en fin de mouvement.",
-        critereValidation: "10 répétitions, mouvement contrôlé sans élan ni haussement d'épaule parasite.",
-        theme: 'force',
-      },
-      {
-        id: 'trap-raise-45', nom: 'Trap raise 3 - 45°', videoUrl: 'https://youtu.be/FjzjHU2BrvA',
-        consigne: "Charge légère, mouvement lent, en sentant le travail se concentrer entre les omoplates plutôt que dans le haut du trapèze.",
-        critereValidation: "10 répétitions contrôlées, sans élan du buste pour compenser le manque de force.",
-        theme: 'force',
-      },
-      {
-        id: 'rotation-cubaine', nom: 'Rotation cubaine', videoUrl: 'https://youtu.be/FjnxcbgCy_8',
-        consigne: "Coudes fixes à hauteur d'épaule tout au long du mouvement — seul l'avant-bras tourne.",
-        critereValidation: "10 répétitions, coudes qui ne bougent pas de leur position pendant la rotation.",
-        theme: 'force',
-      },
-      {
-        id: 'angola-pu', nom: 'Angola PU', videoUrl: 'https://youtu.be/1jRXZLwnO7A',
-        consigne: "Variante de push-up plus exigeante que la version genoux — amplitude complète, corps aligné, descente contrôlée.",
-        critereValidation: "6 répétitions consécutives, amplitude complète, alignement du corps maintenu sans affaissement des hanches.",
-        theme: 'force',
-      },
-      {
-        id: 'hollow-hold', nom: 'Hollow hold', videoUrl: 'https://youtu.be/axUNfJyWgWc',
-        consigne: "Bas du dos plaqué au sol en permanence, jambes et bras tendus et légèrement décollés — respirer sans relâcher la position.",
-        critereValidation: "20 secondes de maintien, bas du dos qui ne décolle jamais du sol.",
-        theme: 'force',
-      },
-      {
-        id: 'parachutiste', nom: 'Parachutiste', videoUrl: 'https://youtu.be/VKYkH9mjj2I',
-        consigne: "Allongé sur le ventre, extension contrôlée du buste et des membres, sans à-coup ni hyperextension brutale du bas du dos.",
-        critereValidation: "8 répétitions lentes et contrôlées, sans à-coup en fin de mouvement.",
-        theme: 'force',
-      },
-      {
-        id: 'dips-scap-barre', nom: 'Dips scap à la barre', videoUrl: 'https://youtu.be/-LgdBltlUvY',
-        consigne: "Bras tendus en appui, mouvement isolé au niveau des omoplates (protraction/rétraction), sans plier les coudes.",
-        critereValidation: "8 répétitions, mouvement localisé aux omoplates, coudes qui restent tendus tout du long.",
+        id: 'suspension-active-passive-2', nom: 'Suspension passive', videoUrl: 'https://youtu.be/1lpOQnht9jI',
+        consigne: "Suspension relâchée, épaule engagée passivement — pas de tension active recherchée ici, juste un relâchement contrôlé.",
+        critereValidation: "60 secondes de maintien, sans douleur ni compensation.",
         theme: 'force',
       },
     ],
@@ -403,6 +369,18 @@ export const TRONC: NoeudMentorship[] = [
         theme: 'recuperation',
       },
       {
+        id: 'push-up-clean', nom: 'Push up clean (triceps push up)', videoUrl: 'https://youtu.be/ODwUMicVonw',
+        consigne: "Le vrai push-up complet : mains sous les épaules, corps aligné de la tête aux pieds, amplitude complète (poitrine proche du sol).",
+        critereValidation: "1 série de 15 répétitions, technique d'exécution parfaite, amplitude complète, alignement maintenu du début à la fin.",
+        theme: 'force',
+      },
+      {
+        id: 'rowing-circle-inside', nom: 'Rowing circle - inside', videoUrl: 'https://youtu.be/Ksd3whqPvZ0',
+        consigne: "Tirage contrôlé en trajectoire circulaire, buste stable, sans élan du corps pour aider le mouvement.",
+        critereValidation: "3 séries de 5 répétitions, technique d'exécution parfaite, sans élan.",
+        theme: 'force',
+      },
+      {
         id: 'play-with-routine-assise', nom: 'Play with : routine assise', videoUrl: 'https://youtu.be/5eFKp3f8OXY',
         consigne: "Reprendre le vocabulaire de la routine assise en l'enchaînant avec fluidité et un peu de liberté d'exploration, sans figer le mouvement.",
         critereValidation: "Séquence enchaînée avec fluidité, transitions non figées, sans temps mort entre les éléments.",
@@ -421,51 +399,9 @@ export const TRONC: NoeudMentorship[] = [
         theme: 'mobilite',
       },
       {
-        id: 'dislocation-baton-leste', nom: 'Dislocation au bâton allongé - lesté', videoUrl: 'https://youtu.be/J7PLv32LKM8',
-        consigne: "Même mouvement que la version non lestée, avec une légère charge ajoutée — ne pas réduire l'amplitude pour compenser le poids.",
-        critereValidation: "10 répétitions fluides avec la charge, amplitude complète maintenue, sans douleur.",
-        theme: 'mobilite',
-      },
-      {
-        id: 'trap-raise-90', nom: 'Trap raise 3 90°', videoUrl: 'https://youtu.be/BeTsJhg6JXI',
-        consigne: "Variante plus exigeante du trap raise 45° — même exigence de contrôle, amplitude plus grande.",
-        critereValidation: "10 répétitions contrôlées, sans élan du buste, amplitude complète.",
-        theme: 'force',
-      },
-      {
-        id: 'push-up-clean', nom: 'Push up clean (triceps push up)', videoUrl: 'https://youtu.be/ODwUMicVonw',
-        consigne: "Le vrai push-up complet : mains sous les épaules, corps aligné de la tête aux pieds, amplitude complète (poitrine proche du sol).",
-        critereValidation: "1 série de 15 répétitions, technique d'exécution parfaite, amplitude complète, alignement maintenu du début à la fin.",
-        theme: 'force',
-      },
-      {
-        id: 'rowing-circle-inside', nom: 'Rowing circle - inside', videoUrl: 'https://youtu.be/Ksd3whqPvZ0',
-        consigne: "Tirage contrôlé en trajectoire circulaire, buste stable, sans élan du corps pour aider le mouvement.",
-        critereValidation: "3 séries de 5 répétitions, technique d'exécution parfaite, sans élan.",
-        theme: 'force',
-      },
-      {
-        id: 'rotateurs-ext-sleeper', nom: 'Rotateurs ext sleeper', videoUrl: 'https://youtu.be/Yc_Z1A0lyj0',
-        consigne: "Allongé sur le côté, épaule stabilisée, rotation contrôlée de l'avant-bras uniquement — pas de compensation du buste.",
-        critereValidation: "10 répétitions par côté, mouvement isolé à l'avant-bras, sans compensation du tronc.",
-        theme: 'force',
-      },
-      {
-        id: 'iso-dips-anneaux', nom: 'Iso dips (anneaux)', videoUrl: 'https://youtu.be/6Ols9v6UA0I',
-        consigne: "Maintien isométrique en position basse de dips aux anneaux, épaules stables, anneaux tournés vers l'extérieur.",
-        critereValidation: "10 secondes de maintien, épaules stables, sans oscillation excessive des anneaux.",
-        theme: 'force',
-      },
-      {
-        id: 'rowing-anneaux', nom: 'Rowing anneaux', videoUrl: 'https://youtu.be/XzIFzhI-lrU',
-        consigne: "Tirage aux anneaux, buste stable, sans élan du corps — l'instabilité des anneaux exige un gainage actif tout du long.",
-        critereValidation: "8 répétitions, sans oscillation excessive des anneaux ni élan du buste pour compenser.",
-        theme: 'force',
-      },
-      {
-        id: 'quadrupedie-basic-work', nom: 'Quadrupédie - basic work', videoUrl: 'https://youtu.be/YjzgKF-855o',
-        consigne: "Déplacements de base à quatre appuis, en gardant les hanches basses et le dos neutre — préparation directe à la Locomotion.",
-        critereValidation: "Séquence complète réalisée avec fluidité, hanches qui restent basses, sans à-coups dans les transitions d'appuis.",
+        id: 'suspension-active-passive-3', nom: 'Suspension passive', videoUrl: 'https://youtu.be/1lpOQnht9jI',
+        consigne: "Suspension relâchée, épaule engagée passivement — pas de tension active recherchée ici, juste un relâchement contrôlé.",
+        critereValidation: "90 secondes de maintien, sans douleur ni compensation.",
         theme: 'force',
       },
     ],

@@ -1798,6 +1798,22 @@ function BlocExercice({
             )}
           </div>
 
+          {exercice.outils && exercice.outils.length > 0 && (
+            <div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px dashed ${COULEURS.bordure}` }}>
+              <p style={{ fontSize: 10, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 0.5, margin: '0 0 4px' }}>Outils pour progresser</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {exercice.outils.map((o) => (
+                  <button
+                    key={o.nom} onClick={() => onOuvrirVideo(o.videoUrl, o.nom)}
+                    style={{ fontSize: 11, color: COULEURS.texteAtt, background: 'none', border: `1px solid ${COULEURS.bordure}`, borderRadius: 999, padding: '3px 10px', cursor: 'pointer' }}
+                  >
+                    ▶ {o.nom}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {!estOutilSante && !estAdmin && statutEx === 'refuse' && prog?.commentaire_coach && (
             <p style={{ fontSize: 12, color: '#ff6b6b', margin: '8px 0 0' }}>Retour de Sylvain : {prog.commentaire_coach}</p>
           )}
