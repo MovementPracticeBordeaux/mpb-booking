@@ -128,6 +128,11 @@ export type NoeudMentorship = {
   // suit encore l'ancien modèle à validation vidéo unique (tronc).
   exercices?: ExerciceMentorship[];
   progressionBonus?: ExerciceMentorship[];
+  // Outils généraux disponibles à ce niveau : pas rattachés à un objectif
+  // précis (contrairement à ExerciceMentorship.outils), pas soumis à
+  // validation -- juste des liens vidéo mis à disposition pour ce niveau
+  // dans son ensemble.
+  outilsGeneraux?: { nom: string; videoUrl: string }[];
   // Pastille visuelle dédiée à ce nœud précis (chemin dans /public), en
   // remplacement du pictogramme générique de la branche une fois le nœud
   // déverrouillé. Optionnel — objectif à terme : une pastille par nœud.
@@ -225,6 +230,13 @@ export const TRONC: NoeudMentorship[] = [
         theme: 'force',
       },
     ],
+    outilsGeneraux: [
+      { nom: 'Floor mobility training - introduction', videoUrl: 'https://youtu.be/6ETL4STnuJM' },
+      { nom: 'Routine bas du corps', videoUrl: 'https://youtu.be/MQcmU9BQAGY' },
+      { nom: 'Renforcement et santé des épaules', videoUrl: 'https://youtu.be/gdIxt_m35VE' },
+      { nom: 'Push up excentrique genoux', videoUrl: 'https://youtu.be/lmGSzEfYHkE' },
+      { nom: 'Rowing bûcheron', videoUrl: 'https://youtu.be/SNBddEEl1UE' },
+    ],
     qcm: [
       {
         id: 'armure1-q1',
@@ -316,6 +328,14 @@ export const TRONC: NoeudMentorship[] = [
         theme: 'force',
       },
     ],
+    outilsGeneraux: [
+      { nom: 'LU raise wall', videoUrl: 'https://youtu.be/pRaD7ypSONs' },
+      { nom: 'Elevation latérale haltère au sol', videoUrl: 'https://youtu.be/U-R8rIaQs84' },
+      { nom: 'Trap raise 3 - 45°', videoUrl: 'https://youtu.be/FjzjHU2BrvA' },
+      { nom: 'Rotation cubaine', videoUrl: 'https://youtu.be/FjnxcbgCy_8' },
+      { nom: 'Parachutiste', videoUrl: 'https://youtu.be/VKYkH9mjj2I' },
+      { nom: 'Dips scap à la barre', videoUrl: 'https://youtu.be/-LgdBltlUvY' },
+    ],
     qcm: [
       {
         id: 'armure2-q1',
@@ -404,6 +424,13 @@ export const TRONC: NoeudMentorship[] = [
         critereValidation: "90 secondes de maintien, sans douleur ni compensation.",
         theme: 'force',
       },
+    ],
+    outilsGeneraux: [
+      { nom: 'Trap raise 3 90°', videoUrl: 'https://youtu.be/BeTsJhg6JXI' },
+      { nom: 'Rotateurs ext sleeper', videoUrl: 'https://youtu.be/Yc_Z1A0lyj0' },
+      { nom: 'Iso dips (anneaux)', videoUrl: 'https://youtu.be/6Ols9v6UA0I' },
+      { nom: 'Rowing anneaux', videoUrl: 'https://youtu.be/XzIFzhI-lrU' },
+      { nom: 'Quadrupédie - basic work', videoUrl: 'https://youtu.be/YjzgKF-855o' },
     ],
     qcm: [
       {

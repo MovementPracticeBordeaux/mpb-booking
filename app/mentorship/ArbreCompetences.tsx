@@ -983,13 +983,33 @@ export default function ArbreCompetences({
                     {ongletNoeud === 'outil' && (
                       <div>
                         {outil ? (
-                          <a href={outil.href} style={{ display: 'inline-block', fontSize: 13, color: '#f0a', textDecoration: 'none', fontWeight: 600 }}>
+                          <a href={outil.href} style={{ display: 'inline-block', fontSize: 13, color: '#f0a', textDecoration: 'none', fontWeight: 600, marginBottom: 16 }}>
                             {outil.label} →
                           </a>
-                        ) : (
+                        ) : noeud.domaine === 'tronc' && !noeud.outilsGeneraux?.length ? (
                           <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: 0 }}>
-                            {noeud.domaine === 'tronc' ? "Pas d'outil dédié pour le tronc commun — l'outil Objectifs (dans l'onglet Outils) reste utile ici aussi." : "Outil dédié à cette branche à venir."}
+                            Pas d'outil dédié pour le tronc commun — l'outil Objectifs (dans l'onglet Outils) reste utile ici aussi.
                           </p>
+                        ) : !outil && noeud.domaine !== 'tronc' ? (
+                          <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: 0 }}>Outil dédié à cette branche à venir.</p>
+                        ) : null}
+
+                        {noeud.outilsGeneraux && noeud.outilsGeneraux.length > 0 && (
+                          <div>
+                            <p style={{ fontSize: 11, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 0.5, margin: '0 0 8px' }}>
+                              Outils disponibles à ce niveau
+                            </p>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                              {noeud.outilsGeneraux.map((o) => (
+                                <button
+                                  key={o.nom} onClick={() => setVideoOuverteChemin({ url: o.videoUrl, titre: o.nom })}
+                                  style={{ fontSize: 12, color: COULEURS.texteAtt, background: 'none', border: `1px solid ${COULEURS.bordure}`, borderRadius: 999, padding: '5px 12px', cursor: 'pointer' }}
+                                >
+                                  ▶ {o.nom}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
                         )}
                       </div>
                     )}
