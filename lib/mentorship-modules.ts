@@ -128,11 +128,6 @@ export type NoeudMentorship = {
   // suit encore l'ancien modèle à validation vidéo unique (tronc).
   exercices?: ExerciceMentorship[];
   progressionBonus?: ExerciceMentorship[];
-  // Outils généraux disponibles à ce niveau : pas rattachés à un objectif
-  // précis (contrairement à ExerciceMentorship.outils), pas soumis à
-  // validation -- juste des liens vidéo mis à disposition pour ce niveau
-  // dans son ensemble.
-  outilsGeneraux?: { nom: string; videoUrl: string }[];
   // Pastille visuelle dédiée à ce nœud précis (chemin dans /public), en
   // remplacement du pictogramme générique de la branche une fois le nœud
   // déverrouillé. Optionnel — objectif à terme : une pastille par nœud.
@@ -208,6 +203,8 @@ export const TRONC: NoeudMentorship[] = [
         outils: [
           { nom: 'Flexion active de cheville', videoUrl: 'https://youtu.be/Q6CHGnGFJRM' },
           { nom: 'Mollets - stretch actif', videoUrl: 'https://youtu.be/xM9sP2J1d6E' },
+          { nom: 'Floor mobility training - introduction', videoUrl: 'https://youtu.be/6ETL4STnuJM' },
+          { nom: 'Routine bas du corps', videoUrl: 'https://youtu.be/MQcmU9BQAGY' },
         ],
       },
       {
@@ -215,13 +212,18 @@ export const TRONC: NoeudMentorship[] = [
         consigne: "Bras tendus en appui sur support, mouvement isolé au niveau des omoplates (protraction/rétraction), sans plier les coudes.",
         critereValidation: "3 séries de 10 répétitions, mouvement localisé aux omoplates, coudes qui restent tendus tout du long.",
         theme: 'force',
-        outils: [{ nom: 'Routine haut du corps', videoUrl: 'https://youtu.be/V6JDf7t7vPQ' }],
+        outils: [
+          { nom: 'Routine haut du corps', videoUrl: 'https://youtu.be/V6JDf7t7vPQ' },
+          { nom: 'Renforcement et santé des épaules', videoUrl: 'https://youtu.be/gdIxt_m35VE' },
+          { nom: 'Push up excentrique genoux', videoUrl: 'https://youtu.be/lmGSzEfYHkE' },
+        ],
       },
       {
         id: 'hollow-hold', nom: 'Hollow hold', videoUrl: 'https://youtu.be/axUNfJyWgWc',
         consigne: "Bas du dos plaqué au sol en permanence, jambes et bras tendus et légèrement décollés — respirer sans relâcher la position.",
         critereValidation: "3 séries de 30 secondes, bas du dos qui ne décolle jamais du sol.",
         theme: 'force',
+        outils: [{ nom: 'Rowing bûcheron', videoUrl: 'https://youtu.be/SNBddEEl1UE' }],
       },
       {
         id: 'suspension-active-passive-1', nom: 'Suspension active / passive', videoUrl: 'https://youtu.be/1lpOQnht9jI',
@@ -229,13 +231,6 @@ export const TRONC: NoeudMentorship[] = [
         critereValidation: "3 séries de 10 répétitions, transitions actif/passif contrôlées, sans à-coup.",
         theme: 'force',
       },
-    ],
-    outilsGeneraux: [
-      { nom: 'Floor mobility training - introduction', videoUrl: 'https://youtu.be/6ETL4STnuJM' },
-      { nom: 'Routine bas du corps', videoUrl: 'https://youtu.be/MQcmU9BQAGY' },
-      { nom: 'Renforcement et santé des épaules', videoUrl: 'https://youtu.be/gdIxt_m35VE' },
-      { nom: 'Push up excentrique genoux', videoUrl: 'https://youtu.be/lmGSzEfYHkE' },
-      { nom: 'Rowing bûcheron', videoUrl: 'https://youtu.be/SNBddEEl1UE' },
     ],
     qcm: [
       {
@@ -302,12 +297,22 @@ export const TRONC: NoeudMentorship[] = [
         consigne: "Variante de push-up plus exigeante que la version genoux — amplitude complète, corps aligné, descente contrôlée.",
         critereValidation: "6 répétitions consécutives, amplitude complète, alignement du corps maintenu sans affaissement des hanches.",
         theme: 'force',
+        outils: [
+          { nom: 'LU raise wall', videoUrl: 'https://youtu.be/pRaD7ypSONs' },
+          { nom: 'Elevation latérale haltère au sol', videoUrl: 'https://youtu.be/U-R8rIaQs84' },
+          { nom: 'Rotation cubaine', videoUrl: 'https://youtu.be/FjnxcbgCy_8' },
+          { nom: 'Dips scap à la barre', videoUrl: 'https://youtu.be/-LgdBltlUvY' },
+        ],
       },
       {
         id: 'entree-rotation-pont', nom: 'Entrée en rotation sur le pont', videoUrl: 'https://youtu.be/f6-YFDBT2MA',
         consigne: "Combine l'entrée sur le pont avec la rotation — mouvement fluide, sans à-coup à l'entrée.",
         critereValidation: "Entrée réalisée avec contrôle, sans chute ni compensation, des deux côtés.",
         theme: 'mobilite',
+        outils: [
+          { nom: 'Trap raise 3 - 45°', videoUrl: 'https://youtu.be/FjzjHU2BrvA' },
+          { nom: 'Parachutiste', videoUrl: 'https://youtu.be/VKYkH9mjj2I' },
+        ],
       },
       {
         id: 'fragment-stretch-actif', nom: 'Fragment stretch actif', videoUrl: 'https://youtu.be/rRXI-rQXMBc',
@@ -327,14 +332,6 @@ export const TRONC: NoeudMentorship[] = [
         critereValidation: "60 secondes de maintien, sans douleur ni compensation.",
         theme: 'force',
       },
-    ],
-    outilsGeneraux: [
-      { nom: 'LU raise wall', videoUrl: 'https://youtu.be/pRaD7ypSONs' },
-      { nom: 'Elevation latérale haltère au sol', videoUrl: 'https://youtu.be/U-R8rIaQs84' },
-      { nom: 'Trap raise 3 - 45°', videoUrl: 'https://youtu.be/FjzjHU2BrvA' },
-      { nom: 'Rotation cubaine', videoUrl: 'https://youtu.be/FjnxcbgCy_8' },
-      { nom: 'Parachutiste', videoUrl: 'https://youtu.be/VKYkH9mjj2I' },
-      { nom: 'Dips scap à la barre', videoUrl: 'https://youtu.be/-LgdBltlUvY' },
     ],
     qcm: [
       {
@@ -393,18 +390,25 @@ export const TRONC: NoeudMentorship[] = [
         consigne: "Le vrai push-up complet : mains sous les épaules, corps aligné de la tête aux pieds, amplitude complète (poitrine proche du sol).",
         critereValidation: "1 série de 15 répétitions, technique d'exécution parfaite, amplitude complète, alignement maintenu du début à la fin.",
         theme: 'force',
+        outils: [
+          { nom: 'Trap raise 3 90°', videoUrl: 'https://youtu.be/BeTsJhg6JXI' },
+          { nom: 'Rotateurs ext sleeper', videoUrl: 'https://youtu.be/Yc_Z1A0lyj0' },
+          { nom: 'Iso dips (anneaux)', videoUrl: 'https://youtu.be/6Ols9v6UA0I' },
+        ],
       },
       {
         id: 'rowing-circle-inside', nom: 'Rowing circle - inside', videoUrl: 'https://youtu.be/Ksd3whqPvZ0',
         consigne: "Tirage contrôlé en trajectoire circulaire, buste stable, sans élan du corps pour aider le mouvement.",
         critereValidation: "3 séries de 5 répétitions, technique d'exécution parfaite, sans élan.",
         theme: 'force',
+        outils: [{ nom: 'Rowing anneaux', videoUrl: 'https://youtu.be/XzIFzhI-lrU' }],
       },
       {
         id: 'play-with-routine-assise', nom: 'Play with : routine assise', videoUrl: 'https://youtu.be/5eFKp3f8OXY',
         consigne: "Reprendre le vocabulaire de la routine assise en l'enchaînant avec fluidité et un peu de liberté d'exploration, sans figer le mouvement.",
         critereValidation: "Séquence enchaînée avec fluidité, transitions non figées, sans temps mort entre les éléments.",
         theme: 'mobilite',
+        outils: [{ nom: 'Quadrupédie - basic work', videoUrl: 'https://youtu.be/YjzgKF-855o' }],
       },
       {
         id: 'routine-stretch-actif-full', nom: 'Routine stretch actif 1 full', videoUrl: 'https://youtu.be/0XyyLXF1tAo',
@@ -424,13 +428,6 @@ export const TRONC: NoeudMentorship[] = [
         critereValidation: "90 secondes de maintien, sans douleur ni compensation.",
         theme: 'force',
       },
-    ],
-    outilsGeneraux: [
-      { nom: 'Trap raise 3 90°', videoUrl: 'https://youtu.be/BeTsJhg6JXI' },
-      { nom: 'Rotateurs ext sleeper', videoUrl: 'https://youtu.be/Yc_Z1A0lyj0' },
-      { nom: 'Iso dips (anneaux)', videoUrl: 'https://youtu.be/6Ols9v6UA0I' },
-      { nom: 'Rowing anneaux', videoUrl: 'https://youtu.be/XzIFzhI-lrU' },
-      { nom: 'Quadrupédie - basic work', videoUrl: 'https://youtu.be/YjzgKF-855o' },
     ],
     qcm: [
       {

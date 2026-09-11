@@ -796,12 +796,15 @@ export default function ArbreCompetences({
                     <p style={{ color: COULEURS.texteAtt, fontSize: 13, lineHeight: 1.6, margin: '4px 0 14px' }}>{noeud.resume}</p>
 
                     {/* Sous-onglets propres à ce nœud — restent cliquables en haut,
-                        une seule vue à la fois, plutôt que tout empilé en accordéons. */}
+                        une seule vue à la fois, plutôt que tout empilé en accordéons.
+                        L'onglet Outil n'a de sens que pour les branches (lien dédié) --
+                        le tronc n'en a jamais eu, ses outils sont désormais rattachés
+                        directement à chaque objectif dans l'onglet Objectifs. */}
                     <div style={{ display: 'flex', gap: 4, marginBottom: 14, borderBottom: `1px solid ${COULEURS.bordure}`, position: 'sticky', top: 0, background: COULEURS.fond, zIndex: 1, paddingTop: 2 }}>
                       {([
-                        ['pratique', '🎯 Pratique'],
+                        ['pratique', '🎯 Objectifs'],
                         ['theorie', '📖 Théorie'],
-                        ['outil', '🛠️ Outil'],
+                        ...(noeud.domaine !== 'tronc' ? [['outil', '🛠️ Outil'] as const] : []),
                         ['journal', '📓 Journal'],
                       ] as const).map(([id, titreOnglet]) => (
                         <button
@@ -983,33 +986,11 @@ export default function ArbreCompetences({
                     {ongletNoeud === 'outil' && (
                       <div>
                         {outil ? (
-                          <a href={outil.href} style={{ display: 'inline-block', fontSize: 13, color: '#f0a', textDecoration: 'none', fontWeight: 600, marginBottom: 16 }}>
+                          <a href={outil.href} style={{ display: 'inline-block', fontSize: 13, color: '#f0a', textDecoration: 'none', fontWeight: 600 }}>
                             {outil.label} →
                           </a>
-                        ) : noeud.domaine === 'tronc' && !noeud.outilsGeneraux?.length ? (
-                          <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: 0 }}>
-                            Pas d'outil dédié pour le tronc commun — l'outil Objectifs (dans l'onglet Outils) reste utile ici aussi.
-                          </p>
-                        ) : !outil && noeud.domaine !== 'tronc' ? (
+                        ) : (
                           <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: 0 }}>Outil dédié à cette branche à venir.</p>
-                        ) : null}
-
-                        {noeud.outilsGeneraux && noeud.outilsGeneraux.length > 0 && (
-                          <div>
-                            <p style={{ fontSize: 11, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 0.5, margin: '0 0 8px' }}>
-                              Outils disponibles à ce niveau
-                            </p>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                              {noeud.outilsGeneraux.map((o) => (
-                                <button
-                                  key={o.nom} onClick={() => setVideoOuverteChemin({ url: o.videoUrl, titre: o.nom })}
-                                  style={{ fontSize: 12, color: COULEURS.texteAtt, background: 'none', border: `1px solid ${COULEURS.bordure}`, borderRadius: 999, padding: '5px 12px', cursor: 'pointer' }}
-                                >
-                                  ▶ {o.nom}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
                         )}
                       </div>
                     )}
@@ -1808,7 +1789,7 @@ function BlocExercice({
                 ▶ Voir la référence
               </button>
             )}
-            {objectifId && (
+            {objectifId && noeud.domaine !== 'tronc' && (
               <a
                 href={`/mentorship/objectifs?id=${objectifId}`}
                 style={{ fontSize: 11, color: '#8B5CF6', textDecoration: 'underline', textUnderlineOffset: 2 }}
