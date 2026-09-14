@@ -48,9 +48,13 @@ export default function AdminSeancesCarousel({
     const conteneur = carrouselRef.current;
     const carte = conteneur?.children[index] as HTMLElement | undefined;
     if (!conteneur || !carte) return;
+    // 'smooth' combiné à scroll-snap-type: mandatory (voir CSS plus bas)
+    // est peu fiable selon les navigateurs — le défilement animé se fait
+    // parfois interrompre par le magnétisme et revient à sa position de
+    // départ (même correctif que sur le planning public, PlanningVue.tsx).
     conteneur.scrollTo({
       left: carte.offsetLeft - (conteneur.offsetWidth - carte.offsetWidth) / 2,
-      behavior: 'smooth',
+      behavior: 'auto',
     });
   }
 
