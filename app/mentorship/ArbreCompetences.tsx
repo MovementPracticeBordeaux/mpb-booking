@@ -651,6 +651,13 @@ export default function ArbreCompetences({
         @keyframes pulse-noeud { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
         @keyframes glow-acquis { 0%, 100% { filter: drop-shadow(0 0 3px currentColor); } 50% { filter: drop-shadow(0 0 8px currentColor); } }
         @keyframes flame-shift { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+        /* Sur mobile, le rail (chemin vertical) et le panneau de détail ne
+           tiennent pas côte à côte sans tout écraser en largeur -- on les
+           empile verticalement en dessous d'une certaine largeur d'écran. */
+        @media (max-width: 640px) {
+          .chemin-branche { flex-direction: column !important; }
+          .chemin-branche > .chemin-rail { flex-direction: row !important; max-height: none !important; overflow-x: auto !important; overflow-y: visible !important; padding: 8px 4px !important; }
+        }
       `}</style>
 
       <MenuOnglets actif={onglet} onChange={setOnglet} />
@@ -721,9 +728,9 @@ export default function ArbreCompetences({
             </span>
           </div>
 
-          <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+          <div className="chemin-branche" style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
             {/* Rail — chemin vertical de pastilles, socle en bas / progression en haut */}
-            <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', maxHeight: 560, overflowY: 'auto', overflowX: 'visible', padding: '8px 28px' }}>
+            <div className="chemin-rail" style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', maxHeight: 560, overflowY: 'auto', overflowX: 'visible', padding: '8px 28px' }}>
               {noeudsChemin.map((noeud, i) => {
                 const statut = statutAffiche(noeud);
                 const estCourant = noeud.id === noeudCourantId;

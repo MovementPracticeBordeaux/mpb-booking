@@ -355,12 +355,20 @@ export const TRONC: NoeudMentorship[] = [
     domaine: 'tronc',
     niveau: 3,
     titre: 'Intégration',
-    resume: "L'armure organique devient un système vivant : chaque compétence se relie aux autres, et ouvre la porte aux cinq branches.",
-    objectifPedagogique: "Entrer dans la phase de l'artisan : relier les domaines, et se préparer concrètement à l'entrée dans les branches spécialisées.",
+    resume: "L'armure organique se consolide : les principes qui portent toute la pratique, quel que soit le domaine, et qui ouvrent la porte aux cinq branches.",
+    objectifPedagogique: "Consolider les principes fondamentaux de l'entraînement, et se préparer physiquement à l'ouverture simultanée des branches spécialisées.",
     theorie: [
       {
-        titre: "La Mouvolution, phase du chercheur puis de l'artisan",
-        texte: "Dans la phase du chercheur, la démarche évolue : on établit des liens et des connexions entre les domaines étudiés précédemment, en explorant comment les compétences acquises s'influencent mutuellement et peuvent s'intégrer de manière harmonieuse. Puis vient la phase de l'artisan, qui entremêle complètement les compétences, en pratiquant pleinement la transversalité, avec une dimension plus libre et artistique — jusqu'à interagir de manière fluide avec son corps et son environnement, tout en exprimant librement sa propre identité.",
+        titre: 'La répétition, matière première de l\'entraînement',
+        texte: "Chaque mouvement, chaque geste, trouve sa perfection dans la répétition. Elle est la pierre angulaire de tout progrès : répéter régulièrement et consciemment un mouvement permet de le comprendre en profondeur et de forger une connexion solide entre le corps et l'esprit — la base de tout apprentissage durable.",
+      },
+      {
+        titre: "L'ambidextrie, l'équilibre entre les deux côtés",
+        texte: "Développer la capacité à utiliser de manière équilibrée les deux côtés du corps renforce la coordination globale et la conscience corporelle. Ton « côté fort » doit régulièrement pouvoir soutenir et inspirer ton « côté faible » — un principe que tu retrouveras à chaque niveau, sur chaque exercice.",
+      },
+      {
+        titre: "L'analyse de l'erreur",
+        texte: "Les erreurs sont des opportunités d'apprentissage, pas des échecs. Les analyser en profondeur permet de comprendre les lacunes et de les transformer en occasions de progresser — tout en célébrant chacune des étapes franchies, aussi petite soit-elle, pour renforcer la confiance en soi et la motivation.",
       },
       {
         titre: 'Les avantages de la pratique généraliste',
@@ -436,8 +444,8 @@ export const TRONC: NoeudMentorship[] = [
     qcm: [
       {
         id: 'armure3-q1',
-        question: "Que caractérise la phase de l'artisan dans la Mouvolution ?",
-        choix: ["L'étude isolée de chaque secteur", "La transversalité et l'expression libre et créative", "L'arrêt de la pratique une fois les bases acquises"],
+        question: "Selon la Voie de la maîtrise, que faut-il faire d'une erreur ?",
+        choix: ["L'ignorer et passer à autre chose", "L'analyser en profondeur, comme une opportunité d'apprentissage", "Recommencer depuis le tout début"],
         bonneReponse: 1,
       },
       {
