@@ -653,10 +653,15 @@ export default function ArbreCompetences({
         @keyframes flame-shift { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
         /* Sur mobile, le rail (chemin vertical) et le panneau de détail ne
            tiennent pas côte à côte sans tout écraser en largeur -- on les
-           empile verticalement en dessous d'une certaine largeur d'écran. */
+           empile verticalement en dessous d'une certaine largeur d'écran.
+           row-reverse (pas row) : les nœuds sont triés du plus avancé au
+           moins avancé dans le tableau (pour l'empilement vertical du rail
+           bureau, socle en bas) -- en ligne horizontale, il faut inverser
+           pour lire de gauche (le début) à droite (le niveau actuel),
+           sinon le sens de lecture naturel est inversé. */
         @media (max-width: 640px) {
           .chemin-branche { flex-direction: column !important; }
-          .chemin-branche > .chemin-rail { flex-direction: row !important; max-height: none !important; overflow-x: auto !important; overflow-y: visible !important; padding: 8px 4px !important; }
+          .chemin-branche > .chemin-rail { flex-direction: row-reverse !important; max-height: none !important; overflow-x: auto !important; overflow-y: visible !important; padding: 8px 4px !important; }
         }
       `}</style>
 
