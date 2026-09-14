@@ -104,9 +104,15 @@ export default function PlanningVue({
     const conteneur = carrouselRef.current;
     const carte = conteneur?.children[index] as HTMLElement | undefined;
     if (!conteneur || !carte) return;
+    // 'smooth' combiné à scroll-snap-type: mandatory (voir CSS plus bas)
+    // est connu pour être peu fiable selon les navigateurs — le
+    // défilement animé se fait parfois interrompre par le magnétisme et
+    // revient à sa position de départ, donnant l'impression qu'il ne se
+    // passe rien au clic/à la sélection d'une date. 'auto' (instantané)
+    // évite ce conflit.
     conteneur.scrollTo({
       left: carte.offsetLeft - (conteneur.offsetWidth - carte.offsetWidth) / 2,
-      behavior: 'smooth',
+      behavior: 'auto',
     });
   }
 
