@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 
 const JOURS = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
 const COULEUR_SEMAINE: Record<'A' | 'B', string> = { A: '#4FC3F7', B: '#FFB74D' };
-const JOURS_A_VENIR = 14; // fenêtre à venir de la section "Séances"
+const JOURS_A_VENIR = 35; // aligné sur la fenêtre du planning public (app/planning/page.tsx), pour que l'admin puisse toujours voir tout ce qu'un élève peut réserver
 const JOURS_PASSES = 14; // fenêtre passée de la même section, pour pouvoir gérer les no-show/erreurs après coup
 
 export default async function AdminPlanningPage({ searchParams }: { searchParams: { erreur?: string; succes?: string } }) {
