@@ -228,7 +228,6 @@ const VERT_VALIDATION = '#00FF91';
 const BLEU_NUIT = '#0C2040';
 const BLEU_INTERFACE = '#0C3561';
 const BORDURE_PANNEAU = '#0C3561';
-const FOND_PANNEAU = 'rgba(12,53,97,0.12)';
 
 const PALIER_LABEL: Record<PalierFlamme, string> = {
   aucune: '', normal: 'Normal', epique: 'Épique', legendaire: 'Légendaire', mythique: 'Mythique',
@@ -920,7 +919,7 @@ export default function ArbreCompetences({
                               const pct = exercicesValides.length > 0 ? Math.round((nbValides / exercicesValides.length) * 100) : 0;
                               return (
                                 <>
-                                  <div style={{ background: FOND_PANNEAU, border: `1px solid ${BORDURE_PANNEAU}`, borderRadius: 14, padding: 14, marginBottom: 14 }}>
+                                  <div style={{ background: 'transparent', border: `1px solid ${BORDURE_PANNEAU}`, borderRadius: 14, padding: 14, marginBottom: 14 }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 14 }}>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                                         <span style={{
@@ -969,7 +968,7 @@ export default function ArbreCompetences({
                                   </div>
 
                                   {exercicesRecupCumules.length > 0 && (
-                                    <div style={{ background: 'rgba(79,195,247,0.06)', border: `1px solid #029FD666`, borderRadius: 14, padding: 14, marginBottom: 14 }}>
+                                    <div style={{ background: 'transparent', border: `1px solid #029FD666`, borderRadius: 14, padding: 14, marginBottom: 14 }}>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
                                         <span style={{
                                           flexShrink: 0, width: 38, height: 38, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -1886,7 +1885,7 @@ function BlocExercice({
   const teinte = couleurIcone ?? '#FF00BE';
 
   return (
-    <div style={{ background: FOND_PANNEAU, border: `1px solid ${BORDURE_PANNEAU}`, borderRadius: 12, padding: '14px 16px', marginBottom: 10 }}>
+    <div style={{ background: 'transparent', border: `1px solid ${BORDURE_PANNEAU}`, borderRadius: 12, padding: '14px 16px', marginBottom: 10 }}>
       <button
         type="button" onClick={() => setOuvert((o) => !o)}
         style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
