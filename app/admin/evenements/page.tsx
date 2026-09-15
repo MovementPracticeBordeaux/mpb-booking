@@ -25,10 +25,6 @@ export default async function AdminEvenementsPage({ searchParams }: { searchPara
   return (
     <main style={{ maxWidth: 560, margin: '0 auto', padding: 20 }}>
       <h1>Événements</h1>
-      <p style={{ fontSize: 13, opacity: 0.7 }}>
-        Ateliers, stages ou événements ponctuels (distincts des cours réguliers) — affichés en évidence sur la page
-        d'accueil et sur /evenements tant qu'ils sont actifs.
-      </p>
 
       {searchParams.erreur && (
         <p style={{ background: '#5a1a1a', color: '#ffb4b4', padding: 12, borderRadius: 8 }}>⚠️ {searchParams.erreur}</p>

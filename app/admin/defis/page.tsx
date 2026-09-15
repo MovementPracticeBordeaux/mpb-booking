@@ -117,9 +117,6 @@ export default async function AdminDefisPage({ searchParams }: { searchParams: {
           </details>
 
           <h4 style={{ marginTop: 16, marginBottom: 8 }}>Ajouter un élève</h4>
-          <p style={{ fontSize: 11, opacity: 0.5, marginTop: -4, marginBottom: 8 }}>
-            Pour quelqu'un qui a relevé le défi en direct pendant le cours, sans passer par le site.
-          </p>
           {defiActuel && (
             <form action={ajouterParticipationDefiAdmin} style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
               <input type="hidden" name="defi_id" value={defiActuel.id} />
@@ -142,9 +139,6 @@ export default async function AdminDefisPage({ searchParams }: { searchParams: {
           )}
 
           <h4 style={{ marginTop: 16, marginBottom: 8 }}>En attente de validation ({enAttente.length})</h4>
-          <p style={{ fontSize: 11, opacity: 0.5, marginTop: -4, marginBottom: 8 }}>
-            Le niveau présélectionné est celui choisi par l'élève — change-le si besoin avant de valider.
-          </p>
           {enAttente.length === 0 && <p style={{ fontSize: 12, opacity: 0.5 }}>Personne pour l'instant.</p>}
           {enAttente.map((p) => (
             <form

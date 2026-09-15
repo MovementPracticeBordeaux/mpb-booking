@@ -112,12 +112,6 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
 
       <section style={{ marginBottom: 32 }}>
         <h2>Séances — inscrits</h2>
-        <p style={{ fontSize: 13, opacity: 0.7, marginBottom: 12 }}>
-          Visible uniquement par toi. Les élèves ne voient jamais ce nombre. Couvre les {JOURS_PASSES} derniers jours
-          et les {JOURS_A_VENIR} prochains — tu peux retirer un élève d'une séance passée ou du jour même (sa formule
-          est recréditée automatiquement), ou en ajouter un directement sur la séance concernée via "+ Ajouter un
-          élève" (mêmes règles que la réservation normale : pass actif, quota, gel...).
-        </p>
         <AdminSeancesCarousel
           jours={joursCarousel}
           indexAujourdhui={indexAujourdhuiCarousel}
@@ -219,9 +213,6 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
 
       <section>
         <h2 style={{ fontFamily: POLICE_DISPLAY, letterSpacing: 0.5 }}>Créneaux actifs</h2>
-        <p style={{ fontSize: 13, color: COULEURS.texteAtt, marginBottom: 16 }}>
-          Repère-toi comme sur le planning public : un bloc par semaine (A/B), une colonne par jour.
-        </p>
         {(['A', 'B'] as const).map((sem) => {
           const coursSemaine = (coursListe ?? []).filter((c) => c.semaine === sem);
           const disciplinesSemaine = [...new Set(coursSemaine.map((c) => c.discipline))];
