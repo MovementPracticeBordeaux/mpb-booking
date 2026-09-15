@@ -1,7 +1,7 @@
 import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
 import { COULEURS, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
-import { FORMULES, BRANCHES_MENTORAT } from '@/lib/formules';
+import { FORMULES, PALIERS_MENTORAT } from '@/lib/formules';
 import { accepterCandidature, refuserCandidature, remettreEnAttente } from './actions';
 
 export const dynamic = 'force-dynamic';
@@ -12,7 +12,7 @@ const NIVEAU_LABELS: Record<string, string> = {
   avance: 'Avancé',
 };
 
-const NOM_BRANCHE = Object.fromEntries(BRANCHES_MENTORAT.map((b) => [b.cle, b.nom]));
+const NOM_PALIER = Object.fromEntries(PALIERS_MENTORAT.map((p) => [p.cle, p.nom]));
 
 const STATUT_STYLE: Record<string, { label: string; couleur: string; fond: string }> = {
   nouvelle: { label: 'Nouvelle', couleur: '#f0a', fond: 'rgba(255,0,170,0.12)' },
@@ -27,22 +27,22 @@ type Candidature = {
   telephone: string | null;
   niveau: string;
   duree: string | null;
-  nombre_branches: number | null;
-  branches: string | null;
+  palier: string | null;
   objectifs: string;
   statut: 'nouvelle' | 'acceptee' | 'refusee';
   cree_le: string;
 };
 
-function libelleBranches(c: Candidature): string {
-  if (!c.branches) return 'non précisé';
-  return c.branches.split(',').map((cle) => NOM_BRANCHE[cle] ?? cle).join(' + ');
+function libellePalier(c: Candidature): string {
+  if (!c.palier) return 'non précisé';
+  return NOM_PALIER[c.palier] ?? c.palier;
 }
 
 function libelleFormule(c: Candidature): string {
-  if (!c.nombre_branches || !c.duree) return 'non précisée';
-  const cle = `mentorship_${c.nombre_branches === 2 ? '2branches' : '1branche'}_${c.duree}`;
-  return `${FORMULES[cle]?.prixIndicatif ?? '?'} €`;
+  if (!c.palier || !c.duree) return 'non précisée';
+  const p = PALIERS_MENTORAT.find((p) => p.cle === c.palier);
+  const cle = p?.cles3_6_12.find((k) => k.endsWith(`_${c.duree}`));
+  return cle ? `${FORMULES[cle]?.prixIndicatif ?? '?'} €` : 'non précisée';
 }
 
 export default async function AdminCandidaturesPage({ searchParams }: { searchParams: { erreur?: string; succes?: string } }) {
@@ -115,7 +115,7 @@ export default async function AdminCandidaturesPage({ searchParams }: { searchPa
         <p style={{ fontSize: 13, color: COULEURS.texteAtt, margin: '12px 0 4px' }}>
           <strong>Niveau :</strong> {NIVEAU_LABELS[c.niveau] ?? c.niveau}
           {' · '}
-          <strong>Branche(s) :</strong> {libelleBranches(c)}
+          <strong>Palier :</strong> {libellePalier(c)}
           {' · '}
           <strong>Durée :</strong> {c.duree ? `${c.duree} mois` : 'non précisée'}
           {' · '}

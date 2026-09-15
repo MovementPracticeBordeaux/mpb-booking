@@ -453,7 +453,7 @@ export default function ArbreCompetences({
   objectifIdParUrl,
   structureSeance,
   estAdmin,
-  branchesAutorisees,
+  palierAutorise,
 }: {
   tronc: NoeudMentorshipPublic[];
   branches: NoeudMentorshipPublic[];
@@ -468,10 +468,11 @@ export default function ArbreCompetences({
   objectifIdParUrl: Record<string, string>;
   structureSeance: readonly { etape: string; detail: string }[];
   estAdmin?: boolean;
-  // Branches couvertes par la formule Mentorat de l'élève (ex. ['force',
-  // 'locomotion']). null/undefined = pas de restriction (admin, aperçu, ou
-  // ancienne formule globale) : toutes les branches restent accessibles.
-  branchesAutorisees?: Domaine[] | null;
+  // Niveau maximum accessible sur les 5 branches à la fois, déduit de la
+  // formule Mentorat de l'élève (0 = Armure Organique seule, 1/2/3 = jusqu'à
+  // ce niveau sur les 5 branches). null/undefined = pas de restriction
+  // (admin, aperçu, ou ancienne formule globale) : accès complet.
+  palierAutorise?: number | null;
 }) {
   const [selection, setSelection] = useState<string | null>(null);
   // Vue isolée d'une branche (chemin vertical) — null = vue globale (dashboard).
@@ -486,13 +487,13 @@ export default function ArbreCompetences({
   const [apercu, setApercu] = useState<'reel' | 'tronc-1' | 'tronc-complet' | 'branches-en-cours'>('reel');
   // Aperçu (admin) de l'accès par formule — indépendant de l'aperçu de
   // progression ci-dessus. Permet de tester visuellement le verrouillage
-  // des branches non incluses dans une formule, sans avoir à s'attribuer
+  // des niveaux non couverts par un palier, sans avoir à s'attribuer
   // réellement une formule différente depuis /admin/eleves à chaque fois.
-  const [apercuAcces, setApercuAcces] = useState<'reel' | 'toutes' | '1branche' | '2branches'>('reel');
-  const branchesEffectives: Domaine[] | null =
+  const [apercuAcces, setApercuAcces] = useState<'reel' | 'illimite' | 'armure' | 'niveau1' | 'niveau2'>('reel');
+  const palierEffectif: number | null =
     estAdmin && apercuAcces !== 'reel'
-      ? apercuAcces === 'toutes' ? null : apercuAcces === '1branche' ? ['force'] : ['force', 'locomotion']
-      : (branchesAutorisees ?? null);
+      ? apercuAcces === 'illimite' ? null : apercuAcces === 'armure' ? 0 : apercuAcces === 'niveau1' ? 1 : 2
+      : (palierAutorise ?? null);
 
   const NOEUD_ACQUIS: Progression = { module_id: '', statut: 'acquis', quiz_reussi: true, quiz_score: 100, video_url: null, commentaire_coach: null, premiere_video_url: null, premiere_video_date: null };
 
@@ -545,17 +546,18 @@ export default function ArbreCompetences({
     return false;
   }
 
-  // Une branche est incluse si l'élève a une formule Mentorat globale/sans
-  // restriction (branchesAutorisees absent, ex. admin ou ancienne formule),
-  // ou si elle figure explicitement dans sa liste de branches achetées.
-  function brancheIncluse(domaine: DomaineOuTronc): boolean {
-    if (domaine === 'tronc') return true;
-    if (!branchesEffectives) return true;
-    return branchesEffectives.includes(domaine as Domaine);
+  // Un niveau de branche est inclus si l'élève a une formule Mentorat
+  // globale/sans restriction (palierAutorise absent, ex. admin ou ancienne
+  // formule), ou si ce niveau est couvert par le palier de sa formule
+  // (ex. palier 'Niveau 1' -> niveau 1 des 5 branches accessible, niveau 2
+  // et 3 restent verrouillés même une fois débloqués par la progression).
+  function niveauInclus(niveauNoeud: number): boolean {
+    if (palierEffectif === null) return true;
+    return niveauNoeud <= palierEffectif;
   }
 
   function estDeverrouille(noeud: NoeudMentorshipPublic): boolean {
-    if (noeud.domaine !== 'tronc' && !brancheIncluse(noeud.domaine)) return false;
+    if (noeud.domaine !== 'tronc' && !niveauInclus(noeud.niveau)) return false;
     if (noeud.domaine === 'tronc') {
       if (noeud.niveau === 1) return true;
       const precedent = tronc.find((n) => n.niveau === noeud.niveau - 1);
@@ -645,17 +647,12 @@ export default function ArbreCompetences({
   }, [vueBranche, noeudCourantId]);
 
   function entrerBranche(d: Domaine | 'tronc', noeudCibleId?: string) {
-    // Le tronc est toujours accessible, quelle que soit la formule.
-    if (d === 'tronc' || brancheIncluse(d) || estAdmin) {
-      noeudCibleRef.current = noeudCibleId ?? null;
-      setVueBranche(d);
-    } else {
-      // Branche non incluse dans la formule : on garde l'ancien comportement
-      // (ouvrir directement le panneau du niveau 1, qui affiche le message
-      // "branche non incluse") plutôt que d'entrer dans un chemin vide.
-      const n = branches.find((b) => b.domaine === d && b.niveau === 1);
-      if (n) setSelection(n.id);
-    }
+    // Avec le nouveau modèle par palier, une branche n'est plus jamais
+    // entièrement exclue -- seuls certains de ses niveaux peuvent être
+    // verrouillés (géré par estDeverrouille/niveauInclus, nœud par nœud).
+    // On peut donc toujours entrer dans le chemin d'une branche.
+    noeudCibleRef.current = noeudCibleId ?? null;
+    setVueBranche(d);
   }
 
   // Entraînement du jour : la programmation des compétences débloquées mais
@@ -740,9 +737,10 @@ export default function ArbreCompetences({
           <span style={{ fontSize: 11, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 0.5 }}>Aperçu accès formule (admin) :</span>
           {([
             ['reel', 'Réel (ma vraie formule)'],
-            ['toutes', 'Toutes les branches'],
-            ['1branche', '1 branche (Force)'],
-            ['2branches', '2 branches (Force + Locomotion)'],
+            ['illimite', 'Illimité (Complet)'],
+            ['armure', 'Armure Organique seule'],
+            ['niveau1', 'Niveau 1'],
+            ['niveau2', 'Niveau 2'],
           ] as const).map(([id, label]) => (
             <button
               key={id}
@@ -1551,7 +1549,7 @@ export default function ArbreCompetences({
           reponsesQCM={reponsesQCM}
           setReponsesQCM={setReponsesQCM}
           estAdmin={estAdmin}
-          brancheNonIncluse={!brancheIncluse(noeudSelectionne.domaine)}
+          niveauNonInclus={noeudSelectionne.domaine !== 'tronc' && !niveauInclus(noeudSelectionne.niveau)}
           onFermer={() => setSelection(null)}
           objectifIdParUrl={objectifIdParUrl}
         />
@@ -1986,7 +1984,7 @@ function BlocExercice({
 }
 
 function PanneauNoeud({
-  noeud, statut, progression, progressionMap, couleur, reponsesQCM, setReponsesQCM, estAdmin, brancheNonIncluse, onFermer, objectifIdParUrl,
+  noeud, statut, progression, progressionMap, couleur, reponsesQCM, setReponsesQCM, estAdmin, niveauNonInclus, onFermer, objectifIdParUrl,
 }: {
   noeud: NoeudMentorshipPublic;
   statut: string;
@@ -1996,7 +1994,7 @@ function PanneauNoeud({
   reponsesQCM: Record<string, number>;
   setReponsesQCM: (fn: (r: Record<string, number>) => Record<string, number>) => void;
   estAdmin?: boolean;
-  brancheNonIncluse?: boolean;
+  niveauNonInclus?: boolean;
   onFermer: () => void;
   objectifIdParUrl: Record<string, string>;
 }) {
@@ -2013,10 +2011,10 @@ function PanneauNoeud({
       <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 22, letterSpacing: 0.3, margin: '2px 0 4px', color: COULEURS.texte }}>{noeud.titre}</h2>
 
       {statut === 'locked' ? (
-        brancheNonIncluse ? (
+        niveauNonInclus ? (
           <p style={{ color: COULEURS.texteFaible, fontSize: 13, marginTop: 8 }}>
-            🔒 Cette branche n'est pas incluse dans ta formule Mentorat actuelle.
-            {!estAdmin && ' Contacte Sylvain si tu veux ajouter cette branche à ton accès.'}
+            🔒 Ce niveau n'est pas inclus dans ton palier Mentorat actuel.
+            {!estAdmin && ' Contacte Sylvain si tu veux passer au palier supérieur.'}
           </p>
         ) : (
           <p style={{ color: COULEURS.texteFaible, fontSize: 13, marginTop: 8 }}>🔒 Ce niveau est encore verrouillé.</p>

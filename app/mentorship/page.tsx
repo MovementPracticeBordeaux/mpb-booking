@@ -2,6 +2,7 @@ import { supabaseServer } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
 import { TRONC, BRANCHES, TOUS_LES_NOEUDS, STRUCTURE_SEANCE, noeudSansReponses, statutXP, xpGagneParNoeud, niveauGlobal, courbeXPParJour, estNoeudAcquisDepuisProgression, xpNoeudExercices, pourcentageFlammeNoeud, badgeEleve } from '@/lib/mentorship-modules';
 import { calculerStatsProgression } from '@/lib/stats-progression';
+import { palierMaxDeFormule } from '@/lib/formules';
 import { COULEURS, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
 import ArbreCompetences from './ArbreCompetences';
 
@@ -37,6 +38,11 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
     .eq('abonnement_actif', true)
     .maybeSingle();
   const accesAutorise = !!aboMentorat && !aboMentorat.gele;
+  // Palier maximum accessible sur les 5 branches à la fois, déduit de la
+  // formule Mentorat active. null = illimité (ancienne formule globale, ou
+  // ancienne formule par branche -- traitée comme illimité par défaut le
+  // temps de la transition vers le nouveau modèle).
+  const palierAutorise = aboMentorat?.formule_nom ? palierMaxDeFormule(aboMentorat.formule_nom) : null;
 
   if (!accesAutorise) {
     return (
@@ -174,7 +180,7 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
         objectifIdParUrl={objectifIdParUrl}
         structureSeance={STRUCTURE_SEANCE}
         estAdmin={profil?.role === 'admin'}
-        branchesAutorisees={aboMentorat?.branches ? (aboMentorat.branches.split(',') as any) : null}
+        palierAutorise={palierAutorise}
       />
     </main>
   );

@@ -290,10 +290,15 @@ export async function attribuerFormule(formData: FormData) {
   const formule = FORMULES[formuleNom];
   if (!formule) echouer('/admin/eleves', 'Formule inconnue.');
 
-  if (formule.categorie === 'mentorat' && formuleNom.startsWith('mentorship_') && !branche1) {
-    echouer('/admin/eleves', 'Choisis au moins une branche pour cette formule Mentorat.');
+  // Seules les anciennes formules par branche (mentorship_1branche_*,
+  // mentorship_2branches_*) ont besoin d'une branche précisée -- les
+  // nouvelles formules par palier (mentorship_armure_*, mentorship_niveau1_*,
+  // etc.) donnent accès aux 5 branches à la fois, pas de sélection requise.
+  const estAncienneFormuleParBranche = formuleNom.startsWith('mentorship_1branche_') || formuleNom.startsWith('mentorship_2branches_');
+  if (estAncienneFormuleParBranche && !branche1) {
+    echouer('/admin/eleves', 'Choisis au moins une branche pour cette ancienne formule Mentorat par branche.');
   }
-  const branches = formule.categorie === 'mentorat' && branche1
+  const branches = estAncienneFormuleParBranche && branche1
     ? (branche2 ? `${branche1},${branche2}` : branche1)
     : null;
 
