@@ -980,9 +980,12 @@ export default function ArbreCompetences({
                                           <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '2px 0 0' }}>Bibliothèque d'outils santé, non soumise à validation</p>
                                         </div>
                                       </div>
-                                      {exercicesRecupCumules.map(({ ex, noeudSource }) => (
-                                        <BlocExercice key={ex.id} noeud={noeudSource} exercice={ex} prog={progression.get(moduleIdExercice(noeudSource, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} icone="recuperation-souffle" couleurIcone="#4FC3F7" />
-                                      ))}
+                                      {exercicesRecupCumules.map(({ ex, noeudSource }) => {
+                                        const estSouffle = /breath|bandha|respiration/i.test(ex.nom);
+                                        return (
+                                          <BlocExercice key={ex.id} noeud={noeudSource} exercice={ex} prog={progression.get(moduleIdExercice(noeudSource, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} icone={estSouffle ? 'recuperation-souffle' : 'recuperation-nuit'} couleurIcone="#029FD6" />
+                                        );
+                                      })}
                                     </div>
                                   )}
                                 </>
@@ -1671,7 +1674,7 @@ function StatutExercicePastille({ statut, estOutilSante }: { statut: 'locked' | 
   } as const;
   const m = map[statut];
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 11, fontWeight: 600, padding: '5px 12px', borderRadius: 999, background: m.fond, color: m.couleur, flexShrink: 0, whiteSpace: 'nowrap' }}>
+    <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 12.5, fontWeight: 600, padding: '7px 14px', borderRadius: 999, background: m.fond, color: m.couleur, flexShrink: 0, whiteSpace: 'nowrap' }}>
       {m.label} →
     </span>
   );
@@ -1883,26 +1886,26 @@ function BlocExercice({
   const teinte = couleurIcone ?? '#FF00BE';
 
   return (
-    <div style={{ background: FOND_PANNEAU, border: `1px solid ${BORDURE_PANNEAU}`, borderRadius: 10, padding: '10px 14px', marginBottom: 8 }}>
+    <div style={{ background: FOND_PANNEAU, border: `1px solid ${BORDURE_PANNEAU}`, borderRadius: 12, padding: '14px 16px', marginBottom: 10 }}>
       <button
         type="button" onClick={() => setOuvert((o) => !o)}
         style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
       >
-        <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
           <span style={{
-            flexShrink: 0, width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 13, background: estAcquis ? VERT_VALIDATION : 'transparent', border: estAcquis ? 'none' : `1.5px solid ${COULEURS.bordure}`, color: estAcquis ? '#04121A' : '#fff',
+            flexShrink: 0, width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 17, background: estAcquis ? VERT_VALIDATION : 'transparent', border: estAcquis ? 'none' : `1.5px solid ${COULEURS.bordure}`, color: estAcquis ? '#04121A' : '#fff',
             boxShadow: estAcquis ? `0 0 8px ${VERT_VALIDATION}99` : 'none',
           }}>
             {estAcquis ? '✓' : ''}
           </span>
           {icone && (
             <span style={{
-              flexShrink: 0, width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0, width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: `${teinte}1f`,
-            }}><IconeExercice type={icone} taille={16} couleur={teinte} /></span>
+            }}><IconeExercice type={icone} taille={20} couleur={teinte} /></span>
           )}
-          <span style={{ fontSize: 13, color: COULEURS.texte, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: 15, color: COULEURS.texte, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {exercice.nom}{estBonus ? ' 🔥' : ''}
           </span>
         </span>
