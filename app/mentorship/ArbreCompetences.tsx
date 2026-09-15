@@ -1665,15 +1665,15 @@ function FeuilleModale({ onFermer, children }: { onFermer: () => void; children:
 
 function StatutExercicePastille({ statut, estOutilSante }: { statut: 'locked' | 'a_faire' | 'en_attente' | 'acquis' | 'refuse'; estOutilSante?: boolean }) {
   const map = {
-    locked: { label: 'Verrouillé', couleur: COULEURS.texteFaible, fond: COULEURS.surfaceForte },
-    a_faire: { label: estOutilSante ? 'À faire' : 'À soumettre', couleur: estOutilSante ? '#00BFFF' : COULEURS.texte, fond: BLEU_NUIT },
-    en_attente: { label: 'En attente', couleur: '#FFC24B', fond: BLEU_NUIT },
-    acquis: { label: estOutilSante ? 'Fait' : 'Validé', couleur: VERT_VALIDATION, fond: BLEU_NUIT },
-    refuse: { label: 'À retravailler', couleur: '#ff6b6b', fond: BLEU_NUIT },
+    locked: { label: 'Verrouillé', couleur: COULEURS.texteFaible, texte: COULEURS.texteFaible, fond: COULEURS.surfaceForte },
+    a_faire: { label: estOutilSante ? 'À faire' : 'À soumettre', couleur: estOutilSante ? '#00BFFF' : MAGENTA_NEON, texte: estOutilSante ? '#00BFFF' : COULEURS.texte, fond: BLEU_NUIT },
+    en_attente: { label: 'En attente', couleur: '#FFC24B', texte: '#FFC24B', fond: BLEU_NUIT },
+    acquis: { label: estOutilSante ? 'Fait' : 'Validé', couleur: VERT_VALIDATION, texte: VERT_VALIDATION, fond: BLEU_NUIT },
+    refuse: { label: 'À retravailler', couleur: '#ff6b6b', texte: '#ff6b6b', fond: BLEU_NUIT },
   } as const;
   const m = map[statut];
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 12.5, fontWeight: 600, padding: '7px 14px', borderRadius: 999, background: m.fond, color: m.couleur, flexShrink: 0, whiteSpace: 'nowrap' }}>
+    <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 12.5, fontWeight: 600, padding: '7px 14px', borderRadius: 999, border: `1px solid ${m.couleur}`, background: m.fond, color: m.texte, flexShrink: 0, whiteSpace: 'nowrap' }}>
       {m.label} →
     </span>
   );
@@ -1949,7 +1949,7 @@ function BlocExercice({
                 {exercice.outils.map((o) => (
                   <button
                     key={o.nom} onClick={() => onOuvrirVideo(o.videoUrl, o.nom)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 600, color: COULEURS.texte, background: BLEU_NUIT, border: 'none', borderRadius: 999, padding: '6px 14px 6px 6px', cursor: 'pointer' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 600, color: COULEURS.texte, background: BLEU_NUIT, border: `1px solid ${teinte}`, borderRadius: 999, padding: '6px 14px 6px 6px', cursor: 'pointer' }}
                   >
                     <span style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IconeExercice type="jouer" taille={11} couleur={COULEURS.texte} /></span>
                     {o.nom}
