@@ -40,6 +40,7 @@ export async function POST(req: NextRequest) {
       const email = session.customer_details?.email ?? session.customer_email;
       const nom = session.customer_details?.name ?? null;
       const montant = (session.amount_total ?? 0) / 100;
+      const tarifAbonne = session.metadata?.tarif_abonne === 'oui';
 
       if (evenement && email) {
         const { error: erreurInsert } = await admin.from('evenement_reservations').insert({
@@ -67,7 +68,7 @@ export async function POST(req: NextRequest) {
                de ${new Date(evenement.date_debut).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                à ${new Date(evenement.date_fin).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</p>
                <p>📍 ${evenement.lieu}</p>
-               <p>Montant réglé : ${montant.toFixed(2)} €.</p>
+               <p>Montant réglé : ${montant.toFixed(2)} €${tarifAbonne ? ' (tarif abonné -50%)' : ''}.</p>
                <p>Une question avant l'événement ? <a href="https://wa.me/33620477064">Contacte Sylvain sur WhatsApp</a>.</p>`
             );
           } catch {
@@ -77,7 +78,7 @@ export async function POST(req: NextRequest) {
 
           await alerterAdmin(
             'Nouvelle réservation événement',
-            `${nom ?? email} vient de réserver une place pour "${evenement.titre}" (${montant.toFixed(2)} €).`
+            `${nom ?? email} vient de réserver une place pour "${evenement.titre}" (${montant.toFixed(2)} €${tarifAbonne ? ', tarif abonné' : ''}).`
           );
           await alerterAdminPush(
             '💰 Nouvel achat',
