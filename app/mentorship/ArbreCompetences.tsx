@@ -216,8 +216,19 @@ const BORDURE_CARTE = 'rgba(255,255,255,0.16)';
 // (Objectifs, chaque ligne d'exercice, barre d'onglets) -- le rose/la
 // couleur du thème reste réservée aux accents actifs (icônes, liens,
 // progression), pas au cadre des cartes elles-mêmes.
-const BORDURE_PANNEAU = 'rgba(88,131,255,0.35)';
-const FOND_PANNEAU = 'rgba(88,131,255,0.05)';
+// Palette exacte du panneau de nœud (fournie par Sylvain, extraite du
+// modèle graphique) -- pas la palette générale du site, spécifique à cette
+// zone. Magenta = progression/objectifs, cyan = récupération/santé, vert =
+// validé. Les cadres des cartes restent en bleu nuit/interface (structure),
+// jamais dans la couleur d'accent elle-même.
+const MAGENTA = '#E51CBA';
+const MAGENTA_NEON = '#FF00BE';
+const CYAN = '#029FD6';
+const VERT_VALIDATION = '#00FF91';
+const BLEU_NUIT = '#0C2040';
+const BLEU_INTERFACE = '#0C3561';
+const BORDURE_PANNEAU = '#0C3561';
+const FOND_PANNEAU = 'rgba(12,53,97,0.12)';
 
 const PALIER_LABEL: Record<PalierFlamme, string> = {
   aucune: '', normal: 'Normal', epique: 'Épique', legendaire: 'Légendaire', mythique: 'Mythique',
@@ -955,14 +966,14 @@ export default function ArbreCompetences({
                                   </div>
 
                                   {exercicesRecupCumules.length > 0 && (
-                                    <div style={{ background: 'rgba(79,195,247,0.06)', border: `1px solid #4FC3F766`, borderRadius: 14, padding: 14, marginBottom: 14 }}>
+                                    <div style={{ background: 'rgba(79,195,247,0.06)', border: `1px solid #029FD666`, borderRadius: 14, padding: 14, marginBottom: 14 }}>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
                                         <span style={{
                                           flexShrink: 0, width: 38, height: 38, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                          background: '#4FC3F722', boxShadow: '0 0 10px #4FC3F755',
-                                        }}><IconeExercice type="recuperation-coeur" taille={20} couleur="#4FC3F7" /></span>
+                                          background: '#029FD622', boxShadow: '0 0 10px #029FD655',
+                                        }}><IconeExercice type="recuperation-coeur" taille={20} couleur="#029FD6" /></span>
                                         <div>
-                                          <p style={{ fontSize: 14, fontWeight: 700, color: '#4FC3F7', margin: 0 }}>Récupération</p>
+                                          <p style={{ fontSize: 14, fontWeight: 700, color: '#029FD6', margin: 0 }}>Récupération</p>
                                           <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '2px 0 0' }}>Bibliothèque d'outils santé, non soumise à validation</p>
                                         </div>
                                       </div>
@@ -1649,14 +1660,18 @@ function FeuilleModale({ onFermer, children }: { onFermer: () => void; children:
 
 function StatutExercicePastille({ statut, estOutilSante }: { statut: 'locked' | 'a_faire' | 'en_attente' | 'acquis' | 'refuse'; estOutilSante?: boolean }) {
   const map = {
-    locked: { label: 'Verrouillé', couleur: COULEURS.texteFaible },
-    a_faire: { label: estOutilSante ? 'À faire' : 'À soumettre', couleur: estOutilSante ? '#4FC3F7' : COULEURS.texteAtt },
-    en_attente: { label: 'En attente', couleur: '#FFC24B' },
-    acquis: { label: estOutilSante ? 'Fait' : 'Validé', couleur: '#9ef29e' },
-    refuse: { label: 'À retravailler', couleur: '#ff6b6b' },
+    locked: { label: 'Verrouillé', couleur: COULEURS.texteFaible, fond: COULEURS.surfaceForte },
+    a_faire: { label: estOutilSante ? 'À faire' : 'À soumettre', couleur: estOutilSante ? '#00BFFF' : COULEURS.texte, fond: BLEU_NUIT },
+    en_attente: { label: 'En attente', couleur: '#FFC24B', fond: BLEU_NUIT },
+    acquis: { label: estOutilSante ? 'Fait' : 'Validé', couleur: VERT_VALIDATION, fond: BLEU_NUIT },
+    refuse: { label: 'À retravailler', couleur: '#ff6b6b', fond: BLEU_NUIT },
   } as const;
   const m = map[statut];
-  return <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 999, border: `1px solid ${m.couleur}`, color: m.couleur, flexShrink: 0, whiteSpace: 'nowrap' }}>{m.label} →</span>;
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 11, fontWeight: 600, padding: '5px 12px', borderRadius: 999, background: m.fond, color: m.couleur, flexShrink: 0, whiteSpace: 'nowrap' }}>
+      {m.label} →
+    </span>
+  );
 }
 
 // Extrait l'ID YouTube d'une URL youtu.be/xxx ou youtube.com/watch?v=xxx —
@@ -1862,7 +1877,7 @@ function BlocExercice({
   const [ouvert, setOuvert] = useState(false);
   const estOutilSante = exercice.theme === 'recuperation';
   const estAcquis = statutEx === 'acquis';
-  const teinte = couleurIcone ?? '#f0a';
+  const teinte = couleurIcone ?? '#FF00BE';
 
   return (
     <div style={{ background: FOND_PANNEAU, border: `1px solid ${BORDURE_PANNEAU}`, borderRadius: 10, padding: '10px 14px', marginBottom: 8 }}>
@@ -1873,8 +1888,8 @@ function BlocExercice({
         <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
           <span style={{
             flexShrink: 0, width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 13, background: estAcquis ? '#2e7d4f' : 'transparent', border: estAcquis ? 'none' : `1.5px solid ${COULEURS.bordure}`, color: '#fff',
-            boxShadow: estAcquis ? '0 0 8px #2e7d4f99' : 'none',
+            fontSize: 13, background: estAcquis ? VERT_VALIDATION : 'transparent', border: estAcquis ? 'none' : `1.5px solid ${COULEURS.bordure}`, color: estAcquis ? '#04121A' : '#fff',
+            boxShadow: estAcquis ? `0 0 8px ${VERT_VALIDATION}99` : 'none',
           }}>
             {estAcquis ? '✓' : ''}
           </span>
@@ -1926,9 +1941,9 @@ function BlocExercice({
                 {exercice.outils.map((o) => (
                   <button
                     key={o.nom} onClick={() => onOuvrirVideo(o.videoUrl, o.nom)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: COULEURS.texteAtt, background: COULEURS.surfaceForte, border: `1px solid ${COULEURS.bordure}`, borderRadius: 999, padding: '4px 12px 4px 4px', cursor: 'pointer' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 600, color: COULEURS.texte, background: BLEU_NUIT, border: 'none', borderRadius: 999, padding: '6px 14px 6px 6px', cursor: 'pointer' }}
                   >
-                    <span style={{ width: 20, height: 20, borderRadius: '50%', background: `${teinte}22`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IconeExercice type="jouer" taille={11} couleur={teinte} /></span>
+                    <span style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IconeExercice type="jouer" taille={11} couleur={COULEURS.texte} /></span>
                     {o.nom}
                   </button>
                 ))}
@@ -1941,7 +1956,7 @@ function BlocExercice({
           )}
           {!estOutilSante && !estAdmin && statutEx === 'en_attente' && (
             <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: '8px 0 0' }}>
-              Envoyée —{' '}<a href={prog?.video_url ?? '#'} target="_blank" rel="noopener noreferrer" style={{ color: '#f0a' }}>revoir ce que tu as envoyé</a>
+              Envoyée —{' '}<a href={prog?.video_url ?? '#'} target="_blank" rel="noopener noreferrer" style={{ color: '#FF00BE' }}>revoir ce que tu as envoyé</a>
             </p>
           )}
           {!estOutilSante && !estAdmin && (statutEx === 'a_faire' || statutEx === 'refuse') && (
@@ -1950,7 +1965,7 @@ function BlocExercice({
               <input type="hidden" name="exercice_id" value={exercice.id} />
               <input type="url" name="video_url" required placeholder="Lien de ta vidéo"
                 style={{ flexGrow: 1, minWidth: 160, fontSize: 12, padding: '7px 10px', borderRadius: 8, border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surfaceForte, color: COULEURS.texte }} />
-              <button type="submit" style={{ fontSize: 12, padding: '7px 12px', borderRadius: 999, border: '1px solid #f0a', background: 'rgba(255,0,170,0.1)', color: '#f0a', cursor: 'pointer' }}>
+              <button type="submit" style={{ fontSize: 12, padding: '7px 12px', borderRadius: 999, border: '1px solid #FF00BE', background: 'rgba(255,0,170,0.1)', color: '#FF00BE', cursor: 'pointer' }}>
                 {statutEx === 'refuse' ? 'Renvoyer' : 'Envoyer'}
               </button>
             </form>
