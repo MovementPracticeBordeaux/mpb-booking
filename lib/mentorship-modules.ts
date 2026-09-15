@@ -159,6 +159,10 @@ export const TRONC: NoeudMentorship[] = [
     objectifPedagogique: "Préparer le corps et poser la posture d'apprentissage avant toute spécialisation.",
     theorie: [
       {
+        titre: 'Fondations',
+        texte: "Ce premier niveau porte bien son nom : avant toute spécialisation, il pose les fondations — la mobilité de base, la respiration, la conscience du corps — sur lesquelles tout le reste va se construire. Rien de ce qui suit dans ta pratique ne tiendra sans elles.",
+      },
+      {
         titre: 'Qu\'est-ce que le Mouvement ?',
         texte: "Le Mouvement est une quête, une démarche de recherche et de développement personnel, un point de vue et une stratégie originale à la fois physique et mentale, axée sur l'apprentissage et l'acquisition d'expérience. Peut-on le qualifier de pratique ou de discipline ? Oui, car il se distingue par sa démarche, sa communauté, et un domaine de pratique fortement identitaire. Mais il reste aussi difficile à catégoriser, du fait de sa grande diversité de formes et de sa capacité de mutation. Une chose est sûre : il n'existe pas de bon ou de mauvais mouvement dans l'absolu — seulement des mouvements que nous sommes prêts à réaliser, et d'autres non.",
       },
@@ -257,6 +261,10 @@ export const TRONC: NoeudMentorship[] = [
     resume: "Le travail de fond devient méthodique : le cycle d'apprentissage structure la progression.",
     objectifPedagogique: "Passer du subjectif (ce qui me convient) vers l'objectif (ce qui est mesurable et progressif).",
     theorie: [
+      {
+        titre: 'Consolidation',
+        texte: "Ce deuxième niveau porte bien son nom : ce que tu as posé en Fondations se consolide ici — tes outils gagnent en exigence, ta pratique devient plus méthodique. On ne construit pas encore de nouvelles fondations, on solidifie celles qui existent déjà.",
+      },
       {
         titre: "Les cinq qualités de l'armure organique",
         texte: "L'armure organique se compose de cinq qualités. La Structure : une densité osseuse importante et une masse musculaire structurelle (muscles profonds) dense et tonique. L'Équilibre : une masse musculaire « utile », apportant une tenségrité optimale et harmonieuse. La Flexibilité : un corps capable de se déformer, de se plier et de s'étirer de multiples façons. La Résilience : un corps capable de résister à de fortes contraintes puis de retrouver son état d'équilibre. La Connexion : un corps « disponible » dont chacune des parties peut être ressentie et utilisée indépendamment, alternativement ou simultanément, avec la plus grande vivacité ou la plus grande lenteur.",
@@ -358,6 +366,10 @@ export const TRONC: NoeudMentorship[] = [
     resume: "L'armure organique se consolide : les principes qui portent toute la pratique, quel que soit le domaine, et qui ouvrent la porte aux cinq branches.",
     objectifPedagogique: "Consolider les principes fondamentaux de l'entraînement, et se préparer physiquement à l'ouverture simultanée des branches spécialisées.",
     theorie: [
+      {
+        titre: 'Intégration',
+        texte: "Ce troisième niveau porte bien son nom : les outils travaillés en Fondations et Consolidation s'intègrent maintenant les uns aux autres, et ton corps s'intègre à un tout — prêt à intégrer, une fois ce niveau achevé, les cinq branches qui s'ouvriront ensemble.",
+      },
       {
         titre: 'La répétition, matière première de l\'entraînement',
         texte: "Chaque mouvement, chaque geste, trouve sa perfection dans la répétition. Elle est la pierre angulaire de tout progrès : répéter régulièrement et consciemment un mouvement permet de le comprendre en profondeur et de forger une connexion solide entre le corps et l'esprit — la base de tout apprentissage durable.",

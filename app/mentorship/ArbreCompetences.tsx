@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { Zap, Footprints, Moon, Wind, HeartPulse, Eye, Mountain, Play, BookOpen, NotebookText, Wrench, ChevronRight } from 'lucide-react';
+import { Zap, Footprints, Moon, Wind, HeartPulse, Eye, Mountain, Play, BookOpen, NotebookText, Wrench, ChevronRight, Video } from 'lucide-react';
 import {
   ORDRE_DOMAINES,
   DOMAINE_LABELS,
@@ -86,26 +86,6 @@ const OUTIL_PAR_BRANCHE: Partial<Record<Domaine, { href: string; label: string }
   figures: { href: '/mentorship/outils/figures', label: 'Outil Figures — chrono de tenue + récupération' },
 };
 
-// Section repliable simple, utilisée dans le panneau accordéon de la vue chemin.
-function Accordeon({ titre, ouvertParDefaut = false, children }: { titre: string; ouvertParDefaut?: boolean; children: React.ReactNode }) {
-  const [ouvert, setOuvert] = useState(ouvertParDefaut);
-  return (
-    <div style={{ border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, marginBottom: 10, overflow: 'hidden' }}>
-      <button
-        onClick={() => setOuvert((o) => !o)}
-        style={{
-          width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          background: COULEURS.surface, border: 'none', padding: '13px 16px', cursor: 'pointer', textAlign: 'left',
-        }}
-      >
-        <span style={{ fontSize: 13, fontWeight: 600, color: COULEURS.texte }}>{titre}</span>
-        <span style={{ fontSize: 12, color: COULEURS.texteFaible, transform: ouvert ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>▾</span>
-      </button>
-      {ouvert && <div style={{ padding: '14px 16px', borderTop: `1px solid ${COULEURS.bordure}` }}>{children}</div>}
-    </div>
-  );
-}
-
 // Comparaison de la première vidéo jamais soumise sur un module (nœud ou
 // exercice) avec la plus récente — deux boutons qui ouvrent chacun le
 // lecteur vidéo existant. Rien à comparer si une seule vidéo a été soumise
@@ -180,7 +160,7 @@ function Pictogramme({ domaine, taille = 12, couleur }: { domaine: DomaineOuTron
 // seule composée à la main (cible + flèche plantée), lucide n'ayant pas
 // cette combinaison précise -- basée sur les mêmes cercles que son icône
 // Target, avec une flèche ajoutée par-dessus.
-type TypeIcone = 'force' | 'mobilite' | 'recuperation-nuit' | 'recuperation-souffle' | 'objectifs' | 'recuperation-coeur' | 'reference' | 'sommet' | 'jouer' | 'theorie' | 'journal' | 'outil';
+type TypeIcone = 'force' | 'mobilite' | 'recuperation-nuit' | 'recuperation-souffle' | 'objectifs' | 'recuperation-coeur' | 'reference' | 'sommet' | 'jouer' | 'theorie' | 'journal' | 'outil' | 'video';
 
 function IconeExercice({ type, taille = 16, couleur }: { type: TypeIcone; taille?: number; couleur: string }) {
   const commun = { size: taille, color: couleur, strokeWidth: 1.8 };
@@ -196,6 +176,7 @@ function IconeExercice({ type, taille = 16, couleur }: { type: TypeIcone; taille
     case 'theorie': return <BookOpen {...commun} fill={couleur} fillOpacity={0.35} />;
     case 'journal': return <NotebookText {...commun} fill={couleur} fillOpacity={0.35} />;
     case 'outil': return <Wrench {...commun} />;
+    case 'video': return <Video {...commun} />;
     case 'objectifs':
       return (
         <svg width={taille} height={taille} viewBox="0 0 24 24" fill="none" stroke={couleur} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
@@ -497,6 +478,7 @@ export default function ArbreCompetences({
   const [vueBranche, setVueBranche] = useState<Domaine | 'tronc' | null>(null);
   const [noeudPanneauId, setNoeudPanneauId] = useState<string | null>(null);
   const [ongletNoeud, setOngletNoeud] = useState<'theorie' | 'pratique' | 'outil' | 'journal'>('pratique');
+  const [avantApresOuvert, setAvantApresOuvert] = useState(false);
   const [videoOuverteChemin, setVideoOuverteChemin] = useState<{ url: string; titre: string } | null>(null);
   const refNoeudCourant = useRef<HTMLDivElement | null>(null);
   const [reponsesQCM, setReponsesQCM] = useState<Record<string, number>>({});
@@ -801,8 +783,12 @@ export default function ArbreCompetences({
                 const statut = statutAffiche(noeud);
                 const estCourant = noeud.id === noeudCourantId;
                 const estSelectionne = noeud.id === noeudPanneauId;
-                const couleur = noeud.domaine === 'tronc' ? COULEUR_TRONC : DOMAINE_COULEURS[noeud.domaine as Domaine];
+                const couleurNoeud = noeud.domaine === 'tronc' ? COULEUR_TRONC : DOMAINE_COULEURS[noeud.domaine as Domaine];
                 const inerte = statut === 'locked';
+                // Seul le nœud sélectionné reste en couleur pleine -- les autres
+                // sont grisés (même débloqués/acquis), sinon impossible de
+                // repérer où on se trouve dans le chemin d'un coup d'œil.
+                const couleur = estSelectionne ? couleurNoeud : COULEURS.texteFaible;
                 return (
                   <div key={noeud.id} ref={estCourant ? refNoeudCourant : undefined} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     {i > 0 && <div className="chemin-connecteur" style={{ width: 2, height: 20, background: inerte ? COULEURS.bordure : `${couleur}66` }} />}
@@ -814,16 +800,17 @@ export default function ArbreCompetences({
                         width: estSelectionne ? 60 : 50, height: estSelectionne ? 60 : 50, borderRadius: '50%', flexShrink: 0,
                         position: 'relative',
                         border: `${estSelectionne ? 2 : 1.5}px solid ${inerte ? COULEURS.texteFaible : couleur}`,
-                        background: noeud.image ? COULEURS.fond : statut === 'acquis' ? `${couleur}22` : 'transparent',
+                        background: noeud.image ? COULEURS.fond : statut === 'acquis' && estSelectionne ? `${couleur}22` : 'transparent',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, cursor: inerte ? 'default' : 'pointer',
-                        boxShadow: estCourant ? `0 0 6px ${couleur}, 0 0 16px ${couleur}aa, 0 0 32px ${couleur}55` : estSelectionne ? `0 0 10px ${couleur}88` : 'none',
+                        boxShadow: estSelectionne ? `0 0 6px ${couleur}, 0 0 16px ${couleur}aa, 0 0 32px ${couleur}55` : 'none',
+                        opacity: estSelectionne ? 1 : 0.55,
                         transition: 'all 0.15s',
                       }}
                     >
                       {noeud.image ? (
                         <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', overflow: 'hidden' }}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={noeud.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: inerte ? 0.4 : statut === 'acquis' ? 1 : 0.9, filter: inerte ? 'brightness(0.5)' : 'none' }} />
+                          <img src={noeud.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: inerte ? 0.4 : statut === 'acquis' ? 1 : 0.9, filter: inerte || !estSelectionne ? 'brightness(0.5) grayscale(0.6)' : 'none' }} />
                         </div>
                       ) : inerte ? (
                         <span style={{ fontSize: 14, opacity: 0.6 }}>🔒</span>
@@ -999,27 +986,41 @@ export default function ArbreCompetences({
                               </div>
                             )}
 
-                            <Accordeon titre="📹 Avant / Après">
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-                                {[...(noeud.exercices ?? []), ...(noeud.progressionBonus ?? [])].map((ex) => {
-                                  const p = progression.get(moduleIdExercice(noeud, ex));
-                                  if (!p?.premiere_video_url) return null;
-                                  return (
-                                    <ComparaisonVideo
-                                      key={ex.id}
-                                      titre={ex.nom}
-                                      premiereUrl={p.premiere_video_url}
-                                      premiereDate={p.premiere_video_date}
-                                      derniereUrl={p.video_url}
-                                      onOuvrir={(url, titre) => setVideoOuverteChemin({ url, titre })}
-                                    />
-                                  );
-                                })}
-                                {[...(noeud.exercices ?? []), ...(noeud.progressionBonus ?? [])].every((ex) => !progression.get(moduleIdExercice(noeud, ex))?.premiere_video_url) && (
-                                  <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: 0 }}>Pas encore de vidéo soumise sur ce niveau.</p>
-                                )}
-                              </div>
-                            </Accordeon>
+                            <div style={{ background: 'transparent', border: `1px solid ${BORDURE_PANNEAU}`, borderRadius: 14, padding: 14, marginTop: 14 }}>
+                              <button
+                                type="button" onClick={() => setAvantApresOuvert((o) => !o)}
+                                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
+                              >
+                                <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                  <span style={{ flexShrink: 0, width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <IconeExercice type="video" taille={24} couleur={couleur} />
+                                  </span>
+                                  <p style={{ fontSize: 14, fontWeight: 700, color: COULEURS.texte, margin: 0 }}>Avant / Après</p>
+                                </span>
+                                <ChevronRight size={16} color={COULEURS.texteFaible} style={{ transform: avantApresOuvert ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }} />
+                              </button>
+                              {avantApresOuvert && (
+                                <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 18 }}>
+                                  {[...(noeud.exercices ?? []), ...(noeud.progressionBonus ?? [])].map((ex) => {
+                                    const p = progression.get(moduleIdExercice(noeud, ex));
+                                    if (!p?.premiere_video_url) return null;
+                                    return (
+                                      <ComparaisonVideo
+                                        key={ex.id}
+                                        titre={ex.nom}
+                                        premiereUrl={p.premiere_video_url}
+                                        premiereDate={p.premiere_video_date}
+                                        derniereUrl={p.video_url}
+                                        onOuvrir={(url, titre) => setVideoOuverteChemin({ url, titre })}
+                                      />
+                                    );
+                                  })}
+                                  {[...(noeud.exercices ?? []), ...(noeud.progressionBonus ?? [])].every((ex) => !progression.get(moduleIdExercice(noeud, ex))?.premiere_video_url) && (
+                                    <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: 0 }}>Pas encore de vidéo soumise sur ce niveau.</p>
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           </>
                         ) : !estAdmin ? (
                           <>
