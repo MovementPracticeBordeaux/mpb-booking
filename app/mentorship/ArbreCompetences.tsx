@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { Zap, Footprints, Moon, Wind, HeartPulse, Eye, Mountain, Play, BookOpen, NotebookText, Wrench } from 'lucide-react';
+import { Zap, Footprints, Moon, Wind, HeartPulse, Eye, Mountain, Play, BookOpen, NotebookText, Wrench, ChevronRight } from 'lucide-react';
 import {
   ORDRE_DOMAINES,
   DOMAINE_LABELS,
@@ -1903,7 +1903,10 @@ function BlocExercice({
             {exercice.nom}{estBonus ? ' 🔥' : ''}
           </span>
         </span>
-        <StatutExercicePastille statut={statutEx} estOutilSante={estOutilSante} />
+        <span style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+          {estOutilSante && <ChevronRight size={14} color={COULEURS.texteFaible} />}
+          <StatutExercicePastille statut={statutEx} estOutilSante={estOutilSante} />
+        </span>
       </button>
 
       {ouvert && (
