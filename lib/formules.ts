@@ -100,10 +100,15 @@ export const FORMULES: Record<string, Formule> = {
   // progresse dans l'arbre entier (Armure Organique puis les 5 branches,
   // niveau par niveau) sans nouveau mur de paiement à chaque étape
   // franchie ; seule la durée de validité de l'accès change.
-  // ⚠️ Prix indicatifs -- à discuter et confirmer avec Sylvain.
-  mentorship_3: { nom: 'Mentorat — 3 mois', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 449 },
-  mentorship_6: { nom: 'Mentorat — 6 mois', categorie: 'mentorat', unite: null, quota: null, validiteMois: 6, prixIndicatif: 799 },
-  mentorship_12: { nom: 'Mentorat — 12 mois', categorie: 'mentorat', unite: null, quota: null, validiteMois: 12, prixIndicatif: 1299 },
+  // Prix validés avec Sylvain (13/09/2026) après comparaison au marché
+  // français du coaching sportif en ligne avec suivi personnalisé
+  // (fourchette 100-150€/mois) : positionnement légèrement en dessous,
+  // pour rester accessible au grand public tout en restant cohérent avec
+  // le service réellement rendu (retour vidéo personnel, pas juste un
+  // programme statique).
+  mentorship_3: { nom: 'Mentorat — 3 mois', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 289 },
+  mentorship_6: { nom: 'Mentorat — 6 mois', categorie: 'mentorat', unite: null, quota: null, validiteMois: 6, prixIndicatif: 499 },
+  mentorship_12: { nom: 'Mentorat — 12 mois', categorie: 'mentorat', unite: null, quota: null, validiteMois: 12, prixIndicatif: 849 },
 
   post_mentorship: { nom: 'Suivi Post-Mentorat', categorie: 'mentorat', unite: null, quota: null, validiteMois: 1, prixIndicatif: 80 },
 };
