@@ -651,13 +651,16 @@ export default function ArbreCompetences({
         @keyframes pulse-noeud { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
         @keyframes glow-acquis { 0%, 100% { filter: drop-shadow(0 0 3px currentColor); } 50% { filter: drop-shadow(0 0 8px currentColor); } }
         @keyframes flame-shift { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
-        /* Sur mobile, le rail (chemin vertical) et le panneau de détail ne
-           tiennent pas côte à côte sans tout écraser en largeur -- le rail
-           passe au-dessus du panneau au lieu d'à côté, mais garde sa
-           propre orientation verticale (juste centré, plus compact). */
+        /* Sur mobile : le rail flotte à gauche (compact, colonne verticale
+           inchangée), le titre/résumé du niveau vient s'écouler à côté --
+           puis la barre de sous-onglets et tout ce qui suit s'en libèrent
+           (clear) pour repasser en pleine largeur d'écran, comme demandé.
+           Technique par flottement plutôt que réorganisation du JSX :
+           beaucoup plus sûr sur un bloc de contenu aussi imbriqué. */
         @media (max-width: 640px) {
-          .chemin-branche { flex-direction: column !important; align-items: center !important; }
-          .chemin-branche > .chemin-rail { max-height: 220px !important; }
+          .chemin-branche { display: block !important; }
+          .chemin-branche > .chemin-rail { float: left !important; max-height: none !important; margin-right: 12px !important; padding: 4px !important; }
+          .chemin-onglets { clear: both !important; }
         }
       `}</style>
 
@@ -808,7 +811,7 @@ export default function ArbreCompetences({
                         L'onglet Outil n'a de sens que pour les branches (lien dédié) --
                         le tronc n'en a jamais eu, ses outils sont désormais rattachés
                         directement à chaque objectif dans l'onglet Objectifs. */}
-                    <div style={{ display: 'flex', gap: 4, marginBottom: 14, borderBottom: `1px solid ${COULEURS.bordure}`, position: 'sticky', top: 0, background: COULEURS.fond, zIndex: 1, paddingTop: 2 }}>
+                    <div className="chemin-onglets" style={{ display: 'flex', gap: 4, marginBottom: 14, borderBottom: `1px solid ${COULEURS.bordure}`, position: 'sticky', top: 0, background: COULEURS.fond, zIndex: 1, paddingTop: 2 }}>
                       {([
                         ['pratique', '🎯 Objectifs'],
                         ['theorie', '📖 Théorie'],
