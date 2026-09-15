@@ -595,17 +595,26 @@ export default function ArbreCompetences({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vueBranche, tronc, branches, idsAcquis.size]);
 
+  const noeudCibleRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (vueBranche) {
-      setNoeudPanneauId(noeudCourantId); setOngletNoeud('pratique');
+      // Si on est entré via un clic sur un nœud précis (pas juste l'en-tête
+      // de branche), on ouvre CE nœud -- sinon, comportement par défaut :
+      // le premier nœud non acquis dans l'ordre chronologique.
+      const cible = noeudCibleRef.current ?? noeudCourantId;
+      setNoeudPanneauId(cible);
+      noeudCibleRef.current = null; // consommé, ne doit pas influencer les prochains changements de vue
+      setOngletNoeud('pratique');
       // Laisse le DOM se peindre avant de scroller (le rail vient d'apparaître).
       requestAnimationFrame(() => refNoeudCourant.current?.scrollIntoView({ block: 'center', behavior: 'auto' }));
     }
   }, [vueBranche, noeudCourantId]);
 
-  function entrerBranche(d: Domaine | 'tronc') {
+  function entrerBranche(d: Domaine | 'tronc', noeudCibleId?: string) {
     // Le tronc est toujours accessible, quelle que soit la formule.
     if (d === 'tronc' || brancheIncluse(d) || estAdmin) {
+      noeudCibleRef.current = noeudCibleId ?? null;
       setVueBranche(d);
     } else {
       // Branche non incluse dans la formule : on garde l'ancien comportement
@@ -660,6 +669,8 @@ export default function ArbreCompetences({
         @media (max-width: 640px) {
           .chemin-branche { display: block !important; }
           .chemin-branche > .chemin-rail { float: left !important; max-height: none !important; margin-right: 12px !important; padding: 4px !important; }
+          .chemin-rail .chemin-connecteur { height: 8px !important; }
+          .chemin-rail .chemin-pastille { width: 34px !important; height: 34px !important; font-size: 10px !important; }
           .chemin-onglets { clear: both !important; }
         }
       `}</style>
@@ -743,8 +754,9 @@ export default function ArbreCompetences({
                 const inerte = statut === 'locked';
                 return (
                   <div key={noeud.id} ref={estCourant ? refNoeudCourant : undefined} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    {i > 0 && <div style={{ width: 2, height: 20, background: inerte ? COULEURS.bordure : `${couleur}66` }} />}
+                    {i > 0 && <div className="chemin-connecteur" style={{ width: 2, height: 20, background: inerte ? COULEURS.bordure : `${couleur}66` }} />}
                     <button
+                      className="chemin-pastille"
                       onClick={() => { if (!inerte) { setNoeudPanneauId(noeud.id); setOngletNoeud('pratique'); } }}
                       aria-label={noeud.titre}
                       style={{
@@ -1078,7 +1090,7 @@ export default function ArbreCompetences({
                     domaine={d}
                     flamme={flammeDuNoeud(noeud)}
                     image={noeud.image}
-                    onClick={() => entrerBranche(d)}
+                    onClick={() => entrerBranche(d, noeud.id)}
                   />
                 );
               })
@@ -1093,7 +1105,7 @@ export default function ArbreCompetences({
                 couleur={COULEUR_TRONC}
                 domaine="tronc"
                 image={noeud.image}
-                onClick={() => entrerBranche('tronc')}
+                onClick={() => entrerBranche('tronc', noeud.id)}
               />
             ))}
           </div>
