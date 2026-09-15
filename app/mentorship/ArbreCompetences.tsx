@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect } from 'react';
+import { Zap, Footprints, Moon, Wind, HeartPulse, Eye, Mountain, Play, BookOpen, NotebookText, Wrench } from 'lucide-react';
 import {
   ORDRE_DOMAINES,
   DOMAINE_LABELS,
@@ -173,39 +174,35 @@ function Pictogramme({ domaine, taille = 12, couleur }: { domaine: DomaineOuTron
 }
 
 // Icônes vectorielles pour le panneau de nœud (exercices, thèmes,
-// récupération) -- même famille de dessin que Pictogramme (traits fins,
-// viewBox 24, strokeWidth 2), plutôt que des emoji Unicode : ça permet une
-// couleur, une taille et un rendu réellement identiques partout, ce qu'un
-// emoji ne permet pas (couleur et style fixés par la plateforme).
+// récupération) -- une vraie bibliothèque (lucide-react) plutôt que des
+// dessins à la main ou des emoji Unicode : rendu net, cohérent, et
+// recolorable partout, ce qu'un emoji ne permet pas. 'objectifs' est la
+// seule composée à la main (cible + flèche plantée), lucide n'ayant pas
+// cette combinaison précise -- basée sur les mêmes cercles que son icône
+// Target, avec une flèche ajoutée par-dessus.
 type TypeIcone = 'force' | 'mobilite' | 'recuperation-nuit' | 'recuperation-souffle' | 'objectifs' | 'recuperation-coeur' | 'reference' | 'sommet' | 'jouer' | 'theorie' | 'journal' | 'outil';
 
-function IconeExercice({ type, taille = 14, couleur }: { type: TypeIcone; taille?: number; couleur: string }) {
-  const props = { width: taille, height: taille, viewBox: '0 0 24 24', fill: 'none', stroke: couleur, strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+function IconeExercice({ type, taille = 16, couleur }: { type: TypeIcone; taille?: number; couleur: string }) {
+  const commun = { size: taille, color: couleur, strokeWidth: 1.8 };
   switch (type) {
-    case 'force':
-      return <svg {...props}><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z" /></svg>;
-    case 'mobilite':
-      return <svg {...props}><circle cx="14" cy="4.5" r="1.8" /><path d="M14 6.5l-3 4 2 3-2 6M11 10.5l-4 2M16 9.5l3 2-1 6" /></svg>;
-    case 'recuperation-nuit':
-      return <svg {...props}><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z" /></svg>;
-    case 'recuperation-souffle':
-      return <svg {...props}><path d="M12 3v7M12 10c-.5-2-2.5-3.5-4.5-3-2.5.6-3.5 4-2 6.5.8 1.3 2.2 2 3.5 1.5L12 12M12 10c.5-2 2.5-3.5 4.5-3 2.5.6 3.5 4 2 6.5-.8 1.3-2.2 2-3.5 1.5L12 12" /></svg>;
+    case 'force': return <Zap {...commun} />;
+    case 'mobilite': return <Footprints {...commun} />;
+    case 'recuperation-nuit': return <Moon {...commun} />;
+    case 'recuperation-souffle': return <Wind {...commun} />;
+    case 'recuperation-coeur': return <HeartPulse {...commun} />;
+    case 'reference': return <Eye {...commun} />;
+    case 'sommet': return <Mountain {...commun} />;
+    case 'jouer': return <Play {...commun} fill={couleur} />;
+    case 'theorie': return <BookOpen {...commun} />;
+    case 'journal': return <NotebookText {...commun} />;
+    case 'outil': return <Wrench {...commun} />;
     case 'objectifs':
-      return <svg {...props}><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="4.5" /><circle cx="12" cy="12" r="1" fill={couleur} /></svg>;
-    case 'recuperation-coeur':
-      return <svg {...props}><path d="M12 20s-7-4.4-9.3-8.8C1 8.3 2 4.5 6 4.5c2 0 3.8 1.4 6 4 2.2-2.6 4-4 6-4 4 0 5 3.8 3.3 6.7C19 15.6 12 20 12 20z" /><path d="M5 12h3l1.5-3 2 5 1.5-2.5h5" /></svg>;
-    case 'reference':
-      return <svg {...props}><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12z" /><circle cx="12" cy="12" r="2.5" /></svg>;
-    case 'sommet':
-      return <svg {...props}><path d="M3 19h18L14 5l-3.5 6.5L8 9 3 19z" /></svg>;
-    case 'jouer':
-      return <svg {...props} fill={couleur}><path d="M6 4l14 8-14 8V4z" /></svg>;
-    case 'theorie':
-      return <svg {...props}><path d="M4 5c2-1 5-1 8 0v14c-3-1-6-1-8 0V5zM20 5c-2-1-5-1-8 0v14c3-1 6-1 8 0V5z" /></svg>;
-    case 'journal':
-      return <svg {...props}><path d="M6 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" /><path d="M8 8h6M8 12h6M8 16h3" /></svg>;
-    case 'outil':
-      return <svg {...props}><path d="M14.5 3.5a4 4 0 0 0-5.4 4.9L3 14.5 5.5 17l6.1-6.1a4 4 0 0 0 4.9-5.4l-2.8 2.8-2-2 2.8-2.8z" /></svg>;
+      return (
+        <svg width={taille} height={taille} viewBox="0 0 24 24" fill="none" stroke={couleur} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5.5" /><circle cx="12" cy="12" r="2" fill={couleur} />
+          <path d="M12 12 19 5" /><path d="M19 5h-3.5M19 5v3.5" />
+        </svg>
+      );
   }
 }
 
@@ -878,7 +875,7 @@ export default function ArbreCompetences({
                             fontWeight: ongletNoeud === id ? 700 : 400,
                           }}
                         >
-                          <IconeExercice type={icone} taille={13} couleur={ongletNoeud === id ? couleur : COULEURS.texteFaible} />
+                          <IconeExercice type={icone} taille={15} couleur={ongletNoeud === id ? couleur : COULEURS.texteFaible} />
                           {titreOnglet}
                         </button>
                       ))}
@@ -909,9 +906,9 @@ export default function ArbreCompetences({
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 14 }}>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                                         <span style={{
-                                          flexShrink: 0, width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                          flexShrink: 0, width: 38, height: 38, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
                                           background: `${couleur}22`, boxShadow: `0 0 10px ${couleur}55`,
-                                        }}><IconeExercice type="objectifs" taille={16} couleur={couleur} /></span>
+                                        }}><IconeExercice type="objectifs" taille={20} couleur={couleur} /></span>
                                         <div>
                                           <p style={{ fontSize: 14, fontWeight: 700, color: COULEURS.texte, margin: 0 }}>Objectifs</p>
                                           <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '2px 0 0' }}>Clique un exercice pour le détail</p>
@@ -928,7 +925,7 @@ export default function ArbreCompetences({
                                     {parTheme('force').length > 0 && (
                                       <div style={{ marginBottom: 12 }}>
                                         <p style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: couleur, fontWeight: 700, letterSpacing: 0.6, margin: '0 0 8px' }}>
-                                          <IconeExercice type="force" taille={14} couleur={couleur} /> FORCE
+                                          <IconeExercice type="force" taille={16} couleur={couleur} /> FORCE
                                         </p>
                                         {parTheme('force').map((ex) => (
                                           <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} icone="force" couleurIcone={couleur} />
@@ -938,7 +935,7 @@ export default function ArbreCompetences({
                                     {parTheme('mobilite').length > 0 && (
                                       <div style={{ marginBottom: 12 }}>
                                         <p style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: couleur, fontWeight: 700, letterSpacing: 0.6, margin: '0 0 8px' }}>
-                                          <IconeExercice type="mobilite" taille={14} couleur={couleur} /> MOBILITÉ
+                                          <IconeExercice type="mobilite" taille={16} couleur={couleur} /> MOBILITÉ
                                         </p>
                                         {parTheme('mobilite').map((ex) => (
                                           <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} icone="mobilite" couleurIcone={couleur} />
@@ -954,9 +951,9 @@ export default function ArbreCompetences({
                                     <div style={{ background: 'rgba(79,195,247,0.06)', border: `1px solid #4FC3F766`, borderRadius: 14, padding: 14, marginBottom: 14 }}>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
                                         <span style={{
-                                          flexShrink: 0, width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                          flexShrink: 0, width: 38, height: 38, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
                                           background: '#4FC3F722', boxShadow: '0 0 10px #4FC3F755',
-                                        }}><IconeExercice type="recuperation-coeur" taille={16} couleur="#4FC3F7" /></span>
+                                        }}><IconeExercice type="recuperation-coeur" taille={20} couleur="#4FC3F7" /></span>
                                         <div>
                                           <p style={{ fontSize: 14, fontWeight: 700, color: '#4FC3F7', margin: 0 }}>Récupération</p>
                                           <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '2px 0 0' }}>Bibliothèque d'outils santé, non soumise à validation</p>
@@ -1876,9 +1873,9 @@ function BlocExercice({
           </span>
           {icone && (
             <span style={{
-              flexShrink: 0, width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0, width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: `${teinte}1f`,
-            }}><IconeExercice type={icone} taille={13} couleur={teinte} /></span>
+            }}><IconeExercice type={icone} taille={16} couleur={teinte} /></span>
           )}
           <span style={{ fontSize: 13, color: COULEURS.texte, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {exercice.nom}{estBonus ? ' 🔥' : ''}
@@ -1893,7 +1890,7 @@ function BlocExercice({
           {exercice.consigne && <p style={{ margin: '4px 0 0', fontSize: 11.5, color: COULEURS.texteAtt, lineHeight: 1.5 }}>{exercice.consigne}</p>}
           {exercice.critereValidation && (
             <p style={{ margin: '6px 0 0', fontSize: 11, color: estOutilSante ? COULEURS.texteFaible : teinte, fontWeight: estOutilSante ? 400 : 600, display: 'flex', alignItems: 'flex-start', gap: 5 }}>
-              <span style={{ flexShrink: 0, marginTop: 1 }}><IconeExercice type="sommet" taille={13} couleur={estOutilSante ? COULEURS.texteFaible : teinte} /></span><span>{exercice.critereValidation}</span>
+              <span style={{ flexShrink: 0, marginTop: 1 }}><IconeExercice type="sommet" taille={14} couleur={estOutilSante ? COULEURS.texteFaible : teinte} /></span><span>{exercice.critereValidation}</span>
             </p>
           )}
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginTop: 8 }}>
@@ -1902,7 +1899,7 @@ function BlocExercice({
                 onClick={() => onOuvrirVideo(exercice.videoUrl, exercice.nom)}
                 style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: teinte, background: 'none', border: 'none', padding: 0, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 2 }}
               >
-                <IconeExercice type="reference" taille={13} couleur={teinte} /> Voir la référence
+                <IconeExercice type="reference" taille={14} couleur={teinte} /> Voir la référence
               </button>
             )}
             {objectifId && noeud.domaine !== 'tronc' && (
@@ -1924,7 +1921,7 @@ function BlocExercice({
                     key={o.nom} onClick={() => onOuvrirVideo(o.videoUrl, o.nom)}
                     style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: COULEURS.texteAtt, background: COULEURS.surfaceForte, border: `1px solid ${COULEURS.bordure}`, borderRadius: 999, padding: '4px 12px 4px 4px', cursor: 'pointer' }}
                   >
-                    <span style={{ width: 18, height: 18, borderRadius: '50%', background: `${teinte}22`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IconeExercice type="jouer" taille={9} couleur={teinte} /></span>
+                    <span style={{ width: 20, height: 20, borderRadius: '50%', background: `${teinte}22`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IconeExercice type="jouer" taille={11} couleur={teinte} /></span>
                     {o.nom}
                   </button>
                 ))}
