@@ -193,8 +193,8 @@ function IconeExercice({ type, taille = 16, couleur }: { type: TypeIcone; taille
     case 'reference': return <Eye {...commun} />;
     case 'sommet': return <Mountain {...commun} />;
     case 'jouer': return <Play {...commun} fill={couleur} />;
-    case 'theorie': return <BookOpen {...commun} />;
-    case 'journal': return <NotebookText {...commun} />;
+    case 'theorie': return <BookOpen {...commun} fill={couleur} fillOpacity={0.35} />;
+    case 'journal': return <NotebookText {...commun} fill={couleur} fillOpacity={0.35} />;
     case 'outil': return <Wrench {...commun} />;
     case 'objectifs':
       return (
@@ -932,10 +932,13 @@ export default function ArbreCompetences({
                                           <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '2px 0 0' }}>Clique un exercice pour le détail</p>
                                         </div>
                                       </div>
-                                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-                                        <span style={{ fontSize: 12, fontWeight: 700, color: couleur }}>{nbValides}/{exercicesValides.length}</span>
+                                      <div style={{
+                                        display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, padding: '6px 14px', borderRadius: 999,
+                                        border: `1px solid ${noeud.domaine === 'tronc' ? MAGENTA_NEON : couleur}`,
+                                      }}>
+                                        <span style={{ fontSize: 12, fontWeight: 700, color: noeud.domaine === 'tronc' ? MAGENTA_NEON : couleur }}>{nbValides}/{exercicesValides.length}</span>
                                         <div style={{ width: 52, height: 6, borderRadius: 999, background: COULEURS.bordure, overflow: 'hidden' }}>
-                                          <div style={{ width: `${pct}%`, height: '100%', background: couleur, borderRadius: 999, boxShadow: pct > 0 ? `0 0 6px ${couleur}` : 'none' }} />
+                                          <div style={{ width: `${pct}%`, height: '100%', background: noeud.domaine === 'tronc' ? MAGENTA_NEON : couleur, borderRadius: 999, boxShadow: pct > 0 ? `0 0 6px ${noeud.domaine === 'tronc' ? MAGENTA_NEON : couleur}` : 'none' }} />
                                         </div>
                                       </div>
                                     </div>
