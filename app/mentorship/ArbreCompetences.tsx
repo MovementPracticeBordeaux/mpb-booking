@@ -923,9 +923,9 @@ export default function ArbreCompetences({
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 14 }}>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                                         <span style={{
-                                          flexShrink: 0, width: 38, height: 38, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                          flexShrink: 0, width: 44, height: 44, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
                                           background: `${couleur}22`, boxShadow: `0 0 10px ${couleur}55`,
-                                        }}><IconeExercice type="objectifs" taille={20} couleur={couleur} /></span>
+                                        }}><IconeExercice type="objectifs" taille={32} couleur={couleur} /></span>
                                         <div>
                                           <p style={{ fontSize: 14, fontWeight: 700, color: COULEURS.texte, margin: 0 }}>Objectifs</p>
                                           <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '2px 0 0' }}>Clique un exercice pour le détail</p>
@@ -971,9 +971,9 @@ export default function ArbreCompetences({
                                     <div style={{ background: 'transparent', border: `1px solid #029FD666`, borderRadius: 14, padding: 14, marginBottom: 14 }}>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
                                         <span style={{
-                                          flexShrink: 0, width: 38, height: 38, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                          flexShrink: 0, width: 44, height: 44, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
                                           background: '#029FD622', boxShadow: '0 0 10px #029FD655',
-                                        }}><IconeExercice type="recuperation-coeur" taille={20} couleur="#029FD6" /></span>
+                                        }}><IconeExercice type="recuperation-coeur" taille={32} couleur="#029FD6" /></span>
                                         <div>
                                           <p style={{ fontSize: 14, fontWeight: 700, color: '#029FD6', margin: 0 }}>Récupération</p>
                                           <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '2px 0 0' }}>Bibliothèque d'outils santé, non soumise à validation</p>
@@ -1902,7 +1902,7 @@ function BlocExercice({
             <span style={{
               flexShrink: 0, width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: `${teinte}1f`,
-            }}><IconeExercice type={icone} taille={20} couleur={teinte} /></span>
+            }}><IconeExercice type={icone} taille={26} couleur={teinte} /></span>
           )}
           <span style={{ fontSize: 15, color: COULEURS.texte, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {exercice.nom}{estBonus ? ' 🔥' : ''}
