@@ -924,7 +924,7 @@ export default function ArbreCompetences({
                                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                                         <span style={{
                                           flexShrink: 0, width: 44, height: 44, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                          background: `${couleur}22`, boxShadow: `0 0 10px ${couleur}55`,
+                                          background: 'transparent',
                                         }}><IconeExercice type="objectifs" taille={32} couleur={couleur} /></span>
                                         <div>
                                           <p style={{ fontSize: 14, fontWeight: 700, color: COULEURS.texte, margin: 0 }}>Objectifs</p>
@@ -972,7 +972,7 @@ export default function ArbreCompetences({
                                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
                                         <span style={{
                                           flexShrink: 0, width: 44, height: 44, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                          background: '#029FD622', boxShadow: '0 0 10px #029FD655',
+                                          background: 'transparent',
                                         }}><IconeExercice type="recuperation-coeur" taille={32} couleur="#029FD6" /></span>
                                         <div>
                                           <p style={{ fontSize: 14, fontWeight: 700, color: '#029FD6', margin: 0 }}>Récupération</p>
@@ -1901,7 +1901,7 @@ function BlocExercice({
           {icone && (
             <span style={{
               flexShrink: 0, width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: `${teinte}1f`,
+              background: 'transparent',
             }}><IconeExercice type={icone} taille={26} couleur={teinte} /></span>
           )}
           <span style={{ fontSize: 15, color: COULEURS.texte, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
