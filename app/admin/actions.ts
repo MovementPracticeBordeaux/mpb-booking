@@ -291,9 +291,10 @@ export async function attribuerFormule(formData: FormData) {
   if (!formule) echouer('/admin/eleves', 'Formule inconnue.');
 
   // Seules les anciennes formules par branche (mentorship_1branche_*,
-  // mentorship_2branches_*) ont besoin d'une branche précisée -- les
-  // nouvelles formules par palier (mentorship_armure_*, mentorship_niveau1_*,
-  // etc.) donnent accès aux 5 branches à la fois, pas de sélection requise.
+  // mentorship_2branches_*) ont besoin d'une branche précisée -- toutes les
+  // autres formules Mentorat (nouvelles comme les anciennes par palier,
+  // mentorship_armure_*/niveau1_*/etc.) donnent accès à l'arbre complet,
+  // pas de sélection requise.
   const estAncienneFormuleParBranche = formuleNom.startsWith('mentorship_1branche_') || formuleNom.startsWith('mentorship_2branches_');
   if (estAncienneFormuleParBranche && !branche1) {
     echouer('/admin/eleves', 'Choisis au moins une branche pour cette ancienne formule Mentorat par branche.');

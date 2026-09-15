@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { FORMULES, MENTORAT_OUVERT, MENTORAT_PLACES_PAR_SESSION, PALIERS_MENTORAT } from '@/lib/formules';
+import { FORMULES, MENTORAT_OUVERT, MENTORAT_PLACES_PAR_SESSION, FORMULES_MENTORAT_DUREE } from '@/lib/formules';
 import { COULEURS, GRADIENT, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
 
 type Erreur = { message: string; connexionRequise: boolean };
@@ -46,18 +46,17 @@ const PRICE_IDS: Record<string, string> = {
   coaching_carnet_3h: 'price_1U0fjMA7uUFwYAcPJ1bm09Wq',
   coaching_carnet_4h: 'price_1U0fkNA7uUFwYAcPPB0ftT8Q',
   coaching_online: 'price_1U0frAA7uUFwYAcPc2PhR6B3',
-  // ⚠️ Anciennes formules par branche : ne plus vendre, conservées ici
-  // uniquement pour que CarteFormule/FORMULES restent cohérents pour les
-  // élèves qui les ont déjà (jamais affichées ci-dessous, MENTORAT_OUVERT
-  // les a de toute façon retirées de la vente avant la refonte).
+  // ⚠️ Anciennes formules par branche puis par palier : ne plus vendre,
+  // conservées ici uniquement pour que CarteFormule/FORMULES restent
+  // cohérents pour les élèves qui les ont déjà (jamais affichées
+  // ci-dessous, MENTORAT_OUVERT les a de toute façon retirées de la vente
+  // avant la refonte).
   mentorship_1branche_3: 'À_CREER_DANS_STRIPE_mentorship_1branche_3',
   mentorship_1branche_6: 'À_CREER_DANS_STRIPE_mentorship_1branche_6',
   mentorship_1branche_12: 'À_CREER_DANS_STRIPE_mentorship_1branche_12',
   mentorship_2branches_3: 'À_CREER_DANS_STRIPE_mentorship_2branches_3',
   mentorship_2branches_6: 'À_CREER_DANS_STRIPE_mentorship_2branches_6',
   mentorship_2branches_12: 'À_CREER_DANS_STRIPE_mentorship_2branches_12',
-  // ⚠️ Nouvelles formules par palier — à créer dans Stripe (Produits > Prix,
-  // achat ponctuel) puis remplacer ces 12 valeurs avant réouverture du Mentorat :
   mentorship_armure_3: 'À_CREER_DANS_STRIPE_mentorship_armure_3',
   mentorship_armure_6: 'À_CREER_DANS_STRIPE_mentorship_armure_6',
   mentorship_armure_12: 'À_CREER_DANS_STRIPE_mentorship_armure_12',
@@ -70,6 +69,12 @@ const PRICE_IDS: Record<string, string> = {
   mentorship_complet_3: 'À_CREER_DANS_STRIPE_mentorship_complet_3',
   mentorship_complet_6: 'À_CREER_DANS_STRIPE_mentorship_complet_6',
   mentorship_complet_12: 'À_CREER_DANS_STRIPE_mentorship_complet_12',
+  // ⚠️ Nouvelles formules (accès complet, différencié par durée seule) — à
+  // créer dans Stripe (Produits > Prix, achat ponctuel) puis remplacer ces
+  // 3 valeurs avant réouverture du Mentorat :
+  mentorship_3: 'À_CREER_DANS_STRIPE_mentorship_3',
+  mentorship_6: 'À_CREER_DANS_STRIPE_mentorship_6',
+  mentorship_12: 'À_CREER_DANS_STRIPE_mentorship_12',
   post_mentorship: 'price_1U0ftFA7uUFwYAcPwzVQnERa',
 };
 
@@ -81,7 +86,7 @@ const GROUPES = [
 // Formules mises en avant (badge). Clé -> libellé du badge.
 const MIS_EN_AVANT: Record<string, string> = {
   illimite: 'Le + populaire',
-  mentorship_niveau1_6: 'Le + choisi',
+  mentorship_6: 'Le + choisi',
 };
 
 
@@ -266,19 +271,14 @@ export default function TarifsPage({ searchParams }: { searchParams: { erreur?: 
           </div>
         ) : (
           <>
-            {PALIERS_MENTORAT.map((p) => (
-              <div key={p.cle}>
-                <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 10px' }}>{p.nom}</p>
-                <div style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', marginBottom: 24 }}>
-                  {p.cles3_6_12.map((cle) => (
-                    <CarteFormule key={cle} cle={cle} onAcheter={() => (window.location.href = '/mentorat/candidature')} libelleBouton="Candidater" />
-                  ))}
-                </div>
-              </div>
-            ))}
+            <div style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', marginBottom: 24 }}>
+              {FORMULES_MENTORAT_DUREE.map((cle) => (
+                <CarteFormule key={cle} cle={cle} onAcheter={() => (window.location.href = '/mentorat/candidature')} libelleBouton="Candidater" />
+              ))}
+            </div>
 
             <p style={{ color: COULEURS.texteFaible, fontSize: 12, maxWidth: 640 }}>
-              L'accès se fait sur candidature : tu précises ton niveau, jusqu'où tu veux aller, et tes
+              L'accès se fait sur candidature : tu précises ton niveau et tes
               objectifs, pour s'assurer que le Mentorat correspond à ta démarche. Les échanges se font
               exclusivement via la plateforme, avec des validations traitées de façon groupée chaque semaine
               (délai de réponse maximum : 5 jours ouvrés).

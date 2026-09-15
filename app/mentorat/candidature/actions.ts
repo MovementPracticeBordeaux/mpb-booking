@@ -19,14 +19,12 @@ export async function envoyerCandidature(formData: FormData) {
   const telephone = (formData.get('telephone') as string)?.trim() || null;
   const niveau = formData.get('niveau') as string;
   const duree = formData.get('duree') as string;
-  const palier = formData.get('palier') as string;
   const objectifs = (formData.get('objectifs') as string)?.trim();
 
   if (!nom) echouer('Merci d\'indiquer ton nom.');
   if (!email || !email.includes('@')) echouer('Merci d\'indiquer une adresse email valide.');
   if (!niveau) echouer('Merci d\'indiquer ton niveau actuel.');
   if (!duree) echouer('Merci d\'indiquer la durée souhaitée.');
-  if (!palier) echouer('Merci de choisir jusqu\'où tu veux aller.');
   if (!objectifs || objectifs.length < 10) echouer('Merci de préciser un peu tes objectifs.');
 
   const admin = supabaseAdmin();
@@ -36,7 +34,6 @@ export async function envoyerCandidature(formData: FormData) {
     telephone,
     niveau,
     duree,
-    palier,
     objectifs,
   });
 
@@ -55,7 +52,6 @@ export async function envoyerCandidature(formData: FormData) {
         `<p><strong>${nom}</strong> (${email}${telephone ? `, ${telephone}` : ''}) vient de candidater au Mentorat.</p>
          <p><strong>Niveau :</strong> ${niveau}</p>
          <p><strong>Durée souhaitée :</strong> ${duree} mois</p>
-         <p><strong>Palier :</strong> ${palier}</p>
          <p><strong>Objectifs :</strong><br/>${objectifs.replace(/\n/g, '<br/>')}</p>
          <p>À traiter depuis /admin/candidatures.</p>`
       );

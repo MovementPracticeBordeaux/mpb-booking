@@ -70,43 +70,47 @@ export const FORMULES: Record<string, Formule> = {
   // cours). Ne plus vendre — retirée de la page /tarifs.
   mentorship: { nom: 'Mentorat (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 599 },
 
-  // Anciennes formules Mentorat par branche (1 ou 2 branches au choix) :
-  // remplacées par le modèle par palier ci-dessous (déblocage simultané des
-  // 5 branches, niveau par niveau, cohérent avec le fonctionnement réel de
-  // l'arbre). Conservées uniquement pour les élèves qui les ont déjà en
-  // base -- ne plus vendre, retirées de /tarifs et de la page /mentorat.
+  // Anciennes formules Mentorat par branche (1 ou 2 branches au choix), puis
+  // par palier (Armure/Niveau 1/2/Complet) : deux tentatives précédentes,
+  // remplacées par un modèle plus simple -- un mur de paiement à chaque
+  // palier va à l'encontre de la logique de progression continue de l'arbre.
+  // Conservées uniquement pour les élèves qui les ont déjà en base -- ne
+  // plus vendre, retirées de /tarifs et de la page /mentorat.
   mentorship_1branche_3: { nom: 'Mentorat — 1 branche — 3 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 249 },
   mentorship_1branche_6: { nom: 'Mentorat — 1 branche — 6 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 6, prixIndicatif: 449 },
   mentorship_1branche_12: { nom: 'Mentorat — 1 branche — 12 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 12, prixIndicatif: 799 },
   mentorship_2branches_3: { nom: 'Mentorat — 2 branches — 3 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 329 },
   mentorship_2branches_6: { nom: 'Mentorat — 2 branches — 6 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 6, prixIndicatif: 599 },
   mentorship_2branches_12: { nom: 'Mentorat — 2 branches — 12 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 12, prixIndicatif: 999 },
+  mentorship_armure_3: { nom: 'Mentorat — Armure Organique — 3 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 99 },
+  mentorship_armure_6: { nom: 'Mentorat — Armure Organique — 6 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 6, prixIndicatif: 169 },
+  mentorship_armure_12: { nom: 'Mentorat — Armure Organique — 12 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 12, prixIndicatif: 299 },
+  mentorship_niveau1_3: { nom: 'Mentorat — Niveau 1 — 3 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 199 },
+  mentorship_niveau1_6: { nom: 'Mentorat — Niveau 1 — 6 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 6, prixIndicatif: 349 },
+  mentorship_niveau1_12: { nom: 'Mentorat — Niveau 1 — 12 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 12, prixIndicatif: 599 },
+  mentorship_niveau2_3: { nom: 'Mentorat — Niveau 2 — 3 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 289 },
+  mentorship_niveau2_6: { nom: 'Mentorat — Niveau 2 — 6 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 6, prixIndicatif: 499 },
+  mentorship_niveau2_12: { nom: 'Mentorat — Niveau 2 — 12 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 12, prixIndicatif: 849 },
+  mentorship_complet_3: { nom: 'Mentorat — Complet (Niveau 3) — 3 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 379 },
+  mentorship_complet_6: { nom: 'Mentorat — Complet (Niveau 3) — 6 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 6, prixIndicatif: 649 },
+  mentorship_complet_12: { nom: 'Mentorat — Complet (Niveau 3) — 12 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 12, prixIndicatif: 1099 },
 
-  // Nouvelles formules Mentorat, par PALIER plutôt que par branche -- cohérent
-  // avec le fonctionnement réel de l'arbre : l'Armure Organique d'abord, puis
-  // le niveau 1 des 5 branches se débloque en même temps, puis le niveau 2,
-  // puis le niveau 3. On ne choisit plus une branche, on achète l'accès
-  // jusqu'à un palier donné, sur les 5 branches à la fois.
-  // ⚠️ Prix indicatifs -- à confirmer avec Sylvain avant mise en vente réelle.
-  mentorship_armure_3: { nom: 'Mentorat — Armure Organique — 3 mois', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 99 },
-  mentorship_armure_6: { nom: 'Mentorat — Armure Organique — 6 mois', categorie: 'mentorat', unite: null, quota: null, validiteMois: 6, prixIndicatif: 169 },
-  mentorship_armure_12: { nom: 'Mentorat — Armure Organique — 12 mois', categorie: 'mentorat', unite: null, quota: null, validiteMois: 12, prixIndicatif: 299 },
-  mentorship_niveau1_3: { nom: 'Mentorat — Niveau 1 — 3 mois', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 199 },
-  mentorship_niveau1_6: { nom: 'Mentorat — Niveau 1 — 6 mois', categorie: 'mentorat', unite: null, quota: null, validiteMois: 6, prixIndicatif: 349 },
-  mentorship_niveau1_12: { nom: 'Mentorat — Niveau 1 — 12 mois', categorie: 'mentorat', unite: null, quota: null, validiteMois: 12, prixIndicatif: 599 },
-  mentorship_niveau2_3: { nom: 'Mentorat — Niveau 2 — 3 mois', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 289 },
-  mentorship_niveau2_6: { nom: 'Mentorat — Niveau 2 — 6 mois', categorie: 'mentorat', unite: null, quota: null, validiteMois: 6, prixIndicatif: 499 },
-  mentorship_niveau2_12: { nom: 'Mentorat — Niveau 2 — 12 mois', categorie: 'mentorat', unite: null, quota: null, validiteMois: 12, prixIndicatif: 849 },
-  mentorship_complet_3: { nom: 'Mentorat — Complet (Niveau 3) — 3 mois', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 379 },
-  mentorship_complet_6: { nom: 'Mentorat — Complet (Niveau 3) — 6 mois', categorie: 'mentorat', unite: null, quota: null, validiteMois: 6, prixIndicatif: 649 },
-  mentorship_complet_12: { nom: 'Mentorat — Complet (Niveau 3) — 12 mois', categorie: 'mentorat', unite: null, quota: null, validiteMois: 12, prixIndicatif: 1099 },
+  // Nouveau modèle, simplifié après discussion : un seul niveau d'accès,
+  // différencié uniquement par la durée -- pas de palier payant. L'élève
+  // progresse dans l'arbre entier (Armure Organique puis les 5 branches,
+  // niveau par niveau) sans nouveau mur de paiement à chaque étape
+  // franchie ; seule la durée de validité de l'accès change.
+  // ⚠️ Prix indicatifs -- à discuter et confirmer avec Sylvain.
+  mentorship_3: { nom: 'Mentorat — 3 mois', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 449 },
+  mentorship_6: { nom: 'Mentorat — 6 mois', categorie: 'mentorat', unite: null, quota: null, validiteMois: 6, prixIndicatif: 799 },
+  mentorship_12: { nom: 'Mentorat — 12 mois', categorie: 'mentorat', unite: null, quota: null, validiteMois: 12, prixIndicatif: 1299 },
 
   post_mentorship: { nom: 'Suivi Post-Mentorat', categorie: 'mentorat', unite: null, quota: null, validiteMois: 1, prixIndicatif: 80 },
 };
 
 // Toutes les clés de formule donnant accès à l'espace /mentorship (ancienne
-// + anciennes formules par branche, conservées pour les élèves existants +
-// nouvelles formules par palier + suivi post-programme).
+// + anciennes formules par branche/palier, conservées pour les élèves
+// existants + nouvelles formules par durée + suivi post-programme).
 export const CLES_ACCES_MENTORAT = [
   'mentorship',
   'mentorship_1branche_3', 'mentorship_1branche_6', 'mentorship_1branche_12',
@@ -115,42 +119,19 @@ export const CLES_ACCES_MENTORAT = [
   'mentorship_niveau1_3', 'mentorship_niveau1_6', 'mentorship_niveau1_12',
   'mentorship_niveau2_3', 'mentorship_niveau2_6', 'mentorship_niveau2_12',
   'mentorship_complet_3', 'mentorship_complet_6', 'mentorship_complet_12',
+  'mentorship_3', 'mentorship_6', 'mentorship_12',
   'post_mentorship',
 ];
 
-// Les 4 paliers du nouveau modèle -- le niveau maximum accessible sur les 5
-// branches à la fois (null = illimité, ancienne formule ou admin). Les clés
-// de formule 3/6/12 mois d'un même palier donnent toutes le même palierMax,
+// Les 3 formules Mentorat par durée -- accès complet dans les trois cas,
 // seule la durée change.
-export type PalierMentorat = { cle: string; nom: string; palierMax: number; description: string; cles3_6_12: [string, string, string] };
-export const PALIERS_MENTORAT: PalierMentorat[] = [
-  {
-    cle: 'armure', nom: 'Armure Organique', palierMax: 0,
-    description: "Les fondations communes à tout le reste : mobilité, respiration, force et souplesse générales. Rien ne s'ouvre encore au-delà.",
-    cles3_6_12: ['mentorship_armure_3', 'mentorship_armure_6', 'mentorship_armure_12'],
-  },
-  {
-    cle: 'niveau1', nom: 'Niveau 1', palierMax: 1,
-    description: "L'Armure Organique complète, puis le niveau 1 des cinq branches (Force, Figures, Locomotion, Connexion, Flexibilité) débloqué en même temps.",
-    cles3_6_12: ['mentorship_niveau1_3', 'mentorship_niveau1_6', 'mentorship_niveau1_12'],
-  },
-  {
-    cle: 'niveau2', nom: 'Niveau 2', palierMax: 2,
-    description: "Tout le Niveau 1, plus le niveau 2 des cinq branches débloqué en même temps.",
-    cles3_6_12: ['mentorship_niveau2_3', 'mentorship_niveau2_6', 'mentorship_niveau2_12'],
-  },
-  {
-    cle: 'complet', nom: 'Complet', palierMax: 3,
-    description: "L'arbre dans son intégralité : les trois niveaux des cinq branches.",
-    cles3_6_12: ['mentorship_complet_3', 'mentorship_complet_6', 'mentorship_complet_12'],
-  },
-];
+export const FORMULES_MENTORAT_DUREE = ['mentorship_3', 'mentorship_6', 'mentorship_12'];
 
 // Les 5 branches de spécialisation (mêmes clés que le champ `domaine` dans
 // lib/mentorship-modules.ts, pour rester cohérent avec le modèle de données
-// de l'arbre de compétences). Ne représente plus un choix d'achat (le
-// nouveau modèle est par palier, pas par branche) -- gardé comme référence
-// des noms/clés de branche pour l'affichage.
+// de l'arbre de compétences). Ne représente plus un choix d'achat -- gardé
+// comme référence des noms/clés de branche pour l'affichage (ex. filtre du
+// journal par branche).
 export const BRANCHES_MENTORAT: { cle: string; nom: string }[] = [
   { cle: 'force', nom: 'Force' },
   { cle: 'figures', nom: 'Figures' },
@@ -159,15 +140,13 @@ export const BRANCHES_MENTORAT: { cle: string; nom: string }[] = [
   { cle: 'flexibilite', nom: 'Flexibilité' },
 ];
 
-// Palier maximum accessible sur les 5 branches à la fois, à partir d'une clé
-// de formule Mentorat. null = illimité (ancienne formule 'mentorship', ou
-// clé inconnue/admin) -- traité comme un accès complet par le reste du code.
-// Les anciennes formules par branche (1branche/2branches) sont traitées
-// comme 'illimité' : on ne sait plus, avec le nouveau modèle, à quel palier
-// les rattacher précisément -- Sylvain les convertira au cas par cas.
-export function palierMaxDeFormule(cleFormule: string): number | null {
-  for (const p of PALIERS_MENTORAT) {
-    if (p.cles3_6_12.includes(cleFormule)) return p.palierMax;
-  }
+// Toutes les formules Mentorat (anciennes et nouvelles) donnent maintenant
+// un accès complet et illimité -- plus de restriction par palier ou par
+// branche. Le nom est conservé (plutôt que de retirer complètement la
+// fonction) pour ne pas casser les imports existants dans ArbreCompetences.tsx
+// et app/mentorship/page.tsx ; elle ne fait plus que documenter cette
+// décision. La progression dans l'arbre (Armure Organique -> niveau par
+// niveau sur les 5 branches) reste le seul mécanisme de déblocage.
+export function palierMaxDeFormule(_cleFormule: string): number | null {
   return null;
 }

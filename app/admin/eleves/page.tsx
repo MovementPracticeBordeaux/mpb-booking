@@ -100,7 +100,7 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
           </select>
           <p style={{ fontSize: 12, opacity: 0.7, margin: '4px 0 0' }}>
             Branche(s) — uniquement pour une ANCIENNE formule Mentorat par branche (mentorship_1branche_*/2branches_*).
-            Les nouvelles formules par palier (Armure/Niveau 1/2/Complet) donnent accès aux 5 branches directement, rien à choisir ici :
+            Toutes les autres formules Mentorat (mentorship_3/6/12, et les anciennes par palier) donnent accès à l'arbre complet, rien à choisir ici :
           </p>
           <select name="branche_1" defaultValue="">
             <option value="">-- 1ère branche (si Mentorat) --</option>

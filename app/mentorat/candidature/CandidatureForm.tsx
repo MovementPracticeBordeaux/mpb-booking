@@ -1,8 +1,6 @@
 'use client';
 
-import { useState } from 'react';
 import { COULEURS, GRADIENT } from '@/lib/theme';
-import { PALIERS_MENTORAT } from '@/lib/formules';
 import { envoyerCandidature } from './actions';
 
 const champStyle: React.CSSProperties = {
@@ -24,8 +22,6 @@ const labelStyle: React.CSSProperties = {
 };
 
 export default function CandidatureForm() {
-  const [palier, setPalier] = useState('');
-
   return (
     <form action={envoyerCandidature} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
@@ -61,29 +57,6 @@ export default function CandidatureForm() {
           <option value="6">6 mois</option>
           <option value="12">12 mois</option>
         </select>
-      </div>
-
-      <div>
-        <span style={labelStyle}>Jusqu'où veux-tu aller ?</span>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {PALIERS_MENTORAT.map((p) => (
-            <label
-              key={p.cle}
-              style={{
-                display: 'flex', flexDirection: 'column', gap: 2, fontSize: 13, cursor: 'pointer',
-                padding: '10px 12px', borderRadius: 8,
-                border: palier === p.cle ? '1px solid #FF2D78' : `1px solid ${COULEURS.bordure}`,
-                background: palier === p.cle ? 'rgba(255,45,120,0.12)' : 'transparent',
-              }}
-            >
-              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input type="radio" name="palier" value={p.cle} required checked={palier === p.cle} onChange={() => setPalier(p.cle)} />
-                <strong>{p.nom}</strong>
-              </span>
-              <span style={{ color: COULEURS.texteFaible, fontSize: 12, marginLeft: 22 }}>{p.description}</span>
-            </label>
-          ))}
-        </div>
       </div>
 
       <div>

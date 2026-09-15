@@ -1,5 +1,5 @@
 import { COULEURS, GRADIENT, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
-import { MENTORAT_OUVERT, MENTORAT_PLACES_PAR_SESSION, FORMULES, PALIERS_MENTORAT } from '@/lib/formules';
+import { MENTORAT_OUVERT, MENTORAT_PLACES_PAR_SESSION, FORMULES, FORMULES_MENTORAT_DUREE } from '@/lib/formules';
 
 export const metadata = {
   title: 'Mentorat — Calisthenics, Handstand, Locomotion & Mobilité | Movement Practice Bordeaux',
@@ -134,12 +134,17 @@ export default function MentoratPage() {
         </h2>
         <p style={{ color: COULEURS.texteAtt, lineHeight: 1.6, textAlign: 'center', maxWidth: 600, margin: '0 auto 24px' }}>
           Le Mentorat ne se choisit pas thématique par thématique : les cinq domaines se débloquent
-          ensemble, niveau par niveau, à mesure que tu avances. Ton accès dépend simplement de jusqu'où
-          tu veux aller.
+          ensemble, niveau par niveau, à mesure que tu avances. Ces paliers font partie du parcours —
+          pas un choix payant supplémentaire à chaque étape.
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {PALIERS_MENTORAT.map((p, i) => (
-            <div key={p.cle} style={{ display: 'flex', gap: 14, alignItems: 'flex-start', border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: 16, background: COULEURS.surface }}>
+          {[
+            { nom: 'Armure Organique', description: "Les fondations communes à tout le reste : mobilité, respiration, force et souplesse générales." },
+            { nom: 'Niveau 1', description: "L'Armure Organique complète, puis le niveau 1 des cinq branches (Force, Figures, Locomotion, Connexion, Flexibilité) débloqué en même temps." },
+            { nom: 'Niveau 2', description: 'Tout le Niveau 1, plus le niveau 2 des cinq branches débloqué en même temps.' },
+            { nom: 'Niveau 3', description: "L'arbre dans son intégralité : les trois niveaux des cinq branches." },
+          ].map((p, i) => (
+            <div key={p.nom} style={{ display: 'flex', gap: 14, alignItems: 'flex-start', border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: 16, background: COULEURS.surface }}>
               <span style={{ ...GRADIENT_TEXTE, fontFamily: POLICE_DISPLAY, fontSize: 20, flexShrink: 0, width: 24, textAlign: 'center' }}>{i + 1}</span>
               <div>
                 <h3 style={{ fontSize: 15, fontWeight: 600, margin: '0 0 4px' }}>{p.nom}</h3>
@@ -187,22 +192,13 @@ export default function MentoratPage() {
                 {MENTORAT_PLACES_PAR_SESSION} places par session
               </p>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
-                {PALIERS_MENTORAT.map((p) => (
-                  <div key={p.cle}>
-                    <p style={{ fontSize: 12, letterSpacing: 1, color: COULEURS.texteFaible, margin: '0 0 10px', textTransform: 'uppercase' }}>
-                      {p.nom}
-                    </p>
-                    <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
-                      {p.cles3_6_12.map((cle) => (
-                        <div key={cle} style={{ fontSize: 14, color: COULEURS.texteAtt }}>
-                          <span style={{ display: 'block', fontFamily: POLICE_DISPLAY, fontSize: 22, ...GRADIENT_TEXTE }}>
-                            {FORMULES[cle].prixIndicatif} €
-                          </span>
-                          {FORMULES[cle].nom.replace(`Mentorat — ${p.nom} — `, '').replace('Mentorat — Complet (Niveau 3) — ', '')}
-                        </div>
-                      ))}
-                    </div>
+              <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
+                {FORMULES_MENTORAT_DUREE.map((cle) => (
+                  <div key={cle} style={{ fontSize: 14, color: COULEURS.texteAtt }}>
+                    <span style={{ display: 'block', fontFamily: POLICE_DISPLAY, fontSize: 22, ...GRADIENT_TEXTE }}>
+                      {FORMULES[cle].prixIndicatif} €
+                    </span>
+                    {FORMULES[cle].nom.replace('Mentorat — ', '')}
                   </div>
                 ))}
               </div>
@@ -214,8 +210,8 @@ export default function MentoratPage() {
                 Candidater au Mentorat →
               </a>
               <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginTop: 14, maxWidth: 460, marginLeft: 'auto', marginRight: 'auto' }}>
-                L'accès se fait sur candidature : quelques questions sur ton niveau, jusqu'où tu veux
-                aller, et tes objectifs, pour s'assurer que le Mentorat correspond à ta démarche.
+                L'accès se fait sur candidature : quelques questions sur ton niveau et tes objectifs,
+                pour s'assurer que le Mentorat correspond à ta démarche.
               </p>
             </>
           )}
