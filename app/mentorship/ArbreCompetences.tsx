@@ -823,7 +823,7 @@ export default function ArbreCompetences({
                         L'onglet Outil n'a de sens que pour les branches (lien dédié) --
                         le tronc n'en a jamais eu, ses outils sont désormais rattachés
                         directement à chaque objectif dans l'onglet Objectifs. */}
-                    <div className="chemin-onglets" style={{ display: 'flex', gap: 4, marginBottom: 14, borderBottom: `1px solid ${COULEURS.bordure}`, position: 'sticky', top: 0, background: COULEURS.fond, zIndex: 1, paddingTop: 2 }}>
+                    <div className="chemin-onglets" style={{ display: 'flex', gap: 4, marginBottom: 16, padding: 4, borderRadius: 12, border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surface, position: 'sticky', top: 0, zIndex: 1 }}>
                       {([
                         ['pratique', '🎯 Objectifs'],
                         ['theorie', '📖 Théorie'],
@@ -833,11 +833,11 @@ export default function ArbreCompetences({
                         <button
                           key={id} type="button" onClick={() => setOngletNoeud(id)}
                           style={{
-                            fontSize: 12, padding: '8px 10px', background: 'none', border: 'none', cursor: 'pointer',
+                            flex: 1, fontSize: 12, padding: '8px 6px', borderRadius: 9, cursor: 'pointer', textAlign: 'center',
+                            background: ongletNoeud === id ? `${couleur}22` : 'none',
+                            border: ongletNoeud === id ? `1px solid ${couleur}66` : '1px solid transparent',
                             color: ongletNoeud === id ? couleur : COULEURS.texteFaible,
                             fontWeight: ongletNoeud === id ? 700 : 400,
-                            borderBottom: ongletNoeud === id ? `2px solid ${couleur}` : '2px solid transparent',
-                            marginBottom: -1,
                           }}
                         >
                           {titreOnglet}
@@ -862,36 +862,51 @@ export default function ArbreCompetences({
                               const exercicesRecupCumules = noeudsDomaine
                                 .filter((n) => n.niveau <= noeud.niveau)
                                 .flatMap((n) => (n.exercices ?? []).filter((ex) => ex.theme === 'recuperation').map((ex) => ({ ex, noeudSource: n })));
+                              const nbValides = exercicesValides.filter((ex) => progression.get(moduleIdExercice(noeud, ex))?.statut === 'acquis').length;
+                              const pct = exercicesValides.length > 0 ? Math.round((nbValides / exercicesValides.length) * 100) : 0;
                               return (
                                 <>
-                                  <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                                    {exercicesValides.filter((ex) => progression.get(moduleIdExercice(noeud, ex))?.statut === 'acquis').length}/{exercicesValides.length} validés — clique un exercice pour le détail
-                                  </p>
-                                  {parTheme('force').length > 0 && (
-                                    <div style={{ marginBottom: 14 }}>
-                                      <p style={{ fontSize: 11, color: couleur, fontWeight: 700, letterSpacing: 0.5, margin: '0 0 6px' }}>💪 FORCE</p>
-                                      {parTheme('force').map((ex) => (
-                                        <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} />
-                                      ))}
+                                  <div style={{ background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: 14, marginBottom: 14 }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
+                                      <div>
+                                        <p style={{ fontSize: 14, fontWeight: 700, color: COULEURS.texte, margin: 0 }}>🎯 Objectifs</p>
+                                        <p style={{ fontSize: 11.5, color: COULEURS.texteFaible, margin: '2px 0 0' }}>C'est validé — clique un exercice pour le détail.</p>
+                                      </div>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                                        <span style={{ fontSize: 12, fontWeight: 700, color: couleur }}>{nbValides}/{exercicesValides.length}</span>
+                                        <div style={{ width: 46, height: 6, borderRadius: 999, background: COULEURS.bordure, overflow: 'hidden' }}>
+                                          <div style={{ width: `${pct}%`, height: '100%', background: couleur, borderRadius: 999 }} />
+                                        </div>
+                                      </div>
                                     </div>
-                                  )}
-                                  {parTheme('mobilite').length > 0 && (
-                                    <div style={{ marginBottom: 14 }}>
-                                      <p style={{ fontSize: 11, color: couleur, fontWeight: 700, letterSpacing: 0.5, margin: '0 0 6px' }}>🤸 MOBILITÉ</p>
-                                      {parTheme('mobilite').map((ex) => (
-                                        <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} />
-                                      ))}
-                                    </div>
-                                  )}
-                                  {sansTheme.map((ex) => (
-                                    <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} />
-                                  ))}
+
+                                    {parTheme('force').length > 0 && (
+                                      <div style={{ marginBottom: 10 }}>
+                                        <p style={{ fontSize: 11, color: couleur, fontWeight: 700, letterSpacing: 0.5, margin: '0 0 6px' }}>⚡ FORCE</p>
+                                        {parTheme('force').map((ex) => (
+                                          <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} icone="⚡" />
+                                        ))}
+                                      </div>
+                                    )}
+                                    {parTheme('mobilite').length > 0 && (
+                                      <div style={{ marginBottom: 10 }}>
+                                        <p style={{ fontSize: 11, color: couleur, fontWeight: 700, letterSpacing: 0.5, margin: '0 0 6px' }}>🤸 MOBILITÉ</p>
+                                        {parTheme('mobilite').map((ex) => (
+                                          <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} icone="🤸" />
+                                        ))}
+                                      </div>
+                                    )}
+                                    {sansTheme.map((ex) => (
+                                      <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} />
+                                    ))}
+                                  </div>
+
                                   {exercicesRecupCumules.length > 0 && (
-                                    <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${COULEURS.bordure}` }}>
-                                      <p style={{ fontSize: 11, color: couleur, fontWeight: 700, letterSpacing: 0.5, margin: '0 0 4px' }}>🌬️ RÉCUPÉRATION</p>
-                                      <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 6px', fontStyle: 'italic' }}>Bibliothèque d'outils santé accumulée au fil de ta progression, non soumise à validation.</p>
+                                    <div style={{ background: 'rgba(79,195,247,0.06)', border: `1px solid #4FC3F766`, borderRadius: 12, padding: 14, marginBottom: 14 }}>
+                                      <p style={{ fontSize: 14, fontWeight: 700, color: '#4FC3F7', margin: '0 0 2px' }}>❤️‍🩹 Récupération</p>
+                                      <p style={{ fontSize: 11.5, color: COULEURS.texteFaible, margin: '0 0 10px' }}>Bibliothèque d'outils santé accumulée au fil de ta progression, non soumise à validation.</p>
                                       {exercicesRecupCumules.map(({ ex, noeudSource }) => (
-                                        <BlocExercice key={ex.id} noeud={noeudSource} exercice={ex} prog={progression.get(moduleIdExercice(noeudSource, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} />
+                                        <BlocExercice key={ex.id} noeud={noeudSource} exercice={ex} prog={progression.get(moduleIdExercice(noeudSource, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} icone="🫁" />
                                       ))}
                                     </div>
                                   )}
@@ -1571,16 +1586,16 @@ function FeuilleModale({ onFermer, children }: { onFermer: () => void; children:
   );
 }
 
-function StatutExercicePastille({ statut }: { statut: 'locked' | 'a_faire' | 'en_attente' | 'acquis' | 'refuse' }) {
+function StatutExercicePastille({ statut, estOutilSante }: { statut: 'locked' | 'a_faire' | 'en_attente' | 'acquis' | 'refuse'; estOutilSante?: boolean }) {
   const map = {
     locked: { label: 'Verrouillé', couleur: COULEURS.texteFaible },
-    a_faire: { label: 'À soumettre', couleur: COULEURS.texteAtt },
+    a_faire: { label: estOutilSante ? 'À faire' : 'À soumettre', couleur: estOutilSante ? '#4FC3F7' : COULEURS.texteAtt },
     en_attente: { label: 'En attente', couleur: '#FFC24B' },
-    acquis: { label: 'Validé', couleur: '#9ef29e' },
+    acquis: { label: estOutilSante ? 'Fait' : 'Validé', couleur: '#9ef29e' },
     refuse: { label: 'À retravailler', couleur: '#ff6b6b' },
   } as const;
   const m = map[statut];
-  return <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 999, border: `1px solid ${m.couleur}`, color: m.couleur, flexShrink: 0 }}>{m.label}</span>;
+  return <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 999, border: `1px solid ${m.couleur}`, color: m.couleur, flexShrink: 0, whiteSpace: 'nowrap' }}>{m.label} →</span>;
 }
 
 // Extrait l'ID YouTube d'une URL youtu.be/xxx ou youtube.com/watch?v=xxx —
@@ -1768,7 +1783,7 @@ function LecteurVideoModal({ url, titre, onFermer }: { url: string; titre: strin
 // Un exercice indépendant (obligatoire ou progression bonus), avec son
 // propre statut et son propre formulaire de soumission vidéo.
 function BlocExercice({
-  noeud, exercice, prog, estBonus, estAdmin, onOuvrirVideo, objectifIdParUrl,
+  noeud, exercice, prog, estBonus, estAdmin, onOuvrirVideo, objectifIdParUrl, icone,
 }: {
   noeud: NoeudMentorshipPublic;
   exercice: ExerciceMentorship;
@@ -1777,39 +1792,52 @@ function BlocExercice({
   estAdmin?: boolean;
   onOuvrirVideo: (url: string, titre: string) => void;
   objectifIdParUrl: Record<string, string>;
+  icone?: string;
 }) {
   const statutEx: 'a_faire' | 'en_attente' | 'acquis' | 'refuse' =
     prog?.statut === 'acquis' ? 'acquis' : prog?.statut === 'refuse' ? 'refuse' : prog?.statut === 'en_attente' ? 'en_attente' : 'a_faire';
   const objectifId = exercice.videoUrl ? objectifIdParUrl[exercice.videoUrl] : undefined;
   const [ouvert, setOuvert] = useState(false);
   const estOutilSante = exercice.theme === 'recuperation';
+  const estAcquis = statutEx === 'acquis';
 
   return (
-    <div style={{ background: COULEURS.surface, borderRadius: 8, padding: '10px 14px', marginBottom: 8 }}>
+    <div style={{ background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 10, padding: '10px 14px', marginBottom: 8 }}>
       <button
         type="button" onClick={() => setOuvert((o) => !o)}
-        style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
+        style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
       >
-        <span style={{ fontSize: 13, color: COULEURS.texte }}>{ouvert ? '▾' : '▸'} {exercice.nom}{estBonus ? ' 🔥' : ''}</span>
-        {!estOutilSante && <StatutExercicePastille statut={statutEx} />}
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+          <span style={{
+            flexShrink: 0, width: 22, height: 22, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 12, background: estAcquis ? '#2e7d4f' : 'transparent', border: estAcquis ? 'none' : `1.5px solid ${COULEURS.bordure}`, color: '#fff',
+          }}>
+            {estAcquis ? '✓' : ''}
+          </span>
+          {icone && <span style={{ fontSize: 14, flexShrink: 0 }}>{icone}</span>}
+          <span style={{ fontSize: 13, color: COULEURS.texte, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {exercice.nom}{estBonus ? ' 🔥' : ''}
+          </span>
+        </span>
+        <StatutExercicePastille statut={statutEx} estOutilSante={estOutilSante} />
       </button>
 
       {ouvert && (
-        <div style={{ marginTop: 8 }}>
+        <div style={{ marginTop: 10, paddingLeft: 30 }}>
           {exercice.note && <p style={{ margin: '2px 0 0', fontSize: 11, color: COULEURS.texteFaible, fontStyle: 'italic' }}>{exercice.note}</p>}
-          {exercice.consigne && <p style={{ margin: '4px 0 0', fontSize: 11.5, color: COULEURS.texteAtt }}>{exercice.consigne}</p>}
+          {exercice.consigne && <p style={{ margin: '4px 0 0', fontSize: 11.5, color: COULEURS.texteAtt, lineHeight: 1.5 }}>{exercice.consigne}</p>}
           {exercice.critereValidation && (
-            <p style={{ margin: '2px 0 0', fontSize: 11, color: estOutilSante ? COULEURS.texteFaible : '#f0a', fontWeight: estOutilSante ? 400 : 600 }}>
-              {estOutilSante ? '' : '✓ '}{exercice.critereValidation}
+            <p style={{ margin: '6px 0 0', fontSize: 11, color: estOutilSante ? COULEURS.texteFaible : '#f0a', fontWeight: estOutilSante ? 400 : 600, display: 'flex', alignItems: 'flex-start', gap: 5 }}>
+              <span>⛰️</span><span>{exercice.critereValidation}</span>
             </p>
           )}
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginTop: 8 }}>
             {exercice.videoUrl && (
               <button
                 onClick={() => onOuvrirVideo(exercice.videoUrl, exercice.nom)}
                 style={{ fontSize: 11, color: '#f0a', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 2 }}
               >
-                ▶ Voir la référence
+                👁 Voir la référence
               </button>
             )}
             {objectifId && noeud.domaine !== 'tronc' && (
@@ -1823,13 +1851,13 @@ function BlocExercice({
           </div>
 
           {exercice.outils && exercice.outils.length > 0 && (
-            <div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px dashed ${COULEURS.bordure}` }}>
-              <p style={{ fontSize: 10, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 0.5, margin: '0 0 4px' }}>Outils pour progresser</p>
+            <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px dashed ${COULEURS.bordure}` }}>
+              <p style={{ fontSize: 10, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 0.6, margin: '0 0 6px', fontWeight: 700 }}>Outils pour progresser</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {exercice.outils.map((o) => (
                   <button
                     key={o.nom} onClick={() => onOuvrirVideo(o.videoUrl, o.nom)}
-                    style={{ fontSize: 11, color: COULEURS.texteAtt, background: 'none', border: `1px solid ${COULEURS.bordure}`, borderRadius: 999, padding: '3px 10px', cursor: 'pointer' }}
+                    style={{ fontSize: 11, color: COULEURS.texteAtt, background: COULEURS.surfaceForte, border: `1px solid ${COULEURS.bordure}`, borderRadius: 999, padding: '5px 12px', cursor: 'pointer' }}
                   >
                     ▶ {o.nom}
                   </button>
