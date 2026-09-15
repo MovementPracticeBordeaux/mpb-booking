@@ -212,6 +212,13 @@ function IconeExercice({ type, taille = 16, couleur }: { type: TypeIcone; taille
 const FOND_CARTE = 'rgba(255,255,255,0.055)';
 const BORDURE_CARTE = 'rgba(255,255,255,0.16)';
 
+// Bordure "structure" bleutée pour les cartes du panneau de nœud
+// (Objectifs, chaque ligne d'exercice, barre d'onglets) -- le rose/la
+// couleur du thème reste réservée aux accents actifs (icônes, liens,
+// progression), pas au cadre des cartes elles-mêmes.
+const BORDURE_PANNEAU = 'rgba(88,131,255,0.35)';
+const FOND_PANNEAU = 'rgba(88,131,255,0.05)';
+
 const PALIER_LABEL: Record<PalierFlamme, string> = {
   aucune: '', normal: 'Normal', epique: 'Épique', legendaire: 'Légendaire', mythique: 'Mythique',
 };
@@ -857,7 +864,7 @@ export default function ArbreCompetences({
                         L'onglet Outil n'a de sens que pour les branches (lien dédié) --
                         le tronc n'en a jamais eu, ses outils sont désormais rattachés
                         directement à chaque objectif dans l'onglet Objectifs. */}
-                    <div className="chemin-onglets" style={{ display: 'flex', gap: 4, marginBottom: 16, padding: 4, borderRadius: 12, border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surface, position: 'sticky', top: 0, zIndex: 1 }}>
+                    <div className="chemin-onglets" style={{ display: 'flex', gap: 4, marginBottom: 16, padding: 4, borderRadius: 12, border: `1px solid ${BORDURE_PANNEAU}`, background: COULEURS.fond, position: 'sticky', top: 0, zIndex: 1 }}>
                       {([
                         ['pratique', 'objectifs', 'Objectifs'],
                         ['theorie', 'theorie', 'Théorie'],
@@ -902,7 +909,7 @@ export default function ArbreCompetences({
                               const pct = exercicesValides.length > 0 ? Math.round((nbValides / exercicesValides.length) * 100) : 0;
                               return (
                                 <>
-                                  <div style={{ background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 14, padding: 14, marginBottom: 14 }}>
+                                  <div style={{ background: FOND_PANNEAU, border: `1px solid ${BORDURE_PANNEAU}`, borderRadius: 14, padding: 14, marginBottom: 14 }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 14 }}>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                                         <span style={{
@@ -1858,7 +1865,7 @@ function BlocExercice({
   const teinte = couleurIcone ?? '#f0a';
 
   return (
-    <div style={{ background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 10, padding: '10px 14px', marginBottom: 8 }}>
+    <div style={{ background: FOND_PANNEAU, border: `1px solid ${BORDURE_PANNEAU}`, borderRadius: 10, padding: '10px 14px', marginBottom: 8 }}>
       <button
         type="button" onClick={() => setOuvert((o) => !o)}
         style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
