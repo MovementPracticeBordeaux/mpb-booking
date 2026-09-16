@@ -692,49 +692,27 @@ export default function ArbreCompetences({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tronc, branches, idsAcquis.size, troncComplet]);
 
-// Rayon de l'anneau néon autour de chaque nœud, en pixels réels (doit
-// correspondre au r utilisé dans AnneauNeon).
-const RAYON_ANNEAU_PX = 34;
-
-  // Le nœud (bouton + anneau) a une taille FIXE en pixels, alors que les
-  // traits sont positionnés dans un repère 0-100 qui s'étire avec la
-  // largeur réelle du conteneur (max 560px, mais souvent moins sur mobile).
-  // Une marge calculée pour 560px serait donc trop courte sur un écran plus
-  // étroit -- on mesure la largeur réelle et on recalcule la marge en
-  // continu (RAYON_ANNEAU_PX -> % de la hauteur réelle du conteneur, qui
-  // suit l'aspect-ratio 3/4).
-  const arbreConteneurRef = useRef<HTMLDivElement | null>(null);
-  const [margeAnneauY, setMargeAnneauY] = useState(4.5);
-  useEffect(() => {
-    const el = arbreConteneurRef.current;
-    if (!el) return;
-    const mettreAJour = () => {
-      const largeur = el.getBoundingClientRect().width;
-      if (largeur > 0) {
-        const hauteur = (largeur * 4) / 3; // aspectRatio: 3 / 4
-        setMargeAnneauY((RAYON_ANNEAU_PX / hauteur) * 100);
-      }
-    };
-    mettreAJour();
-    const ro = new ResizeObserver(mettreAJour);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
+  // Le nœud (bouton + anneau) a une taille fixe en pixels, alors que les
+  // traits vivent dans un repère 0-100 qui s'étire avec le conteneur --
+  // essayer de calculer une marge "juste" dans ce repère s'est révélé
+  // fragile (dépend de la taille réelle à l'écran, jamais fiable partout).
+  // Plus simple et robuste : le trait va jusqu'au centre du nœud comme
+  // avant ; le bouton du nœud (opaque, dessiné après dans le DOM) le
+  // recouvre déjà naturellement, et seules les billes de l'anneau
+  // (dessinées par-dessus, à leur rayon fixe) restent visibles pile sur
+  // le trait -- c'est ce qui donne l'impression que le trait s'arrête à
+  // la bille, sans dépendre d'aucune mesure de taille.
   const lignes = useMemo(() => {
     const segs: { d: string; active: boolean; key: string }[] = [];
     ORDRE_DOMAINES.forEach((d) => {
-      // partie verticale à l'intérieur de la branche (entre les nœuds) : reste droite,
-      // arrêtée à la bille de chaque nœud d'extrémité (pas jusqu'à leur centre)
-      segs.push({ d: tracePath(BRANCH_X[d], BRANCH_LEVEL_Y[1] - margeAnneauY, BRANCH_LEVEL_Y[3] + margeAnneauY, BRANCH_X[d]), active: troncComplet, key: `branche-${d}` });
+      segs.push({ d: tracePath(BRANCH_X[d], BRANCH_LEVEL_Y[1], BRANCH_LEVEL_Y[3], BRANCH_X[d]), active: troncComplet, key: `branche-${d}` });
       // jonction vers le tronc : chaque branche descend individuellement
       // jusqu'au premier nœud de l'armure (pas de point de convergence
-      // partagé avant le tronc -- 5 traits distincts, pas 4 qui fusionnent),
-      // arrêtée à la bille du nœud de départ et à celle du nœud d'arrivée
-      segs.push({ d: tracePath(BRANCH_X[d], BRANCH_LEVEL_Y[1] - margeAnneauY, TRUNK_LEVEL_Y[3] - margeAnneauY, TRUNK_X), active: troncComplet, key: `jonction-${d}` });
+      // partagé avant le tronc -- 5 traits distincts, pas 4 qui fusionnent)
+      segs.push({ d: tracePath(BRANCH_X[d], BRANCH_LEVEL_Y[1], TRUNK_LEVEL_Y[3], TRUNK_X), active: troncComplet, key: `jonction-${d}` });
     });
     return segs;
-  }, [troncComplet, margeAnneauY]);
+  }, [troncComplet]);
 
   const noeudSelectionne = selection ? [...tronc, ...branches].find((n) => n.id === selection) ?? null : null;
   const ORDRE_VISUEL: Domaine[] = ['connexion', 'flexibilite', 'force', 'figures', 'locomotion'];
@@ -1214,7 +1192,7 @@ const RAYON_ANNEAU_PX = 34;
           </div>
 
           {/* Arbre — en vedette, section large */}
-          <div ref={arbreConteneurRef} style={{ position: 'relative', width: '100%', maxWidth: 560, marginInline: 'auto', aspectRatio: '3 / 4' }}>
+          <div style={{ position: 'relative', width: '100%', maxWidth: 560, marginInline: 'auto', aspectRatio: '3 / 4' }}>
             <svg viewBox="0 0 100 100" preserveAspectRatio="none" width="100%" height="100%" style={{ position: 'absolute', inset: 0, display: 'block' }}>
               <defs>
                 <linearGradient id="gradient-lignes" gradientUnits="userSpaceOnUse" x1="0" y1="100" x2="0" y2="0">
@@ -1239,9 +1217,9 @@ const RAYON_ANNEAU_PX = 34;
               ))}
               {/* Ligne du tronc — couleur pleine dédiée (pas le gradient partagé),
                   pour être toujours visible quel que soit l'état des branches */}
-              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3] + margeAnneauY} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1] - margeAnneauY} stroke="#ff00aa" strokeWidth={1.1} opacity={0.45} strokeLinecap="round" style={{ filter: 'blur(1.6px)' }} />
-              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3] + margeAnneauY} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1] - margeAnneauY} stroke="#ff00aa" strokeWidth={0.55} opacity={0.75} strokeLinecap="round" style={{ filter: 'blur(0.5px)' }} />
-              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3] + margeAnneauY} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1] - margeAnneauY} stroke="#ffd6f0" strokeWidth={0.2} opacity={0.9} strokeLinecap="round" />
+              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3]} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1]} stroke="#ff00aa" strokeWidth={1.1} opacity={0.45} strokeLinecap="round" style={{ filter: 'blur(1.6px)' }} />
+              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3]} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1]} stroke="#ff00aa" strokeWidth={0.55} opacity={0.75} strokeLinecap="round" style={{ filter: 'blur(0.5px)' }} />
+              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3]} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1]} stroke="#ffd6f0" strokeWidth={0.2} opacity={0.9} strokeLinecap="round" />
             </svg>
 
             {/* Nœuds des branches — cliquer entre dans le chemin isolé de la branche */}
