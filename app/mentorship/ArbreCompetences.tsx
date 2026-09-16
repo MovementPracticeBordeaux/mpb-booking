@@ -692,16 +692,23 @@ export default function ArbreCompetences({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tronc, branches, idsAcquis.size, troncComplet]);
 
+// Marge verticale (en unités du repère 0-100) correspondant au rayon de
+// l'anneau néon (~34px) autour de chaque nœud, sur la base du conteneur de
+// référence (560 x ~747px) -- pour que les traits s'arrêtent à la bille sur
+// l'anneau plutôt que de foncer jusqu'au centre du nœud (la pastille/logo).
+const MARGE_ANNEAU_Y = 4.5;
+
   const lignes = useMemo(() => {
     const segs: { d: string; active: boolean; key: string }[] = [];
     ORDRE_DOMAINES.forEach((d) => {
-      // partie verticale à l'intérieur de la branche (entre les nœuds) : reste droite
-      segs.push({ d: tracePath(BRANCH_X[d], BRANCH_LEVEL_Y[1], BRANCH_LEVEL_Y[3], BRANCH_X[d]), active: troncComplet, key: `branche-${d}` });
-      // jonction vers le tronc : arrondie, converge vers le point central
+      // partie verticale à l'intérieur de la branche (entre les nœuds) : reste droite,
+      // arrêtée à la bille de chaque nœud d'extrémité (pas jusqu'à leur centre)
+      segs.push({ d: tracePath(BRANCH_X[d], BRANCH_LEVEL_Y[1] - MARGE_ANNEAU_Y, BRANCH_LEVEL_Y[3] + MARGE_ANNEAU_Y, BRANCH_X[d]), active: troncComplet, key: `branche-${d}` });
       // jonction vers le tronc : chaque branche descend individuellement
       // jusqu'au premier nœud de l'armure (pas de point de convergence
-      // partagé avant le tronc -- 5 traits distincts, pas 4 qui fusionnent)
-      segs.push({ d: tracePath(BRANCH_X[d], BRANCH_LEVEL_Y[1], TRUNK_LEVEL_Y[3], TRUNK_X), active: troncComplet, key: `jonction-${d}` });
+      // partagé avant le tronc -- 5 traits distincts, pas 4 qui fusionnent),
+      // arrêtée à la bille du nœud de départ et à celle du nœud d'arrivée
+      segs.push({ d: tracePath(BRANCH_X[d], BRANCH_LEVEL_Y[1] - MARGE_ANNEAU_Y, TRUNK_LEVEL_Y[3] - MARGE_ANNEAU_Y, TRUNK_X), active: troncComplet, key: `jonction-${d}` });
     });
     return segs;
   }, [troncComplet]);
@@ -1209,9 +1216,9 @@ export default function ArbreCompetences({
               ))}
               {/* Ligne du tronc — couleur pleine dédiée (pas le gradient partagé),
                   pour être toujours visible quel que soit l'état des branches */}
-              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3]} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1]} stroke="#ff00aa" strokeWidth={1.1} opacity={0.45} strokeLinecap="round" style={{ filter: 'blur(1.6px)' }} />
-              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3]} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1]} stroke="#ff00aa" strokeWidth={0.55} opacity={0.75} strokeLinecap="round" style={{ filter: 'blur(0.5px)' }} />
-              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3]} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1]} stroke="#ffd6f0" strokeWidth={0.2} opacity={0.9} strokeLinecap="round" />
+              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3] + MARGE_ANNEAU_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1] - MARGE_ANNEAU_Y} stroke="#ff00aa" strokeWidth={1.1} opacity={0.45} strokeLinecap="round" style={{ filter: 'blur(1.6px)' }} />
+              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3] + MARGE_ANNEAU_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1] - MARGE_ANNEAU_Y} stroke="#ff00aa" strokeWidth={0.55} opacity={0.75} strokeLinecap="round" style={{ filter: 'blur(0.5px)' }} />
+              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3] + MARGE_ANNEAU_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1] - MARGE_ANNEAU_Y} stroke="#ffd6f0" strokeWidth={0.2} opacity={0.9} strokeLinecap="round" />
             </svg>
 
             {/* Nœuds des branches — cliquer entre dans le chemin isolé de la branche */}
