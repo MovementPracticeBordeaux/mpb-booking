@@ -723,22 +723,42 @@ export default function ArbreCompetences({
     return segs;
   }, [troncComplet]);
 
-  // Les 4 billes de chaque nœud (haut/bas/gauche/droite), dans ce même
-  // repère -- décoratives sur les côtés gauche/droite, mais haut/bas
-  // tombent pile sur le point où les traits ci-dessus s'arrêtent.
+  // Position + couleur + intensité de CHAQUE nœud, dans le même repère que
+  // les traits -- sert à la fois à placer les billes et à dessiner
+  // l'anneau (en ellipse : rx/ry choisis pour redevenir un cercle visuel
+  // parfait une fois le repère étiré par le conteneur, quelle que soit sa
+  // taille réelle -- voir POINT_MARGE_X/Y).
+  const noeudsRepere = useMemo(() => {
+    const items: { x: number; y: number; couleur: string; intensite: 'shadow' | 'lit' | 'neon'; key: string }[] = [];
+    const ajouter = (x: number, y: number, couleur: string, statut: StatutAffiche, key: string) => {
+      const intensite: 'shadow' | 'lit' | 'neon' = statut === 'locked' ? 'shadow' : statut === 'acquis' ? 'neon' : 'lit';
+      items.push({ x, y, couleur, intensite, key });
+    };
+    branches.forEach((n) => ajouter(BRANCH_X[n.domaine as Domaine], BRANCH_LEVEL_Y[n.niveau], DOMAINE_COULEURS[n.domaine as Domaine], statutAffiche(n), n.id));
+    tronc.forEach((n) => ajouter(TRUNK_X, TRUNK_LEVEL_Y[n.niveau], COULEUR_TRONC, statutAffiche(n), n.id));
+    return items;
+  }, [branches, tronc]);
+
+  // Les 4 billes de chaque nœud (haut/bas/gauche/droite) -- décoratives sur
+  // les côtés gauche/droite, mais haut/bas tombent pile sur le point où les
+  // traits ci-dessus s'arrêtent.
   const billes = useMemo(() => {
     const pts: { x: number; y: number; couleur: string; intensite: 'shadow' | 'lit' | 'neon'; key: string }[] = [];
-    const ajouterNoeud = (x: number, y: number, couleur: string, statut: StatutAffiche, prefixe: string) => {
-      const intensite: 'shadow' | 'lit' | 'neon' = statut === 'locked' ? 'shadow' : statut === 'acquis' ? 'neon' : 'lit';
-      pts.push({ x: x - POINT_MARGE_X, y, couleur, intensite, key: `${prefixe}-l` });
-      pts.push({ x: x + POINT_MARGE_X, y, couleur, intensite, key: `${prefixe}-r` });
-      pts.push({ x, y: y - POINT_MARGE_Y, couleur, intensite, key: `${prefixe}-t` });
-      pts.push({ x, y: y + POINT_MARGE_Y, couleur, intensite, key: `${prefixe}-b` });
-    };
-    branches.forEach((n) => ajouterNoeud(BRANCH_X[n.domaine as Domaine], BRANCH_LEVEL_Y[n.niveau], DOMAINE_COULEURS[n.domaine as Domaine], statutAffiche(n), n.id));
-    tronc.forEach((n) => ajouterNoeud(TRUNK_X, TRUNK_LEVEL_Y[n.niveau], COULEUR_TRONC, statutAffiche(n), n.id));
+    noeudsRepere.forEach(({ x, y, couleur, intensite, key }) => {
+      pts.push({ x: x - POINT_MARGE_X, y, couleur, intensite, key: `${key}-l` });
+      pts.push({ x: x + POINT_MARGE_X, y, couleur, intensite, key: `${key}-r` });
+      pts.push({ x, y: y - POINT_MARGE_Y, couleur, intensite, key: `${key}-t` });
+      pts.push({ x, y: y + POINT_MARGE_Y, couleur, intensite, key: `${key}-b` });
+    });
     return pts;
-  }, [branches, tronc]);
+  }, [noeudsRepere]);
+
+  // L'anneau de chaque nœud, en ellipse dans ce même repère (rx=POINT_MARGE_X,
+  // ry=POINT_MARGE_Y) -- puisque le SVG est étiré pour coller à un
+  // conteneur d'aspect 3/4 quelle que soit sa taille réelle, cette ellipse
+  // redevient TOUJOURS un cercle visuellement parfait après étirement, et
+  // coïncide par construction avec l'endroit où les traits s'arrêtent.
+  const anneaux = useMemo(() => noeudsRepere, [noeudsRepere]);
 
 
   const noeudSelectionne = selection ? [...tronc, ...branches].find((n) => n.id === selection) ?? null : null;
@@ -1251,6 +1271,23 @@ export default function ArbreCompetences({
               <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[2] + POINT_MARGE_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1] - POINT_MARGE_Y} stroke="#ff00aa" strokeWidth={0.55} opacity={0.75} strokeLinecap="round" style={{ filter: 'blur(0.5px)' }} />
               <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[2] + POINT_MARGE_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1] - POINT_MARGE_Y} stroke="#ffd6f0" strokeWidth={0.2} opacity={0.9} strokeLinecap="round" />
 
+              {/* Anneaux des nœuds : ellipses (rx=POINT_MARGE_X, ry=POINT_MARGE_Y)
+                  dans ce même repère étiré -- redeviennent des cercles
+                  visuellement parfaits après étirement, et coïncident par
+                  construction avec l'endroit où les traits s'arrêtent. */}
+              {anneaux.map((n) => {
+                const mid = eclaircir(n.couleur, 0.45);
+                const core = eclaircir(n.couleur, 0.82);
+                const cfg = { shadow: { glow: 0.12, mid: 0.1, core: 0.1 }, lit: { glow: 0.5, mid: 0.5, core: 0.16 }, neon: { glow: 0.95, mid: 1, core: 1 } }[n.intensite];
+                return (
+                  <g key={`anneau-${n.key}`}>
+                    <ellipse cx={n.x} cy={n.y} rx={POINT_MARGE_X} ry={POINT_MARGE_Y} fill="none" stroke={n.couleur} strokeWidth={0.9} opacity={cfg.glow} style={{ filter: 'blur(0.9px)' }} />
+                    <ellipse cx={n.x} cy={n.y} rx={POINT_MARGE_X} ry={POINT_MARGE_Y} fill="none" stroke={mid} strokeWidth={0.45} opacity={cfg.mid} style={{ filter: 'blur(0.3px)' }} />
+                    <ellipse cx={n.x} cy={n.y} rx={POINT_MARGE_X} ry={POINT_MARGE_Y} fill="none" stroke={core} strokeWidth={0.22} opacity={cfg.core} />
+                  </g>
+                );
+              })}
+
               {/* Billes de connexion : même repère que les traits ci-dessus,
                   mêmes marges -- elles tombent exactement là où les traits
                   s'arrêtent, sans dépendre d'un calcul de taille d'écran. */}
@@ -1700,28 +1737,6 @@ function LigneProgression({ label, pourcentage, couleur, domaine, entrees, compa
 // reprend exactement la structure du prototype validé, appliquée ici en SVG
 // local au bouton (pas dans le SVG général de l'arbre, qui est étiré et
 // déformerait un cercle).
-function AnneauNeon({ couleur, intensite }: { couleur: string; intensite: 'shadow' | 'lit' | 'neon' }) {
-  const mid = eclaircir(couleur, 0.45);
-  const core = eclaircir(couleur, 0.82);
-  const cfg = {
-    shadow: { glow: 0.12, mid: 0.1, core: 0.1 },
-    lit: { glow: 0.5, mid: 0.5, core: 0.16 },
-    neon: { glow: 0.95, mid: 1, core: 1 },
-  }[intensite];
-  const c = 50, r = 34;
-  // Les billes de connexion ne sont plus ici : dessinées dans le SVG
-  // général de l'arbre, dans le même repère que les traits, exactement là
-  // où ceux-ci s'arrêtent -- alignement garanti par construction plutôt
-  // que par un réglage de taille (voir POINT_MARGE_X/Y).
-  return (
-    <svg width={100} height={100} viewBox="0 0 100 100" style={{ position: 'absolute', left: -22, top: -22, overflow: 'visible', pointerEvents: 'none' }}>
-      <circle cx={c} cy={c} r={r} fill="none" stroke={couleur} strokeWidth={7} opacity={cfg.glow} style={{ filter: 'blur(3px)' }} />
-      <circle cx={c} cy={c} r={r} fill="none" stroke={mid} strokeWidth={3.5} opacity={cfg.mid} style={{ filter: 'blur(1px)' }} />
-      <circle cx={c} cy={c} r={r} fill="none" stroke={core} strokeWidth={1.8} opacity={cfg.core} />
-    </svg>
-  );
-}
-
 function Noeud({ x, y, statut, couleur, domaine, flamme, image, onClick }: { x: number; y: number; statut: StatutAffiche; couleur: string; domaine: DomaineOuTronc; flamme?: PalierFlamme; image?: string; onClick: () => void }) {
   const meta = metaPour(statut, couleur);
   const pulse = statut === 'en_attente';
@@ -1731,10 +1746,13 @@ function Noeud({ x, y, statut, couleur, domaine, flamme, image, onClick }: { x: 
   // Accès (peut jouer, en attente, refusé...) vs validation : seul l'anneau
   // (et les points) s'éclaire à l'accès ; le logo/pictogramme ne passe en
   // plein néon qu'une fois le nœud réellement validé.
-  const intensite: 'shadow' | 'lit' | 'neon' = locked ? 'shadow' : acquis ? 'neon' : 'lit';
+  // -- L'anneau lui-même n'est plus ici : il est dessiné dans le SVG général
+  // de l'arbre (voir "anneaux"), dans le même repère que les traits, pour
+  // que les deux coïncident par construction quelle que soit la taille
+  // d'écran réelle (un anneau à taille fixe en pixels ne pouvait jamais
+  // coïncider de façon fiable avec des traits positionnés en pourcentage).
   return (
     <div style={{ position: 'absolute', left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)', width: 56, height: 56 }}>
-      <AnneauNeon couleur={couleur} intensite={intensite} />
       <button
         onClick={onClick}
         aria-label={meta.label}
