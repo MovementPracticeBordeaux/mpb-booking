@@ -1166,12 +1166,27 @@ export default function ArbreCompetences({
                   <stop offset="0%" stopColor="#FF3B30" /><stop offset="35%" stopColor="#FF8A00" /><stop offset="70%" stopColor="#FF2D78" /><stop offset="100%" stopColor="#8B5CF6" />
                 </linearGradient>
               </defs>
+              {/* Rendu "tube néon" : la même ligne empilée trois fois (halo flouté,
+                  teinte intermédiaire, cœur fin) plutôt qu'un simple trait plat.
+                  Ne change ni les coordonnées ni la condition `active` déjà en place. */}
               {lignes.map((l) => (
-                <line key={l.key} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke={l.active ? 'url(#gradient-lignes)' : COULEURS.texteFaible} strokeWidth={l.active ? 0.45 : 0.35} opacity={l.active ? 0.85 : 0.6} strokeLinecap="round" />
+                <g key={l.key}>
+                  {l.active ? (
+                    <>
+                      <line x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke="url(#gradient-lignes)" strokeWidth={0.9} opacity={0.5} strokeLinecap="round" style={{ filter: 'blur(1.6px)' }} />
+                      <line x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke="url(#gradient-lignes)" strokeWidth={0.45} opacity={0.75} strokeLinecap="round" style={{ filter: 'blur(0.5px)' }} />
+                      <line x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke="url(#gradient-lignes)" strokeWidth={0.18} opacity={1} strokeLinecap="round" />
+                    </>
+                  ) : (
+                    <line x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke={COULEURS.texteFaible} strokeWidth={0.22} opacity={0.45} strokeLinecap="round" />
+                  )}
+                </g>
               ))}
               {/* Ligne du tronc — couleur pleine dédiée (pas le gradient partagé),
                   pour être toujours visible quel que soit l'état des branches */}
-              <line x1={TRUNK_X} y1={JUNCTION_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1]} stroke="#ff00aa" strokeWidth={0.7} opacity={0.85} strokeLinecap="round" />
+              <line x1={TRUNK_X} y1={JUNCTION_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1]} stroke="#ff00aa" strokeWidth={1.1} opacity={0.45} strokeLinecap="round" style={{ filter: 'blur(1.6px)' }} />
+              <line x1={TRUNK_X} y1={JUNCTION_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1]} stroke="#ff00aa" strokeWidth={0.55} opacity={0.75} strokeLinecap="round" style={{ filter: 'blur(0.5px)' }} />
+              <line x1={TRUNK_X} y1={JUNCTION_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1]} stroke="#ffd6f0" strokeWidth={0.2} opacity={0.9} strokeLinecap="round" />
             </svg>
 
             {/* Nœuds des branches — cliquer entre dans le chemin isolé de la branche */}
