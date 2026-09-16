@@ -57,6 +57,28 @@ const TRUNK_LEVEL_Y: Record<1 | 2 | 3, number> = { 3: 62, 2: 80, 1: 97 };
 const TRUNK_X = 50;
 const BRANCH_X: Record<Domaine, number> = { connexion: 10, flexibilite: 30, force: 50, figures: 70, locomotion: 90 };
 
+// Mélange une couleur hex vers le blanc (t=0 -> couleur pure, t=1 -> blanc) :
+// utilisé pour le cœur pâle "néon" des traits et des nœuds, toujours teinté
+// de la couleur de thème plutôt qu'un blanc plat.
+function eclaircir(hex: string, t: number): string {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+  const nr = Math.round(r + (255 - r) * t), ng = Math.round(g + (255 - g) * t), nb = Math.round(b + (255 - b) * t);
+  return `#${nr.toString(16).padStart(2, '0')}${ng.toString(16).padStart(2, '0')}${nb.toString(16).padStart(2, '0')}`;
+}
+
+// Tracé d'un segment de ligne : droit si la branche est alignée avec le
+// tronc (force, x=50), sinon courbe arrondie en S vers le point de jonction
+// -- même principe que le prototype (contrôles proportionnels au décalage
+// horizontal).
+function tracePath(x: number, y1: number, y2: number, cx: number): string {
+  if (x === cx) return `M ${x} ${y1} L ${x} ${y2}`;
+  const midY = y1 + (y2 - y1) * 0.55;
+  const endY = y2 - (y2 - y1) * 0.15;
+  const endX = cx + (x - cx) * 0.15;
+  return `M ${x} ${y1} C ${x} ${midY}, ${endX} ${endY}, ${cx} ${y2}`;
+}
+
 const STATUT_META: Record<Exclude<StatutAffiche, 'unlocked' | 'locked'>, { label: string; fill: string; border: string; dash?: string }> = {
   qcm_reussi: { label: 'QCM validé — vidéo à envoyer', fill: `linear-gradient(${COULEURS.surfaceForte}, ${COULEURS.surfaceForte}), ${COULEURS.fond}`, border: '#FF8A00' },
   en_attente: { label: 'Vidéo envoyée — en attente', fill: `linear-gradient(${COULEURS.surfaceForte}, ${COULEURS.surfaceForte}), ${COULEURS.fond}`, border: '#FFC24B', dash: '3 3' },
@@ -672,12 +694,13 @@ export default function ArbreCompetences({
   }, [tronc, branches, idsAcquis.size, troncComplet]);
 
   const lignes = useMemo(() => {
-    const segs: { x1: number; y1: number; x2: number; y2: number; active: boolean; key: string }[] = [];
+    const segs: { d: string; active: boolean; key: string }[] = [];
     ORDRE_DOMAINES.forEach((d) => {
-      segs.push({ x1: BRANCH_X[d], y1: BRANCH_LEVEL_Y[1], x2: BRANCH_X[d], y2: BRANCH_LEVEL_Y[3], active: troncComplet, key: `branche-${d}` });
-      segs.push({ x1: BRANCH_X[d], y1: BRANCH_LEVEL_Y[1], x2: BRANCH_X[d], y2: JUNCTION_Y, active: troncComplet, key: `jonction-${d}` });
+      // partie verticale à l'intérieur de la branche (entre les nœuds) : reste droite
+      segs.push({ d: tracePath(BRANCH_X[d], BRANCH_LEVEL_Y[1], BRANCH_LEVEL_Y[3], BRANCH_X[d]), active: troncComplet, key: `branche-${d}` });
+      // jonction vers le tronc : arrondie, converge vers le point central
+      segs.push({ d: tracePath(BRANCH_X[d], BRANCH_LEVEL_Y[1], JUNCTION_Y, TRUNK_X), active: troncComplet, key: `jonction-${d}` });
     });
-    segs.push({ x1: BRANCH_X.connexion, y1: JUNCTION_Y, x2: BRANCH_X.locomotion, y2: JUNCTION_Y, active: troncComplet, key: 'barre-jonction' });
     return segs;
   }, [troncComplet]);
 
@@ -1173,12 +1196,12 @@ export default function ArbreCompetences({
                 <g key={l.key}>
                   {l.active ? (
                     <>
-                      <line x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke="url(#gradient-lignes)" strokeWidth={0.9} opacity={0.5} strokeLinecap="round" style={{ filter: 'blur(1.6px)' }} />
-                      <line x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke="url(#gradient-lignes)" strokeWidth={0.45} opacity={0.75} strokeLinecap="round" style={{ filter: 'blur(0.5px)' }} />
-                      <line x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke="url(#gradient-lignes)" strokeWidth={0.18} opacity={1} strokeLinecap="round" />
+                      <path d={l.d} fill="none" stroke="url(#gradient-lignes)" strokeWidth={0.9} opacity={0.5} strokeLinecap="round" style={{ filter: 'blur(1.6px)' }} />
+                      <path d={l.d} fill="none" stroke="url(#gradient-lignes)" strokeWidth={0.45} opacity={0.75} strokeLinecap="round" style={{ filter: 'blur(0.5px)' }} />
+                      <path d={l.d} fill="none" stroke="url(#gradient-lignes)" strokeWidth={0.18} opacity={1} strokeLinecap="round" />
                     </>
                   ) : (
-                    <line x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke={COULEURS.texteFaible} strokeWidth={0.22} opacity={0.45} strokeLinecap="round" />
+                    <path d={l.d} fill="none" stroke={COULEURS.texteFaible} strokeWidth={0.22} opacity={0.45} strokeLinecap="round" />
                   )}
                 </g>
               ))}
@@ -1625,19 +1648,26 @@ function Noeud({ x, y, statut, couleur, domaine, flamme, image, onClick }: { x: 
   const acquis = statut === 'acquis';
   const locked = statut === 'locked';
   const aImage = !!image;
+  // Glow en couches (halo large -> halo serré) plutôt qu'un unique
+  // box-shadow plat ; la bordure "néon" du niveau validé passe à une teinte
+  // pâle de la couleur de branche (jamais blanc pur), comme sur les traits.
+  const glow = locked ? 'none' : acquis
+    ? `0 0 5px ${eclaircir(couleur, 0.6)}, 0 0 12px ${couleur}, 0 0 24px ${couleur}bb, 0 0 38px ${couleur}55`
+    : `0 0 8px ${couleur}99, 0 0 16px ${couleur}55`;
+  const bordure = acquis ? eclaircir(couleur, 0.7) : meta.border;
   return (
     <button
       onClick={onClick}
       aria-label={meta.label}
       style={{
         position: 'absolute', left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)',
-        width: 40, height: 40, borderRadius: '50%',
+        width: 56, height: 56, borderRadius: '50%',
         background: aImage ? COULEURS.fond : acquis ? `radial-gradient(circle at 35% 30%, ${couleur}, ${couleur}bb)` : meta.fill,
-        border: `1.5px ${meta.dash ? 'dashed' : 'solid'} ${meta.border}`,
+        border: `2px ${meta.dash ? 'dashed' : 'solid'} ${bordure}`,
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, cursor: 'pointer',
         animation: pulse ? 'pulse-noeud 1.8s ease-in-out infinite' : 'none',
         color: couleur,
-        boxShadow: statut !== 'locked' ? `0 0 14px ${couleur}cc, 0 0 6px ${couleur}` : 'none',
+        boxShadow: glow,
       }}
     >
       {flamme && flamme !== 'aucune' && <IconeFlamme palier={flamme} />}
@@ -1661,13 +1691,13 @@ function Noeud({ x, y, statut, couleur, domaine, flamme, image, onClick }: { x: 
           </div>
         </>
       ) : locked ? (
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={couleur} strokeWidth={2} opacity={0.75}>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={couleur} strokeWidth={2} opacity={0.75}>
           <rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V7a4 4 0 018 0v4" />
         </svg>
       ) : acquis ? (
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0b0b0d" strokeWidth={3}><path d="M5 13l4 4L19 7" /></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0b0b0d" strokeWidth={3}><path d="M5 13l4 4L19 7" /></svg>
       ) : (
-        <Pictogramme domaine={domaine} taille={16} couleur={statut === 'unlocked' ? couleur : meta.border} />
+        <Pictogramme domaine={domaine} taille={21} couleur={statut === 'unlocked' ? couleur : meta.border} />
       )}
     </button>
   );
