@@ -919,7 +919,7 @@ export default function ArbreCompetences({
                                           background: 'transparent',
                                         }}><IconeExercice type="objectifs" taille={32} couleur={couleur} /></span>
                                         <div>
-                                          <p style={{ fontSize: 14, fontWeight: 700, color: COULEURS.texte, margin: 0 }}>Objectifs</p>
+                                          <p style={{ fontSize: 18, fontWeight: 700, color: COULEURS.texte, margin: 0 }}>Objectifs</p>
                                           <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '2px 0 0' }}>Clique un exercice pour le détail</p>
                                         </div>
                                       </div>
@@ -936,7 +936,7 @@ export default function ArbreCompetences({
 
                                     {parTheme('force').length > 0 && (
                                       <div style={{ marginBottom: 12 }}>
-                                        <p style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: couleur, fontWeight: 700, letterSpacing: 0.6, margin: '0 0 8px' }}>
+                                        <p style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: couleur, fontWeight: 700, letterSpacing: 0.6, margin: '0 0 8px' }}>
                                           <IconeExercice type="force" taille={16} couleur={couleur} /> FORCE
                                         </p>
                                         {parTheme('force').map((ex) => (
@@ -946,7 +946,7 @@ export default function ArbreCompetences({
                                     )}
                                     {parTheme('mobilite').length > 0 && (
                                       <div style={{ marginBottom: 12 }}>
-                                        <p style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: couleur, fontWeight: 700, letterSpacing: 0.6, margin: '0 0 8px' }}>
+                                        <p style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: couleur, fontWeight: 700, letterSpacing: 0.6, margin: '0 0 8px' }}>
                                           <IconeExercice type="mobilite" taille={16} couleur={couleur} /> MOBILITÉ
                                         </p>
                                         {parTheme('mobilite').map((ex) => (
@@ -967,7 +967,7 @@ export default function ArbreCompetences({
                                           background: 'transparent',
                                         }}><IconeExercice type="recuperation-coeur" taille={32} couleur="#029FD6" /></span>
                                         <div>
-                                          <p style={{ fontSize: 14, fontWeight: 700, color: '#029FD6', margin: 0 }}>Récupération</p>
+                                          <p style={{ fontSize: 18, fontWeight: 700, color: '#029FD6', margin: 0 }}>Récupération</p>
                                           <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '2px 0 0' }}>Bibliothèque d'outils santé, non soumise à validation</p>
                                         </div>
                                       </div>
@@ -1923,7 +1923,7 @@ function BlocExercice({
               background: 'transparent',
             }}><IconeExercice type={icone} taille={26} couleur={teinte} /></span>
           )}
-          <span style={{ fontSize: 15, color: COULEURS.texte, overflowWrap: 'break-word', wordBreak: 'break-word', minWidth: 0 }}>
+          <span style={{ fontSize: 14, fontWeight: 500, color: COULEURS.texte, overflowWrap: 'break-word', wordBreak: 'break-word', minWidth: 0 }}>
             {exercice.nom}{estBonus ? ' 🔥' : ''}
           </span>
         </span>
