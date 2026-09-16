@@ -699,12 +699,6 @@ export default function ArbreCompetences({
   const POINT_MARGE_X = 6;
   const POINT_MARGE_Y = 4.5;
 
-  // Marge un peu plus large côté tronc pour les courbes de jonction : leur
-  // approche n'est pas verticale (sauf Force), donc une même marge en Y n'y
-  // dégage pas autant de distance réelle par rapport à l'anneau qu'une
-  // ligne droite -- on compense en reculant davantage à cette extrémité.
-  const POINT_MARGE_JONCTION = 7;
-
   const lignes = useMemo(() => {
     const segs: { d: string; active: boolean; key: string }[] = [];
     ORDRE_DOMAINES.forEach((d) => {
@@ -717,8 +711,14 @@ export default function ArbreCompetences({
       segs.push({ d: tracePath(x, BRANCH_LEVEL_Y[2] - POINT_MARGE_Y, BRANCH_LEVEL_Y[3] + POINT_MARGE_Y, x), active: troncComplet, key: `branche-${d}-23` });
       // jonction vers le tronc : chaque branche descend individuellement
       // jusqu'au premier nœud de l'armure (pas de point de convergence
-      // partagé avant le tronc -- 5 traits distincts, pas 4 qui fusionnent)
-      segs.push({ d: tracePath(x, BRANCH_LEVEL_Y[1] - POINT_MARGE_Y, TRUNK_LEVEL_Y[3] - POINT_MARGE_JONCTION, TRUNK_X), active: troncComplet, key: `jonction-${d}` });
+      // partagé avant le tronc -- 5 traits distincts, pas 4 qui fusionnent).
+      // Toutes finissent au MÊME point fixe (TRUNK_X, TRUNK_LEVEL_Y[3]-marge) :
+      // ce point est exactement le sommet de l'ellipse (rx=POINT_MARGE_X,
+      // ry=POINT_MARGE_Y), donc la marge à utiliser ici est POINT_MARGE_Y,
+      // point final -- peu importe l'angle d'approche de la courbe, puisque
+      // ce n'est pas l'angle de la courbe qui compte mais la position de ce
+      // point fixe par rapport à l'ellipse.
+      segs.push({ d: tracePath(x, BRANCH_LEVEL_Y[1] - POINT_MARGE_Y, TRUNK_LEVEL_Y[3] - POINT_MARGE_Y, TRUNK_X), active: troncComplet, key: `jonction-${d}` });
     });
     return segs;
   }, [troncComplet]);
