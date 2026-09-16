@@ -1656,15 +1656,15 @@ function AnneauNeon({ couleur, intensite }: { couleur: string; intensite: 'shado
     lit: { glow: 0.5, mid: 0.5, core: 0.16, dotGlow: 0.4, dotCore: 0.3 },
     neon: { glow: 0.95, mid: 1, core: 1, dotGlow: 1, dotCore: 1 },
   }[intensite];
-  const c = 40, r = 28; // canvas centré sur le bouton (56px), rayon = bord exact de la photo
+  const c = 50, r = 34; // canvas agrandi, anneau nettement plus large que la photo pour bien détacher les billes
   const dot = (dx: number, dy: number, key: string) => (
     <g key={key}>
-      <circle cx={dx} cy={dy} r={4} fill={couleur} opacity={cfg.dotGlow} style={{ filter: 'blur(1.5px)' }} />
-      <circle cx={dx} cy={dy} r={1.5} fill={core} opacity={cfg.dotCore} />
+      <circle cx={dx} cy={dy} r={4.5} fill={couleur} opacity={cfg.dotGlow} style={{ filter: 'blur(1.5px)' }} />
+      <circle cx={dx} cy={dy} r={1.8} fill={core} opacity={cfg.dotCore} />
     </g>
   );
   return (
-    <svg width={80} height={80} viewBox="0 0 80 80" style={{ position: 'absolute', left: -12, top: -12, overflow: 'visible', pointerEvents: 'none' }}>
+    <svg width={100} height={100} viewBox="0 0 100 100" style={{ position: 'absolute', left: -22, top: -22, overflow: 'visible', pointerEvents: 'none' }}>
       <circle cx={c} cy={c} r={r} fill="none" stroke={couleur} strokeWidth={7} opacity={cfg.glow} style={{ filter: 'blur(3px)' }} />
       <circle cx={c} cy={c} r={r} fill="none" stroke={mid} strokeWidth={3.5} opacity={cfg.mid} style={{ filter: 'blur(1px)' }} />
       <circle cx={c} cy={c} r={r} fill="none" stroke={core} strokeWidth={1.8} opacity={cfg.core} />
