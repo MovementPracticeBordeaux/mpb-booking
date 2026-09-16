@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { Zap, Footprints, Moon, Wind, HeartPulse, Eye, Mountain, Play, BookOpen, NotebookText, Wrench, ChevronRight, Video } from 'lucide-react';
+import { Zap, Footprints, Moon, Wind, HeartPulse, Eye, Mountain, Play, BookOpen, NotebookText, Wrench, ChevronRight, Video, Send, Lock, Clock, Check, X } from 'lucide-react';
 import {
   ORDRE_DOMAINES,
   DOMAINE_LABELS,
@@ -225,16 +225,16 @@ function IconeFlamme({ palier }: { palier: PalierFlamme }) {
       aria-hidden
       title={`Flamme ${PALIER_LABEL[palier]}`}
       style={{
-        position: 'absolute', top: -6, right: -6, width: 18, height: 18, borderRadius: '50%',
+        position: 'absolute', top: -4, right: -4, width: 14, height: 14, borderRadius: '50%',
         display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2,
         background: mythique ? 'linear-gradient(270deg, #FF3B30, #FF2D78, #8B5CF6, #FF3B30)' : '#161618',
         backgroundSize: mythique ? '400% 100%' : undefined,
         animation: mythique ? 'flame-shift 3s linear infinite' : 'pulse-noeud 2.4s ease-in-out infinite',
-        border: `2px solid ${mythique ? 'transparent' : couleur}`,
-        boxShadow: `0 0 6px ${mythique ? '#FF2D78' : couleur}`,
+        border: `1.5px solid ${mythique ? 'transparent' : couleur}`,
+        boxShadow: `0 0 5px ${mythique ? '#FF2D78' : couleur}`,
       }}
     >
-      <svg width="11" height="11" viewBox="0 0 24 24" fill={mythique ? '#fff' : couleur}>
+      <svg width="9" height="9" viewBox="0 0 24 24" fill={mythique ? '#fff' : couleur}>
         <path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z" />
       </svg>
     </span>
@@ -1616,13 +1616,13 @@ function Noeud({ x, y, statut, couleur, domaine, flamme, image, onClick }: { x: 
       aria-label={meta.label}
       style={{
         position: 'absolute', left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)',
-        width: 58, height: 58, borderRadius: '50%',
+        width: 40, height: 40, borderRadius: '50%',
         background: aImage ? COULEURS.fond : acquis ? `radial-gradient(circle at 35% 30%, ${couleur}, ${couleur}bb)` : meta.fill,
         border: `1.5px ${meta.dash ? 'dashed' : 'solid'} ${meta.border}`,
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, cursor: 'pointer',
         animation: pulse ? 'pulse-noeud 1.8s ease-in-out infinite' : 'none',
         color: couleur,
-        boxShadow: statut !== 'locked' ? `0 0 22px ${couleur}cc, 0 0 10px ${couleur}` : 'none',
+        boxShadow: statut !== 'locked' ? `0 0 14px ${couleur}cc, 0 0 6px ${couleur}` : 'none',
       }}
     >
       {flamme && flamme !== 'aucune' && <IconeFlamme palier={flamme} />}
@@ -1646,13 +1646,13 @@ function Noeud({ x, y, statut, couleur, domaine, flamme, image, onClick }: { x: 
           </div>
         </>
       ) : locked ? (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={couleur} strokeWidth={2} opacity={0.75}>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={couleur} strokeWidth={2} opacity={0.75}>
           <rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V7a4 4 0 018 0v4" />
         </svg>
       ) : acquis ? (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0b0b0d" strokeWidth={3}><path d="M5 13l4 4L19 7" /></svg>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0b0b0d" strokeWidth={3}><path d="M5 13l4 4L19 7" /></svg>
       ) : (
-        <Pictogramme domaine={domaine} taille={22} couleur={statut === 'unlocked' ? couleur : meta.border} />
+        <Pictogramme domaine={domaine} taille={16} couleur={statut === 'unlocked' ? couleur : meta.border} />
       )}
     </button>
   );
@@ -1669,18 +1669,30 @@ function FeuilleModale({ onFermer, children }: { onFermer: () => void; children:
   );
 }
 
+// Badge de statut compact — une icône dans un petit cercle, pas une pilule
+// texte comme avant ("À soumettre →" prenait trop de place à côté d'un
+// nom d'exercice parfois long). Volontairement très différent visuellement
+// des pilules "outils pour progresser" (rectangles larges avec nom + icône
+// jouer) pour qu'on ne les confonde plus : ici un simple indicateur d'état,
+// pas un bouton avec un nom dessus.
 function StatutExercicePastille({ statut, estOutilSante }: { statut: 'locked' | 'a_faire' | 'en_attente' | 'acquis' | 'refuse'; estOutilSante?: boolean }) {
   const map = {
-    locked: { label: 'Verrouillé', couleur: COULEURS.texteFaible, texte: COULEURS.texteFaible, fond: COULEURS.surfaceForte },
-    a_faire: { label: estOutilSante ? 'À faire' : 'À soumettre', couleur: estOutilSante ? '#00BFFF' : MAGENTA_NEON, texte: estOutilSante ? '#00BFFF' : COULEURS.texte, fond: BLEU_NUIT },
-    en_attente: { label: 'En attente', couleur: '#FFC24B', texte: '#FFC24B', fond: BLEU_NUIT },
-    acquis: { label: estOutilSante ? 'Fait' : 'Validé', couleur: VERT_VALIDATION, texte: VERT_VALIDATION, fond: BLEU_NUIT },
-    refuse: { label: 'À retravailler', couleur: '#ff6b6b', texte: '#ff6b6b', fond: BLEU_NUIT },
+    locked: { Icone: Lock, couleur: COULEURS.texteFaible, titre: 'Verrouillé' },
+    a_faire: { Icone: Send, couleur: estOutilSante ? '#00BFFF' : MAGENTA_NEON, titre: estOutilSante ? 'À faire' : 'À soumettre' },
+    en_attente: { Icone: Clock, couleur: '#FFC24B', titre: 'En attente de validation' },
+    acquis: { Icone: Check, couleur: VERT_VALIDATION, titre: estOutilSante ? 'Fait' : 'Validé' },
+    refuse: { Icone: X, couleur: '#ff6b6b', titre: 'À retravailler' },
   } as const;
   const m = map[statut];
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: 12.5, fontWeight: 600, padding: '7px 14px', borderRadius: 999, border: `1px solid ${m.couleur}`, background: m.fond, color: m.texte, flexShrink: 0, whiteSpace: 'nowrap' }}>
-      {m.label} →
+    <span
+      title={m.titre}
+      style={{
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+        width: 30, height: 30, borderRadius: '50%', background: BLEU_NUIT, border: `1.5px solid ${m.couleur}`,
+      }}
+    >
+      <m.Icone size={15} color={m.couleur} strokeWidth={2.2} />
     </span>
   );
 }
