@@ -52,7 +52,6 @@ type Niveau = { niveau: number; titre: string; xpDansPalier: number; xpProchainP
 // haut" : le tronc descend jusqu'à la base, les 5 branches partent de son
 // sommet et s'élèvent plus haut encore.
 const BRANCH_LEVEL_Y: Record<1 | 2 | 3, number> = { 3: 5, 2: 21, 1: 38 };
-const JUNCTION_Y = 50;
 const TRUNK_LEVEL_Y: Record<1 | 2 | 3, number> = { 3: 62, 2: 80, 1: 97 };
 const TRUNK_X = 50;
 const BRANCH_X: Record<Domaine, number> = { connexion: 10, flexibilite: 30, force: 50, figures: 70, locomotion: 90 };
@@ -699,7 +698,10 @@ export default function ArbreCompetences({
       // partie verticale à l'intérieur de la branche (entre les nœuds) : reste droite
       segs.push({ d: tracePath(BRANCH_X[d], BRANCH_LEVEL_Y[1], BRANCH_LEVEL_Y[3], BRANCH_X[d]), active: troncComplet, key: `branche-${d}` });
       // jonction vers le tronc : arrondie, converge vers le point central
-      segs.push({ d: tracePath(BRANCH_X[d], BRANCH_LEVEL_Y[1], JUNCTION_Y, TRUNK_X), active: troncComplet, key: `jonction-${d}` });
+      // jonction vers le tronc : chaque branche descend individuellement
+      // jusqu'au premier nœud de l'armure (pas de point de convergence
+      // partagé avant le tronc -- 5 traits distincts, pas 4 qui fusionnent)
+      segs.push({ d: tracePath(BRANCH_X[d], BRANCH_LEVEL_Y[1], TRUNK_LEVEL_Y[3], TRUNK_X), active: troncComplet, key: `jonction-${d}` });
     });
     return segs;
   }, [troncComplet]);
@@ -1207,9 +1209,9 @@ export default function ArbreCompetences({
               ))}
               {/* Ligne du tronc — couleur pleine dédiée (pas le gradient partagé),
                   pour être toujours visible quel que soit l'état des branches */}
-              <line x1={TRUNK_X} y1={JUNCTION_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1]} stroke="#ff00aa" strokeWidth={1.1} opacity={0.45} strokeLinecap="round" style={{ filter: 'blur(1.6px)' }} />
-              <line x1={TRUNK_X} y1={JUNCTION_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1]} stroke="#ff00aa" strokeWidth={0.55} opacity={0.75} strokeLinecap="round" style={{ filter: 'blur(0.5px)' }} />
-              <line x1={TRUNK_X} y1={JUNCTION_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1]} stroke="#ffd6f0" strokeWidth={0.2} opacity={0.9} strokeLinecap="round" />
+              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3]} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1]} stroke="#ff00aa" strokeWidth={1.1} opacity={0.45} strokeLinecap="round" style={{ filter: 'blur(1.6px)' }} />
+              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3]} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1]} stroke="#ff00aa" strokeWidth={0.55} opacity={0.75} strokeLinecap="round" style={{ filter: 'blur(0.5px)' }} />
+              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3]} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1]} stroke="#ffd6f0" strokeWidth={0.2} opacity={0.9} strokeLinecap="round" />
             </svg>
 
             {/* Nœuds des branches — cliquer entre dans le chemin isolé de la branche */}
