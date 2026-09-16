@@ -692,27 +692,42 @@ export default function ArbreCompetences({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tronc, branches, idsAcquis.size, troncComplet]);
 
-  // Le nœud (bouton + anneau) a une taille fixe en pixels, alors que les
-  // traits vivent dans un repère 0-100 qui s'étire avec le conteneur --
-  // essayer de calculer une marge "juste" dans ce repère s'est révélé
-  // fragile (dépend de la taille réelle à l'écran, jamais fiable partout).
-  // Plus simple et robuste : le trait va jusqu'au centre du nœud comme
-  // avant ; le bouton du nœud (opaque, dessiné après dans le DOM) le
-  // recouvre déjà naturellement, et seules les billes de l'anneau
-  // (dessinées par-dessus, à leur rayon fixe) restent visibles pile sur
-  // le trait -- c'est ce qui donne l'impression que le trait s'arrête à
-  // la bille, sans dépendre d'aucune mesure de taille.
+  // Billes de connexion ET arrêt des traits calculés dans le MÊME repère
+  // (0-100, celui des traits) avec les MÊMES marges fixes -- alignement
+  // garanti par construction : le trait s'arrête exactement là où la bille
+  // est dessinée, quelle que soit la taille réelle du conteneur à l'écran.
+  const POINT_MARGE_X = 6;
+  const POINT_MARGE_Y = 4.5;
+
   const lignes = useMemo(() => {
     const segs: { d: string; active: boolean; key: string }[] = [];
     ORDRE_DOMAINES.forEach((d) => {
-      segs.push({ d: tracePath(BRANCH_X[d], BRANCH_LEVEL_Y[1], BRANCH_LEVEL_Y[3], BRANCH_X[d]), active: troncComplet, key: `branche-${d}` });
+      segs.push({ d: tracePath(BRANCH_X[d], BRANCH_LEVEL_Y[1] - POINT_MARGE_Y, BRANCH_LEVEL_Y[3] + POINT_MARGE_Y, BRANCH_X[d]), active: troncComplet, key: `branche-${d}` });
       // jonction vers le tronc : chaque branche descend individuellement
       // jusqu'au premier nœud de l'armure (pas de point de convergence
       // partagé avant le tronc -- 5 traits distincts, pas 4 qui fusionnent)
-      segs.push({ d: tracePath(BRANCH_X[d], BRANCH_LEVEL_Y[1], TRUNK_LEVEL_Y[3], TRUNK_X), active: troncComplet, key: `jonction-${d}` });
+      segs.push({ d: tracePath(BRANCH_X[d], BRANCH_LEVEL_Y[1] - POINT_MARGE_Y, TRUNK_LEVEL_Y[3] - POINT_MARGE_Y, TRUNK_X), active: troncComplet, key: `jonction-${d}` });
     });
     return segs;
   }, [troncComplet]);
+
+  // Les 4 billes de chaque nœud (haut/bas/gauche/droite), dans ce même
+  // repère -- décoratives sur les côtés gauche/droite, mais haut/bas
+  // tombent pile sur le point où les traits ci-dessus s'arrêtent.
+  const billes = useMemo(() => {
+    const pts: { x: number; y: number; couleur: string; intensite: 'shadow' | 'lit' | 'neon'; key: string }[] = [];
+    const ajouterNoeud = (x: number, y: number, couleur: string, statut: StatutAffiche, prefixe: string) => {
+      const intensite: 'shadow' | 'lit' | 'neon' = statut === 'locked' ? 'shadow' : statut === 'acquis' ? 'neon' : 'lit';
+      pts.push({ x: x - POINT_MARGE_X, y, couleur, intensite, key: `${prefixe}-l` });
+      pts.push({ x: x + POINT_MARGE_X, y, couleur, intensite, key: `${prefixe}-r` });
+      pts.push({ x, y: y - POINT_MARGE_Y, couleur, intensite, key: `${prefixe}-t` });
+      pts.push({ x, y: y + POINT_MARGE_Y, couleur, intensite, key: `${prefixe}-b` });
+    };
+    branches.forEach((n) => ajouterNoeud(BRANCH_X[n.domaine as Domaine], BRANCH_LEVEL_Y[n.niveau], DOMAINE_COULEURS[n.domaine as Domaine], statutAffiche(n), n.id));
+    tronc.forEach((n) => ajouterNoeud(TRUNK_X, TRUNK_LEVEL_Y[n.niveau], COULEUR_TRONC, statutAffiche(n), n.id));
+    return pts;
+  }, [branches, tronc]);
+
 
   const noeudSelectionne = selection ? [...tronc, ...branches].find((n) => n.id === selection) ?? null : null;
   const ORDRE_VISUEL: Domaine[] = ['connexion', 'flexibilite', 'force', 'figures', 'locomotion'];
@@ -1217,9 +1232,23 @@ export default function ArbreCompetences({
               ))}
               {/* Ligne du tronc — couleur pleine dédiée (pas le gradient partagé),
                   pour être toujours visible quel que soit l'état des branches */}
-              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3]} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1]} stroke="#ff00aa" strokeWidth={1.1} opacity={0.45} strokeLinecap="round" style={{ filter: 'blur(1.6px)' }} />
-              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3]} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1]} stroke="#ff00aa" strokeWidth={0.55} opacity={0.75} strokeLinecap="round" style={{ filter: 'blur(0.5px)' }} />
-              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3]} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1]} stroke="#ffd6f0" strokeWidth={0.2} opacity={0.9} strokeLinecap="round" />
+              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3] + POINT_MARGE_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1] - POINT_MARGE_Y} stroke="#ff00aa" strokeWidth={1.1} opacity={0.45} strokeLinecap="round" style={{ filter: 'blur(1.6px)' }} />
+              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3] + POINT_MARGE_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1] - POINT_MARGE_Y} stroke="#ff00aa" strokeWidth={0.55} opacity={0.75} strokeLinecap="round" style={{ filter: 'blur(0.5px)' }} />
+              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3] + POINT_MARGE_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1] - POINT_MARGE_Y} stroke="#ffd6f0" strokeWidth={0.2} opacity={0.9} strokeLinecap="round" />
+
+              {/* Billes de connexion : même repère que les traits ci-dessus,
+                  mêmes marges -- elles tombent exactement là où les traits
+                  s'arrêtent, sans dépendre d'un calcul de taille d'écran. */}
+              {billes.map((p) => {
+                const halo = { shadow: 0.18, lit: 0.4, neon: 1 }[p.intensite];
+                const coeur = { shadow: 0.15, lit: 0.3, neon: 1 }[p.intensite];
+                return (
+                  <g key={p.key}>
+                    <circle cx={p.x} cy={p.y} r={1.1} fill={p.couleur} opacity={halo} style={{ filter: 'blur(0.8px)' }} />
+                    <circle cx={p.x} cy={p.y} r={0.4} fill={eclaircir(p.couleur, 0.82)} opacity={coeur} />
+                  </g>
+                );
+              })}
             </svg>
 
             {/* Nœuds des branches — cliquer entre dans le chemin isolé de la branche */}
@@ -1660,23 +1689,20 @@ function AnneauNeon({ couleur, intensite }: { couleur: string; intensite: 'shado
   const mid = eclaircir(couleur, 0.45);
   const core = eclaircir(couleur, 0.82);
   const cfg = {
-    shadow: { glow: 0.12, mid: 0.1, core: 0.1, dotGlow: 0.18, dotCore: 0.15 },
-    lit: { glow: 0.5, mid: 0.5, core: 0.16, dotGlow: 0.4, dotCore: 0.3 },
-    neon: { glow: 0.95, mid: 1, core: 1, dotGlow: 1, dotCore: 1 },
+    shadow: { glow: 0.12, mid: 0.1, core: 0.1 },
+    lit: { glow: 0.5, mid: 0.5, core: 0.16 },
+    neon: { glow: 0.95, mid: 1, core: 1 },
   }[intensite];
-  const c = 50, r = 34; // canvas agrandi, anneau nettement plus large que la photo pour bien détacher les billes
-  const dot = (dx: number, dy: number, key: string) => (
-    <g key={key}>
-      <circle cx={dx} cy={dy} r={4.5} fill={couleur} opacity={cfg.dotGlow} style={{ filter: 'blur(1.5px)' }} />
-      <circle cx={dx} cy={dy} r={1.8} fill={core} opacity={cfg.dotCore} />
-    </g>
-  );
+  const c = 50, r = 34;
+  // Les billes de connexion ne sont plus ici : dessinées dans le SVG
+  // général de l'arbre, dans le même repère que les traits, exactement là
+  // où ceux-ci s'arrêtent -- alignement garanti par construction plutôt
+  // que par un réglage de taille (voir POINT_MARGE_X/Y).
   return (
     <svg width={100} height={100} viewBox="0 0 100 100" style={{ position: 'absolute', left: -22, top: -22, overflow: 'visible', pointerEvents: 'none' }}>
       <circle cx={c} cy={c} r={r} fill="none" stroke={couleur} strokeWidth={7} opacity={cfg.glow} style={{ filter: 'blur(3px)' }} />
       <circle cx={c} cy={c} r={r} fill="none" stroke={mid} strokeWidth={3.5} opacity={cfg.mid} style={{ filter: 'blur(1px)' }} />
       <circle cx={c} cy={c} r={r} fill="none" stroke={core} strokeWidth={1.8} opacity={cfg.core} />
-      {dot(c - r, c, 'l')}{dot(c + r, c, 'r')}{dot(c, c - r, 't')}{dot(c, c + r, 'b')}
     </svg>
   );
 }
