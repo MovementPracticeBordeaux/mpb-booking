@@ -699,14 +699,26 @@ export default function ArbreCompetences({
   const POINT_MARGE_X = 6;
   const POINT_MARGE_Y = 4.5;
 
+  // Marge un peu plus large côté tronc pour les courbes de jonction : leur
+  // approche n'est pas verticale (sauf Force), donc une même marge en Y n'y
+  // dégage pas autant de distance réelle par rapport à l'anneau qu'une
+  // ligne droite -- on compense en reculant davantage à cette extrémité.
+  const POINT_MARGE_JONCTION = 7;
+
   const lignes = useMemo(() => {
     const segs: { d: string; active: boolean; key: string }[] = [];
     ORDRE_DOMAINES.forEach((d) => {
-      segs.push({ d: tracePath(BRANCH_X[d], BRANCH_LEVEL_Y[1] - POINT_MARGE_Y, BRANCH_LEVEL_Y[3] + POINT_MARGE_Y, BRANCH_X[d]), active: troncComplet, key: `branche-${d}` });
+      const x = BRANCH_X[d];
+      // découpé en DEUX segments distincts (niveau1<->niveau2, niveau2<->niveau3)
+      // au lieu d'une ligne unique -- une ligne unique traverserait le nœud du
+      // milieu en son centre exact, puisqu'il ne serait alors qu'un point de
+      // passage et non une extrémité reculée.
+      segs.push({ d: tracePath(x, BRANCH_LEVEL_Y[1] - POINT_MARGE_Y, BRANCH_LEVEL_Y[2] + POINT_MARGE_Y, x), active: troncComplet, key: `branche-${d}-12` });
+      segs.push({ d: tracePath(x, BRANCH_LEVEL_Y[2] - POINT_MARGE_Y, BRANCH_LEVEL_Y[3] + POINT_MARGE_Y, x), active: troncComplet, key: `branche-${d}-23` });
       // jonction vers le tronc : chaque branche descend individuellement
       // jusqu'au premier nœud de l'armure (pas de point de convergence
       // partagé avant le tronc -- 5 traits distincts, pas 4 qui fusionnent)
-      segs.push({ d: tracePath(BRANCH_X[d], BRANCH_LEVEL_Y[1] - POINT_MARGE_Y, TRUNK_LEVEL_Y[3] - POINT_MARGE_Y, TRUNK_X), active: troncComplet, key: `jonction-${d}` });
+      segs.push({ d: tracePath(x, BRANCH_LEVEL_Y[1] - POINT_MARGE_Y, TRUNK_LEVEL_Y[3] - POINT_MARGE_JONCTION, TRUNK_X), active: troncComplet, key: `jonction-${d}` });
     });
     return segs;
   }, [troncComplet]);
@@ -1232,9 +1244,12 @@ export default function ArbreCompetences({
               ))}
               {/* Ligne du tronc — couleur pleine dédiée (pas le gradient partagé),
                   pour être toujours visible quel que soit l'état des branches */}
-              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3] + POINT_MARGE_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1] - POINT_MARGE_Y} stroke="#ff00aa" strokeWidth={1.1} opacity={0.45} strokeLinecap="round" style={{ filter: 'blur(1.6px)' }} />
-              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3] + POINT_MARGE_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1] - POINT_MARGE_Y} stroke="#ff00aa" strokeWidth={0.55} opacity={0.75} strokeLinecap="round" style={{ filter: 'blur(0.5px)' }} />
-              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3] + POINT_MARGE_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1] - POINT_MARGE_Y} stroke="#ffd6f0" strokeWidth={0.2} opacity={0.9} strokeLinecap="round" />
+              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3] + POINT_MARGE_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[2] - POINT_MARGE_Y} stroke="#ff00aa" strokeWidth={1.1} opacity={0.45} strokeLinecap="round" style={{ filter: 'blur(1.6px)' }} />
+              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3] + POINT_MARGE_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[2] - POINT_MARGE_Y} stroke="#ff00aa" strokeWidth={0.55} opacity={0.75} strokeLinecap="round" style={{ filter: 'blur(0.5px)' }} />
+              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3] + POINT_MARGE_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[2] - POINT_MARGE_Y} stroke="#ffd6f0" strokeWidth={0.2} opacity={0.9} strokeLinecap="round" />
+              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[2] + POINT_MARGE_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1] - POINT_MARGE_Y} stroke="#ff00aa" strokeWidth={1.1} opacity={0.45} strokeLinecap="round" style={{ filter: 'blur(1.6px)' }} />
+              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[2] + POINT_MARGE_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1] - POINT_MARGE_Y} stroke="#ff00aa" strokeWidth={0.55} opacity={0.75} strokeLinecap="round" style={{ filter: 'blur(0.5px)' }} />
+              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[2] + POINT_MARGE_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1] - POINT_MARGE_Y} stroke="#ffd6f0" strokeWidth={0.2} opacity={0.9} strokeLinecap="round" />
 
               {/* Billes de connexion : même repère que les traits ci-dessus,
                   mêmes marges -- elles tombent exactement là où les traits
