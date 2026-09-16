@@ -1644,64 +1644,91 @@ function LigneProgression({ label, pourcentage, couleur, domaine, entrees, compa
   );
 }
 
+// Anneau néon à trois couches + 4 points de connexion (cœur pâle inclus) --
+// reprend exactement la structure du prototype validé, appliquée ici en SVG
+// local au bouton (pas dans le SVG général de l'arbre, qui est étiré et
+// déformerait un cercle).
+function AnneauNeon({ couleur, intensite }: { couleur: string; intensite: 'shadow' | 'lit' | 'neon' }) {
+  const mid = eclaircir(couleur, 0.45);
+  const core = eclaircir(couleur, 0.82);
+  const cfg = {
+    shadow: { glow: 0.12, mid: 0.1, core: 0.1, dotGlow: 0.18, dotCore: 0.15 },
+    lit: { glow: 0.5, mid: 0.5, core: 0.16, dotGlow: 0.4, dotCore: 0.3 },
+    neon: { glow: 0.95, mid: 1, core: 1, dotGlow: 1, dotCore: 1 },
+  }[intensite];
+  const c = 40, r = 28; // canvas centré sur le bouton (56px), rayon = bord exact de la photo
+  const dot = (dx: number, dy: number, key: string) => (
+    <g key={key}>
+      <circle cx={dx} cy={dy} r={4} fill={couleur} opacity={cfg.dotGlow} style={{ filter: 'blur(1.5px)' }} />
+      <circle cx={dx} cy={dy} r={1.5} fill={core} opacity={cfg.dotCore} />
+    </g>
+  );
+  return (
+    <svg width={80} height={80} viewBox="0 0 80 80" style={{ position: 'absolute', left: -12, top: -12, overflow: 'visible', pointerEvents: 'none' }}>
+      <circle cx={c} cy={c} r={r} fill="none" stroke={couleur} strokeWidth={7} opacity={cfg.glow} style={{ filter: 'blur(3px)' }} />
+      <circle cx={c} cy={c} r={r} fill="none" stroke={mid} strokeWidth={3.5} opacity={cfg.mid} style={{ filter: 'blur(1px)' }} />
+      <circle cx={c} cy={c} r={r} fill="none" stroke={core} strokeWidth={1.8} opacity={cfg.core} />
+      {dot(c - r, c, 'l')}{dot(c + r, c, 'r')}{dot(c, c - r, 't')}{dot(c, c + r, 'b')}
+    </svg>
+  );
+}
+
 function Noeud({ x, y, statut, couleur, domaine, flamme, image, onClick }: { x: number; y: number; statut: StatutAffiche; couleur: string; domaine: DomaineOuTronc; flamme?: PalierFlamme; image?: string; onClick: () => void }) {
   const meta = metaPour(statut, couleur);
   const pulse = statut === 'en_attente';
   const acquis = statut === 'acquis';
   const locked = statut === 'locked';
   const aImage = !!image;
-  // Glow en couches (halo large -> halo serré) plutôt qu'un unique
-  // box-shadow plat ; la bordure "néon" du niveau validé passe à une teinte
-  // pâle de la couleur de branche (jamais blanc pur), comme sur les traits.
-  const glow = locked ? 'none' : acquis
-    ? `0 0 5px ${eclaircir(couleur, 0.6)}, 0 0 12px ${couleur}, 0 0 24px ${couleur}bb, 0 0 38px ${couleur}55`
-    : `0 0 8px ${couleur}99, 0 0 16px ${couleur}55`;
-  const bordure = acquis ? eclaircir(couleur, 0.7) : meta.border;
+  // Accès (peut jouer, en attente, refusé...) vs validation : seul l'anneau
+  // (et les points) s'éclaire à l'accès ; le logo/pictogramme ne passe en
+  // plein néon qu'une fois le nœud réellement validé.
+  const intensite: 'shadow' | 'lit' | 'neon' = locked ? 'shadow' : acquis ? 'neon' : 'lit';
   return (
-    <button
-      onClick={onClick}
-      aria-label={meta.label}
-      style={{
-        position: 'absolute', left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)',
-        width: 56, height: 56, borderRadius: '50%',
-        background: aImage ? COULEURS.fond : acquis ? `radial-gradient(circle at 35% 30%, ${couleur}, ${couleur}bb)` : meta.fill,
-        border: `2px ${meta.dash ? 'dashed' : 'solid'} ${bordure}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, cursor: 'pointer',
-        animation: pulse ? 'pulse-noeud 1.8s ease-in-out infinite' : 'none',
-        color: couleur,
-        boxShadow: glow,
-      }}
-    >
-      {flamme && flamme !== 'aucune' && <IconeFlamme palier={flamme} />}
-      {aImage ? (
-        <>
-          {/* Pastille encore éteinte tant que verrouillée : logo visible
-              mais assombri (pas de néon), pour donner envie sans dévoiler
-              pleinement — s'éclaire progressivement au fil du déblocage
-              puis de la validation. */}
-          <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', overflow: 'hidden' }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={image}
-              alt=""
-              style={{
-                width: '100%', height: '100%', objectFit: 'cover',
-                opacity: acquis ? 1 : locked ? 0.55 : 0.9,
-                filter: locked ? 'brightness(0.5)' : 'none',
-              }}
-            />
-          </div>
-        </>
-      ) : locked ? (
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={couleur} strokeWidth={2} opacity={0.75}>
-          <rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V7a4 4 0 018 0v4" />
-        </svg>
-      ) : acquis ? (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0b0b0d" strokeWidth={3}><path d="M5 13l4 4L19 7" /></svg>
-      ) : (
-        <Pictogramme domaine={domaine} taille={21} couleur={statut === 'unlocked' ? couleur : meta.border} />
-      )}
-    </button>
+    <div style={{ position: 'absolute', left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)', width: 56, height: 56 }}>
+      <AnneauNeon couleur={couleur} intensite={intensite} />
+      <button
+        onClick={onClick}
+        aria-label={meta.label}
+        style={{
+          position: 'absolute', inset: 0, borderRadius: '50%',
+          background: aImage ? COULEURS.fond : acquis ? `radial-gradient(circle at 35% 30%, ${couleur}, ${couleur}bb)` : meta.fill,
+          border: meta.dash ? `1.5px dashed ${meta.border}` : 'none',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, cursor: 'pointer',
+          animation: pulse ? 'pulse-noeud 1.8s ease-in-out infinite' : 'none',
+          color: couleur,
+        }}
+      >
+        {flamme && flamme !== 'aucune' && <IconeFlamme palier={flamme} />}
+        {aImage ? (
+          <>
+            {/* Pastille encore éteinte tant que verrouillée : logo visible
+                mais assombri (pas de néon), pour donner envie sans dévoiler
+                pleinement — s'éclaire progressivement au fil du déblocage
+                puis de la validation. */}
+            <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', overflow: 'hidden' }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={image}
+                alt=""
+                style={{
+                  width: '100%', height: '100%', objectFit: 'cover',
+                  opacity: acquis ? 1 : locked ? 0.55 : 0.9,
+                  filter: locked ? 'brightness(0.5)' : acquis ? 'none' : 'grayscale(1) brightness(1.4)',
+                }}
+              />
+            </div>
+          </>
+        ) : locked ? (
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={couleur} strokeWidth={2} opacity={0.75}>
+            <rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V7a4 4 0 018 0v4" />
+          </svg>
+        ) : acquis ? (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0b0b0d" strokeWidth={3}><path d="M5 13l4 4L19 7" /></svg>
+        ) : (
+          <Pictogramme domaine={domaine} taille={21} couleur={statut === 'unlocked' ? couleur : meta.border} />
+        )}
+      </button>
+    </div>
   );
 }
 
