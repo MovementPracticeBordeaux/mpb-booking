@@ -702,6 +702,13 @@ export default function ArbreCompetences({
           .chemin-rail .chemin-connecteur { height: 8px !important; }
           .chemin-rail .chemin-pastille { width: 34px !important; height: 34px !important; font-size: 10px !important; }
           .chemin-onglets { clear: both !important; }
+          /* Sur mobile, les badges (validation + icône) de chaque ligne
+             d'exercice prennent trop de place à côté d'un nom parfois long
+             ('RING PUSH UPS UNILATÉRALES ASSISTEES') -- réduits pour
+             laisser le nom respirer, plutôt que de le tronquer. */
+          .bloc-exercice-check { width: 26px !important; height: 26px !important; font-size: 14px !important; }
+          .bloc-exercice-icone { width: 28px !important; height: 28px !important; }
+          .bloc-exercice-nom-groupe { gap: 7px !important; }
         }
       `}</style>
 
@@ -1887,10 +1894,11 @@ function BlocExercice({
     <div style={{ background: 'transparent', border: `1px solid ${BORDURE_PANNEAU}`, borderRadius: 12, padding: '14px 16px', marginBottom: 10 }}>
       <button
         type="button" onClick={() => setOuvert((o) => !o)}
-        style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
+        className="bloc-exercice-entete"
+        style={{ width: '100%', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 10, background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
       >
-        <span style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-          <span style={{
+        <span className="bloc-exercice-nom-groupe" style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: '1 1 190px' }}>
+          <span className="bloc-exercice-check" style={{
             flexShrink: 0, width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 17, background: estAcquis ? VERT_VALIDATION : 'transparent', border: estAcquis ? 'none' : `1.5px solid ${COULEURS.bordure}`, color: estAcquis ? '#04121A' : '#fff',
             boxShadow: estAcquis ? `0 0 8px ${VERT_VALIDATION}99` : 'none',
@@ -1898,12 +1906,12 @@ function BlocExercice({
             {estAcquis ? '✓' : ''}
           </span>
           {icone && (
-            <span style={{
+            <span className="bloc-exercice-icone" style={{
               flexShrink: 0, width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: 'transparent',
             }}><IconeExercice type={icone} taille={26} couleur={teinte} /></span>
           )}
-          <span style={{ fontSize: 15, color: COULEURS.texte, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: 15, color: COULEURS.texte, overflowWrap: 'break-word', wordBreak: 'break-word', minWidth: 0 }}>
             {exercice.nom}{estBonus ? ' 🔥' : ''}
           </span>
         </span>
