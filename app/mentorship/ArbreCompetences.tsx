@@ -692,12 +692,21 @@ export default function ArbreCompetences({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tronc, branches, idsAcquis.size, troncComplet]);
 
-  // Billes de connexion ET arrêt des traits calculés dans le MÊME repère
-  // (0-100, celui des traits) avec les MÊMES marges fixes -- alignement
-  // garanti par construction : le trait s'arrête exactement là où la bille
-  // est dessinée, quelle que soit la taille réelle du conteneur à l'écran.
-  const POINT_MARGE_X = 6;
-  const POINT_MARGE_Y = 4.5;
+  // Le SVG utilisait un repère carré (0-100 x 0-100) étiré différemment en
+  // largeur et en hauteur pour remplir un conteneur non carré (3/4) --
+  // exactement le problème : un cercle dessiné dans ce repère devient une
+  // ellipse à l'écran. On corrige à la racine, comme sur le prototype qui,
+  // lui, redimensionnait toujours de façon UNIFORME : le repère du SVG
+  // adopte maintenant le même rapport 3/4 que le conteneur (largeur 100,
+  // hauteur 100*4/3), et n'est donc plus étiré du tout -- un cercle y reste
+  // un cercle, sans aucun rattrapage (ellipse, marge dynamique, etc).
+  // sy() convertit une coordonnée Y "0-100 façon CSS" (utilisée par
+  // ailleurs pour positionner les boutons des nœuds en `top: {y}%`) vers
+  // cette échelle SVG -- les deux repères coexistent, chacun pour son usage.
+  const ECHELLE_Y = 4 / 3;
+  const HAUTEUR_VUE = 100 * ECHELLE_Y;
+  const sy = (y: number) => y * ECHELLE_Y;
+  const MARGE = 6; // rayon des anneaux/billes ET marge de recul des traits, dans ce repère non déformé
 
   const lignes = useMemo(() => {
     const segs: { d: string; active: boolean; key: string }[] = [];
@@ -707,32 +716,23 @@ export default function ArbreCompetences({
       // au lieu d'une ligne unique -- une ligne unique traverserait le nœud du
       // milieu en son centre exact, puisqu'il ne serait alors qu'un point de
       // passage et non une extrémité reculée.
-      segs.push({ d: tracePath(x, BRANCH_LEVEL_Y[1] - POINT_MARGE_Y, BRANCH_LEVEL_Y[2] + POINT_MARGE_Y, x), active: troncComplet, key: `branche-${d}-12` });
-      segs.push({ d: tracePath(x, BRANCH_LEVEL_Y[2] - POINT_MARGE_Y, BRANCH_LEVEL_Y[3] + POINT_MARGE_Y, x), active: troncComplet, key: `branche-${d}-23` });
+      segs.push({ d: tracePath(x, sy(BRANCH_LEVEL_Y[1]) - MARGE, sy(BRANCH_LEVEL_Y[2]) + MARGE, x), active: troncComplet, key: `branche-${d}-12` });
+      segs.push({ d: tracePath(x, sy(BRANCH_LEVEL_Y[2]) - MARGE, sy(BRANCH_LEVEL_Y[3]) + MARGE, x), active: troncComplet, key: `branche-${d}-23` });
       // jonction vers le tronc : chaque branche descend individuellement
       // jusqu'au premier nœud de l'armure (pas de point de convergence
       // partagé avant le tronc -- 5 traits distincts, pas 4 qui fusionnent).
-      // Toutes finissent au MÊME point fixe (TRUNK_X, TRUNK_LEVEL_Y[3]-marge) :
-      // ce point est exactement le sommet de l'ellipse (rx=POINT_MARGE_X,
-      // ry=POINT_MARGE_Y), donc la marge à utiliser ici est POINT_MARGE_Y,
-      // point final -- peu importe l'angle d'approche de la courbe, puisque
-      // ce n'est pas l'angle de la courbe qui compte mais la position de ce
-      // point fixe par rapport à l'ellipse.
-      segs.push({ d: tracePath(x, BRANCH_LEVEL_Y[1] - POINT_MARGE_Y, TRUNK_LEVEL_Y[3] - POINT_MARGE_Y, TRUNK_X), active: troncComplet, key: `jonction-${d}` });
+      segs.push({ d: tracePath(x, sy(BRANCH_LEVEL_Y[1]) - MARGE, sy(TRUNK_LEVEL_Y[3]) - MARGE, TRUNK_X), active: troncComplet, key: `jonction-${d}` });
     });
     return segs;
   }, [troncComplet]);
 
-  // Position + couleur + intensité de CHAQUE nœud, dans le même repère que
-  // les traits -- sert à la fois à placer les billes et à dessiner
-  // l'anneau (en ellipse : rx/ry choisis pour redevenir un cercle visuel
-  // parfait une fois le repère étiré par le conteneur, quelle que soit sa
-  // taille réelle -- voir POINT_MARGE_X/Y).
+  // Position (dans le repère SVG) + couleur + intensité de chaque nœud --
+  // sert à placer les billes ET l'anneau, désormais un simple cercle.
   const noeudsRepere = useMemo(() => {
     const items: { x: number; y: number; couleur: string; intensite: 'shadow' | 'lit' | 'neon'; key: string }[] = [];
     const ajouter = (x: number, y: number, couleur: string, statut: StatutAffiche, key: string) => {
       const intensite: 'shadow' | 'lit' | 'neon' = statut === 'locked' ? 'shadow' : statut === 'acquis' ? 'neon' : 'lit';
-      items.push({ x, y, couleur, intensite, key });
+      items.push({ x, y: sy(y), couleur, intensite, key });
     };
     branches.forEach((n) => ajouter(BRANCH_X[n.domaine as Domaine], BRANCH_LEVEL_Y[n.niveau], DOMAINE_COULEURS[n.domaine as Domaine], statutAffiche(n), n.id));
     tronc.forEach((n) => ajouter(TRUNK_X, TRUNK_LEVEL_Y[n.niveau], COULEUR_TRONC, statutAffiche(n), n.id));
@@ -745,19 +745,18 @@ export default function ArbreCompetences({
   const billes = useMemo(() => {
     const pts: { x: number; y: number; couleur: string; intensite: 'shadow' | 'lit' | 'neon'; key: string }[] = [];
     noeudsRepere.forEach(({ x, y, couleur, intensite, key }) => {
-      pts.push({ x: x - POINT_MARGE_X, y, couleur, intensite, key: `${key}-l` });
-      pts.push({ x: x + POINT_MARGE_X, y, couleur, intensite, key: `${key}-r` });
-      pts.push({ x, y: y - POINT_MARGE_Y, couleur, intensite, key: `${key}-t` });
-      pts.push({ x, y: y + POINT_MARGE_Y, couleur, intensite, key: `${key}-b` });
+      pts.push({ x: x - MARGE, y, couleur, intensite, key: `${key}-l` });
+      pts.push({ x: x + MARGE, y, couleur, intensite, key: `${key}-r` });
+      pts.push({ x, y: y - MARGE, couleur, intensite, key: `${key}-t` });
+      pts.push({ x, y: y + MARGE, couleur, intensite, key: `${key}-b` });
     });
     return pts;
   }, [noeudsRepere]);
 
-  // L'anneau de chaque nœud, en ellipse dans ce même repère (rx=POINT_MARGE_X,
-  // ry=POINT_MARGE_Y) -- puisque le SVG est étiré pour coller à un
-  // conteneur d'aspect 3/4 quelle que soit sa taille réelle, cette ellipse
-  // redevient TOUJOURS un cercle visuellement parfait après étirement, et
-  // coïncide par construction avec l'endroit où les traits s'arrêtent.
+  // L'anneau de chaque nœud : un cercle (rayon MARGE) dans ce repère non
+  // déformé -- reste un cercle visuellement parfait à l'écran, sans aucun
+  // calcul de compensation, et coïncide par construction avec l'endroit où
+  // les traits ci-dessus s'arrêtent.
   const anneaux = useMemo(() => noeudsRepere, [noeudsRepere]);
 
 
@@ -1240,9 +1239,9 @@ export default function ArbreCompetences({
 
           {/* Arbre — en vedette, section large */}
           <div style={{ position: 'relative', width: '100%', maxWidth: 560, marginInline: 'auto', aspectRatio: '3 / 4' }}>
-            <svg viewBox="0 0 100 100" preserveAspectRatio="none" width="100%" height="100%" style={{ position: 'absolute', inset: 0, display: 'block' }}>
+            <svg viewBox={`0 0 100 ${HAUTEUR_VUE}`} width="100%" height="100%" style={{ position: 'absolute', inset: 0, display: 'block' }}>
               <defs>
-                <linearGradient id="gradient-lignes" gradientUnits="userSpaceOnUse" x1="0" y1="100" x2="0" y2="0">
+                <linearGradient id="gradient-lignes" gradientUnits="userSpaceOnUse" x1="0" y1={HAUTEUR_VUE} x2="0" y2="0">
                   <stop offset="0%" stopColor="#FF3B30" /><stop offset="35%" stopColor="#FF8A00" /><stop offset="70%" stopColor="#FF2D78" /><stop offset="100%" stopColor="#8B5CF6" />
                 </linearGradient>
               </defs>
@@ -1264,26 +1263,25 @@ export default function ArbreCompetences({
               ))}
               {/* Ligne du tronc — couleur pleine dédiée (pas le gradient partagé),
                   pour être toujours visible quel que soit l'état des branches */}
-              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3] + POINT_MARGE_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[2] - POINT_MARGE_Y} stroke="#ff00aa" strokeWidth={1.1} opacity={0.45} strokeLinecap="round" style={{ filter: 'blur(1.6px)' }} />
-              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3] + POINT_MARGE_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[2] - POINT_MARGE_Y} stroke="#ff00aa" strokeWidth={0.55} opacity={0.75} strokeLinecap="round" style={{ filter: 'blur(0.5px)' }} />
-              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3] + POINT_MARGE_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[2] - POINT_MARGE_Y} stroke="#ffd6f0" strokeWidth={0.2} opacity={0.9} strokeLinecap="round" />
-              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[2] + POINT_MARGE_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1] - POINT_MARGE_Y} stroke="#ff00aa" strokeWidth={1.1} opacity={0.45} strokeLinecap="round" style={{ filter: 'blur(1.6px)' }} />
-              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[2] + POINT_MARGE_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1] - POINT_MARGE_Y} stroke="#ff00aa" strokeWidth={0.55} opacity={0.75} strokeLinecap="round" style={{ filter: 'blur(0.5px)' }} />
-              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[2] + POINT_MARGE_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1] - POINT_MARGE_Y} stroke="#ffd6f0" strokeWidth={0.2} opacity={0.9} strokeLinecap="round" />
+              <line x1={TRUNK_X} y1={sy(TRUNK_LEVEL_Y[3]) + MARGE} x2={TRUNK_X} y2={sy(TRUNK_LEVEL_Y[2]) - MARGE} stroke="#ff00aa" strokeWidth={1.1} opacity={0.45} strokeLinecap="round" style={{ filter: 'blur(1.6px)' }} />
+              <line x1={TRUNK_X} y1={sy(TRUNK_LEVEL_Y[3]) + MARGE} x2={TRUNK_X} y2={sy(TRUNK_LEVEL_Y[2]) - MARGE} stroke="#ff00aa" strokeWidth={0.55} opacity={0.75} strokeLinecap="round" style={{ filter: 'blur(0.5px)' }} />
+              <line x1={TRUNK_X} y1={sy(TRUNK_LEVEL_Y[3]) + MARGE} x2={TRUNK_X} y2={sy(TRUNK_LEVEL_Y[2]) - MARGE} stroke="#ffd6f0" strokeWidth={0.2} opacity={0.9} strokeLinecap="round" />
+              <line x1={TRUNK_X} y1={sy(TRUNK_LEVEL_Y[2]) + MARGE} x2={TRUNK_X} y2={sy(TRUNK_LEVEL_Y[1]) - MARGE} stroke="#ff00aa" strokeWidth={1.1} opacity={0.45} strokeLinecap="round" style={{ filter: 'blur(1.6px)' }} />
+              <line x1={TRUNK_X} y1={sy(TRUNK_LEVEL_Y[2]) + MARGE} x2={TRUNK_X} y2={sy(TRUNK_LEVEL_Y[1]) - MARGE} stroke="#ff00aa" strokeWidth={0.55} opacity={0.75} strokeLinecap="round" style={{ filter: 'blur(0.5px)' }} />
+              <line x1={TRUNK_X} y1={sy(TRUNK_LEVEL_Y[2]) + MARGE} x2={TRUNK_X} y2={sy(TRUNK_LEVEL_Y[1]) - MARGE} stroke="#ffd6f0" strokeWidth={0.2} opacity={0.9} strokeLinecap="round" />
 
-              {/* Anneaux des nœuds : ellipses (rx=POINT_MARGE_X, ry=POINT_MARGE_Y)
-                  dans ce même repère étiré -- redeviennent des cercles
-                  visuellement parfaits après étirement, et coïncident par
-                  construction avec l'endroit où les traits s'arrêtent. */}
+              {/* Anneaux des nœuds : de vrais cercles (rayon MARGE) dans ce
+                  repère non déformé -- coïncident par construction avec
+                  l'endroit où les traits ci-dessus s'arrêtent. */}
               {anneaux.map((n) => {
                 const mid = eclaircir(n.couleur, 0.45);
                 const core = eclaircir(n.couleur, 0.82);
                 const cfg = { shadow: { glow: 0.12, mid: 0.1, core: 0.1 }, lit: { glow: 0.5, mid: 0.5, core: 0.16 }, neon: { glow: 0.95, mid: 1, core: 1 } }[n.intensite];
                 return (
                   <g key={`anneau-${n.key}`}>
-                    <ellipse cx={n.x} cy={n.y} rx={POINT_MARGE_X} ry={POINT_MARGE_Y} fill="none" stroke={n.couleur} strokeWidth={0.9} opacity={cfg.glow} style={{ filter: 'blur(0.9px)' }} />
-                    <ellipse cx={n.x} cy={n.y} rx={POINT_MARGE_X} ry={POINT_MARGE_Y} fill="none" stroke={mid} strokeWidth={0.45} opacity={cfg.mid} style={{ filter: 'blur(0.3px)' }} />
-                    <ellipse cx={n.x} cy={n.y} rx={POINT_MARGE_X} ry={POINT_MARGE_Y} fill="none" stroke={core} strokeWidth={0.22} opacity={cfg.core} />
+                    <circle cx={n.x} cy={n.y} r={MARGE} fill="none" stroke={n.couleur} strokeWidth={0.9} opacity={cfg.glow} style={{ filter: 'blur(0.9px)' }} />
+                    <circle cx={n.x} cy={n.y} r={MARGE} fill="none" stroke={mid} strokeWidth={0.45} opacity={cfg.mid} style={{ filter: 'blur(0.3px)' }} />
+                    <circle cx={n.x} cy={n.y} r={MARGE} fill="none" stroke={core} strokeWidth={0.22} opacity={cfg.core} />
                   </g>
                 );
               })}
