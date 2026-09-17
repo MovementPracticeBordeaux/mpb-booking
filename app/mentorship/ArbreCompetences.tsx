@@ -1752,7 +1752,7 @@ function Noeud({ x, y, statut, couleur, domaine, flamme, image, onClick }: { x: 
   // d'écran réelle (un anneau à taille fixe en pixels ne pouvait jamais
   // coïncider de façon fiable avec des traits positionnés en pourcentage).
   return (
-    <div style={{ position: 'absolute', left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)', width: 56, height: 56 }}>
+    <div style={{ position: 'absolute', left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)', width: 'clamp(40px, 10%, 56px)', aspectRatio: '1 / 1' }}>
       <button
         onClick={onClick}
         aria-label={meta.label}
