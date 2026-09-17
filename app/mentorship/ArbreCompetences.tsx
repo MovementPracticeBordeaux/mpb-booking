@@ -52,7 +52,7 @@ type Niveau = { niveau: number; titre: string; xpDansPalier: number; xpProchainP
 // haut" : le tronc descend jusqu'à la base, les 5 branches partent de son
 // sommet et s'élèvent plus haut encore.
 const BRANCH_LEVEL_Y: Record<1 | 2 | 3, number> = { 3: 5, 2: 21, 1: 38 };
-const TRUNK_LEVEL_Y: Record<1 | 2 | 3, number> = { 3: 62, 2: 80, 1: 97 };
+const TRUNK_LEVEL_Y: Record<1 | 2 | 3, number> = { 3: 62, 2: 73, 1: 84 };
 const TRUNK_X = 50;
 const BRANCH_X: Record<Domaine, number> = { connexion: 10, flexibilite: 30, force: 50, figures: 70, locomotion: 90 };
 
