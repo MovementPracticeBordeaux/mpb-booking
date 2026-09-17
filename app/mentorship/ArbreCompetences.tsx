@@ -1271,17 +1271,6 @@ export default function ArbreCompetences({
               <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[2] + POINT_MARGE_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1] - POINT_MARGE_Y} stroke="#ff00aa" strokeWidth={0.55} opacity={0.75} strokeLinecap="round" style={{ filter: 'blur(0.5px)' }} />
               <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[2] + POINT_MARGE_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1] - POINT_MARGE_Y} stroke="#ffd6f0" strokeWidth={0.2} opacity={0.9} strokeLinecap="round" />
 
-              {/* Disque occultant : masque tout trait qui traînerait sous
-                  cette zone, quelle que soit la précision de son arrêt --
-                  bien plus large que l'anneau, couleur du fond (invisible en
-                  tant que tel), rendu AVANT l'anneau donc en dessous de lui.
-                  Objectif : plus aucune pénétration visible, quitte à ne pas
-                  toucher pile la bille -- garanti quelle que soit la taille
-                  d'écran, sans aucun calcul de coïncidence. */}
-              {anneaux.map((n) => (
-                <ellipse key={`masque-${n.key}`} cx={n.x} cy={n.y} rx={POINT_MARGE_X * 1.6} ry={POINT_MARGE_Y * 1.6} fill="#0b0b0d" />
-              ))}
-
               {/* Anneaux des nœuds : ellipses (rx=POINT_MARGE_X, ry=POINT_MARGE_Y)
                   dans ce même repère étiré -- redeviennent des cercles
                   visuellement parfaits après étirement, et coïncident par
