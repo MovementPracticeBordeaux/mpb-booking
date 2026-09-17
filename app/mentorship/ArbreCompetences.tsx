@@ -169,14 +169,13 @@ function Pictogramme({ domaine, taille = 12, couleur }: { domaine: DomaineOuTron
     case 'force':
       return <svg {...props}><path d="M4 12h2M18 12h2M6 8v8M18 8v8M8 12h8" /></svg>;
     case 'flexibilite':
-      // Bambou : tige à nœuds + vraies feuilles pleines (pas de simples
-      // traits) pour se reconnaître clairement même en petit.
+      // Jeune pousse : tige + deux feuilles symétriques -- plus simple et
+      // plus lisible qu'un bambou détaillé à cette taille.
       return (
         <svg {...props}>
-          <path d="M9 21V6" />
-          <path d="M6 10h6M6 15h6" />
-          <path d="M9 6c1.5-2.8 4.5-3 6.5-4.5c-0.5 2.8-1.8 5-6.5 4.5z" fill={couleur} stroke="none" />
-          <path d="M9 8.5c-2-1.7-4.7-1.2-6.5-2.7c0.8 2.6 2.3 4.4 6.5 2.7z" fill={couleur} stroke="none" />
+          <path d="M12 20V12" />
+          <path d="M12 12c0-3.8-2.8-6-6.5-6c0.4 3.8 2.9 6.2 6.5 6z" fill={couleur} stroke="none" />
+          <path d="M12 12c0-3.8 2.8-6 6.5-6c-0.4 3.8-2.9 6.2-6.5 6z" fill={couleur} stroke="none" />
         </svg>
       );
     case 'locomotion':
