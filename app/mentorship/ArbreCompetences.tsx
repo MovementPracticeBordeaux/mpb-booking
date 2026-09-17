@@ -1251,7 +1251,7 @@ export default function ArbreCompetences({
                 <button
                   key={d}
                   onClick={() => entrerBranche(d)}
-                  style={{ textAlign: 'center', padding: '0 2px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
+                  style={{ textAlign: 'center', padding: '0 2px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', minWidth: 0 }}
                 >
                   <div style={{ position: 'relative', width: 40, height: 40, marginInline: 'auto', marginBottom: 6 }}>
                     <svg width={40} height={40} viewBox="0 0 40 40" style={{ position: 'absolute', inset: 0, overflow: 'visible' }}>
@@ -1264,7 +1264,7 @@ export default function ArbreCompetences({
                       <Pictogramme domaine={d} taille={16} couleur={couleur} />
                     </div>
                   </div>
-                  <p style={{ margin: 0, fontFamily: POLICE_DISPLAY, fontSize: 12, letterSpacing: '0.04em', textTransform: 'uppercase', color: couleur, minHeight: 15, lineHeight: '15px' }}>{DOMAINE_LABELS[d]}</p>
+                  <p style={{ margin: 0, fontFamily: POLICE_DISPLAY, fontSize: 12, letterSpacing: '0.04em', textTransform: 'uppercase', color: couleur, minHeight: 15, lineHeight: 1.15 }}>{DOMAINE_LABELS[d]}</p>
                   <p style={{ margin: '2px 0 0', fontSize: 10, color: COULEURS.texteFaible, lineHeight: 1.3, minHeight: 26 }}>{DOMAINE_ACCROCHES[d]}</p>
                 </button>
               );
