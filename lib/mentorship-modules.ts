@@ -70,9 +70,9 @@ export const DOMAINE_ACCROCHES: Record<Domaine, string> = {
 export const DOMAINE_COULEURS: Record<Domaine, string> = {
   force: '#FF3B30',
   flexibilite: '#39FF14',
-  locomotion: '#FF8A00',
+  locomotion: '#6C5CE7',
   connexion: '#FF2D78',
-  figures: '#8B5CF6',
+  figures: '#FFD400',
 };
 export const COULEUR_TRONC = '#ff00aa'; // accent déjà utilisé pour les CTA du site
 

@@ -52,8 +52,16 @@ type Niveau = { niveau: number; titre: string; xpDansPalier: number; xpProchainP
 // haut" : le tronc descend jusqu'à la base, les 5 branches partent de son
 // sommet et s'élèvent plus haut encore.
 const BRANCH_LEVEL_Y: Record<1 | 2 | 3, number> = { 3: 5, 2: 21, 1: 38 };
-const TRUNK_LEVEL_Y: Record<1 | 2 | 3, number> = { 3: 62, 2: 73, 1: 84 };
 const TRUNK_X = 50;
+// Armure organique en triangle (niveau 3 en haut, alimente les branches ;
+// niveaux 1 et 2 en bas à gauche/droite) plutôt qu'empilée sur 3 étages --
+// nettement moins de hauteur utilisée. Le point du niveau 3 ne bouge pas
+// (50,62) : c'est là que convergent déjà les 5 courbes de branches.
+const TRUNK_POS: Record<1 | 2 | 3, { x: number; y: number }> = {
+  3: { x: TRUNK_X, y: 62 },
+  1: { x: TRUNK_X - 12, y: 76 },
+  2: { x: TRUNK_X + 12, y: 76 },
+};
 const BRANCH_X: Record<Domaine, number> = { connexion: 10, flexibilite: 30, force: 50, figures: 70, locomotion: 90 };
 
 // Mélange une couleur hex vers le blanc (t=0 -> couleur pure, t=1 -> blanc) :
@@ -161,13 +169,26 @@ function Pictogramme({ domaine, taille = 12, couleur }: { domaine: DomaineOuTron
     case 'force':
       return <svg {...props}><path d="M4 12h2M18 12h2M6 8v8M18 8v8M8 12h8" /></svg>;
     case 'flexibilite':
-      // Bambou : tige avec nœuds (segments) + pousse de feuilles -- évoque
-      // la souplesse qui plie sans casser, plus parlant qu'une simple vague.
-      return <svg {...props}><path d="M9 21V4" /><path d="M6 7h6M6 12h6M6 17h6" /><path d="M9 4c-2-1.2-3.2-.3-4.3.8M9 4c2-1.2 3.2-.3 4.3.8" /><path d="M17 21V11" /><path d="M15 14h4M15 18h4" /></svg>;
+      // Bambou : tige à nœuds + vraies feuilles pleines (pas de simples
+      // traits) pour se reconnaître clairement même en petit.
+      return (
+        <svg {...props}>
+          <path d="M9 21V6" />
+          <path d="M6 10h6M6 15h6" />
+          <path d="M9 6c1.5-2.8 4.5-3 6.5-4.5c-0.5 2.8-1.8 5-6.5 4.5z" fill={couleur} stroke="none" />
+          <path d="M9 8.5c-2-1.7-4.7-1.2-6.5-2.7c0.8 2.6 2.3 4.4 6.5 2.7z" fill={couleur} stroke="none" />
+        </svg>
+      );
     case 'locomotion':
-      // Tête de singe (agilité, déplacement) -- plus représentatif qu'une
-      // silhouette en course générique.
-      return <svg {...props}><circle cx="12" cy="13.5" r="6" /><circle cx="5.5" cy="9" r="3" /><circle cx="18.5" cy="9" r="3" /><circle cx="9.5" cy="12.5" r="0.9" fill={couleur} stroke="none" /><circle cx="14.5" cy="12.5" r="0.9" fill={couleur} stroke="none" /><path d="M9 16.5c1.2 1 4.8 1 6 0" /></svg>;
+      // Vague (flow, déplacement) -- plus juste qu'une tête de singe pour
+      // "déplacement, flow et créativité".
+      return (
+        <svg {...props}>
+          <path d="M3 7.5c1.5-2 3-2 4.5 0s3 2 4.5 0s3-2 4.5 0s3 2 4.5 0" />
+          <path d="M3 12.5c1.5-2 3-2 4.5 0s3 2 4.5 0s3-2 4.5 0s3 2 4.5 0" />
+          <path d="M3 17.5c1.5-2 3-2 4.5 0s3 2 4.5 0s3-2 4.5 0s3 2 4.5 0" />
+        </svg>
+      );
     case 'connexion':
       return <svg {...props}><circle cx="6" cy="6" r="2" /><circle cx="18" cy="6" r="2" /><circle cx="12" cy="18" r="2" /><path d="M8 6h8M7 8l4 8M17 8l-4 8" /></svg>;
     case 'figures':
@@ -716,13 +737,13 @@ export default function ArbreCompetences({
       // jonction vers le tronc : chaque branche descend individuellement
       // jusqu'au premier nœud de l'armure (pas de point de convergence
       // partagé avant le tronc -- 5 traits distincts, pas 4 qui fusionnent).
-      // Toutes finissent au MÊME point fixe (TRUNK_X, TRUNK_LEVEL_Y[3]-marge) :
+      // Toutes finissent au MÊME point fixe (TRUNK_POS[3]-marge) :
       // ce point est exactement le sommet de l'ellipse (rx=POINT_MARGE_X,
       // ry=POINT_MARGE_Y), donc la marge à utiliser ici est POINT_MARGE_Y,
       // point final -- peu importe l'angle d'approche de la courbe, puisque
       // ce n'est pas l'angle de la courbe qui compte mais la position de ce
       // point fixe par rapport à l'ellipse.
-      segs.push({ d: tracePath(x, BRANCH_LEVEL_Y[1] - POINT_MARGE_Y, TRUNK_LEVEL_Y[3] - POINT_MARGE_Y, TRUNK_X), active: troncComplet, key: `jonction-${d}` });
+      segs.push({ d: tracePath(x, BRANCH_LEVEL_Y[1] - POINT_MARGE_Y, TRUNK_POS[3].y - POINT_MARGE_Y, TRUNK_POS[3].x), active: troncComplet, key: `jonction-${d}` });
     });
     return segs;
   }, [troncComplet]);
@@ -739,7 +760,7 @@ export default function ArbreCompetences({
       items.push({ x, y, couleur, intensite, key });
     };
     branches.forEach((n) => ajouter(BRANCH_X[n.domaine as Domaine], BRANCH_LEVEL_Y[n.niveau], DOMAINE_COULEURS[n.domaine as Domaine], statutAffiche(n), n.id));
-    tronc.forEach((n) => ajouter(TRUNK_X, TRUNK_LEVEL_Y[n.niveau], COULEUR_TRONC, statutAffiche(n), n.id));
+    tronc.forEach((n) => ajouter(TRUNK_POS[n.niveau].x, TRUNK_POS[n.niveau].y, COULEUR_TRONC, statutAffiche(n), n.id));
     return items;
   }, [branches, tronc]);
 
@@ -1275,14 +1296,31 @@ export default function ArbreCompetences({
                   )}
                 </g>
               ))}
-              {/* Ligne du tronc — couleur pleine dédiée (pas le gradient partagé),
-                  pour être toujours visible quel que soit l'état des branches */}
-              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3] + POINT_MARGE_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[2] - POINT_MARGE_Y} stroke="#ff00aa" strokeWidth={1.1} opacity={0.45} strokeLinecap="round" style={{ filter: 'blur(1.6px)' }} />
-              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3] + POINT_MARGE_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[2] - POINT_MARGE_Y} stroke="#ff00aa" strokeWidth={0.55} opacity={0.75} strokeLinecap="round" style={{ filter: 'blur(0.5px)' }} />
-              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[3] + POINT_MARGE_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[2] - POINT_MARGE_Y} stroke="#ffd6f0" strokeWidth={0.2} opacity={0.9} strokeLinecap="round" />
-              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[2] + POINT_MARGE_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1] - POINT_MARGE_Y} stroke="#ff00aa" strokeWidth={1.1} opacity={0.45} strokeLinecap="round" style={{ filter: 'blur(1.6px)' }} />
-              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[2] + POINT_MARGE_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1] - POINT_MARGE_Y} stroke="#ff00aa" strokeWidth={0.55} opacity={0.75} strokeLinecap="round" style={{ filter: 'blur(0.5px)' }} />
-              <line x1={TRUNK_X} y1={TRUNK_LEVEL_Y[2] + POINT_MARGE_Y} x2={TRUNK_X} y2={TRUNK_LEVEL_Y[1] - POINT_MARGE_Y} stroke="#ffd6f0" strokeWidth={0.2} opacity={0.9} strokeLinecap="round" />
+              {/* Lignes du tronc — couleur pleine dédiée (pas le gradient partagé),
+                  toujours visibles quel que soit l'état des branches.
+                  Triangle : 3 arêtes (1-2, 1-3, 2-3), chacune reculée d'une
+                  distance fixe le long de sa propre direction pour dégager
+                  les anneaux, même en diagonale. */}
+              {(() => {
+                const recul = (x1: number, y1: number, x2: number, y2: number, dist: number) => {
+                  const dx = x2 - x1, dy = y2 - y1;
+                  const len = Math.hypot(dx, dy) || 1;
+                  const ux = dx / len, uy = dy / len;
+                  return { x1: x1 + ux * dist, y1: y1 + uy * dist, x2: x2 - ux * dist, y2: y2 - uy * dist };
+                };
+                const aretes = [
+                  recul(TRUNK_POS[1].x, TRUNK_POS[1].y, TRUNK_POS[2].x, TRUNK_POS[2].y, 7),
+                  recul(TRUNK_POS[1].x, TRUNK_POS[1].y, TRUNK_POS[3].x, TRUNK_POS[3].y, 7),
+                  recul(TRUNK_POS[2].x, TRUNK_POS[2].y, TRUNK_POS[3].x, TRUNK_POS[3].y, 7),
+                ];
+                return aretes.map((a, i) => (
+                  <g key={`tronc-arete-${i}`}>
+                    <line x1={a.x1} y1={a.y1} x2={a.x2} y2={a.y2} stroke="#ff00aa" strokeWidth={1.1} opacity={0.45} strokeLinecap="round" style={{ filter: 'blur(1.6px)' }} />
+                    <line x1={a.x1} y1={a.y1} x2={a.x2} y2={a.y2} stroke="#ff00aa" strokeWidth={0.55} opacity={0.75} strokeLinecap="round" style={{ filter: 'blur(0.5px)' }} />
+                    <line x1={a.x1} y1={a.y1} x2={a.x2} y2={a.y2} stroke="#ffd6f0" strokeWidth={0.2} opacity={0.9} strokeLinecap="round" />
+                  </g>
+                ));
+              })()}
 
               {/* Anneaux des nœuds : ellipses (rx=POINT_MARGE_X, ry=POINT_MARGE_Y)
                   dans ce même repère étiré -- redeviennent des cercles
@@ -1340,7 +1378,7 @@ export default function ArbreCompetences({
             {tronc.map((noeud) => (
               <Noeud
                 key={noeud.id}
-                x={TRUNK_X} y={TRUNK_LEVEL_Y[noeud.niveau]}
+                x={TRUNK_POS[noeud.niveau].x} y={TRUNK_POS[noeud.niveau].y}
                 statut={statutAffiche(noeud)}
                 couleur={COULEUR_TRONC}
                 domaine="tronc"
