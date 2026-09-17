@@ -161,9 +161,13 @@ function Pictogramme({ domaine, taille = 12, couleur }: { domaine: DomaineOuTron
     case 'force':
       return <svg {...props}><path d="M4 12h2M18 12h2M6 8v8M18 8v8M8 12h8" /></svg>;
     case 'flexibilite':
-      return <svg {...props}><path d="M4 18c3-6 6 6 9 0s6-6 7-3" /></svg>;
+      // Bambou : tige avec nœuds (segments) + pousse de feuilles -- évoque
+      // la souplesse qui plie sans casser, plus parlant qu'une simple vague.
+      return <svg {...props}><path d="M9 21V4" /><path d="M6 7h6M6 12h6M6 17h6" /><path d="M9 4c-2-1.2-3.2-.3-4.3.8M9 4c2-1.2 3.2-.3 4.3.8" /><path d="M17 21V11" /><path d="M15 14h4M15 18h4" /></svg>;
     case 'locomotion':
-      return <svg {...props}><circle cx="15" cy="5" r="2" /><path d="M13 8l-3 4 2 2-1 6M10 12l-4 1M15 10l3 3-2 6" /></svg>;
+      // Tête de singe (agilité, déplacement) -- plus représentatif qu'une
+      // silhouette en course générique.
+      return <svg {...props}><circle cx="12" cy="13.5" r="6" /><circle cx="5.5" cy="9" r="3" /><circle cx="18.5" cy="9" r="3" /><circle cx="9.5" cy="12.5" r="0.9" fill={couleur} stroke="none" /><circle cx="14.5" cy="12.5" r="0.9" fill={couleur} stroke="none" /><path d="M9 16.5c1.2 1 4.8 1 6 0" /></svg>;
     case 'connexion':
       return <svg {...props}><circle cx="6" cy="6" r="2" /><circle cx="18" cy="6" r="2" /><circle cx="12" cy="18" r="2" /><path d="M8 6h8M7 8l4 8M17 8l-4 8" /></svg>;
     case 'figures':
@@ -1240,8 +1244,8 @@ export default function ArbreCompetences({
                       <Pictogramme domaine={d} taille={16} couleur={couleur} />
                     </div>
                   </div>
-                  <p style={{ margin: 0, fontFamily: POLICE_DISPLAY, fontSize: 12, letterSpacing: '0.04em', textTransform: 'uppercase', color: couleur }}>{DOMAINE_LABELS[d]}</p>
-                  <p style={{ margin: '2px 0 0', fontSize: 10, color: COULEURS.texteFaible, lineHeight: 1.3 }}>{DOMAINE_ACCROCHES[d]}</p>
+                  <p style={{ margin: 0, fontFamily: POLICE_DISPLAY, fontSize: 12, letterSpacing: '0.04em', textTransform: 'uppercase', color: couleur, minHeight: 15, lineHeight: '15px' }}>{DOMAINE_LABELS[d]}</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 10, color: COULEURS.texteFaible, lineHeight: 1.3, minHeight: 26 }}>{DOMAINE_ACCROCHES[d]}</p>
                 </button>
               );
             })}

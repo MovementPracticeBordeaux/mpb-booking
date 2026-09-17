@@ -69,7 +69,7 @@ export const DOMAINE_ACCROCHES: Record<Domaine, string> = {
 // site plutôt qu'une palette arbitraire.
 export const DOMAINE_COULEURS: Record<Domaine, string> = {
   force: '#FF3B30',
-  flexibilite: '#FF6A3D',
+  flexibilite: '#39FF14',
   locomotion: '#FF8A00',
   connexion: '#FF2D78',
   figures: '#8B5CF6',
