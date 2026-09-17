@@ -1219,23 +1219,32 @@ export default function ArbreCompetences({
         <>
           {/* En-têtes de branches — icône, nom, accroche, avant l'arbre lui-même. Cliquable : entre dans le chemin isolé de la branche. */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 4, maxWidth: 560, marginInline: 'auto', marginBottom: 4 }}>
-            {ORDRE_VISUEL.map((d) => (
-              <button
-                key={d}
-                onClick={() => entrerBranche(d)}
-                style={{ textAlign: 'center', padding: '0 2px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
-              >
-                <div style={{
-                  width: 36, height: 36, borderRadius: '50%', marginInline: 'auto', marginBottom: 6,
-                  border: `2px solid ${DOMAINE_COULEURS[d]}`, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  boxShadow: `0 0 10px ${DOMAINE_COULEURS[d]}55`, background: `${DOMAINE_COULEURS[d]}14`,
-                }}>
-                  <Pictogramme domaine={d} taille={16} couleur={DOMAINE_COULEURS[d]} />
-                </div>
-                <p style={{ margin: 0, fontFamily: POLICE_DISPLAY, fontSize: 12, letterSpacing: '0.04em', textTransform: 'uppercase', color: DOMAINE_COULEURS[d] }}>{DOMAINE_LABELS[d]}</p>
-                <p style={{ margin: '2px 0 0', fontSize: 10, color: COULEURS.texteFaible, lineHeight: 1.3 }}>{DOMAINE_ACCROCHES[d]}</p>
-              </button>
-            ))}
+            {ORDRE_VISUEL.map((d) => {
+              const couleur = DOMAINE_COULEURS[d];
+              const mid = eclaircir(couleur, 0.45);
+              const core = eclaircir(couleur, 0.82);
+              return (
+                <button
+                  key={d}
+                  onClick={() => entrerBranche(d)}
+                  style={{ textAlign: 'center', padding: '0 2px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
+                >
+                  <div style={{ position: 'relative', width: 40, height: 40, marginInline: 'auto', marginBottom: 6 }}>
+                    <svg width={40} height={40} viewBox="0 0 40 40" style={{ position: 'absolute', inset: 0, overflow: 'visible' }}>
+                      <circle cx={20} cy={20} r={16} fill={`${couleur}14`} />
+                      <circle cx={20} cy={20} r={16} fill="none" stroke={couleur} strokeWidth={3.2} opacity={0.9} style={{ filter: 'blur(2.2px)' }} />
+                      <circle cx={20} cy={20} r={16} fill="none" stroke={mid} strokeWidth={1.6} opacity={0.95} style={{ filter: 'blur(0.8px)' }} />
+                      <circle cx={20} cy={20} r={16} fill="none" stroke={core} strokeWidth={0.8} />
+                    </svg>
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Pictogramme domaine={d} taille={16} couleur={couleur} />
+                    </div>
+                  </div>
+                  <p style={{ margin: 0, fontFamily: POLICE_DISPLAY, fontSize: 12, letterSpacing: '0.04em', textTransform: 'uppercase', color: couleur }}>{DOMAINE_LABELS[d]}</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 10, color: COULEURS.texteFaible, lineHeight: 1.3 }}>{DOMAINE_ACCROCHES[d]}</p>
+                </button>
+              );
+            })}
           </div>
 
           {/* Arbre — en vedette, section large */}
