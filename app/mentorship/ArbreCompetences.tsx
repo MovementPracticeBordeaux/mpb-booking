@@ -820,12 +820,6 @@ export default function ArbreCompetences({
       )}
 
       {estAdmin && (
-        <div style={{ fontSize: 11, fontFamily: 'monospace', color: '#0f0', background: '#000', padding: '6px 10px', borderRadius: 6, marginBottom: 12 }}>
-          DEBUG -- apercu={apercu} | apercuAcces={apercuAcces} | palierEffectif={String(palierEffectif)} | troncComplet={String(troncComplet)} | idsAcquis.size={idsAcquis.size} | progression.size={progression.size} | tronc.length={tronc.length} | branches.length={branches.length}
-        </div>
-      )}
-
-      {estAdmin && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 20, padding: '8px 12px', border: `1px dashed ${COULEURS.bordure}`, borderRadius: 8 }}>
           <span style={{ fontSize: 11, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 0.5 }}>Aperçu accès formule (admin) :</span>
           {([
