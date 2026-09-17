@@ -1251,7 +1251,7 @@ export default function ArbreCompetences({
                 <button
                   key={d}
                   onClick={() => entrerBranche(d)}
-                  style={{ textAlign: 'center', padding: '0 2px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', minWidth: 0 }}
+                  style={{ textAlign: 'center', padding: '0 2px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', minWidth: 0, alignSelf: 'start', display: 'block' }}
                 >
                   <div style={{ position: 'relative', width: 40, height: 40, marginInline: 'auto', marginBottom: 6 }}>
                     <svg width={40} height={40} viewBox="0 0 40 40" style={{ position: 'absolute', inset: 0, overflow: 'visible' }}>
