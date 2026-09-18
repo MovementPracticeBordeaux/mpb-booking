@@ -1866,8 +1866,8 @@ function Noeud({ x, y, statut, couleur, domaine, flamme, image, onClick }: { x: 
                 alt=""
                 style={{
                   width: '100%', height: '100%', objectFit: 'cover',
-                  opacity: acquis ? 1 : locked ? 0.55 : 0.9,
-                  filter: locked ? 'brightness(0.5)' : acquis ? 'none' : 'grayscale(1) brightness(1.4)',
+                  opacity: acquis ? 1 : locked ? 0.55 : 0.5,
+                  filter: locked ? 'brightness(0.5)' : acquis ? 'none' : 'grayscale(1) brightness(0.5)',
                 }}
               />
             </div>
