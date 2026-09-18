@@ -542,11 +542,27 @@ export default function ArbreCompetences({
   const refNoeudCourant = useRef<HTMLDivElement | null>(null);
   const [reponsesQCM, setReponsesQCM] = useState<Record<string, number>>({});
   const [onglet, setOnglet] = useState<Onglet>('arbre');
-  const [apercu, setApercu] = useState<'reel' | 'tronc-1' | 'tronc-complet' | 'branches-en-cours'>('reel');
-  // Aperçu (admin) de l'accès par formule — indépendant de l'aperçu de
-  // progression ci-dessus. Permet de tester visuellement le verrouillage
-  // des niveaux non couverts par un palier, sans avoir à s'attribuer
-  // réellement une formule différente depuis /admin/eleves à chaque fois.
+  // Parcours de progression (admin) : une seule échelle linéaire, dans
+  // l'ordre réel où un élève avance (le tronc puis les 5 branches ensemble,
+  // palier par palier) -- remplace les anciens boutons épars, difficiles à
+  // relier entre eux.
+  const ETAPES_PARCOURS = [
+    { id: 'reel', label: 'Réel' },
+    { id: 'tronc-1', label: 'Armure niv. 1' },
+    { id: 'tronc-2', label: 'Armure niv. 2' },
+    { id: 'tronc-complet', label: 'Armure complète' },
+    { id: 'palier-1', label: 'Palier 1 (5 branches)' },
+    { id: 'palier-2', label: 'Palier 2 (5 branches)' },
+    { id: 'tout-acquis', label: 'Tout validé' },
+  ] as const;
+  type EtapeParcours = (typeof ETAPES_PARCOURS)[number]['id'];
+  const [apercu, setApercu] = useState<EtapeParcours>('reel');
+  // Aperçu (admin) de l'accès par formule — indépendant du parcours de
+  // progression ci-dessus : une chose est "où en est l'élève dans sa
+  // pratique", une autre est "jusqu'où sa formule payée lui donne accès".
+  // Permet de tester visuellement le verrouillage des niveaux non couverts
+  // par un palier, sans avoir à s'attribuer réellement une formule
+  // différente depuis /admin/eleves à chaque fois.
   const [apercuAcces, setApercuAcces] = useState<'reel' | 'illimite' | 'armure' | 'niveau1' | 'niveau2'>('reel');
   const palierEffectif: number | null =
     estAdmin && apercuAcces !== 'reel'
@@ -557,22 +573,22 @@ export default function ArbreCompetences({
 
   // Aperçu (admin uniquement) : simule différents états d'avancement sans
   // toucher aux vraies données, pour visualiser le rendu à chaque étape.
+  // Chaque étape est CUMULATIVE (elle inclut tout ce qui la précède dans
+  // ETAPES_PARCOURS) et ne représente que des états réellement atteignables
+  // -- jamais un domaine seul en avance sur les autres, conformément à la
+  // règle de déverrouillage par palier complet (voir estDeverrouille).
   const progression = useMemo(() => {
     if (apercu === 'reel') return progressionReelle;
     const m = new Map<string, Progression>();
     const marquer = (id: string) => m.set(id, { ...NOEUD_ACQUIS, module_id: id });
-    if (apercu === 'tronc-1') {
-      marquer(tronc.find((n) => n.niveau === 1)!.id);
-    } else if (apercu === 'tronc-complet' || apercu === 'branches-en-cours') {
-      tronc.forEach((n) => marquer(n.id));
-      if (apercu === 'branches-en-cours') {
-        // État réellement atteignable : niveau 1 partout, puis niveau 2
-        // partout aussi (jamais un domaine seul en avance sur les autres,
-        // conformément à la règle de déverrouillage par palier complet).
-        branches.filter((n) => n.niveau === 1).forEach((n) => marquer(n.id));
-        branches.filter((n) => n.niveau === 2).forEach((n) => marquer(n.id));
-      }
-    }
+    const rang = ETAPES_PARCOURS.findIndex((e) => e.id === apercu);
+    const atteint = (etape: EtapeParcours) => rang >= ETAPES_PARCOURS.findIndex((e) => e.id === etape);
+    if (atteint('tronc-1')) marquer(tronc.find((n) => n.niveau === 1)!.id);
+    if (atteint('tronc-2')) marquer(tronc.find((n) => n.niveau === 2)!.id);
+    if (atteint('tronc-complet')) tronc.forEach((n) => marquer(n.id));
+    if (atteint('palier-1')) branches.filter((n) => n.niveau === 1).forEach((n) => marquer(n.id));
+    if (atteint('palier-2')) branches.filter((n) => n.niveau === 2).forEach((n) => marquer(n.id));
+    if (atteint('tout-acquis')) branches.filter((n) => n.niveau === 3).forEach((n) => marquer(n.id));
     return m;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apercu, progressionReelle, tronc, branches]);
@@ -835,53 +851,58 @@ export default function ArbreCompetences({
       <MenuOnglets actif={onglet} onChange={setOnglet} />
 
       {estAdmin && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 12, padding: '8px 12px', border: `1px dashed ${COULEURS.bordure}`, borderRadius: 8 }}>
-          <span style={{ fontSize: 11, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 0.5 }}>Aperçu progression (admin) :</span>
-          {([
-            ['reel', 'Réel'],
-            ['tronc-1', 'Tronc niveau 1'],
-            ['tronc-complet', 'Tronc complet'],
-            ['branches-en-cours', 'Branches en cours'],
-          ] as const).map(([id, label]) => (
-            <button
-              key={id}
-              onClick={() => setApercu(id)}
-              style={{
-                fontSize: 11, padding: '4px 10px', borderRadius: 999, cursor: 'pointer',
-                border: `1px solid ${apercu === id ? '#ff00aa' : COULEURS.bordure}`,
-                background: apercu === id ? 'rgba(255,0,170,0.12)' : 'transparent',
-                color: apercu === id ? '#ff00aa' : COULEURS.texteFaible,
-              }}
-            >
-              {label}
-            </button>
-          ))}
+        <div style={{ marginBottom: 12, padding: '10px 12px', border: `1px dashed ${COULEURS.bordure}`, borderRadius: 8 }}>
+          <span style={{ fontSize: 11, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+            Parcours de l&apos;élève (admin) — chaque étape inclut celles d&apos;avant
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap', marginTop: 8 }}>
+            {ETAPES_PARCOURS.map(({ id, label }, i) => (
+              <div key={id} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                {i > 0 && <span style={{ color: COULEURS.bordure, fontSize: 12 }}>→</span>}
+                <button
+                  onClick={() => setApercu(id)}
+                  style={{
+                    fontSize: 11, padding: '4px 10px', borderRadius: 999, cursor: 'pointer', whiteSpace: 'nowrap',
+                    border: `1px solid ${apercu === id ? '#ff00aa' : COULEURS.bordure}`,
+                    background: apercu === id ? 'rgba(255,0,170,0.12)' : 'transparent',
+                    color: apercu === id ? '#ff00aa' : COULEURS.texteFaible,
+                  }}
+                >
+                  {label}
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
       {estAdmin && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 20, padding: '8px 12px', border: `1px dashed ${COULEURS.bordure}`, borderRadius: 8 }}>
-          <span style={{ fontSize: 11, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 0.5 }}>Aperçu accès formule (admin) :</span>
-          {([
-            ['reel', 'Réel (ma vraie formule)'],
-            ['illimite', 'Illimité (Complet)'],
-            ['armure', 'Armure Organique seule'],
-            ['niveau1', 'Niveau 1'],
-            ['niveau2', 'Niveau 2'],
-          ] as const).map(([id, label]) => (
-            <button
-              key={id}
-              onClick={() => setApercuAcces(id)}
-              style={{
-                fontSize: 11, padding: '4px 10px', borderRadius: 999, cursor: 'pointer',
-                border: `1px solid ${apercuAcces === id ? '#ff8a00' : COULEURS.bordure}`,
-                background: apercuAcces === id ? 'rgba(255,138,0,0.12)' : 'transparent',
-                color: apercuAcces === id ? '#ff8a00' : COULEURS.texteFaible,
-              }}
-            >
-              {label}
-            </button>
-          ))}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 20, padding: '10px 12px', border: `1px dashed ${COULEURS.bordure}`, borderRadius: 8 }}>
+          <span style={{ fontSize: 11, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+            Formule payée (admin) — indépendant du parcours ci-dessus
+          </span>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {([
+              ['reel', 'Réelle'],
+              ['illimite', 'Illimitée'],
+              ['armure', 'Armure seule'],
+              ['niveau1', 'Jusqu\'au niveau 1'],
+              ['niveau2', 'Jusqu\'au niveau 2'],
+            ] as const).map(([id, label]) => (
+              <button
+                key={id}
+                onClick={() => setApercuAcces(id)}
+                style={{
+                  fontSize: 11, padding: '4px 10px', borderRadius: 999, cursor: 'pointer',
+                  border: `1px solid ${apercuAcces === id ? '#ff8a00' : COULEURS.bordure}`,
+                  background: apercuAcces === id ? 'rgba(255,138,0,0.12)' : 'transparent',
+                  color: apercuAcces === id ? '#ff8a00' : COULEURS.texteFaible,
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
