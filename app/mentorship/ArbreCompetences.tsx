@@ -566,8 +566,11 @@ export default function ArbreCompetences({
     } else if (apercu === 'tronc-complet' || apercu === 'branches-en-cours') {
       tronc.forEach((n) => marquer(n.id));
       if (apercu === 'branches-en-cours') {
+        // État réellement atteignable : niveau 1 partout, puis niveau 2
+        // partout aussi (jamais un domaine seul en avance sur les autres,
+        // conformément à la règle de déverrouillage par palier complet).
         branches.filter((n) => n.niveau === 1).forEach((n) => marquer(n.id));
-        branches.filter((n) => (n.domaine === 'force' || n.domaine === 'figures') && n.niveau === 2).forEach((n) => marquer(n.id));
+        branches.filter((n) => n.niveau === 2).forEach((n) => marquer(n.id));
       }
     }
     return m;
