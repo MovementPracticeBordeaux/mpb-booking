@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { Zap, Footprints, Moon, Wind, HeartPulse, Eye, Mountain, Play, BookOpen, NotebookText, Wrench, ChevronRight, Video, Send, Lock, Clock, Check, X } from 'lucide-react';
+import { Zap, Moon, Wind, HeartPulse, Eye, Mountain, Play, BookOpen, NotebookText, Wrench, ChevronRight, Video, Send, Lock, Clock, Check, X } from 'lucide-react';
 import {
   ORDRE_DOMAINES,
   DOMAINE_LABELS,
@@ -167,7 +167,10 @@ function Pictogramme({ domaine, taille = 12, couleur }: { domaine: DomaineOuTron
   const props = { width: taille, height: taille, viewBox: '0 0 24 24', fill: 'none', stroke: couleur, strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
   switch (domaine) {
     case 'force':
-      return <svg {...props}><path d="M4 12h2M18 12h2M6 8v8M18 8v8M8 12h8" /></svg>;
+      // Éclair -- le même symbole que celui utilisé pour les exercices de
+      // type "force" (IconeExercice), pour une cohérence totale entre
+      // l'en-tête de branche et les exercices qui la composent.
+      return <svg {...props} fill={couleur} stroke="none"><polygon points="13,2 4,14 11,14 10,22 20,10 12,10 13,2" /></svg>;
     case 'flexibilite':
       // Jeune pousse : tige + deux feuilles symétriques -- plus simple et
       // plus lisible qu'un bambou détaillé à cette taille.
@@ -211,7 +214,17 @@ function IconeExercice({ type, taille = 16, couleur }: { type: TypeIcone; taille
   const commun = { size: taille, color: couleur, strokeWidth: 1.8 };
   switch (type) {
     case 'force': return <Zap {...commun} />;
-    case 'mobilite': return <Footprints {...commun} />;
+    case 'mobilite':
+      // Mêmes feuilles que le symbole de la branche Flexibilité (pas des
+      // traces de pas) -- un exercice de mobilité dans l'armure organique
+      // doit se reconnaître au même symbole que la branche correspondante.
+      return (
+        <svg width={taille} height={taille} viewBox="0 0 24 24" fill="none" stroke={couleur} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 20V12" />
+          <path d="M12 12c0-3.8-2.8-6-6.5-6c0.4 3.8 2.9 6.2 6.5 6z" fill={couleur} stroke="none" />
+          <path d="M12 12c0-3.8 2.8-6 6.5-6c-0.4 3.8-2.9 6.2-6.5 6z" fill={couleur} stroke="none" />
+        </svg>
+      );
     case 'recuperation-nuit': return <Moon {...commun} />;
     case 'recuperation-souffle': return <Wind {...commun} />;
     case 'recuperation-coeur': return <HeartPulse {...commun} />;
