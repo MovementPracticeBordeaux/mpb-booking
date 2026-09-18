@@ -1332,7 +1332,7 @@ export default function ArbreCompetences({
                 return (
                   <g key={`anneau-${n.key}`}>
                     <ellipse cx={n.x} cy={n.y} rx={POINT_MARGE_X} ry={POINT_MARGE_Y} fill="none" stroke={n.couleur} strokeWidth={0.9} opacity={cfg.glow} style={{ filter: 'blur(0.9px)' }} />
-                    <ellipse cx={n.x} cy={n.y} rx={POINT_MARGE_X} ry={POINT_MARGE_Y} fill="none" stroke={mid} strokeWidth={0.45} opacity={cfg.mid} />
+                    <ellipse cx={n.x} cy={n.y} rx={POINT_MARGE_X} ry={POINT_MARGE_Y} fill="none" stroke={mid} strokeWidth={0.45} opacity={cfg.mid} style={{ filter: 'blur(0.3px)' }} />
                     <ellipse cx={n.x} cy={n.y} rx={POINT_MARGE_X} ry={POINT_MARGE_Y} fill="none" stroke={core} strokeWidth={0.22} opacity={cfg.core} />
                   </g>
                 );
@@ -1346,7 +1346,7 @@ export default function ArbreCompetences({
                 const coeur = { shadow: 0.15, lit: 0.3, neon: 1 }[p.intensite];
                 return (
                   <g key={p.key}>
-                    <circle cx={p.x} cy={p.y} r={1.1} fill={p.couleur} opacity={halo} />
+                    <circle cx={p.x} cy={p.y} r={1.1} fill={p.couleur} opacity={halo} style={{ filter: 'blur(0.8px)' }} />
                     <circle cx={p.x} cy={p.y} r={0.4} fill={eclaircir(p.couleur, 0.82)} opacity={coeur} />
                   </g>
                 );
