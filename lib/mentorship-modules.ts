@@ -499,12 +499,21 @@ const FORCE: NoeudMentorship[] = [
     niveau: 1,
     titre: 'Force — niveau 1',
     resume: 'Bases de tirage, poussée et suspension unilatérale.',
-    objectifPedagogique: 'À définir ensemble (théorie/QCM à rédiger — exercices déjà calés).',
+    objectifPedagogique: "Comprendre l'équilibre entre suspension et répulsion, et pourquoi la chaîne postérieure mérite une attention particulière.",
     image: '/mentorship/force-1.png',
-    theorie: [],
+    theorie: [
+      {
+        titre: 'Suspension et répulsion : un équilibre de forces',
+        texte: "Le travail en suspension (anneaux, barre) est équilibré par des mouvements en répulsion (pompes, locomotion, handstand). La suspension développe la force et la stabilité dans des positions qui défient la gravité ; la répulsion renforce la capacité à générer de la force contre une surface. Les modes de vie sédentaires favorisent un déséquilibre où la chaîne postérieure est sous-développée par rapport à la chaîne antérieure — une disproportion qui contribue à une posture affaiblie et des douleurs d'épaule. C'est pourquoi cette branche commence par le tirage (rowing) et la suspension, pas par la poussée : rééquilibrer avant d'ajouter.",
+      },
+      {
+        titre: 'Ce que la Force construit pour les autres branches',
+        texte: "La force construite ici n'est pas une fin en soi : elle nourrit directement les Figures (un handstand tient sur la force de poussée et d'épaule construite ici) et la Locomotion (chaque appui, chaque répulsion au sol s'appuie sur ce travail). Une bonne règle : si tu es sous 5 répétitions propres sur un exercice de Figures ou de Locomotion, la Force redevient prioritaire en attendant de rattraper ce socle.",
+      },
+    ],
     programmation: [],
     qcm: [],
-    contenuDefini: false, // exercices calés, théorie/QCM restent à rédiger
+    contenuDefini: false, // théorie rédigée, QCM restant à écrire
     exercices: [
       { id: 'pushup-ring', nom: 'Push up ring', videoUrl: 'https://youtu.be/VM9s-3m7bAQ', theme: 'force',
         consigne: "Push-up complet sur les anneaux : mains sous les épaules, corps aligné de la tête aux pieds, poitrine qui vient frôler le niveau des anneaux. L'instabilité oblige les stabilisateurs de l'épaule à travailler en plus du grand pectoral et des triceps.",
@@ -530,9 +539,18 @@ const FORCE: NoeudMentorship[] = [
     niveau: 2,
     titre: 'Force — niveau 2',
     resume: 'Travail aux anneaux de gymnastique : dips, tractions, transition et skin the cat.',
-    objectifPedagogique: 'À définir ensemble (théorie/QCM à rédiger — exercices déjà calés).',
+    objectifPedagogique: "Comprendre pourquoi l'instabilité des anneaux ajoute une dimension de contrôle scapulaire à la force déjà acquise.",
     image: '/mentorship/force-2.png',
-    theorie: [],
+    theorie: [
+      {
+        titre: "L'instabilité comme amplificateur",
+        texte: "Les anneaux ne pardonnent rien : la moindre stabilité manquante à l'épaule se voit immédiatement dans un tremblement ou une rotation parasite. C'est exactement pour ça qu'ils sont utilisés ici — la protraction et la rétraction scapulaire travaillées dans l'Armure Organique trouvent enfin un terrain où leur utilité devient évidente et nécessaire, pas seulement théorique.",
+      },
+      {
+        titre: 'Skin the cat : la synthèse tirage-poussée',
+        texte: "Le skin the cat combine dans un même mouvement ce que le tirage et la poussée ont construit séparément. C'est un bon indicateur : si la transition est brutale ou incontrôlée, c'est souvent le signe qu'un des deux axes (tirage ou poussée) est resté en retard sur l'autre.",
+      },
+    ],
     programmation: [],
     qcm: [],
     contenuDefini: false,
@@ -563,9 +581,18 @@ const FORCE: NoeudMentorship[] = [
     niveau: 3,
     titre: 'Force — niveau 3',
     resume: 'Muscle up, poussée/tirage unilatéraux avancés, toes to bar et session ring complète.',
-    objectifPedagogique: 'À définir ensemble (théorie/QCM à rédiger — exercices déjà calés).',
+    objectifPedagogique: "Comprendre le muscle up comme synthèse complète, et ce que la force unilatérale libère pour la suite du parcours.",
     image: '/mentorship/force-3.png',
-    theorie: [],
+    theorie: [
+      {
+        titre: 'Le muscle up, sommet et synthèse',
+        texte: "Le muscle up n'introduit aucune qualité nouvelle : il exige simplement que le tirage, la poussée et la stabilité scapulaire construits jusqu'ici fonctionnent ensemble, sans faille, dans une seule transition. C'est un excellent test — pas un but en soi.",
+      },
+      {
+        titre: 'La force unilatérale, passerelle vers les autres branches',
+        texte: "Travailler un seul côté à la fois (push-up unilatéral, traction à un bras) révèle et corrige les déséquilibres gauche/droite que les mouvements bilatéraux masquent facilement. Cette force asymétrique se retrouve directement dans les figures qui demandent du tirage (skin the cat, muscle up), et dans la Locomotion en suspension et en brachiation, où le poids du corps change constamment de côté.",
+      },
+    ],
     programmation: [],
     qcm: [],
     contenuDefini: false,
@@ -604,9 +631,18 @@ const FLEXIBILITE: NoeudMentorship[] = [
     niveau: 1,
     titre: 'Flexibilité — niveau 1',
     resume: 'Jefferson curl, squats de mobilité et straddle assis-debout.',
-    objectifPedagogique: 'À définir ensemble (théorie/QCM à rédiger — exercices déjà calés).',
+    objectifPedagogique: "Comprendre que l'amplitude construite ici doit rester fonctionnelle, pas seulement esthétique.",
     image: '/mentorship/flexibilite-1.png',
-    theorie: [],
+    theorie: [
+      {
+        titre: 'Une souplesse qui sert le mouvement',
+        texte: "En Flexibilité, l'amplitude prime sur l'intensité : chercher la régularité plutôt que la performance. Mais l'objectif n'est jamais l'étirement pour lui-même — une souplesse développée sans intégration au mouvement reste un talent isolé, sans utilité réelle. Chaque position travaillée ici (Jefferson curl, straddle, squats de mobilité) doit à terme se retrouver disponible en mouvement, pas seulement statique.",
+      },
+      {
+        titre: 'Ce que la Flexibilité prépare ailleurs',
+        texte: "La souplesse construite ici nourrit directement la Locomotion, qui a besoin de grandes amplitudes de hanche pour la quadrupédie et le floor work, et les Figures, où le handstand et le pont exigent une ouverture d'épaule que la force seule ne donne pas. Une pratique qui ne travaille que la force sans la flexibilité complémentaire finit toujours par se limiter elle-même.",
+      },
+    ],
     programmation: [],
     qcm: [],
     contenuDefini: false,
@@ -639,9 +675,18 @@ const FLEXIBILITE: NoeudMentorship[] = [
     niveau: 2,
     titre: 'Flexibilité — niveau 2',
     resume: 'Routine active complète, Jefferson curl straddle et squats chargés.',
-    objectifPedagogique: 'À définir ensemble (théorie/QCM à rédiger — exercices déjà calés).',
+    objectifPedagogique: "Comprendre la différence entre stretch passif et stretch actif, et pourquoi la charge accélère la progression.",
     image: '/mentorship/flexibilite-2.png',
-    theorie: [],
+    theorie: [
+      {
+        titre: 'Stretch actif : engager plutôt que relâcher',
+        texte: "Un stretch tenu passivement (le poids du corps qui relâche dans la position) construit de l'amplitude, mais une amplitude fragile, difficile à utiliser en mouvement. Le stretch actif — engager les muscles autour de l'articulation étirée pendant l'étirement — construit une amplitude que le corps sait aussi contrôler, pas seulement atteindre.",
+      },
+      {
+        titre: 'La charge comme accélérateur, pas comme objectif',
+        texte: "Ajouter une charge (squat chargé, papillon avec charge) intensifie l'étirement en fin d'amplitude, là où le poids du corps seul ne suffit plus. Cette charge sert la progression du squat unilatéral en Flexibilité et prépare indirectement les positions chargées qu'on retrouve en Figures (pont haut) et en Force (positions statiques exigeantes).",
+      },
+    ],
     programmation: [],
     qcm: [],
     contenuDefini: false,
@@ -674,9 +719,18 @@ const FLEXIBILITE: NoeudMentorship[] = [
     niveau: 3,
     titre: 'Flexibilité — niveau 3',
     resume: 'Diagonal stretch, pancake chargé et squats avancés.',
-    objectifPedagogique: 'À définir ensemble (théorie/QCM à rédiger — exercices déjà calés).',
+    objectifPedagogique: "Comprendre pourquoi la mobilité de cheville conditionne les squats unilatéraux plus que la force des quadriceps.",
     image: '/mentorship/flexibilite-3.png',
-    theorie: [],
+    theorie: [
+      {
+        titre: 'La cheville, facteur limitant caché',
+        texte: "Une cheville peu flexible limite tous les squats unilatéraux (bulgare, dragon, sissy), même avec de bons quadriceps — le corps compense en levant le talon ou en penchant le buste, ce qui casse la technique bien avant que la force ne manque. Travailler ses points faibles plutôt que ses points forts est ici la clé, même quand c'est moins gratifiant.",
+      },
+      {
+        titre: 'Chaîne antérieure et postérieure, une paire indissociable',
+        texte: "Pour le bas du corps, la chaîne antérieure (quadriceps, fléchisseurs de hanche) et la chaîne postérieure (ischios, fessiers) sont complémentaires, tout comme la rotation interne et externe de hanche. Négliger l'une pour l'autre crée exactement le même déséquilibre que celui décrit entre tirage et poussée en Force — la logique d'équilibre systémique traverse toutes les branches, pas seulement celle-ci.",
+      },
+    ],
     programmation: [],
     qcm: [],
     contenuDefini: false,
@@ -710,9 +764,18 @@ const LOCOMOTION: NoeudMentorship[] = [
     niveau: 1,
     titre: 'Locomotion — niveau 1',
     resume: 'Bases de la quadrupédie, de la bipédie et du travail au sol.',
-    objectifPedagogique: 'À définir ensemble (théorie/QCM à rédiger — exercices déjà calés).',
+    objectifPedagogique: "Comprendre les caractéristiques propres à la Locomotion : intention, maîtrise et contrôle plutôt que simple exécution.",
     image: '/mentorship/locomotion-1.png',
-    theorie: [],
+    theorie: [
+      {
+        titre: 'Intention, maîtrise, contrôle',
+        texte: "Chaque déplacement en Locomotion est dirigé par une intention claire, qui engage tout le corps et oriente chaque appui. L'objectif n'est pas d'exécuter un mouvement mais de le maîtriser pleinement : cela implique un dosage fin de la tension musculaire, de l'équilibre et de la respiration. Ralentir la cadence permet de ressentir et d'affiner les détails du geste — le corps reste actif en permanence, même dans les transitions les plus lentes.",
+      },
+      {
+        titre: 'La Locomotion exprime ce que les autres branches construisent',
+        texte: "Cette branche est celle où tout ce qui est développé ailleurs se retrouve intégré : la force de la branche Force soutient chaque répulsion au sol, la souplesse de la branche Flexibilité permet les amplitudes de hanche nécessaires à la quadrupédie. La Locomotion ne construit pas des qualités isolées, elle les exprime dans un mouvement global et intentionnel.",
+      },
+    ],
     programmation: [],
     qcm: [],
     contenuDefini: false,
@@ -746,9 +809,18 @@ const LOCOMOTION: NoeudMentorship[] = [
     niveau: 2,
     titre: 'Locomotion — niveau 2',
     resume: 'Transitions au sol, bases de la brachiation et rotation sur le pont bas.',
-    objectifPedagogique: 'À définir ensemble (théorie/QCM à rédiger — exercices déjà calés).',
+    objectifPedagogique: "Comprendre les bienfaits physiques spécifiques de la Locomotion : force organique, endurance, équilibre dynamique.",
     image: '/mentorship/locomotion-2.png',
-    theorie: [],
+    theorie: [
+      {
+        titre: 'Force organique et équilibre dynamique',
+        texte: "Le corps apprend ici à produire et transférer la force dans des mouvements globaux, en chaîne, sans déperdition — c'est ce qu'on appelle la force organique, différente de la force isolée travaillée en musculation classique. La brachiation ajoute une dimension supplémentaire : gérer l'équilibre en déplacement suspendu, en rotation, en transition d'un bras à l'autre, sans jamais perdre le contrôle.",
+      },
+      {
+        titre: 'Le pont, pont entre les branches',
+        texte: "La rotation sur le pont bas suppose déjà la posture du pont maîtrisée côté Figures — c'est un exemple concret de la manière dont les branches se nourrissent entre elles plutôt que de progresser isolément. Une compétence acquise dans une branche devient souvent le point de départ d'un chunk dans une autre.",
+      },
+    ],
     programmation: [],
     qcm: [],
     contenuDefini: false,
@@ -782,9 +854,18 @@ const LOCOMOTION: NoeudMentorship[] = [
     niveau: 3,
     titre: 'Locomotion — niveau 3',
     resume: 'Reptation, changement de QDR et jeu de self-dominance.',
-    objectifPedagogique: 'À définir ensemble (théorie/QCM à rédiger — exercices déjà calés).',
+    objectifPedagogique: "Comprendre la Locomotion comme langage corporel et terrain d'exploration sans fin, pas comme une liste de tricks à cocher.",
     image: '/mentorship/locomotion-3.png',
-    theorie: [],
+    theorie: [
+      {
+        titre: 'Un langage qui révèle le travail interne',
+        texte: "La Locomotion est un langage qui traduit la qualité du travail interne : elle révèle la précision, la concentration, la finesse du contrôle. Un pratiquant expérimenté donne une impression de facilité, de gestes lissés et continus, sans à-coup — même dans l'explosivité, tout reste fluide et délibéré. C'est ici que la branche Connexion prend tout son sens : la précision du contrôle moteur fin qu'elle développe se voit directement dans la qualité visuelle du mouvement.",
+      },
+      {
+        titre: 'La self-dominance : laisser le corps décider',
+        texte: "Le jeu de self-dominance inverse la logique habituelle d'apprentissage : au lieu de suivre un pattern fixe, on laisse le corps improviser et décider du mouvement suivant. C'est l'aboutissement naturel de tout ce qui précède — un vocabulaire de mouvement suffisamment intégré pour ne plus avoir besoin d'être pensé consciemment à chaque instant.",
+      },
+    ],
     programmation: [],
     qcm: [],
     contenuDefini: false,
@@ -816,9 +897,18 @@ const CONNEXION: NoeudMentorship[] = [
     niveau: 1,
     titre: 'Connexion — niveau 1',
     resume: 'Premiers jeux de coordination cerveau et manipulation de balle.',
-    objectifPedagogique: 'À définir ensemble (théorie/QCM à rédiger — exercices déjà calés).',
+    objectifPedagogique: "Comprendre la Connexion comme travail interne, distinct des autres branches par sa nature même.",
     image: '/mentorship/connexion-1.png',
-    theorie: [],
+    theorie: [
+      {
+        titre: "Un travail d'un autre ordre",
+        texte: "Là où Force, Flexibilité, Figures et Locomotion développent des qualités physiques visibles, la Connexion travaille quelque chose de plus interne : la concentration, la mémorisation, la proprioception, la coordination. Ce sont des compétences cognitives et psychomotrices — le premier ordre de priorité dans toute progression, avant même la mobilité ou la force, car un mouvement mal ressenti ne peut pas être bien corrigé.",
+      },
+      {
+        titre: "L'équilibre interne au service de l'externe",
+        texte: "La Connexion apporte un équilibre entre le contrôle interne (ce que tu ressens et diriges consciemment) et l'expression externe (ce que ton corps produit réellement). Un pratiquant très fort ou très souple mais peu connecté à son corps aura du mal à affiner son geste ; la Connexion est ce qui permet aux autres branches de gagner en précision, pas seulement en amplitude ou en puissance.",
+      },
+    ],
     programmation: [],
     qcm: [],
     contenuDefini: false,
@@ -848,9 +938,18 @@ const CONNEXION: NoeudMentorship[] = [
     niveau: 2,
     titre: 'Connexion — niveau 2',
     resume: 'Dribbles de pieds, deux balles et jeux de percussion.',
-    objectifPedagogique: 'À définir ensemble (théorie/QCM à rédiger — exercices déjà calés).',
+    objectifPedagogique: "Approfondir le contrôle du rythme et la coordination avec les pieds, un axe distinct de la coordination des mains.",
     image: '/mentorship/connexion-2.png',
-    theorie: [],
+    theorie: [
+      {
+        titre: 'Une nouvelle coordination : les pieds',
+        texte: "Les dribbles de pieds demandent une coordination différente de celle des mains — moins précise dans le détail, mais plus exigeante en équilibre et en anticipation. C'est une occasion de constater que la coordination n'est pas une compétence unique et transférable d'un membre à l'autre : chaque nouvelle combinaison doit être reconstruite.",
+      },
+      {
+        titre: 'Le rythme comme fil conducteur',
+        texte: "Les jeux de percussion introduisent une dimension rythmique qui traverse toute la famille Brain work : le contrôle moteur fin devient plus exigeant quand il doit aussi respecter un tempo. Cette même exigence de rythme et de fluidité se retrouve directement en Locomotion, où un mouvement techniquement correct mais mal rythmé perd toute sa qualité visuelle.",
+      },
+    ],
     programmation: [],
     qcm: [],
     contenuDefini: false,
@@ -883,9 +982,18 @@ const CONNEXION: NoeudMentorship[] = [
     niveau: 3,
     titre: 'Connexion — niveau 3',
     resume: 'Monkey ball, manipulation avancée et dribbles progressifs.',
-    objectifPedagogique: 'À définir ensemble (théorie/QCM à rédiger — exercices déjà calés).',
+    objectifPedagogique: "Comprendre le contrôle moteur fin comme le raffinement final qui distingue la maîtrise de la simple exécution.",
     image: '/mentorship/connexion-3.png',
-    theorie: [],
+    theorie: [
+      {
+        titre: 'Le contrôle moteur fin, dernier raffinement',
+        texte: "Manipuler un ballon en équilibre sur le front, ou enchaîner des dribbles inversées, demande un contrôle moteur si subtil qu'il devient presque involontaire chez un pratiquant expérimenté. Ce niveau de finesse ne s'improvise pas : il vient de centaines de répétitions conscientes, où chaque petit ajustement a été senti et corrigé.",
+      },
+      {
+        titre: "Ce que la Connexion offre aux autres branches",
+        texte: "Le contrôle psychomoteur fin développé ici se retrouve partout ailleurs, en filigrane : dans la précision d'un appui en Locomotion, dans le dosage exact de tension nécessaire pour tenir une figure sans excès de rigidité, dans la capacité à sentir un déséquilibre avant qu'il ne devienne une chute. La Connexion ne se voit pas toujours à l'œil nu, mais elle conditionne la qualité de tout le reste.",
+      },
+    ],
     programmation: [],
     qcm: [],
     contenuDefini: false,
@@ -924,9 +1032,18 @@ const FIGURES: NoeudMentorship[] = [
     niveau: 1,
     titre: 'Figures — niveau 1',
     resume: 'Bases du pont, du handstand contre le mur et de l\'elbow lever.',
-    objectifPedagogique: 'À définir ensemble (théorie/QCM à rédiger — exercices déjà calés).',
+    objectifPedagogique: "Comprendre les figures statiques comme fondement de tout le travail de Figures à venir.",
     image: '/mentorship/figures-1.png',
-    theorie: [],
+    theorie: [
+      {
+        titre: 'Les figures statiques : un fondement, pas un but',
+        texte: "Les figures statiques (tenues en isométrie, sans mouvement apparent du corps) développent une force considérable, une stabilité et un contrôle exceptionnels. Le pont, le handstand contre le mur et l'elbow lever en sont les trois piliers de ce premier niveau. Elles servent de fondement solide pour les compétences dynamiques à venir et forgent autant une discipline mentale que physique.",
+      },
+      {
+        titre: 'Pont et handstand : deux inversions complémentaires',
+        texte: "Le pont ouvre le corps vers l'arrière (extension), le handstand l'inverse complètement (renversement). Les deux stimulent le système vestibulaire différemment et sollicitent des chaînes musculaires opposées — c'est volontaire : cette branche construit dès le départ un corps capable des deux extrêmes, pas seulement d'un sens de mouvement.",
+      },
+    ],
     programmation: [],
     qcm: [],
     contenuDefini: false,
@@ -959,9 +1076,18 @@ const FIGURES: NoeudMentorship[] = [
     niveau: 2,
     titre: 'Figures — niveau 2',
     resume: 'Handstand ventre au mur, L-sit et transitions frog/elbow.',
-    objectifPedagogique: 'À définir ensemble (théorie/QCM à rédiger — exercices déjà calés).',
+    objectifPedagogique: "Comprendre l'ouverture et la fermeture comme deux polarités complémentaires du corps en figure.",
     image: '/mentorship/figures-2.png',
-    theorie: [],
+    theorie: [
+      {
+        titre: 'Ouverture et fermeture : harmonie des mouvements',
+        texte: "Les mouvements d'ouverture (extensions, comme le pont) sont équilibrés par des mouvements de fermeture (flexion et compression, comme le L-sit). Cette dualité assure que muscles et articulations ne sont pas seulement flexibles mais aussi forts dans les deux sens — travailler uniquement l'un des deux crée à terme un déséquilibre, exactement comme la chaîne antérieure/postérieure en Force.",
+      },
+      {
+        titre: "L'endurance de position, avant l'autonomie",
+        texte: "Le handstand ventre au mur expose davantage à la sensation de bascule que dos au mur — il construit l'endurance de la position avant de chercher à s'en éloigner en niveau 3. C'est la même logique de progression que partout ailleurs dans l'arbre : sécuriser une compétence avant de retirer les aides qui la soutenaient.",
+      },
+    ],
     programmation: [],
     qcm: [],
     contenuDefini: false,
@@ -994,9 +1120,18 @@ const FIGURES: NoeudMentorship[] = [
     niveau: 3,
     titre: 'Figures — niveau 3',
     resume: 'Handstand, QDR, pont haut et elbow straddle.',
-    objectifPedagogique: 'À définir ensemble (théorie/QCM à rédiger — exercices déjà calés).',
+    objectifPedagogique: "Comprendre l'inversion autonome comme perspective complémentaire à la station debout, et les figures dynamiques comme aboutissement du travail statique.",
     image: '/mentorship/figures-3.png',
-    theorie: [],
+    theorie: [
+      {
+        titre: 'Inversion et station debout : perspectives complémentaires',
+        texte: "Le handstand libre offre une perspective unique qui défie l'équilibre et la perception habituelle. Il est complété par la station debout, notre état le plus naturel — la pratique de l'inversion stimule le système vestibulaire et les circulations, tandis que la station debout renforce la capacité à s'ancrer et interagir avec l'environnement. Un pratiquant qui ne travaille que l'un des deux perd la complémentarité entre les deux états.",
+      },
+      {
+        titre: 'Des figures statiques aux figures dynamiques',
+        texte: "Le QDR et les transitions qui l'accompagnent marquent le passage des figures statiques vers les figures dynamiques : des transitions fluides et contrôlées entre postures, qui demandent en plus de la force et de la stabilité déjà acquises une coordination et une conscience spatiale accrues. Une fois maîtrisées, ces figures se réinjectent directement dans la pratique de la Locomotion — la boucle entre les branches se referme ici.",
+      },
+    ],
     programmation: [],
     qcm: [],
     contenuDefini: false,
