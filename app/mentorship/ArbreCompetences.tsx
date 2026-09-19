@@ -1903,10 +1903,10 @@ function FeuilleModale({ onFermer, children }: { onFermer: () => void; children:
 // des pilules "outils pour progresser" (rectangles larges avec nom + icône
 // jouer) pour qu'on ne les confonde plus : ici un simple indicateur d'état,
 // pas un bouton avec un nom dessus.
-function StatutExercicePastille({ statut, estOutilSante }: { statut: 'locked' | 'a_faire' | 'en_attente' | 'acquis' | 'refuse'; estOutilSante?: boolean }) {
+function StatutExercicePastille({ statut, estOutilSante, couleur }: { statut: 'locked' | 'a_faire' | 'en_attente' | 'acquis' | 'refuse'; estOutilSante?: boolean; couleur?: string }) {
   const map = {
     locked: { Icone: Lock, couleur: COULEURS.texteFaible, titre: 'Verrouillé' },
-    a_faire: { Icone: Send, couleur: estOutilSante ? '#00BFFF' : MAGENTA_NEON, titre: estOutilSante ? 'À faire' : 'À soumettre' },
+    a_faire: { Icone: Send, couleur: estOutilSante ? '#00BFFF' : (couleur ?? MAGENTA_NEON), titre: estOutilSante ? 'À faire' : 'À soumettre' },
     en_attente: { Icone: Clock, couleur: '#FFC24B', titre: 'En attente de validation' },
     acquis: { Icone: Check, couleur: VERT_VALIDATION, titre: estOutilSante ? 'Fait' : 'Validé' },
     refuse: { Icone: X, couleur: '#ff6b6b', titre: 'À retravailler' },
@@ -2157,7 +2157,7 @@ function BlocExercice({
         </span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
           {estOutilSante && <ChevronRight size={14} color={COULEURS.texteFaible} />}
-          <StatutExercicePastille statut={statutEx} estOutilSante={estOutilSante} />
+          <StatutExercicePastille statut={statutEx} estOutilSante={estOutilSante} couleur={teinte} />
         </span>
       </button>
 
@@ -2284,7 +2284,7 @@ function PanneauNoeud({
               Exercices à valider ({noeud.exercices!.filter((ex) => progressionMap.get(moduleIdExercice(noeud, ex))?.statut === 'acquis').length}/{noeud.exercices!.length})
             </p>
             {noeud.exercices!.map((ex) => (
-              <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progressionMap.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverte({ url, titre })} objectifIdParUrl={objectifIdParUrl} />
+              <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progressionMap.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverte({ url, titre })} objectifIdParUrl={objectifIdParUrl} couleurIcone={couleur} />
             ))}
           </div>
 
@@ -2294,7 +2294,7 @@ function PanneauNoeud({
                 ✦ Quête secondaire (facultative, dépassement)
               </p>
               {noeud.progressionBonus!.map((ex) => (
-                <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progressionMap.get(moduleIdExercice(noeud, ex))} estBonus estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverte({ url, titre })} objectifIdParUrl={objectifIdParUrl} />
+                <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progressionMap.get(moduleIdExercice(noeud, ex))} estBonus estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverte({ url, titre })} objectifIdParUrl={objectifIdParUrl} couleurIcone={couleur} />
               ))}
             </div>
           )}
