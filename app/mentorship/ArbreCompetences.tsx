@@ -689,9 +689,10 @@ export default function ArbreCompetences({
   const noeudsChemin = useMemo(() => {
     if (!vueBranche) return [];
     if (vueBranche === 'tronc') return [...tronc].sort((a, b) => b.niveau - a.niveau);
-    const brancheOrdonnee = branches.filter((n) => n.domaine === vueBranche).sort((a, b) => b.niveau - a.niveau);
-    const troncOrdonne = [...tronc].sort((a, b) => b.niveau - a.niveau);
-    return [...brancheOrdonnee, ...troncOrdonne];
+    // Rail d'une branche spécifique : seulement ses 3 propres nœuds, plus
+    // l'aperçu de l'Armure Organique en dessous (retiré sur demande -- ça
+    // n'apporte rien une fois la branche débloquée, et encombre le rail).
+    return branches.filter((n) => n.domaine === vueBranche).sort((a, b) => b.niveau - a.niveau);
   }, [vueBranche, branches, tronc]);
 
   // Le nœud "courant" : le premier, dans l'ordre chronologique réel
