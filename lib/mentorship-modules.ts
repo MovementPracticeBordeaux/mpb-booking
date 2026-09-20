@@ -515,7 +515,6 @@ const FORCE: NoeudMentorship[] = [
       {
         titre: 'Fragmenter avant d\'assembler',
         texte: "Ce niveau applique très concrètement la première étape du Cycle d'apprentissage : Fragmenter. Plutôt que de te lancer directement sur un mouvement complexe (le muscle up, par exemple), on isole d'abord chaque qualité qui le compose — le tirage (rowing), la poussée (push-up), la suspension (tenue à un bras) — et on les travaille séparément. C'est exactement comme un musicien qui apprend d'abord ses notes avant de jouer un morceau : la qualité de cette phase de découpage conditionne directement la réussite de l'assemblage qui suivra aux niveaux 2 et 3.",
-        image: '/mentorship/theorie/cycle-apprentissage.jpg',
       },
       {
         titre: 'La coiffe des rotateurs, un point aveugle fréquent',
@@ -673,7 +672,6 @@ const FLEXIBILITE: NoeudMentorship[] = [
       {
         titre: 'Fragmenter une amplitude, articulation par articulation',
         texte: "Comme en Force, ce niveau applique la logique du Fragmenter : plutôt que de chercher une souplesse générale et vague, chaque exercice isole une articulation ou une chaîne précise — la colonne (Jefferson curl), la hanche en rotation externe (pigeon squat), la cheville (squat bulgare). Cette précision permet d'identifier clairement où se trouve la vraie limite du corps, plutôt que de deviner.",
-        image: '/mentorship/theorie/fragmenter-biceps-curl.jpg',
       },
       {
         titre: 'Étirement statique et dynamique : deux outils différents',
@@ -833,6 +831,11 @@ const LOCOMOTION: NoeudMentorship[] = [
         texte: "Le travail au sol se construit dans un ordre précis : Floor work, puis Bipédie, puis Quadrupédie, puis Brachiation, puis Reptation. Chaque famille prépare la suivante — la quadrupédie développe la coordination des membres inférieurs et supérieurs ensemble, indispensable avant d'aborder la brachiation en suspension. Sauter les étapes fonctionne rarement : la dette de coordination se paie tôt ou tard.",
       },
       {
+        titre: "Le Cycle d'apprentissage, pensé pour la Locomotion",
+        texte: "Le Cycle d'apprentissage (Fragmenter → Assembler → Amplifier → Injecter) concerne toutes les branches, mais c'est en Locomotion qu'il prend tout son sens, car c'est l'exemple même sur lequel il a été pensé : on se constitue d'abord un vocabulaire de base de mouvements isolés (Fragmenter), on étudie ensuite comment créer des liens entre eux, du plus simple au plus complexe (Assembler), puis on utilise ces compétences dans des jeux créatifs et d'expression (Amplifier), avant de réinjecter le tout dans un apprentissage plus vaste (Injecter). Toute cette branche est construite sur cette logique, niveau après niveau.",
+        image: '/mentorship/theorie/cycle-apprentissage.jpg',
+      },
+      {
         titre: 'Le sol comme partenaire, pas comme obstacle',
         texte: "Le sol est un allié avec lequel on apprend : il guide à travers de nombreux retours sensoriels — équilibre instable, glissements, résistance à la pression. Ces informations révèlent la qualité de l'implication corporelle. Plutôt que de s'imposer à lui, on cherche un compromis, une qualité d'échange avec ce qu'il transmet. Les freins les plus courants sont d'ailleurs souvent mentaux (le regard des autres, le refus du contact avec le sol) avant d'être physiques — il est plus simple de préparer le corps que de déconstruire ces réticences, d'où l'intérêt d'y aller progressivement.",
       },
@@ -980,6 +983,16 @@ const CONNEXION: NoeudMentorship[] = [
       {
         titre: "Un travail d'un autre ordre",
         texte: "Là où Force, Flexibilité, Figures et Locomotion développent des qualités physiques visibles, la Connexion travaille quelque chose de plus interne : la concentration, la mémorisation, la proprioception, la coordination. Ce sont des compétences cognitives et psychomotrices — le premier ordre de priorité dans toute progression, avant même la mobilité ou la force, car un mouvement mal ressenti ne peut pas être bien corrigé.",
+      },
+      {
+        titre: 'Contenu et contenant : la dualité du mouvement',
+        texte: "Le travail de Rudolf Laban, pionnier de l'analyse du mouvement, distingue le « contenant » d'un mouvement (sa forme visible, ce qui permet de le reconnaître et de le nommer) et son « contenu » (l'intention et les qualités déployées pour le réaliser — coordination, force, équilibre, mémorisation). Un même contenant peut être rempli de contenus très différents selon le niveau du pratiquant : deux personnes qui font « le même » mouvement ne recrutent jamais exactement les mêmes qualités avec la même intensité.",
+        image: '/mentorship/theorie/fragmenter-biceps-curl.jpg',
+      },
+      {
+        titre: 'Qualités majeures et qualités mineures',
+        texte: "Chaque mouvement recrute une qualité majeure (son noyau) entourée de qualités mineures. Un biceps curl sollicite principalement la force du bras, avec très peu de couches autour. Un handstand, à l'inverse, recrute un nombre de qualités bien supérieur — équilibre, force d'épaule, mobilité de poignet, contrôle postural, concentration — empilées en couches successives. Apprendre à repérer cette différence, c'est apprendre à juger correctement la difficulté réelle d'un mouvement avant de s'y lancer.",
+        image: '/mentorship/theorie/fragmenter-handstand.jpg',
       },
       {
         titre: "L'équilibre interne au service de l'externe",
@@ -1147,7 +1160,6 @@ const FIGURES: NoeudMentorship[] = [
       {
         titre: 'Fragmenter une figure : identifier ce qu\'elle demande',
         texte: "Avant de tenter une figure complète, on juge le niveau de maîtrise requis puis on identifie les qualités à développer séparément — c'est l'étape Fragmenter du Cycle d'apprentissage. Le handstand contre le mur, par exemple, retire la composante équilibre pour ne travailler que la force d'épaule et l'alignement ; l'elbow diamant retire la difficulté du renversement pour ne travailler que le placement du poids sur les coudes. Chaque figure statique de ce niveau isole ainsi une qualité précise du travail complet à venir.",
-        image: '/mentorship/theorie/fragmenter-handstand.jpg',
       },
       {
         titre: 'Les standards, des repères plutôt que des jugements',
@@ -1245,7 +1257,8 @@ const FIGURES: NoeudMentorship[] = [
     theorie: [
       {
         titre: 'Inversion et station debout : perspectives complémentaires',
-        texte: "Le handstand libre offre une perspective unique qui défie l'équilibre et la perception habituelle. Il est complété par la station debout, notre état le plus naturel — la pratique de l'inversion stimule le système vestibulaire et les circulations, tandis que la station debout renforce la capacité à s'ancrer et interagir avec l'environnement. Un pratiquant qui ne travaille que l'un des deux perd la complémentarité entre les deux états.",
+        texte: "Le handstand libre offre une perspective unique qui défie l'équilibre et la perception habituelle. Il est complété par la station debout, notre état le plus naturel — la pratique de l'inversion stimule le système vestibulaire et les circulations, tandis que la station debout renforce la capacité à s'ancrer et interagir avec l'environnement. Un pratiquant qui ne travaille que l'un des deux perd la complémentarité entre les deux états. Le handstand pousse la flexion d'épaule à son maximum (180°, bras au-dessus de la tête) : c'est cette amplitude, construite dès les premiers niveaux de Figures, qui rend la position tenable sans compensation dans le bas du dos.",
+        image: '/mentorship/theorie/flexion-extension-epaule.jpg',
       },
       {
         titre: 'Des figures statiques aux figures dynamiques',
@@ -1254,7 +1267,6 @@ const FIGURES: NoeudMentorship[] = [
       {
         titre: 'Amplifier : la même figure, plus exigeante',
         texte: "Le pont haut n'est pas un mouvement nouveau par rapport au pont bas du niveau 1 — c'est la même figure amplifiée en amplitude et en exigence de flexion d'épaule. C'est une bonne illustration du principe d'Amplifier du Cycle d'apprentissage : augmenter la difficulté d'une compétence déjà acquise plutôt que d'en ajouter sans cesse de nouvelles, pour continuer à progresser sans disperser l'effort.",
-        image: '/mentorship/theorie/flexion-extension-epaule.jpg',
       },
       {
         titre: "Les transitions, cœur de la démarche du Mouvement",
