@@ -510,6 +510,14 @@ const FORCE: NoeudMentorship[] = [
         titre: 'Ce que la Force construit pour les autres branches',
         texte: "La force construite ici n'est pas une fin en soi : elle nourrit directement les Figures (un handstand tient sur la force de poussée et d'épaule construite ici) et la Locomotion (chaque appui, chaque répulsion au sol s'appuie sur ce travail). Une bonne règle : si tu es sous 5 répétitions propres sur un exercice de Figures ou de Locomotion, la Force redevient prioritaire en attendant de rattraper ce socle.",
       },
+      {
+        titre: 'Fragmenter avant d\'assembler',
+        texte: "Ce niveau applique très concrètement la première étape du Cycle d'apprentissage : Fragmenter. Plutôt que de te lancer directement sur un mouvement complexe (le muscle up, par exemple), on isole d'abord chaque qualité qui le compose — le tirage (rowing), la poussée (push-up), la suspension (tenue à un bras) — et on les travaille séparément. C'est exactement comme un musicien qui apprend d'abord ses notes avant de jouer un morceau : la qualité de cette phase de découpage conditionne directement la réussite de l'assemblage qui suivra aux niveaux 2 et 3.",
+      },
+      {
+        titre: 'La coiffe des rotateurs, un point aveugle fréquent',
+        texte: "Le rowing et la suspension sollicitent fortement les muscles stabilisateurs profonds de l'épaule (la coiffe des rotateurs), souvent négligés au profit des gros groupes musculaires visibles (pectoraux, dorsaux). Ces stabilisateurs sont pourtant ceux qui protègent l'articulation dans toutes les positions extrêmes que la suite de cette branche va explorer — anneaux, suspension à un bras, transitions. Un déficit ici ne se voit pas immédiatement, mais il finit toujours par limiter la progression ou par provoquer une gêne à l'épaule.",
+      },
     ],
     programmation: [],
     qcm: [],
@@ -549,6 +557,14 @@ const FORCE: NoeudMentorship[] = [
       {
         titre: 'Skin the cat : la synthèse tirage-poussée',
         texte: "Le skin the cat combine dans un même mouvement ce que le tirage et la poussée ont construit séparément. C'est un bon indicateur : si la transition est brutale ou incontrôlée, c'est souvent le signe qu'un des deux axes (tirage ou poussée) est resté en retard sur l'autre.",
+      },
+      {
+        titre: "Assembler : du fragment au chunk",
+        texte: "Ce niveau correspond à la deuxième étape du Cycle d'apprentissage : Assembler. Les dips et tractions aux anneaux ne sont plus des qualités isolées mais des mouvements complets, où l'attention se porte sur la qualité d'exécution plutôt que sur le développement brut de la force. Le skin the cat va plus loin : il fusionne deux mouvements distincts (tirage et poussée) en une seule unité — ce que le document appelle un « chunk ». C'est la même logique qu'un musicien qui passe de la note isolée à l'accord.",
+      },
+      {
+        titre: "Pourquoi l'instabilité change tout",
+        texte: "Sur une surface fixe (barre, sol), le corps peut se reposer partiellement sur la structure elle-même. Sur des anneaux, chaque muscle stabilisateur doit rester actif en continu pour corriger les micro-oscillations — ce qui explique pourquoi un mouvement pourtant maîtrisé au sol ou à la barre redevient difficile aux anneaux. Cette exigence supplémentaire n'est pas un obstacle inutile : c'est elle qui construit la résilience articulaire qui protégera l'épaule dans les figures et transitions plus avancées.",
       },
     ],
     programmation: [],
@@ -591,6 +607,14 @@ const FORCE: NoeudMentorship[] = [
       {
         titre: 'La force unilatérale, passerelle vers les autres branches',
         texte: "Travailler un seul côté à la fois (push-up unilatéral, traction à un bras) révèle et corrige les déséquilibres gauche/droite que les mouvements bilatéraux masquent facilement. Cette force asymétrique se retrouve directement dans les figures qui demandent du tirage (skin the cat, muscle up), et dans la Locomotion en suspension et en brachiation, où le poids du corps change constamment de côté.",
+      },
+      {
+        titre: 'Amplifier et injecter : la suite du cycle',
+        texte: "Ce niveau correspond aux deux dernières étapes du Cycle d'apprentissage. Amplifier : la difficulté augmente non pas en ajoutant un mouvement nouveau, mais en complexifiant ce qui existe déjà (passer du bilatéral à l'unilatéral, ajouter une transition). Injecter : la force construite dans cette branche est désormais réutilisée comme un simple « outil » au service d'objectifs plus larges — un handstand push-up en Figures, une brachiation en Locomotion. Le travail isolé d'une compétence n'a de sens que s'il finit par se recycler ailleurs.",
+      },
+      {
+        titre: "Jouer sa peau : s'engager dans la durée",
+        texte: "Une compétence de force se perd si elle n'est pas entretenue — c'est particulièrement vrai pour les mouvements avancés comme le muscle up, qui demandent un volume d'entraînement régulier pour rester acquis. S'engager dans ce travail (ce que le document appelle « jouer sa peau », en référence à Nassim Taleb) suppose d'accepter cette exigence sur la durée, pas seulement de viser la première réussite.",
       },
     ],
     programmation: [],
@@ -642,6 +666,14 @@ const FLEXIBILITE: NoeudMentorship[] = [
         titre: 'Ce que la Flexibilité prépare ailleurs',
         texte: "La souplesse construite ici nourrit directement la Locomotion, qui a besoin de grandes amplitudes de hanche pour la quadrupédie et le floor work, et les Figures, où le handstand et le pont exigent une ouverture d'épaule que la force seule ne donne pas. Une pratique qui ne travaille que la force sans la flexibilité complémentaire finit toujours par se limiter elle-même.",
       },
+      {
+        titre: 'Fragmenter une amplitude, articulation par articulation',
+        texte: "Comme en Force, ce niveau applique la logique du Fragmenter : plutôt que de chercher une souplesse générale et vague, chaque exercice isole une articulation ou une chaîne précise — la colonne (Jefferson curl), la hanche en rotation externe (pigeon squat), la cheville (squat bulgare). Cette précision permet d'identifier clairement où se trouve la vraie limite du corps, plutôt que de deviner.",
+      },
+      {
+        titre: 'Étirement statique et dynamique : deux outils différents',
+        texte: "La science du sport distingue l'étirement statique (tenu, comme le Jefferson curl) de l'étirement dynamique (en mouvement contrôlé). Le premier construit l'amplitude passive, le second la rend utilisable en action — c'est pour cela que cette branche combine les deux dès le départ plutôt que de se limiter à l'un ou l'autre. Un corps qui n'a que de la souplesse statique reste souvent lent à mobiliser cette amplitude quand le mouvement l'exige réellement.",
+      },
     ],
     programmation: [],
     qcm: [],
@@ -686,6 +718,14 @@ const FLEXIBILITE: NoeudMentorship[] = [
         titre: 'La charge comme accélérateur, pas comme objectif',
         texte: "Ajouter une charge (squat chargé, papillon avec charge) intensifie l'étirement en fin d'amplitude, là où le poids du corps seul ne suffit plus. Cette charge sert la progression du squat unilatéral en Flexibilité et prépare indirectement les positions chargées qu'on retrouve en Figures (pont haut) et en Force (positions statiques exigeantes).",
       },
+      {
+        titre: "Assembler : la routine complète",
+        texte: "Ce niveau applique l'étape Assembler du Cycle d'apprentissage : les fragments travaillés isolément au niveau 1 (une articulation, une chaîne) sont désormais enchaînés en une routine complète, sans interruption. L'attention se déplace de la qualité brute de l'étirement vers la fluidité de l'enchaînement — exactement comme des notes isolées qui deviennent une phrase musicale.",
+      },
+      {
+        titre: 'Pourquoi le stretch actif construit plus que de la souplesse',
+        texte: "Contracter les muscles autour d'une articulation pendant qu'elle est étirée (stretch actif) entraîne le système nerveux à tolérer et contrôler cette amplitude, pas seulement le tissu à s'allonger. C'est cette différence qui explique pourquoi certaines personnes très souples passivement (jambes qui touchent le sol en grand écart passif) restent incapables de lever la jambe aussi haut activement : la souplesse existe, mais le contrôle moteur pour l'utiliser n'a jamais été construit.",
+      },
     ],
     programmation: [],
     qcm: [],
@@ -729,6 +769,14 @@ const FLEXIBILITE: NoeudMentorship[] = [
       {
         titre: 'Chaîne antérieure et postérieure, une paire indissociable',
         texte: "Pour le bas du corps, la chaîne antérieure (quadriceps, fléchisseurs de hanche) et la chaîne postérieure (ischios, fessiers) sont complémentaires, tout comme la rotation interne et externe de hanche. Négliger l'une pour l'autre crée exactement le même déséquilibre que celui décrit entre tirage et poussée en Force — la logique d'équilibre systémique traverse toutes les branches, pas seulement celle-ci.",
+      },
+      {
+        titre: 'Amplifier et injecter : une souplesse qui devient outil',
+        texte: "Ce dernier niveau amplifie la complexité (diagonale, charge, enchaînement des 4 squats) puis injecte cette souplesse comme un outil au service d'autres apprentissages : le pancake sert le travail au sol en Locomotion, l'ouverture de hanche sert les figures les plus exigeantes. La flexibilité cesse ici d'être un objectif en soi pour devenir une ressource disponible ailleurs.",
+      },
+      {
+        titre: 'Pourquoi travailler ses points faibles plutôt que ses points forts',
+        texte: "Il est tentant de s'entraîner sur ce qu'on réussit déjà bien, car c'est gratifiant. Mais en flexibilité plus qu'ailleurs, c'est le maillon le plus faible qui détermine ce que le corps peut réellement faire : une cheville raide limite un squat même avec d'excellents quadriceps, une hanche fermée limite une amplitude de jambe même avec un dos très souple. Identifier honnêtement sa propre limite, sans la contourner, est ce qui distingue une progression solide d'une progression illusoire.",
       },
     ],
     programmation: [],
@@ -775,6 +823,14 @@ const LOCOMOTION: NoeudMentorship[] = [
         titre: 'La Locomotion exprime ce que les autres branches construisent',
         texte: "Cette branche est celle où tout ce qui est développé ailleurs se retrouve intégré : la force de la branche Force soutient chaque répulsion au sol, la souplesse de la branche Flexibilité permet les amplitudes de hanche nécessaires à la quadrupédie. La Locomotion ne construit pas des qualités isolées, elle les exprime dans un mouvement global et intentionnel.",
       },
+      {
+        titre: 'Une progression qui suit un ordre logique',
+        texte: "Le travail au sol se construit dans un ordre précis : Floor work, puis Bipédie, puis Quadrupédie, puis Brachiation, puis Reptation. Chaque famille prépare la suivante — la quadrupédie développe la coordination des membres inférieurs et supérieurs ensemble, indispensable avant d'aborder la brachiation en suspension. Sauter les étapes fonctionne rarement : la dette de coordination se paie tôt ou tard.",
+      },
+      {
+        titre: 'Le sol comme partenaire, pas comme obstacle',
+        texte: "Le sol est un allié avec lequel on apprend : il guide à travers de nombreux retours sensoriels — équilibre instable, glissements, résistance à la pression. Ces informations révèlent la qualité de l'implication corporelle. Plutôt que de s'imposer à lui, on cherche un compromis, une qualité d'échange avec ce qu'il transmet. Les freins les plus courants sont d'ailleurs souvent mentaux (le regard des autres, le refus du contact avec le sol) avant d'être physiques — il est plus simple de préparer le corps que de déconstruire ces réticences, d'où l'intérêt d'y aller progressivement.",
+      },
     ],
     programmation: [],
     qcm: [],
@@ -819,6 +875,14 @@ const LOCOMOTION: NoeudMentorship[] = [
       {
         titre: 'Le pont, pont entre les branches',
         texte: "La rotation sur le pont bas suppose déjà la posture du pont maîtrisée côté Figures — c'est un exemple concret de la manière dont les branches se nourrissent entre elles plutôt que de progresser isolément. Une compétence acquise dans une branche devient souvent le point de départ d'un chunk dans une autre.",
+      },
+      {
+        titre: 'Le corps comme système, pas comme collection de muscles',
+        texte: "En Locomotion, le mouvement part de l'intérieur : tout est relié, aucune zone n'est passive. C'est là que la pratique corporelle cesse d'être une collection de compétences isolées (un bon dos, de bonnes épaules, de bonnes jambes) pour devenir un système cohérent. La brachiation en particulier ne fonctionne que si l'épaule, le tronc et le regard collaborent en continu — isoler un seul de ces éléments fait s'effondrer tout le reste.",
+      },
+      {
+        titre: 'Endurance et respiration, un couple indissociable',
+        texte: "La locomotion mobilise le corps sur des temps sous tension prolongés, ce qui génère une fatigue progressive — gérée par une respiration fluide, intimement liée au rythme du mouvement. C'est une différence importante avec le travail de force pure : ici, retenir sa respiration ou la désynchroniser du mouvement épuise beaucoup plus vite que l'effort musculaire lui-même.",
       },
     ],
     programmation: [],
@@ -865,6 +929,14 @@ const LOCOMOTION: NoeudMentorship[] = [
         titre: 'La self-dominance : laisser le corps décider',
         texte: "Le jeu de self-dominance inverse la logique habituelle d'apprentissage : au lieu de suivre un pattern fixe, on laisse le corps improviser et décider du mouvement suivant. C'est l'aboutissement naturel de tout ce qui précède — un vocabulaire de mouvement suffisamment intégré pour ne plus avoir besoin d'être pensé consciemment à chaque instant.",
       },
+      {
+        titre: 'Une créativité qui devient personnelle',
+        texte: "Avec le temps et la pratique régulière, chaque pratiquant s'approprie son propre vocabulaire de mouvement et développe un style qui lui est propre — les choix de trajectoire, de rythme et d'engagement varient d'une personne à l'autre. La Locomotion est un terrain d'exploration sans fin : elle ne s'épuise pas, elle évolue avec le pratiquant. Ce niveau ne marque donc pas une fin, mais le moment où le travail dirigé laisse place à une recherche plus personnelle.",
+      },
+      {
+        titre: 'Une école du corps, pas une collection de tricks',
+        texte: "La Locomotion ne montre pas un « trick » isolé, elle enseigne comment bouger intelligemment. La capacité à lire, décoder et déconstruire les mouvements des autres pratiquants (Injecter, dans le Cycle d'apprentissage) devient à ce niveau aussi importante que la capacité à les exécuter soi-même — c'est elle qui permet de continuer à progresser seul, bien après la fin de ce parcours guidé.",
+      },
     ],
     programmation: [],
     qcm: [],
@@ -908,6 +980,14 @@ const CONNEXION: NoeudMentorship[] = [
         titre: "L'équilibre interne au service de l'externe",
         texte: "La Connexion apporte un équilibre entre le contrôle interne (ce que tu ressens et diriges consciemment) et l'expression externe (ce que ton corps produit réellement). Un pratiquant très fort ou très souple mais peu connecté à son corps aura du mal à affiner son geste ; la Connexion est ce qui permet aux autres branches de gagner en précision, pas seulement en amplitude ou en puissance.",
       },
+      {
+        titre: 'Pourquoi cette branche vient en premier dans la priorité',
+        texte: "Dans l'organisation générale de la pratique, l'ordre de priorité recommandé est : cognitif et psychomoteur d'abord (concentration, mémorisation, proprioception, coordination), puis mobilité et renforcement, puis stretch, puis force. Ce n'est pas un hasard : un geste mal ressenti ne peut pas être bien corrigé, quelle que soit la force ou la souplesse disponible pour l'exécuter. La Connexion travaille exactement cette première brique, souvent invisible mais fondatrice.",
+      },
+      {
+        titre: 'La myélinisation, ou comment un geste devient automatique',
+        texte: "Chaque répétition consciente d'un geste de coordination renforce la gaine de myéline autour des circuits nerveux sollicités — un mécanisme physiologique qui rend le signal nerveux plus rapide et plus fiable à chaque passage. C'est pour cela qu'un jeu de manipulation qui semble anodin (faire rouler une balle d'une main à l'autre) a un effet réel sur la qualité motrice globale : le système nerveux ne fait pas de distinction entre un geste « utile » et un geste « ludique », il renforce ce qui est répété avec attention.",
+      },
     ],
     programmation: [],
     qcm: [],
@@ -948,6 +1028,14 @@ const CONNEXION: NoeudMentorship[] = [
       {
         titre: 'Le rythme comme fil conducteur',
         texte: "Les jeux de percussion introduisent une dimension rythmique qui traverse toute la famille Brain work : le contrôle moteur fin devient plus exigeant quand il doit aussi respecter un tempo. Cette même exigence de rythme et de fluidité se retrouve directement en Locomotion, où un mouvement techniquement correct mais mal rythmé perd toute sa qualité visuelle.",
+      },
+      {
+        titre: 'La latéralisation, un chantier discret mais essentiel',
+        texte: "Dribbler avec les pieds sollicite la coordination entre les deux hémisphères du cerveau et la latéralisation — la capacité à faire travailler les deux côtés du corps de façon différenciée et complémentaire. C'est une compétence qui se construit dès l'enfance mais qui reste entraînable à tout âge : chaque nouveau pattern moteur difficile au début (dribbler du pied non-dominant, par exemple) muscle littéralement cette capacité de coordination inter-hémisphérique.",
+      },
+      {
+        titre: "Compenser sans dominer",
+        texte: "Une pratique statique (comme la Force) mérite des outils dynamiques et en grande amplitude pour compenser ; une pratique en fermeture mérite des outils qui favorisent l'ouverture, et inversement. La Connexion joue souvent ce rôle de compensation dans une semaine d'entraînement chargée en Force ou en Figures : elle repose le corps de l'intensité tout en continuant à progresser sur un axe différent.",
       },
     ],
     programmation: [],
@@ -992,6 +1080,14 @@ const CONNEXION: NoeudMentorship[] = [
       {
         titre: "Ce que la Connexion offre aux autres branches",
         texte: "Le contrôle psychomoteur fin développé ici se retrouve partout ailleurs, en filigrane : dans la précision d'un appui en Locomotion, dans le dosage exact de tension nécessaire pour tenir une figure sans excès de rigidité, dans la capacité à sentir un déséquilibre avant qu'il ne devienne une chute. La Connexion ne se voit pas toujours à l'œil nu, mais elle conditionne la qualité de tout le reste.",
+      },
+      {
+        titre: "Le soshin, l'esprit du débutant qui reste actif",
+        texte: "Même à ce niveau avancé, l'état d'esprit du débutant — ouvert, avide d'expérimenter, non attaché au résultat — reste la meilleure posture face à des tâches aussi exigeantes en précision que le monkey ball ou le ballon en équilibre sur le front. Ces exercices demandent d'accepter l'échec répété sans s'en vexer : c'est justement cette tolérance à l'erreur qui permet au système nerveux d'affiner le geste au fil des tentatives.",
+      },
+      {
+        titre: 'Une compétence qui se nourrit ou qui s\'efface',
+        texte: "Le contrôle moteur fin est une compétence périssable : sans pratique régulière, la précision acquise ici se dissipe plus vite que la force ou la souplesse. C'est pourquoi les jeux de manipulation gagnent à être intégrés durablement (en échauffement, en fin de séance) plutôt que traités comme un objectif ponctuel qu'on abandonne une fois validé.",
       },
     ],
     programmation: [],
@@ -1043,6 +1139,14 @@ const FIGURES: NoeudMentorship[] = [
         titre: 'Pont et handstand : deux inversions complémentaires',
         texte: "Le pont ouvre le corps vers l'arrière (extension), le handstand l'inverse complètement (renversement). Les deux stimulent le système vestibulaire différemment et sollicitent des chaînes musculaires opposées — c'est volontaire : cette branche construit dès le départ un corps capable des deux extrêmes, pas seulement d'un sens de mouvement.",
       },
+      {
+        titre: 'Fragmenter une figure : identifier ce qu\'elle demande',
+        texte: "Avant de tenter une figure complète, on juge le niveau de maîtrise requis puis on identifie les qualités à développer séparément — c'est l'étape Fragmenter du Cycle d'apprentissage. Le handstand contre le mur, par exemple, retire la composante équilibre pour ne travailler que la force d'épaule et l'alignement ; l'elbow diamant retire la difficulté du renversement pour ne travailler que le placement du poids sur les coudes. Chaque figure statique de ce niveau isole ainsi une qualité précise du travail complet à venir.",
+      },
+      {
+        titre: 'Les standards, des repères plutôt que des jugements',
+        texte: "Les standards de progression (les critères de validation de chaque exercice) servent d'indicateurs clés : ils permettent de se concentrer sur des améliorations spécifiques et de mesurer ses progrès de façon objective, sans dépendre d'une impression subjective. Atteindre un standard n'est pas une fin, c'est un moyen d'identifier clairement ce qui est acquis et ce qui reste à travailler.",
+      },
     ],
     programmation: [],
     qcm: [],
@@ -1087,6 +1191,14 @@ const FIGURES: NoeudMentorship[] = [
         titre: "L'endurance de position, avant l'autonomie",
         texte: "Le handstand ventre au mur expose davantage à la sensation de bascule que dos au mur — il construit l'endurance de la position avant de chercher à s'en éloigner en niveau 3. C'est la même logique de progression que partout ailleurs dans l'arbre : sécuriser une compétence avant de retirer les aides qui la soutenaient.",
       },
+      {
+        titre: 'Assembler : la figure prend forme',
+        texte: "Ce niveau correspond à l'étape Assembler : les qualités isolées au niveau 1 (force d'épaule, placement des coudes, alignement) sont désormais mises au service d'une figure plus complète — le L-sit exige de tenir simultanément le gainage, la poussée des bras et le contrôle des jambes, plutôt qu'une seule de ces qualités à la fois. Le premier assemblage est souvent imparfait (une version « approximative » de la figure visée) : c'est normal et attendu, pas un échec.",
+      },
+      {
+        titre: "L'appui manuel, une compétence à part entière",
+        texte: "Prendre appui sur les mains sollicite une mobilité de poignet particulière, différente de tout ce qui est demandé dans la vie quotidienne. Cette mobilité se construit progressivement avec le volume d'exposition — c'est pour cela que les figures sur les mains (L-sit, elbow lever, handstand) sont réparties sur plusieurs niveaux plutôt que regroupées d'un coup : le poignet a besoin de temps pour s'adapter à cette charge inhabituelle.",
+      },
     ],
     programmation: [],
     qcm: [],
@@ -1130,6 +1242,14 @@ const FIGURES: NoeudMentorship[] = [
       {
         titre: 'Des figures statiques aux figures dynamiques',
         texte: "Le QDR et les transitions qui l'accompagnent marquent le passage des figures statiques vers les figures dynamiques : des transitions fluides et contrôlées entre postures, qui demandent en plus de la force et de la stabilité déjà acquises une coordination et une conscience spatiale accrues. Une fois maîtrisées, ces figures se réinjectent directement dans la pratique de la Locomotion — la boucle entre les branches se referme ici.",
+      },
+      {
+        titre: 'Amplifier : la même figure, plus exigeante',
+        texte: "Le pont haut n'est pas un mouvement nouveau par rapport au pont bas du niveau 1 — c'est la même figure amplifiée en amplitude et en exigence de flexion d'épaule. C'est une bonne illustration du principe d'Amplifier du Cycle d'apprentissage : augmenter la difficulté d'une compétence déjà acquise plutôt que d'en ajouter sans cesse de nouvelles, pour continuer à progresser sans disperser l'effort.",
+      },
+      {
+        titre: "Les transitions, cœur de la démarche du Mouvement",
+        texte: "Les transitions entre figures sont au cœur de cette pratique : elles ne demandent pas seulement la force et la stabilité des figures statiques, mais aussi une agilité et une conscience spatiale que seul l'enchaînement peut développer. C'est en travaillant les transitions, pas seulement les positions elles-mêmes, que les figures cessent d'être des « tricks » isolés pour devenir un vocabulaire de mouvement réellement disponible.",
       },
     ],
     programmation: [],
