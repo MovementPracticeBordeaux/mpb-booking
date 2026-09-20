@@ -79,6 +79,7 @@ export const COULEUR_TRONC = '#ff00aa'; // accent déjà utilisé pour les CTA d
 export type FragmentTheorie = {
   titre: string;
   texte: string;
+  image?: string; // illustration optionnelle (schéma, diagramme) dans /public/mentorship/theorie
 };
 
 export type CiblesProgrammation = {
@@ -393,6 +394,7 @@ export const TRONC: NoeudMentorship[] = [
       {
         titre: 'Ouvrir des portes',
         texte: "L'armure organique a pour but d'ouvrir des portes. L'exploration commence par l'acquisition de compétences fondamentales, des tremplins vers des objectifs plus avancés — les « Grandes Portes » de ton parcours. Ce niveau termine cette phase : il rend abordables, en même temps, les premiers objectifs des cinq branches. C'est pour cela qu'une fois l'armure organique complète, tu débloques le niveau 1 de Force, Figures, Flexibilité, Locomotion et Connexion en même temps — pas une branche après l'autre.",
+        image: '/mentorship/theorie/venn-5-branches.jpg',
       },
     ],
     programmation: [
@@ -513,10 +515,12 @@ const FORCE: NoeudMentorship[] = [
       {
         titre: 'Fragmenter avant d\'assembler',
         texte: "Ce niveau applique très concrètement la première étape du Cycle d'apprentissage : Fragmenter. Plutôt que de te lancer directement sur un mouvement complexe (le muscle up, par exemple), on isole d'abord chaque qualité qui le compose — le tirage (rowing), la poussée (push-up), la suspension (tenue à un bras) — et on les travaille séparément. C'est exactement comme un musicien qui apprend d'abord ses notes avant de jouer un morceau : la qualité de cette phase de découpage conditionne directement la réussite de l'assemblage qui suivra aux niveaux 2 et 3.",
+        image: '/mentorship/theorie/cycle-apprentissage.jpg',
       },
       {
         titre: 'La coiffe des rotateurs, un point aveugle fréquent',
         texte: "Le rowing et la suspension sollicitent fortement les muscles stabilisateurs profonds de l'épaule (la coiffe des rotateurs), souvent négligés au profit des gros groupes musculaires visibles (pectoraux, dorsaux). Ces stabilisateurs sont pourtant ceux qui protègent l'articulation dans toutes les positions extrêmes que la suite de cette branche va explorer — anneaux, suspension à un bras, transitions. Un déficit ici ne se voit pas immédiatement, mais il finit toujours par limiter la progression ou par provoquer une gêne à l'épaule.",
+        image: '/mentorship/theorie/protraction-retraction.jpg',
       },
     ],
     programmation: [],
@@ -669,6 +673,7 @@ const FLEXIBILITE: NoeudMentorship[] = [
       {
         titre: 'Fragmenter une amplitude, articulation par articulation',
         texte: "Comme en Force, ce niveau applique la logique du Fragmenter : plutôt que de chercher une souplesse générale et vague, chaque exercice isole une articulation ou une chaîne précise — la colonne (Jefferson curl), la hanche en rotation externe (pigeon squat), la cheville (squat bulgare). Cette précision permet d'identifier clairement où se trouve la vraie limite du corps, plutôt que de deviner.",
+        image: '/mentorship/theorie/fragmenter-biceps-curl.jpg',
       },
       {
         titre: 'Étirement statique et dynamique : deux outils différents',
@@ -1142,6 +1147,7 @@ const FIGURES: NoeudMentorship[] = [
       {
         titre: 'Fragmenter une figure : identifier ce qu\'elle demande',
         texte: "Avant de tenter une figure complète, on juge le niveau de maîtrise requis puis on identifie les qualités à développer séparément — c'est l'étape Fragmenter du Cycle d'apprentissage. Le handstand contre le mur, par exemple, retire la composante équilibre pour ne travailler que la force d'épaule et l'alignement ; l'elbow diamant retire la difficulté du renversement pour ne travailler que le placement du poids sur les coudes. Chaque figure statique de ce niveau isole ainsi une qualité précise du travail complet à venir.",
+        image: '/mentorship/theorie/fragmenter-handstand.jpg',
       },
       {
         titre: 'Les standards, des repères plutôt que des jugements',
@@ -1190,6 +1196,7 @@ const FIGURES: NoeudMentorship[] = [
       {
         titre: "L'endurance de position, avant l'autonomie",
         texte: "Le handstand ventre au mur expose davantage à la sensation de bascule que dos au mur — il construit l'endurance de la position avant de chercher à s'en éloigner en niveau 3. C'est la même logique de progression que partout ailleurs dans l'arbre : sécuriser une compétence avant de retirer les aides qui la soutenaient.",
+        image: '/mentorship/theorie/progression-handstand-volume.jpg',
       },
       {
         titre: 'Assembler : la figure prend forme',
@@ -1198,6 +1205,7 @@ const FIGURES: NoeudMentorship[] = [
       {
         titre: "L'appui manuel, une compétence à part entière",
         texte: "Prendre appui sur les mains sollicite une mobilité de poignet particulière, différente de tout ce qui est demandé dans la vie quotidienne. Cette mobilité se construit progressivement avec le volume d'exposition — c'est pour cela que les figures sur les mains (L-sit, elbow lever, handstand) sont réparties sur plusieurs niveaux plutôt que regroupées d'un coup : le poignet a besoin de temps pour s'adapter à cette charge inhabituelle.",
+        image: '/mentorship/theorie/repartition-poids-main.jpg',
       },
     ],
     programmation: [],
@@ -1246,6 +1254,7 @@ const FIGURES: NoeudMentorship[] = [
       {
         titre: 'Amplifier : la même figure, plus exigeante',
         texte: "Le pont haut n'est pas un mouvement nouveau par rapport au pont bas du niveau 1 — c'est la même figure amplifiée en amplitude et en exigence de flexion d'épaule. C'est une bonne illustration du principe d'Amplifier du Cycle d'apprentissage : augmenter la difficulté d'une compétence déjà acquise plutôt que d'en ajouter sans cesse de nouvelles, pour continuer à progresser sans disperser l'effort.",
+        image: '/mentorship/theorie/flexion-extension-epaule.jpg',
       },
       {
         titre: "Les transitions, cœur de la démarche du Mouvement",

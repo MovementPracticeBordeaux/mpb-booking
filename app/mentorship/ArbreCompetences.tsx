@@ -1239,6 +1239,10 @@ export default function ArbreCompetences({
                               <div key={t.titre} style={{ marginBottom: 12, borderLeft: `2px solid ${couleur}`, paddingLeft: 12 }}>
                                 <p style={{ fontSize: 13, fontWeight: 600, margin: 0, color: COULEURS.texte }}>{t.titre}</p>
                                 <p style={{ fontSize: 13, color: COULEURS.texteAtt, lineHeight: 1.7, margin: '4px 0 0' }}>{t.texte}</p>
+                                {t.image && (
+                                  /* eslint-disable-next-line @next/next/no-img-element */
+                                  <img src={t.image} alt={t.titre} style={{ maxWidth: '100%', borderRadius: 8, marginTop: 10, display: 'block' }} />
+                                )}
                               </div>
                             ))}
                           </>
@@ -1497,6 +1501,10 @@ export default function ArbreCompetences({
                     <div key={t.titre} style={{ marginBottom: 12, borderLeft: `2px solid ${couleur}`, paddingLeft: 14 }}>
                       <p style={{ fontSize: 13, fontWeight: 600, margin: 0, color: COULEURS.texte }}>{t.titre}</p>
                       <p style={{ fontSize: 13, color: COULEURS.texteAtt, lineHeight: 1.7, margin: '4px 0 0' }}>{t.texte}</p>
+                      {t.image && (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src={t.image} alt={t.titre} style={{ maxWidth: '100%', borderRadius: 8, marginTop: 10, display: 'block' }} />
+                      )}
                     </div>
                   ))}
                 </div>
@@ -2183,9 +2191,11 @@ function BlocExercice({
             {objectifId && noeud.domaine !== 'tronc' && (
               <a
                 href={`/mentorship/objectifs?id=${objectifId}`}
-                style={{ fontSize: 11, color: '#8B5CF6', textDecoration: 'underline', textUnderlineOffset: 2 }}
+                style={{ fontSize: 11, color: '#8B5CF6', textDecoration: 'underline', textUnderlineOffset: 2, display: 'inline-flex', alignItems: 'center', gap: 5 }}
               >
-                🧭 Éclairer le chemin
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/mentorship/theorie/forgeron.jpg" alt="" style={{ height: 16, width: 16, objectFit: 'cover', borderRadius: 3 }} />
+                Éclairer le chemin
               </a>
             )}
           </div>
@@ -2313,6 +2323,10 @@ function PanneauNoeud({
             <div key={t.titre} style={{ marginTop: 14, borderLeft: `2px solid ${couleur}`, paddingLeft: 14 }}>
               <p style={{ fontSize: 13, fontWeight: 600, margin: 0, color: COULEURS.texte }}>{t.titre}</p>
               <p style={{ fontSize: 13, color: COULEURS.texteAtt, lineHeight: 1.7, margin: '4px 0 0' }}>{t.texte}</p>
+              {t.image && (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img src={t.image} alt={t.titre} style={{ maxWidth: '100%', borderRadius: 8, marginTop: 10, display: 'block' }} />
+              )}
             </div>
           ))}
 
