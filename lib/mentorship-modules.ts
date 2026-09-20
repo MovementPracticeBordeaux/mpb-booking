@@ -394,7 +394,7 @@ export const TRONC: NoeudMentorship[] = [
       {
         titre: 'Ouvrir des portes',
         texte: "L'armure organique a pour but d'ouvrir des portes. L'exploration commence par l'acquisition de compétences fondamentales, des tremplins vers des objectifs plus avancés — les « Grandes Portes » de ton parcours. Ce niveau termine cette phase : il rend abordables, en même temps, les premiers objectifs des cinq branches. C'est pour cela qu'une fois l'armure organique complète, tu débloques le niveau 1 de Force, Figures, Flexibilité, Locomotion et Connexion en même temps — pas une branche après l'autre.",
-        image: '/mentorship/theorie/venn-5-branches.jpg',
+        image: '/mentorship/theorie/venn-5-branches.png',
       },
     ],
     programmation: [
@@ -519,7 +519,7 @@ const FORCE: NoeudMentorship[] = [
       {
         titre: 'La coiffe des rotateurs, un point aveugle fréquent',
         texte: "Le rowing et la suspension sollicitent fortement les muscles stabilisateurs profonds de l'épaule (la coiffe des rotateurs), souvent négligés au profit des gros groupes musculaires visibles (pectoraux, dorsaux). Ces stabilisateurs sont pourtant ceux qui protègent l'articulation dans toutes les positions extrêmes que la suite de cette branche va explorer — anneaux, suspension à un bras, transitions. Un déficit ici ne se voit pas immédiatement, mais il finit toujours par limiter la progression ou par provoquer une gêne à l'épaule.",
-        image: '/mentorship/theorie/protraction-retraction.jpg',
+        image: '/mentorship/theorie/protraction-retraction.png',
       },
     ],
     programmation: [],
@@ -833,7 +833,7 @@ const LOCOMOTION: NoeudMentorship[] = [
       {
         titre: "Le Cycle d'apprentissage, pensé pour la Locomotion",
         texte: "Le Cycle d'apprentissage (Fragmenter → Assembler → Amplifier → Injecter) concerne toutes les branches, mais c'est en Locomotion qu'il prend tout son sens, car c'est l'exemple même sur lequel il a été pensé : on se constitue d'abord un vocabulaire de base de mouvements isolés (Fragmenter), on étudie ensuite comment créer des liens entre eux, du plus simple au plus complexe (Assembler), puis on utilise ces compétences dans des jeux créatifs et d'expression (Amplifier), avant de réinjecter le tout dans un apprentissage plus vaste (Injecter). Toute cette branche est construite sur cette logique, niveau après niveau.",
-        image: '/mentorship/theorie/cycle-apprentissage.jpg',
+        image: '/mentorship/theorie/cycle-apprentissage.png',
       },
       {
         titre: 'Le sol comme partenaire, pas comme obstacle',
@@ -987,12 +987,12 @@ const CONNEXION: NoeudMentorship[] = [
       {
         titre: 'Contenu et contenant : la dualité du mouvement',
         texte: "Le travail de Rudolf Laban, pionnier de l'analyse du mouvement, distingue le « contenant » d'un mouvement (sa forme visible, ce qui permet de le reconnaître et de le nommer) et son « contenu » (l'intention et les qualités déployées pour le réaliser — coordination, force, équilibre, mémorisation). Un même contenant peut être rempli de contenus très différents selon le niveau du pratiquant : deux personnes qui font « le même » mouvement ne recrutent jamais exactement les mêmes qualités avec la même intensité.",
-        image: '/mentorship/theorie/fragmenter-biceps-curl.jpg',
+        image: '/mentorship/theorie/fragmenter-biceps-curl.png',
       },
       {
         titre: 'Qualités majeures et qualités mineures',
         texte: "Chaque mouvement recrute une qualité majeure (son noyau) entourée de qualités mineures. Un biceps curl sollicite principalement la force du bras, avec très peu de couches autour. Un handstand, à l'inverse, recrute un nombre de qualités bien supérieur — équilibre, force d'épaule, mobilité de poignet, contrôle postural, concentration — empilées en couches successives. Apprendre à repérer cette différence, c'est apprendre à juger correctement la difficulté réelle d'un mouvement avant de s'y lancer.",
-        image: '/mentorship/theorie/fragmenter-handstand.jpg',
+        image: '/mentorship/theorie/fragmenter-handstand.png',
       },
       {
         titre: "L'équilibre interne au service de l'externe",
@@ -1208,7 +1208,7 @@ const FIGURES: NoeudMentorship[] = [
       {
         titre: "L'endurance de position, avant l'autonomie",
         texte: "Le handstand ventre au mur expose davantage à la sensation de bascule que dos au mur — il construit l'endurance de la position avant de chercher à s'en éloigner en niveau 3. C'est la même logique de progression que partout ailleurs dans l'arbre : sécuriser une compétence avant de retirer les aides qui la soutenaient.",
-        image: '/mentorship/theorie/progression-handstand-volume.jpg',
+        image: '/mentorship/theorie/progression-handstand-volume.png',
       },
       {
         titre: 'Assembler : la figure prend forme',
@@ -1217,7 +1217,7 @@ const FIGURES: NoeudMentorship[] = [
       {
         titre: "L'appui manuel, une compétence à part entière",
         texte: "Prendre appui sur les mains sollicite une mobilité de poignet particulière, différente de tout ce qui est demandé dans la vie quotidienne. Cette mobilité se construit progressivement avec le volume d'exposition — c'est pour cela que les figures sur les mains (L-sit, elbow lever, handstand) sont réparties sur plusieurs niveaux plutôt que regroupées d'un coup : le poignet a besoin de temps pour s'adapter à cette charge inhabituelle.",
-        image: '/mentorship/theorie/repartition-poids-main.jpg',
+        image: '/mentorship/theorie/repartition-poids-main.png',
       },
     ],
     programmation: [],
@@ -1258,7 +1258,7 @@ const FIGURES: NoeudMentorship[] = [
       {
         titre: 'Inversion et station debout : perspectives complémentaires',
         texte: "Le handstand libre offre une perspective unique qui défie l'équilibre et la perception habituelle. Il est complété par la station debout, notre état le plus naturel — la pratique de l'inversion stimule le système vestibulaire et les circulations, tandis que la station debout renforce la capacité à s'ancrer et interagir avec l'environnement. Un pratiquant qui ne travaille que l'un des deux perd la complémentarité entre les deux états. Le handstand pousse la flexion d'épaule à son maximum (180°, bras au-dessus de la tête) : c'est cette amplitude, construite dès les premiers niveaux de Figures, qui rend la position tenable sans compensation dans le bas du dos.",
-        image: '/mentorship/theorie/flexion-extension-epaule.jpg',
+        image: '/mentorship/theorie/flexion-extension-epaule.png',
       },
       {
         titre: 'Des figures statiques aux figures dynamiques',

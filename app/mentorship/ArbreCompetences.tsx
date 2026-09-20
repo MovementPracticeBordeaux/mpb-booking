@@ -2194,7 +2194,7 @@ function BlocExercice({
                 style={{ fontSize: 11, color: '#8B5CF6', textDecoration: 'underline', textUnderlineOffset: 2, display: 'inline-flex', alignItems: 'center', gap: 5 }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/mentorship/theorie/forgeron.jpg" alt="" style={{ height: 16, width: 16, objectFit: 'cover', borderRadius: 3 }} />
+                <img src="/mentorship/theorie/forgeron.png" alt="" style={{ height: 16, width: 16, objectFit: 'cover', borderRadius: 3 }} />
                 Éclairer le chemin
               </a>
             )}
