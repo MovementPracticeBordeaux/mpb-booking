@@ -521,6 +521,18 @@ const FORCE: NoeudMentorship[] = [
         texte: "Le rowing et la suspension sollicitent fortement les muscles stabilisateurs profonds de l'épaule (la coiffe des rotateurs), souvent négligés au profit des gros groupes musculaires visibles (pectoraux, dorsaux). Ces stabilisateurs sont pourtant ceux qui protègent l'articulation dans toutes les positions extrêmes que la suite de cette branche va explorer — anneaux, suspension à un bras, transitions. Un déficit ici ne se voit pas immédiatement, mais il finit toujours par limiter la progression ou par provoquer une gêne à l'épaule.",
         image: '/mentorship/theorie/protraction-retraction.png',
       },
+      {
+        titre: 'Ce que la force change vraiment dans le corps',
+        texte: "Le travail de force ne se limite pas au volume musculaire. Il stimule la résilience des tendons et des os (leur densité augmente, réduisant le risque de blessure et d'ostéoporose), et agit en profondeur sur le système nerveux : le système nerveux central apprend à recruter plus de fibres musculaires à la fois (meilleure intensité de l'innervation), devient plus efficace et synchronisé (adaptabilité), et cet entraînement régulier retarde même la perte de neurones moteurs liée à l'âge. Le système nerveux périphérique — les nerfs qui relient la moelle épinière aux muscles — gagne lui aussi en qualité de transmission. La force n'est donc pas qu'une question de muscle : c'est un entraînement du système nerveux dans son ensemble.",
+      },
+      {
+        titre: 'Peu de répétitions, beaucoup de récupération',
+        texte: "Un exercice n'est un vrai travail de force que s'il ne peut être réalisé qu'entre 1 et 5 répétitions avec une technique correcte — au-delà, c'est déjà un travail d'endurance musculaire, une qualité différente. Ce seuil est propre à chacun : il dépend du poids corporel et du niveau de force du moment, pas d'une norme universelle. C'est pourquoi les temps de récupération sont ici volontairement longs (5 à 7 minutes) : le système nerveux, sollicité à haute intensité, a besoin de ce temps pour repartir aussi fort sur la série suivante.",
+      },
+      {
+        titre: 'Déconstruire les idées reçues sur la force',
+        texte: "Trois idées fausses circulent encore beaucoup autour du travail de force : qu'il conduirait automatiquement à une prise de volume musculaire excessive (« la gonflette »), qu'il serait réservé aux hommes, et qu'il serait sans intérêt pour les personnes plus âgées. Aucune de ces trois affirmations ne résiste à l'examen — bien structuré, le travail de force est bénéfique à tous les âges et à tous les genres, il prévient l'ostéoporose, stabilise les articulations, et n'a rien d'automatiquement synonyme de prise de masse. La force est une qualité entraînable par tout le monde, indépendamment du point de départ.",
+      },
     ],
     programmation: [],
     qcm: [],
@@ -568,6 +580,14 @@ const FORCE: NoeudMentorship[] = [
       {
         titre: "Pourquoi l'instabilité change tout",
         texte: "Sur une surface fixe (barre, sol), le corps peut se reposer partiellement sur la structure elle-même. Sur des anneaux, chaque muscle stabilisateur doit rester actif en continu pour corriger les micro-oscillations — ce qui explique pourquoi un mouvement pourtant maîtrisé au sol ou à la barre redevient difficile aux anneaux. Cette exigence supplémentaire n'est pas un obstacle inutile : c'est elle qui construit la résilience articulaire qui protégera l'épaule dans les figures et transitions plus avancées.",
+      },
+      {
+        titre: "Force dans l'alignement, puis force organique",
+        texte: "On distingue le travail de force « dans l'alignement » — où l'effort respecte une posture de référence symétrique — de la force « organique », qui cherche au contraire à sortir de cet alignement pour apprendre au corps à s'adapter et à s'organiser face à une situation nouvelle. La force dans l'alignement est à privilégier en premier (c'est elle que tu as construite jusqu'ici) ; les anneaux, par leur instabilité, commencent déjà à demander cette force plus organique, adaptable, moins dépendante d'une position parfaite.",
+      },
+      {
+        titre: 'Gérer son temps : trois façons de s\'organiser',
+        texte: "À ce stade de la branche, la question de l'organisation de l'entraînement devient concrète. Trois approches existent : l'entraînement focalisé (une seule compétence à la fois, avec plus de récupération entre les séances car les mêmes zones sont sollicitées) ; l'entraînement priorisé (un groupe d'objectifs prioritaires et d'autres secondaires, qui se réorganisent au fur et à mesure des validations) ; l'entraînement diversifié (un objectif différent chaque jour, qui demande une régularité quasi quotidienne mais rend chaque compétence plus longue à approfondir). Aucune n'est meilleure dans l'absolu — c'est à toi de choisir celle qui correspond à ton emploi du temps et à ta patience.",
       },
     ],
     programmation: [],
@@ -618,6 +638,10 @@ const FORCE: NoeudMentorship[] = [
       {
         titre: "Jouer sa peau : s'engager dans la durée",
         texte: "Une compétence de force se perd si elle n'est pas entretenue — c'est particulièrement vrai pour les mouvements avancés comme le muscle up, qui demandent un volume d'entraînement régulier pour rester acquis. S'engager dans ce travail (ce que le document appelle « jouer sa peau », en référence à Nassim Taleb) suppose d'accepter cette exigence sur la durée, pas seulement de viser la première réussite.",
+      },
+      {
+        titre: 'Le Strength Project : de quatre appuis à un seul',
+        texte: "Le sommet de la maîtrise du poids du corps suit une progression précise : quatre appuis, puis trois, puis deux, puis un seul — au sol ou en suspension. Chaque réduction d'appui oblige le corps à réajuster la répartition du poids et l'activation musculaire, renforçant au passage les muscles stabilisateurs et la coordination intermusculaire. Le travail unilatéral de ce niveau (push-up et traction à un bras) est exactement cette dernière marche : l'appui unique, où chaque muscle sollicité doit travailler en parfaite harmonie pour maintenir la position. Ce n'est pas qu'un exercice de force brute — c'est aussi un travail de stabilité articulaire et de conscience corporelle très fine.",
       },
     ],
     programmation: [],
@@ -677,6 +701,10 @@ const FLEXIBILITE: NoeudMentorship[] = [
         titre: 'Étirement statique et dynamique : deux outils différents',
         texte: "La science du sport distingue l'étirement statique (tenu, comme le Jefferson curl) de l'étirement dynamique (en mouvement contrôlé). Le premier construit l'amplitude passive, le second la rend utilisable en action — c'est pour cela que cette branche combine les deux dès le départ plutôt que de se limiter à l'un ou l'autre. Un corps qui n'a que de la souplesse statique reste souvent lent à mobiliser cette amplitude quand le mouvement l'exige réellement.",
       },
+      {
+        titre: 'Flexibilité ou mobilité ? Deux mots, deux réalités',
+        texte: "Ces deux termes sont souvent confondus. La flexibilité désigne la capacité des muscles et des tissus conjonctifs à s'étendre, sur un axe précis. La mobilité, elle, concerne la capacité d'une articulation à bouger librement et sans douleur dans toute son amplitude. On peut être flexible sans être mobile (un muscle qui s'étire bien mais une articulation raide) ou l'inverse. Cette branche travaille les deux ensemble : les routines de mobilité articulaire construisent la mobilité, les étirements tenus construisent la flexibilité — les squats de mobilité de ce niveau (bulgare, pigeon) ciblent spécifiquement l'articulation, pas seulement le muscle.",
+      },
     ],
     programmation: [],
     qcm: [],
@@ -728,6 +756,10 @@ const FLEXIBILITE: NoeudMentorship[] = [
       {
         titre: 'Pourquoi le stretch actif construit plus que de la souplesse',
         texte: "Contracter les muscles autour d'une articulation pendant qu'elle est étirée (stretch actif) entraîne le système nerveux à tolérer et contrôler cette amplitude, pas seulement le tissu à s'allonger. C'est cette différence qui explique pourquoi certaines personnes très souples passivement (jambes qui touchent le sol en grand écart passif) restent incapables de lever la jambe aussi haut activement : la souplesse existe, mais le contrôle moteur pour l'utiliser n'a jamais été construit.",
+      },
+      {
+        titre: 'Trois flexibilités, trois usages',
+        texte: "Au-delà de la distinction actif/passif, il existe une troisième forme : la flexibilité balistique, qui utilise des mouvements rythmiques et rebondissants pour repousser progressivement l'amplitude à chaque rebond. Elle renforce la résilience des tissus musculaires et tendineux face aux forces soudaines, mais demande davantage de précaution (les à-coups mal maîtrisés peuvent blesser). La flexibilité passive, elle, active le système nerveux parasympathique — elle est aussi un outil de récupération et de gestion du stress, pas seulement un moyen de gagner en amplitude.",
       },
     ],
     programmation: [],
@@ -839,6 +871,14 @@ const LOCOMOTION: NoeudMentorship[] = [
         titre: 'Le sol comme partenaire, pas comme obstacle',
         texte: "Le sol est un allié avec lequel on apprend : il guide à travers de nombreux retours sensoriels — équilibre instable, glissements, résistance à la pression. Ces informations révèlent la qualité de l'implication corporelle. Plutôt que de s'imposer à lui, on cherche un compromis, une qualité d'échange avec ce qu'il transmet. Les freins les plus courants sont d'ailleurs souvent mentaux (le regard des autres, le refus du contact avec le sol) avant d'être physiques — il est plus simple de préparer le corps que de déconstruire ces réticences, d'où l'intérêt d'y aller progressivement.",
       },
+      {
+        titre: "Des modes de déplacement organisés par altitude",
+        texte: "Les différents modes de locomotion s'organisent selon une logique d'éloignement vertical du sol : de la reptation (au sol) à la brachiation (suspendu), en passant par la quadrupédie, la bipédie et jusqu'au saut. Chaque mode sollicite le corps différemment et développe une expérience motrice distincte — c'est pourquoi cette branche les explore tous plutôt que de se spécialiser dans un seul registre.",
+      },
+      {
+        titre: "Sortir de la salle : la pratique environnementale",
+        texte: "La Locomotion ne se limite pas à un espace dédié : elle inclut la capacité à interagir avec un environnement réel — urbain ou naturel. Un arbre, un muret, un relief deviennent des partenaires d'entraînement à part entière, ajoutant une dimension d'adaptabilité et de créativité qu'aucune salle ne peut recréer à l'identique. Cette pratique développe en prime la pensée spatiale et la prise de décision rapide : le terrain change, jamais deux séances en extérieur ne se ressemblent vraiment.",
+      },
     ],
     programmation: [],
     qcm: [],
@@ -942,6 +982,10 @@ const LOCOMOTION: NoeudMentorship[] = [
         texte: "Avec le temps et la pratique régulière, chaque pratiquant s'approprie son propre vocabulaire de mouvement et développe un style qui lui est propre — les choix de trajectoire, de rythme et d'engagement varient d'une personne à l'autre. La Locomotion est un terrain d'exploration sans fin : elle ne s'épuise pas, elle évolue avec le pratiquant. Ce niveau ne marque donc pas une fin, mais le moment où le travail dirigé laisse place à une recherche plus personnelle.",
       },
       {
+        titre: "De l'étudiant au chercheur",
+        texte: "Étudier Force, Flexibilité, Locomotion et Connexion séparément, comme tu viens de le faire à travers ces cinq branches, correspond à la démarche de l'étudiant : comprendre chaque secteur en profondeur, un par un. L'étape suivante, celle du chercheur, consiste à explorer les intersections entre ces secteurs — comment la force d'épaule nourrit le handstand, comment la souplesse de hanche libère la quadrupédie. Tu as déjà commencé cette démarche sans le savoir, à chaque fois qu'un lien entre deux branches t'a été signalé dans ce parcours.",
+      },
+      {
         titre: 'Une école du corps, pas une collection de tricks',
         texte: "La Locomotion ne montre pas un « trick » isolé, elle enseigne comment bouger intelligemment. La capacité à lire, décoder et déconstruire les mouvements des autres pratiquants (Injecter, dans le Cycle d'apprentissage) devient à ce niveau aussi importante que la capacité à les exécuter soi-même — c'est elle qui permet de continuer à progresser seul, bien après la fin de ce parcours guidé.",
       },
@@ -995,8 +1039,20 @@ const CONNEXION: NoeudMentorship[] = [
         image: '/mentorship/theorie/fragmenter-handstand.png',
       },
       {
+        titre: 'Connexion externe : le corps qui répond vite et juste',
+        texte: "Au niveau physiologique, la connexion externe consiste à optimiser le contrôle de l'influx nerveux pour améliorer le timing, la précision et la maîtrise du geste. Elle englobe la capacité à coordonner les membres de manière indépendante, à manipuler des objets avec adresse, à synchroniser ses mouvements avec ceux d'un partenaire, et à développer des réflexes rapides face à l'imprévu — exactement ce que travaillent les jeux de dribble et de manipulation de cette branche.",
+      },
+      {
+        titre: 'Connexion interne : rester immobile et présent',
+        texte: "À l'opposé, la connexion interne est la capacité à rester immobile et concentré, connecté à ses propres processus internes — la conscience de soi, la capacité à canaliser son attention, la maîtrise de l'esprit. C'est le registre de la méditation, de la respiration consciente, du tir à l'arc. Une pratique du mouvement complète a besoin des deux : l'externe sans l'interne devient de l'agitation sans direction ; l'interne sans l'externe reste une théorie jamais mise en action.",
+      },
+      {
         titre: "L'équilibre interne au service de l'externe",
         texte: "La Connexion apporte un équilibre entre le contrôle interne (ce que tu ressens et diriges consciemment) et l'expression externe (ce que ton corps produit réellement). Un pratiquant très fort ou très souple mais peu connecté à son corps aura du mal à affiner son geste ; la Connexion est ce qui permet aux autres branches de gagner en précision, pas seulement en amplitude ou en puissance.",
+      },
+      {
+        titre: 'Immobilité et mobilité : le yin et le yang du mouvement',
+        texte: "L'immobilité — comme dans une posture tenue ou un moment de concentration avant un geste précis — est un contrepoids essentiel à la mobilité. Elle permet la prise de conscience corporelle et active le système parasympathique (relaxation, récupération), tandis que la mobilité active le système sympathique et renforce le corps. Une pratique qui ne serait que mouvement, sans jamais de moment d'immobilité consciente, se prive de la moitié de ce que le corps a à offrir.",
       },
       {
         titre: 'Pourquoi cette branche vient en premier dans la priorité',
