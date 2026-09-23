@@ -191,19 +191,19 @@ export const TRONC: NoeudMentorship[] = [
       {
         id: 'standing-actif-1', nom: 'Standing actif 1', videoUrl: 'https://youtu.be/Vfc57qvPhQo',
         consigne: "Position debout, ancré, en réalisant les transitions et engagements proposés dans la vidéo avec lenteur et contrôle — sans précipitation.",
-        critereValidation: "Tenue stable sur toute la séquence, sans perte d'équilibre ni précipitation dans les transitions.",
+        critereValidation: "Voir la vidéo : l'objectif de réalisation y est donné directement.",
         theme: 'recuperation',
       },
       {
         id: 'perfect-breath', nom: 'The perfect breath', videoUrl: 'https://youtu.be/EuTvBdpUbWc',
-        consigne: "Respiration diaphragmatique lente, inspiration par le nez, expiration longue et contrôlée. Rechercher le calme, pas la performance.",
-        critereValidation: "5 minutes de pratique continue, respiration fluide et régulière, sans tension au niveau des épaules ou du cou.",
+        consigne: "Respiration diaphragmatique lente : inspiration ET expiration par le nez, sans passer par la bouche. Rechercher le calme, pas la performance.",
+        critereValidation: "15 minutes de pratique continue, respiration fluide et régulière, sans tension au niveau des épaules ou du cou.",
         theme: 'recuperation',
       },
       {
         id: 'deep-squat', nom: 'Deep squat', videoUrl: 'https://youtu.be/9PJymG3sedc',
-        consigne: "Squat complet, talons au sol, buste le plus vertical possible — rester assis dans la position sans forcer.",
-        critereValidation: "3 séries de 5 minutes cumulées en position, talons au sol en permanence, sans douleur articulaire.",
+        consigne: "Squat complet, talons au sol, buste le plus vertical possible. La tenue peut être passive (relâchée) ou active (engagée), et une récupération est possible entre les séries si besoin — pas d'obligation de rester en continu sans bouger.",
+        critereValidation: "3 séries de 5 minutes cumulées en position (passive ou active, récupération autorisée au besoin), talons au sol en permanence, sans douleur articulaire.",
         theme: 'mobilite',
         outils: [
           { nom: 'Flexion active de cheville', videoUrl: 'https://youtu.be/Q6CHGnGFJRM' },
@@ -214,8 +214,8 @@ export const TRONC: NoeudMentorship[] = [
       },
       {
         id: 'scap-pushup-support', nom: 'Scap push up (protraction) sur support', videoUrl: 'https://youtu.be/GlfSSKJpU-k',
-        consigne: "Bras tendus en appui sur support, mouvement isolé au niveau des omoplates (protraction/rétraction), sans plier les coudes.",
-        critereValidation: "3 séries de 10 répétitions, mouvement localisé aux omoplates, coudes qui restent tendus tout du long.",
+        consigne: "Pieds surélevés sur le support (pas les bras), mains au sol à l'aplomb des épaules, bras tendus. Mouvement isolé au niveau des omoplates (protraction/rétraction), en cherchant l'amplitude la plus complète possible, sans plier les coudes.",
+        critereValidation: "3 séries de 10 répétitions, amplitude complète du mouvement des omoplates, coudes qui restent tendus tout du long, 3 minutes de récupération entre les séries.",
         theme: 'force',
         outils: [
           { nom: 'Routine haut du corps', videoUrl: 'https://youtu.be/V6JDf7t7vPQ' },
@@ -226,14 +226,14 @@ export const TRONC: NoeudMentorship[] = [
       },
       {
         id: 'hollow-hold', nom: 'Hollow hold', videoUrl: 'https://youtu.be/axUNfJyWgWc',
-        consigne: "Jambes et bras tendus et légèrement décollés, respirer sans relâcher la position. Régression : exécuter jambes fléchies, puis les tendre petit à petit à mesure que le contrôle s'installe — tant que les lombaires restent plaqués au sol, c'est valable.",
-        critereValidation: "3 séries de 30 secondes, bas du dos qui ne décolle jamais du sol.",
+        consigne: "Jambes et bras tendus et légèrement décollés. Lombaires écrasés au sol (les omoplates, elles, ne touchent pas le sol), bassin en rétroversion, abdos serrés — sternum et pubis qui se rapprochent, jamais de dos cambré. Respirer sans relâcher la position. Régression : exécuter jambes fléchies, puis les tendre petit à petit à mesure que le contrôle s'installe — tant que les lombaires restent plaqués au sol, c'est valable.",
+        critereValidation: "3 séries de 30 secondes, lombaires plaqués au sol en permanence, bassin en rétroversion, aucune cambrure du dos.",
         theme: 'force',
       },
       {
         id: 'suspension-active-passive-1', nom: 'Suspension active / passive', videoUrl: 'https://youtu.be/1lpOQnht9jI',
-        consigne: "Alterner suspension active (épaule engagée) et passive (relâchée), en gardant le contrôle sur les transitions.",
-        critereValidation: "3 séries de 10 répétitions, transitions actif/passif contrôlées, sans à-coup.",
+        consigne: "Alterner suspension active (omoplates serrées, la tête sort des épaules) et passive (épaules relâchées, la tête rentre entre les épaules, corps complètement relâché), en gardant le contrôle sur les transitions. Grip : le pouce passe par-dessus l'index pour verrouiller la prise. Pour progresser sur le grip en dehors de cet exercice (aucune vidéo dédiée pour l'instant) : serrer fort une balle de tennis et maintenir, ou tenir des objets de plus en plus lourds et maintenir.",
+        critereValidation: "3 séries de 10 répétitions, transitions actif/passif contrôlées, sans à-coup, prise verrouillée (pouce sur l'index).",
         theme: 'force',
       },
     ],
