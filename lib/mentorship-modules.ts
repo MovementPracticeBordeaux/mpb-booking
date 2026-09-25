@@ -407,7 +407,7 @@ export const TRONC: NoeudMentorship[] = [
       },
       {
         titre: 'Ouvrir des portes',
-        texte: "L'armure organique a pour but d'ouvrir des portes. L'exploration commence par l'acquisition de compétences fondamentales, des tremplins vers des objectifs plus avancés — les « Grandes Portes » de ton parcours. Ce niveau termine cette phase : il rend abordables, en même temps, les premiers objectifs des cinq branches. C'est pour cela qu'une fois l'armure organique complète, tu débloques le niveau 1 de Force, Figures, Flexibilité, Locomotion et Connexion en même temps — pas une branche après l'autre.",
+        texte: "L'armure organique a pour but d'ouvrir des portes. L'exploration commence par l'acquisition de compétences fondamentales, des tremplins vers des objectifs plus avancés — les « Grandes Portes » de ton parcours. Ce niveau termine cette phase : il rend abordables, en même temps, les premiers objectifs des cinq branches. C'est pour cela qu'une fois l'armure organique complète, tu débloques le niveau 1 de Force, Figures, Flexibilité, Locomotion et Connexion en même temps — pas une branche après l'autre. Le schéma ci-dessous représente les cinq branches qui s'ouvrent à toi : elles se chevauchent volontairement, car aucune ne se pratique jamais complètement isolée des autres — la « zone passerelle » au centre symbolise tout ce qui les relie, et que tu retrouveras au fil de la théorie de chaque branche.",
         image: '/mentorship/theorie/venn-5-branches.png',
       },
     ],
@@ -539,7 +539,7 @@ const FORCE: NoeudMentorship[] = [
       },
       {
         titre: 'La coiffe des rotateurs, un point aveugle fréquent',
-        texte: "Le rowing et la suspension sollicitent fortement les muscles stabilisateurs profonds de l'épaule (la coiffe des rotateurs), souvent négligés au profit des gros groupes musculaires visibles (pectoraux, dorsaux). Ces stabilisateurs sont pourtant ceux qui protègent l'articulation dans toutes les positions extrêmes que la suite de cette branche va explorer — anneaux, suspension à un bras, transitions. Un déficit ici ne se voit pas immédiatement, mais il finit toujours par limiter la progression ou par provoquer une gêne à l'épaule.",
+        texte: "Le rowing et la suspension sollicitent fortement les muscles stabilisateurs profonds de l'épaule (la coiffe des rotateurs), souvent négligés au profit des gros groupes musculaires visibles (pectoraux, dorsaux). Ces stabilisateurs sont pourtant ceux qui protègent l'articulation dans toutes les positions extrêmes que la suite de cette branche va explorer — anneaux, suspension à un bras, transitions. Un déficit ici ne se voit pas immédiatement, mais il finit toujours par limiter la progression ou par provoquer une gêne à l'épaule. Le schéma ci-dessous montre les deux mouvements opposés de l'omoplate que ce travail engage : la rétraction (elle se rapproche de la colonne, flèches vertes) et la protraction (elle s'en écarte, flèches rouges) — c'est justement leur équilibre l'un par rapport à l'autre, pas seulement leur force individuelle, qui protège l'épaule.",
         image: '/mentorship/theorie/protraction-retraction.png',
       },
       {
@@ -885,7 +885,7 @@ const LOCOMOTION: NoeudMentorship[] = [
       },
       {
         titre: "Le Cycle d'apprentissage, pensé pour la Locomotion",
-        texte: "Le Cycle d'apprentissage (Fragmenter → Assembler → Amplifier → Injecter) concerne toutes les branches, mais c'est en Locomotion qu'il prend tout son sens, car c'est l'exemple même sur lequel il a été pensé : on se constitue d'abord un vocabulaire de base de mouvements isolés (Fragmenter), on étudie ensuite comment créer des liens entre eux, du plus simple au plus complexe (Assembler), puis on utilise ces compétences dans des jeux créatifs et d'expression (Amplifier), avant de réinjecter le tout dans un apprentissage plus vaste (Injecter). Toute cette branche est construite sur cette logique, niveau après niveau.",
+        texte: "Le Cycle d'apprentissage (Fragmenter → Assembler → Amplifier → Injecter) concerne toutes les branches, mais c'est en Locomotion qu'il prend tout son sens, car c'est l'exemple même sur lequel il a été pensé : on se constitue d'abord un vocabulaire de base de mouvements isolés (Fragmenter), on étudie ensuite comment créer des liens entre eux, du plus simple au plus complexe (Assembler), puis on utilise ces compétences dans des jeux créatifs et d'expression (Amplifier), avant de réinjecter le tout dans un apprentissage plus vaste (Injecter). Toute cette branche est construite sur cette logique, niveau après niveau. Le schéma ci-dessous illustre ces quatre étapes dans l'ordre : les fragments brisés du début deviennent des pièces qui s'assemblent, puis un cercle qui s'amplifie vers l'extérieur, avant de se réinjecter dans un nouveau réseau de connexions — une image qui vaut pour ce niveau comme pour les deux suivants.",
         image: '/mentorship/theorie/cycle-apprentissage.png',
       },
       {
@@ -1051,12 +1051,12 @@ const CONNEXION: NoeudMentorship[] = [
       },
       {
         titre: 'Contenu et contenant : la dualité du mouvement',
-        texte: "Le travail de Rudolf Laban, pionnier de l'analyse du mouvement, distingue le « contenant » d'un mouvement (sa forme visible, ce qui permet de le reconnaître et de le nommer) et son « contenu » (l'intention et les qualités déployées pour le réaliser — coordination, force, équilibre, mémorisation). Un même contenant peut être rempli de contenus très différents selon le niveau du pratiquant : deux personnes qui font « le même » mouvement ne recrutent jamais exactement les mêmes qualités avec la même intensité.",
+        texte: "Le travail de Rudolf Laban, pionnier de l'analyse du mouvement, distingue le « contenant » d'un mouvement (sa forme visible, ce qui permet de le reconnaître et de le nommer) et son « contenu » (l'intention et les qualités déployées pour le réaliser — coordination, force, équilibre, mémorisation). Un même contenant peut être rempli de contenus très différents selon le niveau du pratiquant : deux personnes qui font « le même » mouvement ne recrutent jamais exactement les mêmes qualités avec la même intensité. Le schéma ci-dessous prend l'exemple du biceps curl : le grand cercle sombre est le contenant (le mouvement tel qu'on le voit de l'extérieur), et la part découpée en couches est son contenu — un noyau (la qualité majeure, ici la force du bras) entouré de couches secondaires.",
         image: '/mentorship/theorie/fragmenter-biceps-curl.png',
       },
       {
         titre: 'Qualités majeures et qualités mineures',
-        texte: "Chaque mouvement recrute une qualité majeure (son noyau) entourée de qualités mineures. Un biceps curl sollicite principalement la force du bras, avec très peu de couches autour. Un handstand, à l'inverse, recrute un nombre de qualités bien supérieur — équilibre, force d'épaule, mobilité de poignet, contrôle postural, concentration — empilées en couches successives. Apprendre à repérer cette différence, c'est apprendre à juger correctement la difficulté réelle d'un mouvement avant de s'y lancer.",
+        texte: "Chaque mouvement recrute une qualité majeure (son noyau) entourée de qualités mineures. Un biceps curl sollicite principalement la force du bras, avec très peu de couches autour. Un handstand, à l'inverse, recrute un nombre de qualités bien supérieur — équilibre, force d'épaule, mobilité de poignet, contrôle postural, concentration — empilées en couches successives. Apprendre à repérer cette différence, c'est apprendre à juger correctement la difficulté réelle d'un mouvement avant de s'y lancer. Compare le schéma ci-dessous à celui du biceps curl juste au-dessus : le même principe de contenant/contenu s'applique, mais avec beaucoup plus de couches empilées au centre — la preuve visuelle qu'un handstand est un mouvement bien plus complexe à décomposer.",
         image: '/mentorship/theorie/fragmenter-handstand.png',
       },
       {
@@ -1284,7 +1284,7 @@ const FIGURES: NoeudMentorship[] = [
       },
       {
         titre: "L'endurance de position, avant l'autonomie",
-        texte: "Le handstand ventre au mur expose davantage à la sensation de bascule que dos au mur — il construit l'endurance de la position avant de chercher à s'en éloigner en niveau 3. C'est la même logique de progression que partout ailleurs dans l'arbre : sécuriser une compétence avant de retirer les aides qui la soutenaient.",
+        texte: "Le handstand ventre au mur expose davantage à la sensation de bascule que dos au mur — il construit l'endurance de la position avant de chercher à s'en éloigner en niveau 3. C'est la même logique de progression que partout ailleurs dans l'arbre : sécuriser une compétence avant de retirer les aides qui la soutenaient. Le graphique ci-dessous illustre cette logique dans le temps : le volume de conditionnement (le travail de fond, en bleu) reste présent tout du long mais diminue progressivement, pendant que les drills spécifiques (en orange) prennent le relais, jusqu'à ce que le handstand en équilibre libre (en vert) devienne possible — les trois phases se chevauchent, elles ne se remplacent jamais brutalement.",
         image: '/mentorship/theorie/progression-handstand-volume.png',
       },
       {
@@ -1293,7 +1293,7 @@ const FIGURES: NoeudMentorship[] = [
       },
       {
         titre: "L'appui manuel, une compétence à part entière",
-        texte: "Prendre appui sur les mains sollicite une mobilité de poignet particulière, différente de tout ce qui est demandé dans la vie quotidienne. Cette mobilité se construit progressivement avec le volume d'exposition — c'est pour cela que les figures sur les mains (L-sit, elbow lever, handstand) sont réparties sur plusieurs niveaux plutôt que regroupées d'un coup : le poignet a besoin de temps pour s'adapter à cette charge inhabituelle.",
+        texte: "Prendre appui sur les mains sollicite une mobilité de poignet particulière, différente de tout ce qui est demandé dans la vie quotidienne. Cette mobilité se construit progressivement avec le volume d'exposition — c'est pour cela que les figures sur les mains (L-sit, elbow lever, handstand) sont réparties sur plusieurs niveaux plutôt que regroupées d'un coup : le poignet a besoin de temps pour s'adapter à cette charge inhabituelle. Le schéma ci-dessous montre pourquoi : à plat sur la main, environ 55% du poids passe par les doigts et 45% par la paume — un équilibre très différent de la marche ou de la préhension, que seul un travail progressif permet d'intégrer sans douleur.",
         image: '/mentorship/theorie/repartition-poids-main.png',
       },
     ],
@@ -1334,7 +1334,7 @@ const FIGURES: NoeudMentorship[] = [
     theorie: [
       {
         titre: 'Inversion et station debout : perspectives complémentaires',
-        texte: "Le handstand libre offre une perspective unique qui défie l'équilibre et la perception habituelle. Il est complété par la station debout, notre état le plus naturel — la pratique de l'inversion stimule le système vestibulaire et les circulations, tandis que la station debout renforce la capacité à s'ancrer et interagir avec l'environnement. Un pratiquant qui ne travaille que l'un des deux perd la complémentarité entre les deux états. Le handstand pousse la flexion d'épaule à son maximum (180°, bras au-dessus de la tête) : c'est cette amplitude, construite dès les premiers niveaux de Figures, qui rend la position tenable sans compensation dans le bas du dos.",
+        texte: "Le handstand libre offre une perspective unique qui défie l'équilibre et la perception habituelle. Il est complété par la station debout, notre état le plus naturel — la pratique de l'inversion stimule le système vestibulaire et les circulations, tandis que la station debout renforce la capacité à s'ancrer et interagir avec l'environnement. Un pratiquant qui ne travaille que l'un des deux perd la complémentarité entre les deux états. Le schéma ci-dessous situe précisément cette amplitude : le handstand pousse la flexion d'épaule jusqu'à son maximum (180°, bras au-dessus de la tête, en haut du schéma) — bien au-delà de l'extension (60° environ, bras vers l'arrière, en bas). C'est cette amplitude en flexion, construite dès les premiers niveaux de Figures, qui rend la position tenable sans compensation dans le bas du dos.",
         image: '/mentorship/theorie/flexion-extension-epaule.png',
       },
       {
