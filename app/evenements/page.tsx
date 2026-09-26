@@ -39,12 +39,12 @@ export default async function EvenementsPage() {
           }}
         >
           <p style={{ fontSize: 12, color: '#f0a', fontWeight: 700, letterSpacing: 0.5, marginBottom: 6, textTransform: 'uppercase' }}>
-            {new Date(e.date_debut).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+            {new Date(e.date_debut).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', weekday: 'long', day: 'numeric', month: 'long'  })}
           </p>
           <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 22, margin: '0 0 8px', letterSpacing: 0.3 }}>{e.titre}</h2>
           <p style={{ fontSize: 13, color: COULEURS.texteAtt, margin: '0 0 10px' }}>
-            {new Date(e.date_debut).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} –{' '}
-            {new Date(e.date_fin).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} · {e.lieu}
+            {new Date(e.date_debut).toLocaleTimeString('fr-FR', { timeZone: 'Europe/Paris', hour: '2-digit', minute: '2-digit'  })} –{' '}
+            {new Date(e.date_fin).toLocaleTimeString('fr-FR', { timeZone: 'Europe/Paris', hour: '2-digit', minute: '2-digit'  })} · {e.lieu}
           </p>
           <p style={{ fontSize: 15, fontWeight: 700 }}>{e.prix} €</p>
         </a>

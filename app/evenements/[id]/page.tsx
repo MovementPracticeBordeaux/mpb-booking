@@ -39,14 +39,14 @@ export default async function EvenementDetailPage({ params }: { params: { id: st
       <a href="/evenements" style={{ fontSize: 13, color: COULEURS.texteAtt, textDecoration: 'none' }}>← Tous les événements</a>
 
       <p style={{ fontSize: 12, color: '#f0a', fontWeight: 700, letterSpacing: 0.5, margin: '16px 0 6px', textTransform: 'uppercase' }}>
-        {new Date(e.date_debut).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+        {new Date(e.date_debut).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'  })}
       </p>
       <h1 style={{ fontFamily: POLICE_DISPLAY, letterSpacing: 0.5, margin: '0 0 16px' }}>{e.titre}</h1>
 
       <div style={{ border: `1px solid ${COULEURS.bordure}`, borderRadius: 16, padding: 20, marginBottom: 20, background: COULEURS.surface }}>
         <p style={{ fontSize: 14, margin: '0 0 8px' }}>
-          🕐 {new Date(e.date_debut).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} –{' '}
-          {new Date(e.date_fin).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+          🕐 {new Date(e.date_debut).toLocaleTimeString('fr-FR', { timeZone: 'Europe/Paris', hour: '2-digit', minute: '2-digit'  })} –{' '}
+          {new Date(e.date_fin).toLocaleTimeString('fr-FR', { timeZone: 'Europe/Paris', hour: '2-digit', minute: '2-digit'  })}
         </p>
         <p style={{ fontSize: 14, margin: '0 0 8px' }}>📍 {e.lieu}</p>
         {estAbonne ? (
@@ -66,7 +66,7 @@ export default async function EvenementDetailPage({ params }: { params: { id: st
         <BoutonPayerEvenement evenementId={e.id} prix={prixAffiche} />
       ) : (
         <a
-          href={`https://wa.me/33620477064?text=${encodeURIComponent(`Bonjour, je souhaite réserver ma place pour "${e.titre}" le ${new Date(e.date_debut).toLocaleDateString('fr-FR')} (${prixAffiche} €).`)}`}
+          href={`https://wa.me/33620477064?text=${encodeURIComponent(`Bonjour, je souhaite réserver ma place pour "${e.titre}" le ${new Date(e.date_debut).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' })} (${prixAffiche} €).`)}`}
           target="_blank"
           rel="noopener noreferrer"
           style={{

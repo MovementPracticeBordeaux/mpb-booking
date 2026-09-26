@@ -59,7 +59,7 @@ export default async function AdminEvenementsPage({ searchParams }: { searchPara
           return (
           <details key={e.id} style={{ borderBottom: '1px solid #333', padding: '10px 0' }}>
             <summary style={{ fontSize: 13, cursor: 'pointer' }}>
-              {new Date(e.date_debut).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })} · {e.titre} · {e.prix} €
+              {new Date(e.date_debut).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', weekday: 'short', day: 'numeric', month: 'short'  })} · {e.titre} · {e.prix} €
               {' · '}{inscrits.length} inscrit{inscrits.length !== 1 ? 's' : ''}
               {!e.actif && ' · (masqué)'}
               {!e.stripe_price_id && ' · ⚠️ paiement en ligne non configuré'}

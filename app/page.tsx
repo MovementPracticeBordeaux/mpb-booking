@@ -63,7 +63,7 @@ export default async function AccueilPage() {
           <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: 0.3 }}>
             <span style={{ display: 'inline-block', animation: 'pulse-evenement 1.8s ease-in-out infinite' }}>🔴</span>
             {' '}Prochain événement — {evenementAVenir.titre} ·{' '}
-            {new Date(evenementAVenir.date_debut).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}{' '}
+            {new Date(evenementAVenir.date_debut).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', weekday: 'long', day: 'numeric', month: 'long'  })}{' '}
             · {evenementAVenir.prix} € — Voir les détails →
           </span>
         </a>
