@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { Zap, Moon, Wind, HeartPulse, Eye, Mountain, Play, BookOpen, NotebookText, Wrench, ChevronRight, Video, Send, Lock, Clock, Check, X } from 'lucide-react';
+import { Zap, Moon, Wind, HeartPulse, Eye, Mountain, Play, BookOpen, NotebookText, Wrench, ChevronRight, Video, Send, Lock, Clock, Check, X, Lightbulb, FlaskConical, Target } from 'lucide-react';
 import {
   ORDRE_DOMAINES,
   DOMAINE_LABELS,
@@ -13,6 +13,7 @@ import {
   DomaineOuTronc,
   NoeudMentorshipPublic,
   ExerciceMentorship,
+  FragmentTheorie,
   PalierFlamme,
   XP_BONUS_DEFI_QUOTIDIEN,
   estNoeudAcquisDepuisProgression,
@@ -1231,21 +1232,7 @@ export default function ArbreCompetences({
                         {!noeud.contenuDefini && noeud.theorie.length === 0 ? (
                           <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: 0 }}>Théorie à venir pour ce niveau.</p>
                         ) : (
-                          <>
-                            {noeud.objectifPedagogique && (
-                              <p style={{ fontSize: 13, color: COULEURS.texteFaible, fontStyle: 'italic', margin: '0 0 12px' }}>Objectif : {noeud.objectifPedagogique}</p>
-                            )}
-                            {noeud.theorie.map((t) => (
-                              <div key={t.titre} style={{ marginBottom: 12, borderLeft: `2px solid ${couleur}`, paddingLeft: 12 }}>
-                                <p style={{ fontSize: 13, fontWeight: 600, margin: 0, color: COULEURS.texte }}>{t.titre}</p>
-                                <p style={{ fontSize: 13, color: COULEURS.texteAtt, lineHeight: 1.7, margin: '4px 0 0' }}>{t.texte}</p>
-                                {t.image && (
-                                  /* eslint-disable-next-line @next/next/no-img-element */
-                                  <img src={t.image} alt={t.titre} style={{ maxWidth: '100%', borderRadius: 8, marginTop: 10, display: 'block' }} />
-                                )}
-                              </div>
-                            ))}
-                          </>
+                          <BlocTheorie theorie={noeud.theorie} couleur={couleur} objectif={noeud.objectifPedagogique} />
                         )}
                       </div>
                     )}
@@ -1497,16 +1484,7 @@ export default function ArbreCompetences({
                 <div key={n.id} style={{ marginBottom: 28 }}>
                   <span style={{ fontSize: 11, color: couleur, letterSpacing: 1, fontWeight: 600 }}>{label.toUpperCase()} · NIVEAU {n.niveau}</span>
                   <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 17, margin: '2px 0 10px', color: COULEURS.texte }}>{n.titre}</p>
-                  {n.theorie.map((t) => (
-                    <div key={t.titre} style={{ marginBottom: 12, borderLeft: `2px solid ${couleur}`, paddingLeft: 14 }}>
-                      <p style={{ fontSize: 13, fontWeight: 600, margin: 0, color: COULEURS.texte }}>{t.titre}</p>
-                      <p style={{ fontSize: 13, color: COULEURS.texteAtt, lineHeight: 1.7, margin: '4px 0 0' }}>{t.texte}</p>
-                      {t.image && (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img src={t.image} alt={t.titre} style={{ maxWidth: '100%', borderRadius: 8, marginTop: 10, display: 'block' }} />
-                      )}
-                    </div>
-                  ))}
+                  <BlocTheorie theorie={n.theorie} couleur={couleur} objectif={n.objectifPedagogique} />
                 </div>
               );
             });
@@ -1912,6 +1890,89 @@ function FeuilleModale({ onFermer, children }: { onFermer: () => void; children:
 // des pilules "outils pour progresser" (rectangles larges avec nom + icône
 // jouer) pour qu'on ne les confonde plus : ici un simple indicateur d'état,
 // pas un bouton avec un nom dessus.
+// Rendu commun de la théorie d'un nœud (vue chemin, onglet Théorie global,
+// fenêtre de nœud) : objectif du niveau, sommaire numéroté, puis chaque
+// section avec numéro, titre, accroche, paragraphes, image encadrée et
+// légendée (largeur limitée, jamais pleine largeur), encadré « À retenir »
+// et source en pied de section.
+function BlocTheorie({ theorie, couleur, objectif }: { theorie: FragmentTheorie[]; couleur: string; objectif?: string }) {
+  const num = (i: number) => String(i + 1).padStart(2, '0');
+  return (
+    <div>
+      {objectif && (
+        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '12px 14px', borderRadius: 10, border: `1px solid ${BORDURE_PANNEAU}`, marginBottom: 18 }}>
+          <Target size={18} color={couleur} style={{ flexShrink: 0, marginTop: 1 }} />
+          <div>
+            <p style={{ margin: 0, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: couleur, fontWeight: 600 }}>Objectif du niveau</p>
+            <p style={{ margin: '3px 0 0', fontSize: 13.5, lineHeight: 1.6, color: COULEURS.texte }}>{objectif}</p>
+          </div>
+        </div>
+      )}
+
+      {theorie.length > 2 && (
+        <div style={{ marginBottom: 22 }}>
+          <p style={{ margin: '0 0 8px', fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', color: COULEURS.texteFaible, fontWeight: 600 }}>Au programme</p>
+          <ol style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 5 }}>
+            {theorie.map((t, i) => (
+              <li key={t.titre} style={{ display: 'flex', gap: 10, alignItems: 'baseline', fontSize: 13, color: COULEURS.texteAtt }}>
+                <span style={{ fontFamily: POLICE_DISPLAY, fontSize: 12, color: couleur, minWidth: 20 }}>{num(i)}</span>
+                <a href={`#theorie-${num(i)}`} style={{ color: 'inherit', textDecoration: 'none' }}>{t.titre}</a>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+
+      {theorie.map((t, i) => (
+        <section key={t.titre} id={`theorie-${num(i)}`} style={{ paddingTop: i === 0 ? 0 : 20, marginTop: i === 0 ? 0 : 20, borderTop: i === 0 ? 'none' : `1px solid ${COULEURS.bordure}`, scrollMarginTop: 90 }}>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+            <span style={{ fontFamily: POLICE_DISPLAY, fontSize: 22, lineHeight: 1, color: couleur, opacity: 0.9, minWidth: 30 }}>{num(i)}</span>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <h3 style={{ fontFamily: POLICE_DISPLAY, fontSize: 17, fontWeight: 400, letterSpacing: '0.02em', margin: 0, color: COULEURS.texte, lineHeight: 1.25 }}>{t.titre}</h3>
+              {t.sousTitre && (
+                <p style={{ margin: '4px 0 0', fontSize: 12.5, fontStyle: 'italic', color: couleur, lineHeight: 1.45 }}>{t.sousTitre}</p>
+              )}
+            </div>
+          </div>
+
+          <div style={{ marginTop: 10 }}>
+            {t.texte.split(/\n\s*\n/).map((para, k) => (
+              <p key={k} style={{ fontSize: 13.5, color: COULEURS.texteAtt, lineHeight: 1.75, margin: k === 0 ? 0 : '10px 0 0' }}>{para}</p>
+            ))}
+          </div>
+
+          {t.image && (
+            <figure style={{ margin: '16px auto 0', width: 'min(100%, 440px)' }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={t.image} alt={t.legende ?? t.titre} style={{ display: 'block', margin: '0 auto', width: 'auto', height: 'auto', maxWidth: '100%', maxHeight: 460, borderRadius: 10 }} />
+              {t.legende && (
+                <figcaption style={{ marginTop: 6, fontSize: 11.5, fontStyle: 'italic', color: COULEURS.texteFaible, textAlign: 'center', lineHeight: 1.5 }}>{t.legende}</figcaption>
+              )}
+            </figure>
+          )}
+
+          {t.aRetenir && (
+            <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginTop: 14, padding: '10px 12px', borderRadius: 8, borderLeft: `3px solid ${couleur}`, background: `${couleur}12` }}>
+              <Lightbulb size={16} color={couleur} style={{ flexShrink: 0, marginTop: 2 }} />
+              <div>
+                <p style={{ margin: 0, fontSize: 10.5, letterSpacing: 1, textTransform: 'uppercase', color: couleur, fontWeight: 600 }}>À retenir</p>
+                <p style={{ margin: '2px 0 0', fontSize: 13, lineHeight: 1.55, color: COULEURS.texte }}>{t.aRetenir}</p>
+              </div>
+            </div>
+          )}
+
+          {t.source && (
+            <p style={{ display: 'flex', gap: 6, alignItems: 'flex-start', margin: '10px 0 0', fontSize: 11, lineHeight: 1.5, color: COULEURS.texteFaible }}>
+              <FlaskConical size={13} style={{ flexShrink: 0, marginTop: 1 }} />
+              <span>Source : {t.source}</span>
+            </p>
+          )}
+        </section>
+      ))}
+    </div>
+  );
+}
+
 function StatutExercicePastille({ statut, estOutilSante, couleur }: { statut: 'locked' | 'a_faire' | 'en_attente' | 'acquis' | 'refuse'; estOutilSante?: boolean; couleur?: string }) {
   const map = {
     locked: { Icone: Lock, couleur: COULEURS.texteFaible, titre: 'Verrouillé' },
@@ -2317,18 +2378,9 @@ function PanneauNoeud({
       ) : (
         <>
           <p style={{ color: COULEURS.texteAtt, fontSize: 14, lineHeight: 1.6, marginTop: 8 }}>{noeud.resume}</p>
-          <p style={{ color: COULEURS.texteFaible, fontSize: 13, fontStyle: 'italic', marginTop: 4 }}>Objectif : {noeud.objectifPedagogique}</p>
-
-          {noeud.theorie.map((t) => (
-            <div key={t.titre} style={{ marginTop: 14, borderLeft: `2px solid ${couleur}`, paddingLeft: 14 }}>
-              <p style={{ fontSize: 13, fontWeight: 600, margin: 0, color: COULEURS.texte }}>{t.titre}</p>
-              <p style={{ fontSize: 13, color: COULEURS.texteAtt, lineHeight: 1.7, margin: '4px 0 0' }}>{t.texte}</p>
-              {t.image && (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={t.image} alt={t.titre} style={{ maxWidth: '100%', borderRadius: 8, marginTop: 10, display: 'block' }} />
-              )}
-            </div>
-          ))}
+          <div style={{ marginTop: 14 }}>
+            <BlocTheorie theorie={noeud.theorie} couleur={couleur} objectif={noeud.objectifPedagogique} />
+          </div>
 
           {noeud.programmation.length > 0 && (
             <div style={{ marginTop: 16 }}>
