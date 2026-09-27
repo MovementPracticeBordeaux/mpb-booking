@@ -280,8 +280,12 @@ export async function attribuerFormule(formData: FormData) {
 
   const eleveId = formData.get('eleve_id') as string;
   const formuleNom = formData.get('formule_nom') as string;
-  const paye = formData.get('paye') === 'on';
-  const montant = Number(formData.get('montant') ?? 0);
+  const moyenPaiement = (formData.get('moyen_paiement') as string) || 'especes';
+  if (!['especes', 'virement', 'carte', 'offert'].includes(moyenPaiement)) echouer('/admin/eleves', 'Moyen de paiement invalide.');
+  const paye = moyenPaiement !== 'offert';
+  const montant = Number(formData.get('montant') || 0);
+  // Sans montant, un abonnement payé comptait 0 € dans les statistiques.
+  if (paye && !(montant > 0)) echouer('/admin/eleves', 'Indique le montant reçu (ou choisis « Offert »).');
   const branche1 = (formData.get('branche_1') as string) || '';
   const branche2 = (formData.get('branche_2') as string) || '';
 
@@ -340,6 +344,7 @@ export async function attribuerFormule(formData: FormData) {
     montant: paye ? montant : 0,
     origine: 'manuel',
     paye,
+    moyen_paiement: moyenPaiement,
   });
   if (errPaiement) echouer('/admin/eleves', errPaiement.message);
 

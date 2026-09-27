@@ -21,7 +21,7 @@ export default async function AdminStatistiquesPage() {
   // compteurs comptent des ABONNEMENTS, pas des élèves distincts.
   const { data: abonnements } = await admin.from('abonnements').select('categorie, formule_nom').eq('abonnement_actif', true);
   const { data: coursListe } = await admin.from('cours').select('*').eq('actif', true).order('semaine').order('jour_semaine').order('heure_debut');
-  const { data: paiementsTous } = await admin.from('paiements').select('montant, created_at, paye, rembourse');
+  const { data: paiementsTous } = await admin.from('paiements').select('montant, created_at, paye, rembourse, moyen_paiement');
   const { data: reservationsTotales } = await admin.from('reservations').select('cours_id').eq('statut', 'confirmee');
 
   const nbAbonnementsActifs = (abonnements ?? []).length;
@@ -53,6 +53,17 @@ export default async function AdminStatistiquesPage() {
     if (!p.paye || p.rembourse) continue;
     const mois = (p.created_at as string).slice(0, 7); // YYYY-MM
     revenusParMois.set(mois, (revenusParMois.get(mois) ?? 0) + Number(p.montant));
+  }
+  // Répartition par moyen de paiement (nouveau site uniquement, l'historique
+  // Wix n'a pas ce détail), sur le mois en cours et au total.
+  const moisCourant = new Date().toISOString().slice(0, 7);
+  const LIBELLE_MOYEN: Record<string, string> = { carte: '💳 Carte', especes: '💶 Espèces', virement: '🏦 Virement' };
+  const parMoyen = { mois: new Map<string, number>(), total: new Map<string, number>() };
+  for (const p of paiementsTous ?? []) {
+    if (!p.paye || p.rembourse || !Number(p.montant)) continue;
+    const moyen = p.moyen_paiement ?? 'carte';
+    parMoyen.total.set(moyen, (parMoyen.total.get(moyen) ?? 0) + Number(p.montant));
+    if ((p.created_at as string).startsWith(moisCourant)) parMoyen.mois.set(moyen, (parMoyen.mois.get(moyen) ?? 0) + Number(p.montant));
   }
   const moisTries = [...revenusParMois.entries()].sort(([a], [b]) => a.localeCompare(b)).slice(-13);
   const maxRevenu = Math.max(1, ...moisTries.map(([, m]) => m));
@@ -166,6 +177,20 @@ export default async function AdminStatistiquesPage() {
             <span><span style={{ color: '#888' }}>●</span> Ancien site (Wix)</span>
             <span><span style={{ color: '#f0a' }}>●</span> Nouveau site</span>
           </div>
+          {parMoyen.total.size > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, marginTop: 10 }}>
+              {(['mois', 'total'] as const).map((periode) => (
+                <div key={periode} style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
+                  <span style={{ opacity: 0.6, width: 70 }}>{periode === 'mois' ? 'Ce mois' : 'Depuis le lancement'}</span>
+                  {['carte', 'especes', 'virement'].filter((m) => parMoyen[periode].get(m)).map((m) => (
+                    <span key={m} style={{ border: '1px solid #333', borderRadius: 999, padding: '3px 10px' }}>
+                      {LIBELLE_MOYEN[m]} · {parMoyen[periode].get(m)!.toLocaleString('fr-FR')} €
+                    </span>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

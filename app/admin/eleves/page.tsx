@@ -114,10 +114,13 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
               <option key={b.cle} value={b.cle}>{b.nom}</option>
             ))}
           </select>
-          <label style={{ fontSize: 13 }}>
-            <input type="checkbox" name="paye" defaultChecked /> Payé
-          </label>
-          <input type="number" step="0.01" name="montant" placeholder="Montant reçu (€) — laisser vide si offert" />
+          <select name="moyen_paiement" defaultValue="especes">
+            <option value="especes">💶 Espèces</option>
+            <option value="virement">🏦 Virement</option>
+            <option value="carte">💳 Carte (TPE)</option>
+            <option value="offert">🎁 Offert</option>
+          </select>
+          <input type="number" step="0.01" min="0" name="montant" placeholder="Montant reçu (€)" />
           <button type="submit">Attribuer</button>
         </form>
       </section>

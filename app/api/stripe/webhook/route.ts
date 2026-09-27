@@ -160,6 +160,7 @@ export async function POST(req: NextRequest) {
         eleve_id: userId,
         formule_nom: formuleNom,
         montant: (session.amount_total ?? 0) / 100, // Stripe donne le montant en centimes
+        moyen_paiement: 'carte',
         origine: 'stripe',
         paye: true,
         stripe_session_id: session.id,
