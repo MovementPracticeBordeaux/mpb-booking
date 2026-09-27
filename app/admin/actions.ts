@@ -293,6 +293,7 @@ export async function attribuerFormule(formData: FormData) {
 
   const formule = FORMULES[formuleNom];
   if (!formule) echouer('/admin/eleves', 'Formule inconnue.');
+  if (formule.retiree) echouer('/admin/eleves', "Cette formule n'est plus proposée.");
 
   // Seules les anciennes formules par branche (mentorship_1branche_*,
   // mentorship_2branches_*) ont besoin d'une branche précisée -- toutes les

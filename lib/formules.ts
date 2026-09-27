@@ -25,6 +25,9 @@ export type Formule = {
   quota: number | null; // null = illimité, pas de décompte
   validiteMois: number;
   prixIndicatif: number; // en euros
+  // Formule plus proposée : conservée uniquement pour les abonnements déjà
+  // existants (affichage, factures), jamais proposée à l'attribution.
+  retiree?: boolean;
 };
 
 // --- Réglages du Mentorat (refonte en cours) ---
@@ -68,7 +71,7 @@ export const FORMULES: Record<string, Formule> = {
   // Ancienne formule Mentorship (un seul pass 3 mois à 599€) : conservée
   // uniquement pour les élèves qui l'ont déjà en base (factures, accès en
   // cours). Ne plus vendre — retirée de la page /tarifs.
-  mentorship: { nom: 'Mentorat (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 599 },
+  mentorship: { nom: 'Mentorat (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 599 , retiree: true },
 
   // Anciennes formules Mentorat par branche (1 ou 2 branches au choix), puis
   // par palier (Armure/Niveau 1/2/Complet) : deux tentatives précédentes,
@@ -76,24 +79,24 @@ export const FORMULES: Record<string, Formule> = {
   // palier va à l'encontre de la logique de progression continue de l'arbre.
   // Conservées uniquement pour les élèves qui les ont déjà en base -- ne
   // plus vendre, retirées de /tarifs et de la page /mentorat.
-  mentorship_1branche_3: { nom: 'Mentorat — 1 branche — 3 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 249 },
-  mentorship_1branche_6: { nom: 'Mentorat — 1 branche — 6 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 6, prixIndicatif: 449 },
-  mentorship_1branche_12: { nom: 'Mentorat — 1 branche — 12 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 12, prixIndicatif: 799 },
-  mentorship_2branches_3: { nom: 'Mentorat — 2 branches — 3 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 329 },
-  mentorship_2branches_6: { nom: 'Mentorat — 2 branches — 6 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 6, prixIndicatif: 599 },
-  mentorship_2branches_12: { nom: 'Mentorat — 2 branches — 12 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 12, prixIndicatif: 999 },
-  mentorship_armure_3: { nom: 'Mentorat — Armure Organique — 3 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 99 },
-  mentorship_armure_6: { nom: 'Mentorat — Armure Organique — 6 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 6, prixIndicatif: 169 },
-  mentorship_armure_12: { nom: 'Mentorat — Armure Organique — 12 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 12, prixIndicatif: 299 },
-  mentorship_niveau1_3: { nom: 'Mentorat — Niveau 1 — 3 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 199 },
-  mentorship_niveau1_6: { nom: 'Mentorat — Niveau 1 — 6 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 6, prixIndicatif: 349 },
-  mentorship_niveau1_12: { nom: 'Mentorat — Niveau 1 — 12 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 12, prixIndicatif: 599 },
-  mentorship_niveau2_3: { nom: 'Mentorat — Niveau 2 — 3 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 289 },
-  mentorship_niveau2_6: { nom: 'Mentorat — Niveau 2 — 6 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 6, prixIndicatif: 499 },
-  mentorship_niveau2_12: { nom: 'Mentorat — Niveau 2 — 12 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 12, prixIndicatif: 849 },
-  mentorship_complet_3: { nom: 'Mentorat — Complet (Niveau 3) — 3 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 379 },
-  mentorship_complet_6: { nom: 'Mentorat — Complet (Niveau 3) — 6 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 6, prixIndicatif: 649 },
-  mentorship_complet_12: { nom: 'Mentorat — Complet (Niveau 3) — 12 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 12, prixIndicatif: 1099 },
+  mentorship_1branche_3: { nom: 'Mentorat — 1 branche — 3 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 249 , retiree: true },
+  mentorship_1branche_6: { nom: 'Mentorat — 1 branche — 6 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 6, prixIndicatif: 449 , retiree: true },
+  mentorship_1branche_12: { nom: 'Mentorat — 1 branche — 12 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 12, prixIndicatif: 799 , retiree: true },
+  mentorship_2branches_3: { nom: 'Mentorat — 2 branches — 3 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 329 , retiree: true },
+  mentorship_2branches_6: { nom: 'Mentorat — 2 branches — 6 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 6, prixIndicatif: 599 , retiree: true },
+  mentorship_2branches_12: { nom: 'Mentorat — 2 branches — 12 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 12, prixIndicatif: 999 , retiree: true },
+  mentorship_armure_3: { nom: 'Mentorat — Armure Organique — 3 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 99 , retiree: true },
+  mentorship_armure_6: { nom: 'Mentorat — Armure Organique — 6 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 6, prixIndicatif: 169 , retiree: true },
+  mentorship_armure_12: { nom: 'Mentorat — Armure Organique — 12 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 12, prixIndicatif: 299 , retiree: true },
+  mentorship_niveau1_3: { nom: 'Mentorat — Niveau 1 — 3 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 199 , retiree: true },
+  mentorship_niveau1_6: { nom: 'Mentorat — Niveau 1 — 6 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 6, prixIndicatif: 349 , retiree: true },
+  mentorship_niveau1_12: { nom: 'Mentorat — Niveau 1 — 12 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 12, prixIndicatif: 599 , retiree: true },
+  mentorship_niveau2_3: { nom: 'Mentorat — Niveau 2 — 3 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 289 , retiree: true },
+  mentorship_niveau2_6: { nom: 'Mentorat — Niveau 2 — 6 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 6, prixIndicatif: 499 , retiree: true },
+  mentorship_niveau2_12: { nom: 'Mentorat — Niveau 2 — 12 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 12, prixIndicatif: 849 , retiree: true },
+  mentorship_complet_3: { nom: 'Mentorat — Complet (Niveau 3) — 3 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 379 , retiree: true },
+  mentorship_complet_6: { nom: 'Mentorat — Complet (Niveau 3) — 6 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 6, prixIndicatif: 649 , retiree: true },
+  mentorship_complet_12: { nom: 'Mentorat — Complet (Niveau 3) — 12 mois (ancienne formule)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 12, prixIndicatif: 1099 , retiree: true },
 
   // Nouveau modèle, simplifié après discussion : un seul niveau d'accès,
   // différencié uniquement par la durée -- pas de palier payant. L'élève

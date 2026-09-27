@@ -1,6 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase-server';
 import { attribuerFormule, suspendreAcces, decompterCoaching, modifierQuotaRestant, modifierExpiration, gelerPass, degelerPass, definirDateReprise, modifierPrenomEleveAdmin, rembourserPaiement, creerEleve } from '../actions';
-import { FORMULES, BRANCHES_MENTORAT } from '@/lib/formules';
+import { FORMULES } from '@/lib/formules';
 import ListeElevesRepliable from '../ListeElevesRepliable';
 import ListePaiementsRepliable from '../ListePaiementsRepliable';
 
@@ -93,26 +93,10 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
               ))}
             </optgroup>
             <optgroup label="Mentorat">
-              {Object.entries(FORMULES).filter(([, f]) => f.categorie === 'mentorat').map(([cle, f]) => (
+              {Object.entries(FORMULES).filter(([, f]) => f.categorie === 'mentorat' && !f.retiree).map(([cle, f]) => (
                 <option key={cle} value={cle}>{f.nom} ({f.quota ? `${f.quota} ${f.unite}s` : 'illimité'}, {f.validiteMois} mois)</option>
               ))}
             </optgroup>
-          </select>
-          <p style={{ fontSize: 12, opacity: 0.7, margin: '4px 0 0' }}>
-            Branche(s) — uniquement pour une ANCIENNE formule Mentorat par branche (mentorship_1branche_*/2branches_*).
-            Toutes les autres formules Mentorat (mentorship_3/6/12, et les anciennes par palier) donnent accès à l'arbre complet, rien à choisir ici :
-          </p>
-          <select name="branche_1" defaultValue="">
-            <option value="">-- 1ère branche (si Mentorat) --</option>
-            {BRANCHES_MENTORAT.map((b) => (
-              <option key={b.cle} value={b.cle}>{b.nom}</option>
-            ))}
-          </select>
-          <select name="branche_2" defaultValue="">
-            <option value="">-- 2e branche (si formule 2 branches) --</option>
-            {BRANCHES_MENTORAT.map((b) => (
-              <option key={b.cle} value={b.cle}>{b.nom}</option>
-            ))}
           </select>
           <select name="moyen_paiement" defaultValue="especes">
             <option value="especes">💶 Espèces</option>
