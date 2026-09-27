@@ -5,7 +5,7 @@
 // /mentorship est explicitement exclu de toute logique de cache tant que
 // cette partie est en chantier, pour ne jamais servir une version périmée.
 
-const VERSION = 'mpb-v3';
+const VERSION = 'mpb-v4';
 const APP_SHELL = ['/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', (event) => {
@@ -85,5 +85,25 @@ self.addEventListener('notificationclick', (event) => {
       }
       return self.clients.openWindow(cible);
     })
+  );
+});
+
+// Le navigateur peut renouveler de lui-même l'abonnement push (rotation de
+// clés côté Google/Mozilla, restauration du téléphone...). Sans ce handler,
+// le serveur continuait d'envoyer vers l'ancien abonnement, désormais mort,
+// et l'appareil ne recevait plus rien.
+self.addEventListener('pushsubscriptionchange', (event) => {
+  event.waitUntil(
+    (async () => {
+      const ancien = event.oldSubscription;
+      const options = ancien?.options ?? { userVisibleOnly: true };
+      const nouveau = event.newSubscription || (await self.registration.pushManager.subscribe(options));
+      await fetch('/api/push/renouveler', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ancienEndpoint: ancien?.endpoint, abonnement: nouveau.toJSON() }),
+      });
+    })()
   );
 });

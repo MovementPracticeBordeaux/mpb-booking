@@ -125,11 +125,35 @@ export default function LoginPage() {
     setErreur('');
     const emailPropre = normaliserEmail(email);
     if (!turnstileToken) {
-      setErreur(
-        turnstileBloque
-          ? "La vérification anti-robot ne se charge pas — voir le message ci-dessus."
-          : 'Vérification anti-robot en cours, patiente une seconde et réessaie.'
-      );
+      if (!turnstileBloque) {
+        setErreur('Vérification anti-robot en cours, patiente une seconde et réessaie.');
+        return;
+      }
+      // La vérification Cloudflare ne peut pas se charger chez cet élève
+      // (DNS privé / bloqueur sur Android, Relais privé iCloud...) : envoi
+      // du code par la voie de secours, réservée aux comptes existants.
+      setEnvoiEnCours(true);
+      try {
+        const res = await fetch('/api/auth/code-secours', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: emailPropre }),
+        });
+        const donnees = await res.json();
+        if (!donnees.ok) {
+          setErreur(donnees.message ?? 'Envoi impossible pour le moment.');
+          return;
+        }
+        setEmail(emailPropre);
+        setEnvoye(true);
+        try {
+          sessionStorage.setItem(CLE_SESSION, JSON.stringify({ email: emailPropre, depuis: Date.now() }));
+        } catch {}
+      } catch {
+        setErreur('Envoi impossible pour le moment, vérifie ta connexion et réessaie.');
+      } finally {
+        setEnvoiEnCours(false);
+      }
       return;
     }
 
@@ -242,9 +266,8 @@ export default function LoginPage() {
           <div ref={conteneurTurnstile} style={{ marginBottom: 10, display: 'flex', justifyContent: 'center', minHeight: 65 }} />
           {turnstileBloque && !turnstileToken && (
             <p style={{ fontSize: 13, color: '#ffb366', marginTop: 0 }}>
-              La vérification anti-robot ne se charge pas. Ça vient souvent d'un bloqueur de contenu, du mode
-              navigation privée ou du « Relais privé iCloud » sur iPhone. Recharge la page, ou essaie depuis Safari
-              en navigation normale. Toujours bloqué ? Écris à Sylvain sur WhatsApp, il te réserve ta place.
+              La vérification anti-robot ne se charge pas sur ton appareil (bloqueur de pub, DNS privé, Relais privé
+              iCloud...). Pas grave : saisis ton email et appuie sur le bouton, ton code t'est envoyé quand même.
             </p>
           )}
           <button type="submit" disabled={envoiEnCours} style={styleBouton}>

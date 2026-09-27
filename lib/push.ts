@@ -49,18 +49,31 @@ export async function envoyerPushAEleve(
     .select('id, endpoint, p256dh, auth')
     .eq('eleve_id', eleveId);
 
+  let envoyes = 0;
   for (const abo of abonnements ?? []) {
     try {
       await webpush.sendNotification(
         { endpoint: abo.endpoint, keys: { p256dh: abo.p256dh, auth: abo.auth } },
-        JSON.stringify({ titre, corps, url: url ?? '/planning' })
+        JSON.stringify({ titre, corps, url: url ?? '/planning' }),
+        // urgency 'high' : sans ça, Android (Firebase) retarde les
+        // notifications "normales" tant que le téléphone est en veille —
+        // un rappel 1h30 avant un cours pouvait arriver après le cours.
+        // TTL 6h : au-delà, un rappel de cours n'a plus de sens.
+        { urgency: 'high', TTL: 6 * 3600 }
       );
+      envoyes++;
     } catch (e: any) {
-      if (e?.statusCode === 404 || e?.statusCode === 410) {
+      const statut = e?.statusCode;
+      // 404/410 : abonnement expiré ou révoqué. 403 : abonnement créé avec
+      // d'autres clés VAPID, il ne fonctionnera plus jamais. Dans les 3
+      // cas on le supprime ; l'appareil se réabonnera automatiquement à la
+      // prochaine visite du site (voir NotificationsToggle).
+      if (statut === 404 || statut === 410 || statut === 403) {
         await admin.from('push_subscriptions').delete().eq('id', abo.id);
+      } else {
+        console.error('Push : échec envoi', statut, e?.body ?? e?.message);
       }
-      // Autres erreurs (réseau, etc.) : on ignore silencieusement pour un
-      // élève, ça ne doit pas casser l'envoi aux autres.
     }
   }
+  return envoyes;
 }

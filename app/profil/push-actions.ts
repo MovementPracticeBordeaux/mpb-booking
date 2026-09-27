@@ -1,6 +1,6 @@
 'use server';
 
-import { supabaseServer } from '@/lib/supabase-server';
+import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 
 // Enregistre l'abonnement push de l'appareil courant pour l'élève connecté.
 // Appelée depuis le composant client juste après pushManager.subscribe().
@@ -9,7 +9,10 @@ export async function enregistrerAbonnementPush(abonnement: { endpoint: string; 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { ok: false, erreur: 'Non connecté.' };
 
-  const { error } = await supabase.from('push_subscriptions').upsert(
+  // Client admin pour l'écriture (identité déjà vérifiée ci-dessus) : si ce
+  // même appareil était auparavant rattaché à un autre compte, la politique
+  // de sécurité bloquait la mise à jour et l'abonnement échouait sans bruit.
+  const { error } = await supabaseAdmin().from('push_subscriptions').upsert(
     {
       eleve_id: user.id,
       endpoint: abonnement.endpoint,
