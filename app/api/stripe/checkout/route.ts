@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Non connecté' }, { status: 401 });
 
-  const { formule_nom, date_debut, retour } = await req.json();
+  const { formule_nom, date_debut, retour, depart } = await req.json();
   const formule = FORMULES[formule_nom];
   if (!formule || formule.retiree) return NextResponse.json({ error: 'Formule inconnue' }, { status: 400 });
   // Le prix est TOUJOURS déduit de la formule côté serveur, jamais pris tel
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
         ? `${process.env.NEXT_PUBLIC_SITE_URL}/profil?paiement=succes`
         : `${process.env.NEXT_PUBLIC_SITE_URL}/?paiement=succes`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/tarifs?paiement=annule`,
-      metadata: { user_id: user.id, formule_nom, date_debut: dateDebutValide },
+      metadata: { user_id: user.id, formule_nom, date_debut: dateDebutValide, depart: depart === 'aujourdhui' ? 'aujourdhui' : 'suite' },
     });
     return NextResponse.json({ url: session.url });
   } catch (e: any) {

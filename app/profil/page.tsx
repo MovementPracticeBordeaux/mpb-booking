@@ -194,12 +194,27 @@ export default async function ProfilPage({ searchParams }: { searchParams: { pai
                           <div style={{ marginTop: 14, padding: 14, borderRadius: 10, border: '1px solid rgba(255,138,0,0.5)', background: 'rgba(255,138,0,0.08)' }}>
                             <p style={{ margin: '0 0 10px', fontSize: 14 }}>
                               ⏳ Ta formule arrive bientôt à sa fin.
-                              {pasRenouvelable ? ' Choisis la suite pour continuer à pratiquer sans interruption.' : " Renouvelle-la en un clic : les séances et les jours qu'il te reste sont conservés."}
+                              {pasRenouvelable ? ' Choisis la suite pour continuer à pratiquer sans interruption.' : " Renouvelle-la en un clic : les séances qu'il te reste sont conservées."}
                             </p>
                             {pasRenouvelable ? (
                               <a href="/tarifs" style={{ color: '#FF2D78', fontWeight: 700, fontSize: 14 }}>Voir les formules →</a>
                             ) : (
-                              <BoutonRenouveler formuleNom={abo.formule_nom} libelle={`Renouveler — ${formule.prixIndicatif} €`} />
+                              <BoutonRenouveler
+                                formuleNom={abo.formule_nom}
+                                prix={formule.prixIndicatif}
+                                choix={(() => {
+                                  // Choix proposé seulement pour les formules à séances, et
+                                  // tant que la formule actuelle court encore (sinon les deux
+                                  // options reviennent au même : démarrage aujourd'hui).
+                                  if (!avecQuota || !abo.date_expiration || abo.date_expiration <= aujourdhuiISO) return null;
+                                  const ajouterMois = (iso: string) => {
+                                    const d = new Date(iso + 'T00:00:00Z');
+                                    d.setUTCMonth(d.getUTCMonth() + formule.validiteMois);
+                                    return d.toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', day: 'numeric', month: 'long' });
+                                  };
+                                  return { finAujourdhui: ajouterMois(aujourdhuiISO), finSuite: ajouterMois(abo.date_expiration) };
+                                })()}
+                              />
                             )}
                           </div>
                         )}

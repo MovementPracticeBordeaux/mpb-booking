@@ -145,7 +145,10 @@ export async function POST(req: NextRequest) {
 
       if (aboActuel && aboActuel.formule_nom === formuleNom && !aboActuel.gele) {
         const aujourdhuiISO = new Date().toISOString().slice(0, 10);
-        const pointDeDepart = aboActuel.date_expiration && aboActuel.date_expiration > aujourdhuiISO
+        // Choix de l'élève au renouvellement : "aujourd'hui" (nouvelle
+        // période qui démarre tout de suite) ou "à la suite" (par défaut).
+        const departAujourdhui = session.metadata?.depart === 'aujourdhui' && formule.quota != null;
+        const pointDeDepart = !departAujourdhui && aboActuel.date_expiration && aboActuel.date_expiration > aujourdhuiISO
           ? new Date(aboActuel.date_expiration + 'T00:00:00')
           : new Date();
         const nouvelleExpiration = new Date(pointDeDepart);
