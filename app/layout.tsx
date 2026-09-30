@@ -3,6 +3,7 @@ import { COULEURS, FONTS_IMPORT_URL, POLICE_CORPS } from '@/lib/theme';
 import ChatWidget from './components/ChatWidget';
 import NavBar from './components/NavBar';
 import PwaRegister from './components/PwaRegister';
+import PwaAccueilAdmin from './components/PwaAccueilAdmin';
 
 export const metadata = {
   metadataBase: new URL('https://www.movementpracticebordeaux.com'),
@@ -146,6 +147,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {children}
         <ChatWidget aUneFormuleActive={aUneFormuleActive} />
         <PwaRegister />
+        <PwaAccueilAdmin estAdmin={estAdmin} />
       </body>
     </html>
   );
