@@ -45,7 +45,6 @@ export const viewport = {
 
 const LIENS = [
   { href: '/', label: 'Accueil' },
-  { href: '/quiz', label: 'Quel cours ?' },
   { href: '/planning', label: 'Planning' },
   { href: '/defi', label: '🏆 Défi du mois' },
   { href: '/tarifs', label: 'Tarifs' },

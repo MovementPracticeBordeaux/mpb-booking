@@ -117,9 +117,6 @@ export default async function AccueilPage() {
           background: COULEURS.surface, border: `1px solid ${COULEURS.bordure}`, borderRadius: 20,
           padding: '32px 28px', textAlign: 'center',
         }}>
-          <p style={{ fontSize: 12, letterSpacing: 2, color: COULEURS.texteFaible, marginBottom: 10 }}>
-            PAS SÛR·E PAR OÙ COMMENCER ?
-          </p>
           <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 28, letterSpacing: 0.3, margin: '0 0 12px' }}>
             Découvre quel cours te correspond
           </h2>
