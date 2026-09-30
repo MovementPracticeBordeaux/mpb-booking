@@ -737,6 +737,19 @@ export async function supprimerDefiMensuel(formData: FormData) {
   const admin = supabaseAdmin();
   const defiId = formData.get('defi_id') as string;
 
+  // Garde-fou : la suppression efface en cascade toutes les participations,
+  // donc les étoiles déjà gagnées et leur place au classement général. Pour
+  // passer au défi suivant, il suffit de publier le nouveau : l'ancien part
+  // dans l'historique avec ses étoiles intactes.
+  const { count: etoiles } = await admin
+    .from('defi_participations')
+    .select('id', { count: 'exact', head: true })
+    .eq('defi_id', defiId)
+    .eq('valide', true);
+  if ((etoiles ?? 0) > 0) {
+    echouer('/admin/defis', `Suppression bloquée : ce défi compte ${etoiles} étoile${(etoiles ?? 0) > 1 ? 's' : ''} validée${(etoiles ?? 0) > 1 ? 's' : ''}, qui seraient perdues. Pour passer au suivant, publie simplement le nouveau défi : celui-ci ira dans l'historique.`);
+  }
+
   // Supprime aussi automatiquement toutes les participations liées (dont
   // les étoiles déjà gagnées sur ce défi précis) via la contrainte "on
   // delete cascade" — c'est volontaire, mais il faut que l'admin en soit
