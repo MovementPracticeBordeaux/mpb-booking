@@ -126,29 +126,59 @@ export async function POST(req: NextRequest) {
 
       const expiration = new Date(dateDebut);
       expiration.setMonth(expiration.getMonth() + formule.validiteMois);
+      let dateFinAffichee = expiration;
 
-      // Un élève ne peut avoir qu'un seul abonnement ACTIF par catégorie
-      // (planning / coaching / mentorat) — mais peut très bien avoir les
-      // trois en parallèle. On désactive l'éventuel abonnement actif de
-      // cette même catégorie avant d'insérer le nouveau.
-      await admin.from('abonnements')
-        .update({ abonnement_actif: false })
+      // Renouvellement de la MÊME formule alors qu'elle est encore active
+      // (bouton "Renouveler" du profil, ou rachat depuis /tarifs) : on
+      // prolonge l'abonnement existant au lieu de le remplacer. Avant, il
+      // était désactivé net et l'élève perdait les séances et les jours
+      // qu'il lui restait. Les séances s'additionnent, et la nouvelle
+      // période démarre à la fin de l'actuelle (ou aujourd'hui si déjà
+      // passée). Un pass gelé n'est pas prolongé automatiquement.
+      const { data: aboActuel } = await admin
+        .from('abonnements')
+        .select('id, formule_nom, quota_restant, date_expiration, gele')
         .eq('eleve_id', userId)
         .eq('categorie', formule.categorie)
-        .eq('abonnement_actif', true);
+        .eq('abonnement_actif', true)
+        .maybeSingle();
 
-      await admin.from('abonnements').insert({
-        eleve_id: userId,
-        categorie: formule.categorie,
-        formule_nom: formuleNom,
-        quota_total: formule.quota,
-        quota_restant: formule.quota,
-        date_debut_formule: dateDebut.toISOString().slice(0, 10),
-        date_expiration: expiration.toISOString().slice(0, 10),
-        abonnement_actif: true,
-        origine: 'stripe',
-        paye: true,
-      });
+      if (aboActuel && aboActuel.formule_nom === formuleNom && !aboActuel.gele) {
+        const aujourdhuiISO = new Date().toISOString().slice(0, 10);
+        const pointDeDepart = aboActuel.date_expiration && aboActuel.date_expiration > aujourdhuiISO
+          ? new Date(aboActuel.date_expiration + 'T00:00:00')
+          : new Date();
+        const nouvelleExpiration = new Date(pointDeDepart);
+        nouvelleExpiration.setMonth(nouvelleExpiration.getMonth() + formule.validiteMois);
+        const quotaRestant = formule.quota != null ? (aboActuel.quota_restant ?? 0) + formule.quota : null;
+        await admin.from('abonnements').update({
+          quota_restant: quotaRestant,
+          quota_total: quotaRestant,
+          date_expiration: nouvelleExpiration.toISOString().slice(0, 10),
+        }).eq('id', aboActuel.id);
+        dateFinAffichee = nouvelleExpiration;
+      } else {
+        // Formule différente : un seul abonnement ACTIF par catégorie
+        // (planning / coaching / mentorat), l'ancien est désactivé.
+        await admin.from('abonnements')
+          .update({ abonnement_actif: false })
+          .eq('eleve_id', userId)
+          .eq('categorie', formule.categorie)
+          .eq('abonnement_actif', true);
+
+        await admin.from('abonnements').insert({
+          eleve_id: userId,
+          categorie: formule.categorie,
+          formule_nom: formuleNom,
+          quota_total: formule.quota,
+          quota_restant: formule.quota,
+          date_debut_formule: dateDebut.toISOString().slice(0, 10),
+          date_expiration: expiration.toISOString().slice(0, 10),
+          abonnement_actif: true,
+          origine: 'stripe',
+          paye: true,
+        });
+      }
       await admin.from('profiles').update({ stripe_customer_id: session.customer as string }).eq('id', userId);
 
       // Historise le paiement pour que l'élève puisse générer sa facture.
@@ -187,7 +217,7 @@ export async function POST(req: NextRequest) {
               `<p>Merci pour ton achat !</p>
                <p>Ta formule <strong>${formule.nom}</strong> est maintenant active
                ${formule.quota ? ` (${formule.quota} ${formule.unite}${formule.quota > 1 ? 's' : ''})` : ' (accès illimité)'},
-               valable jusqu'au ${expiration.toLocaleDateString('fr-FR')}.</p>
+               valable jusqu'au ${dateFinAffichee.toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' })}.</p>
                <p>Montant réglé : ${((session.amount_total ?? 0) / 100).toFixed(2)} €.</p>
                ${formule.categorie === 'coaching'
                  ? '<p>Sylvain va te contacter pour caler ton créneau.</p>'

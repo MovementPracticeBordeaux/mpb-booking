@@ -5,6 +5,8 @@ import BoutonDeconnexion from '../components/BoutonDeconnexion';
 import NotificationsToggle from './NotificationsToggle';
 import EmailPreferences from './EmailPreferences';
 import { modifierMonPrenom, modifierMonTelephone } from './actions';
+import BoutonRenouveler from './BoutonRenouveler';
+import { PRICE_IDS } from '@/lib/prix-stripe';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +16,7 @@ const LIBELLE_CATEGORIE: Record<string, string> = {
   mentorat: 'Mentorat',
 };
 
-export default async function ProfilPage() {
+export default async function ProfilPage({ searchParams }: { searchParams: { paiement?: string } }) {
   const supabase = supabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
@@ -31,6 +33,15 @@ export default async function ProfilPage() {
     .eq('abonnement_actif', true)
     .order('categorie');
 
+  // Séances collectives déjà réservées à venir (déjà déduites du quota).
+  const aujourdhuiISO = new Date().toISOString().slice(0, 10);
+  const { count: seancesAVenir } = await supabase
+    .from('reservations')
+    .select('id', { count: 'exact', head: true })
+    .eq('eleve_id', user.id)
+    .eq('statut', 'confirmee')
+    .gte('date_seance', aujourdhuiISO);
+
   // Défi du mois : juste un petit pointeur vers /defi (qui gère toute la
   // logique — niveaux, validation, classement public) pour éviter de
   // dupliquer cette logique à deux endroits.
@@ -41,6 +52,11 @@ export default async function ProfilPage() {
   return (
     <main style={{ maxWidth: 480, margin: '0 auto', padding: 20 }}>
       <h1>Mon profil</h1>
+      {searchParams.paiement === 'succes' && (
+        <p style={{ background: '#1a4d2e', color: '#b4ffcc', padding: 12, borderRadius: 8 }}>
+          ✅ Paiement reçu, merci ! Ta formule est à jour (si elle n'apparaît pas encore, recharge la page dans quelques secondes).
+        </p>
+      )}
 
       <div style={{ border: '1px solid #333', borderRadius: 8, padding: 16, marginBottom: 20 }}>
         <p style={{ margin: '0 0 4px' }}>{profil?.nom || user.email}</p>
@@ -141,13 +157,55 @@ export default async function ProfilPage() {
                 <p style={{ margin: 0 }}>❄️ Ce pass est actuellement gelé. Contacte Sylvain pour le débloquer.</p>
               ) : (
                 <>
-                  <h3 style={{ margin: '0 0 4px' }}>{formule.nom}</h3>
-                  <p style={{ fontSize: 13, opacity: 0.7, margin: 0 }}>
-                    {formule.quota
-                      ? `${abo.quota_restant} ${formule.unite}${abo.quota_restant > 1 ? 's' : ''} restantes sur ${abo.quota_total}`
-                      : 'Accès illimité'}
-                    {' · '}valable jusqu'au {abo.date_expiration}
-                  </p>
+                  <h3 style={{ margin: '0 0 8px' }}>{formule.nom}</h3>
+                  {(() => {
+                    const joursRestants = abo.date_expiration
+                      ? Math.round((new Date(abo.date_expiration + 'T00:00:00Z').getTime() - new Date(aujourdhuiISO + 'T00:00:00Z').getTime()) / 86400000)
+                      : null;
+                    const dateFin = abo.date_expiration
+                      ? new Date(abo.date_expiration + 'T12:00:00Z').toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', day: 'numeric', month: 'long', year: 'numeric' })
+                      : null;
+                    const avecQuota = formule.quota != null && abo.quota_restant != null;
+                    // Bientôt terminé : 1 séance/heure restante ou moins, ou
+                    // fin de validité dans 7 jours ou moins.
+                    const bientotFini = (avecQuota && abo.quota_restant <= 1) || (joursRestants != null && joursRestants <= 7);
+                    const pasRenouvelable = ['cours_decouverte', 'cours_unite'].includes(abo.formule_nom) || formule.retiree
+                      || abo.categorie === 'mentorat' || !PRICE_IDS[abo.formule_nom]?.startsWith('price_');
+                    const couleur = bientotFini ? '#FF8A00' : '#FF2D78';
+                    return (
+                      <>
+                        {avecQuota && (
+                          <>
+                            <p style={{ fontSize: 14, margin: '0 0 6px' }}>
+                              <strong>{abo.quota_restant}</strong> {formule.unite}{abo.quota_restant > 1 ? 's' : ''} restante{abo.quota_restant > 1 ? 's' : ''} sur {abo.quota_total}
+                            </p>
+                            <div style={{ height: 6, borderRadius: 999, background: 'rgba(255,255,255,0.08)', overflow: 'hidden', marginBottom: 8 }}>
+                              <div style={{ height: '100%', width: `${abo.quota_total ? Math.min(100, (abo.quota_restant / abo.quota_total) * 100) : 0}%`, background: couleur }} />
+                            </div>
+                          </>
+                        )}
+                        {!avecQuota && <p style={{ fontSize: 14, margin: '0 0 6px' }}>Accès illimité</p>}
+                        <p style={{ fontSize: 13, opacity: 0.75, margin: 0 }}>
+                          {dateFin && <>Valable jusqu'au <strong>{dateFin}</strong>{joursRestants != null && joursRestants >= 0 ? ` (${joursRestants === 0 ? "dernier jour aujourd'hui" : `encore ${joursRestants} jour${joursRestants > 1 ? 's' : ''}`})` : ''}</>}
+                          {abo.categorie === 'planning' && (seancesAVenir ?? 0) > 0 && <><br />{seancesAVenir} séance{(seancesAVenir ?? 0) > 1 ? 's' : ''} déjà réservée{(seancesAVenir ?? 0) > 1 ? 's' : ''} à venir</>}
+                        </p>
+
+                        {bientotFini && (
+                          <div style={{ marginTop: 14, padding: 14, borderRadius: 10, border: '1px solid rgba(255,138,0,0.5)', background: 'rgba(255,138,0,0.08)' }}>
+                            <p style={{ margin: '0 0 10px', fontSize: 14 }}>
+                              ⏳ Ta formule arrive bientôt à sa fin.
+                              {pasRenouvelable ? ' Choisis la suite pour continuer à pratiquer sans interruption.' : " Renouvelle-la en un clic : les séances et les jours qu'il te reste sont conservés."}
+                            </p>
+                            {pasRenouvelable ? (
+                              <a href="/tarifs" style={{ color: '#FF2D78', fontWeight: 700, fontSize: 14 }}>Voir les formules →</a>
+                            ) : (
+                              <BoutonRenouveler formuleNom={abo.formule_nom} libelle={`Renouveler — ${formule.prixIndicatif} €`} />
+                            )}
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                   {abo.formule_nom === 'cours_decouverte' && (
                     <p style={{ marginTop: 12, marginBottom: 0, fontSize: 13 }}>
                       👋 Première fois avec nous ? On te recommande de{' '}

@@ -39,7 +39,7 @@ type Action = (formData: FormData) => void;
 const VIOLET = '#8B5CF6';
 const NOMS_JOURS_LONGS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
 const styleChamp: React.CSSProperties = {
-  width: '100%', boxSizing: 'border-box', fontSize: 16, padding: '6px 8px', borderRadius: 6,
+  width: '100%', boxSizing: 'border-box', fontSize: 12, padding: '5px 8px', borderRadius: 6,
   border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surfaceForte, color: COULEURS.texte,
 };
 
@@ -116,7 +116,7 @@ function PanneauAjout({
           <label style={{ fontSize: 12, display: 'flex', gap: 6, alignItems: 'center' }}>
             <input type="checkbox" name="decompter" defaultChecked /> Décompter du crédit de l'élève
           </label>
-          <button type="submit" style={{ padding: '8px 0', borderRadius: 999, border: `1px solid ${VIOLET}`, background: 'none', color: VIOLET, fontWeight: 600, cursor: 'pointer' }}>
+          <button type="submit" style={{ fontSize: 12, padding: '6px 0', borderRadius: 999, border: `1px solid ${VIOLET}`, background: 'none', color: VIOLET, fontWeight: 600, cursor: 'pointer' }}>
             Ajouter le coaching
           </button>
         </form>
@@ -133,7 +133,7 @@ function PanneauAjout({
           <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: 0 }}>
             Chaque {NOMS_JOURS_LONGS[j.jourSemaine]} en semaine {j.semaine}
           </p>
-          <button type="submit" style={{ padding: '8px 0', borderRadius: 999, border: '1px solid #FF2D78', background: 'none', color: '#FF2D78', fontWeight: 600, cursor: 'pointer' }}>
+          <button type="submit" style={{ fontSize: 12, padding: '6px 0', borderRadius: 999, border: '1px solid #FF2D78', background: 'none', color: '#FF2D78', fontWeight: 600, cursor: 'pointer' }}>
             Ajouter le cours
           </button>
         </form>

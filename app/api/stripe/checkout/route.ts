@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { supabaseServer } from '@/lib/supabase-server';
 import { FORMULES } from '@/lib/formules';
+import { PRICE_IDS } from '@/lib/prix-stripe';
 
 // Attend un body JSON: { price_id, formule_nom, date_debut }
 // Le quota et la durée de validité sont dérivés du catalogue FORMULES côté
@@ -12,9 +13,16 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Non connecté' }, { status: 401 });
 
-  const { price_id, formule_nom, date_debut } = await req.json();
+  const { formule_nom, date_debut, retour } = await req.json();
   const formule = FORMULES[formule_nom];
-  if (!formule) return NextResponse.json({ error: 'Formule inconnue' }, { status: 400 });
+  if (!formule || formule.retiree) return NextResponse.json({ error: 'Formule inconnue' }, { status: 400 });
+  // Le prix est TOUJOURS déduit de la formule côté serveur, jamais pris tel
+  // quel depuis le navigateur : sinon on pouvait payer le prix d'une petite
+  // formule en obtenant une formule plus chère.
+  const price_id = PRICE_IDS[formule_nom];
+  if (!price_id || !price_id.startsWith('price_')) {
+    return NextResponse.json({ error: "Cette formule n'est pas disponible au paiement en ligne." }, { status: 400 });
+  }
 
   // Validation stricte de la date de début choisie par l'élève : format
   // YYYY-MM-DD et pas dans le passé. Si absente ou invalide, on retombe sur
@@ -30,7 +38,9 @@ export async function POST(req: NextRequest) {
       payment_method_types: ['card'],
       line_items: [{ price: price_id, quantity: 1 }],
       customer_email: user.email,
-      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/?paiement=succes`,
+      success_url: retour === 'profil'
+        ? `${process.env.NEXT_PUBLIC_SITE_URL}/profil?paiement=succes`
+        : `${process.env.NEXT_PUBLIC_SITE_URL}/?paiement=succes`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/tarifs?paiement=annule`,
       metadata: { user_id: user.id, formule_nom, date_debut: dateDebutValide },
     });
