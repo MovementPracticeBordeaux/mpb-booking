@@ -159,7 +159,17 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
         ))}
       </div>
 
-      <section style={{ marginBottom: 32 }}>
+      {/* Carrousel en pleine largeur comme sur le planning public, au lieu
+          d'être enfermé dans la colonne étroite de l'admin : la section
+          déborde de la colonne de 640px pour s'étendre jusqu'à 1160px. */}
+      <style>{`
+        .zone-admin main > section.seances-pleine-largeur {
+          width: min(1160px, calc(100vw - 40px));
+          margin-left: calc(50% - min(580px, calc(50vw - 20px)));
+          background: none; border: none; padding: 0; margin-bottom: 32px;
+        }
+      `}</style>
+      <section className="seances-pleine-largeur">
         <h2>Séances</h2>
         <AdminSeancesCarousel
           jours={joursCarousel}
