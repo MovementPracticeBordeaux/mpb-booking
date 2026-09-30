@@ -26,12 +26,6 @@ export default async function AdminEvenementsPage({ searchParams }: { searchPara
     <main style={{ maxWidth: 560, margin: '0 auto', padding: 20 }}>
       <h1>Événements</h1>
 
-      {searchParams.erreur && (
-        <p style={{ background: '#5a1a1a', color: '#ffb4b4', padding: 12, borderRadius: 8 }}>⚠️ {searchParams.erreur}</p>
-      )}
-      {searchParams.succes && (
-        <p style={{ background: '#1a4d2e', color: '#b4ffcc', padding: 12, borderRadius: 8 }}>✅ {searchParams.succes}</p>
-      )}
 
       <section style={{ marginBottom: 32 }}>
         <h2>Publier un événement</h2>

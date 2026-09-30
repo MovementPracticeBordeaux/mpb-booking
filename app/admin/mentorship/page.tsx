@@ -60,12 +60,6 @@ export default async function AdminMentorshipPage({ searchParams }: { searchPara
         {(soumissions ?? []).length} soumission{(soumissions ?? []).length > 1 ? 's' : ''} en attente de validation.
       </p>
 
-      {searchParams.erreur && (
-        <p style={{ color: '#ff6b6b', fontSize: 13, marginBottom: 16 }}>{searchParams.erreur}</p>
-      )}
-      {searchParams.succes && (
-        <p style={{ color: '#7fffa0', fontSize: 13, marginBottom: 16 }}>✅ {searchParams.succes}</p>
-      )}
 
       {(soumissions ?? []).length === 0 ? (
         <p style={{ color: COULEURS.texteAtt }}>Aucune soumission en attente pour le moment.</p>

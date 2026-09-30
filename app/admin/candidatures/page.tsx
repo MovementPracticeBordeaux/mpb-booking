@@ -164,12 +164,6 @@ export default async function AdminCandidaturesPage({ searchParams }: { searchPa
         {nouvelles.length} nouvelle{nouvelles.length !== 1 ? 's' : ''} candidature{nouvelles.length !== 1 ? 's' : ''} en attente de traitement.
       </p>
 
-      {searchParams.erreur && (
-        <p style={{ color: '#ff6b6b', fontSize: 13, marginBottom: 16 }}>{searchParams.erreur}</p>
-      )}
-      {searchParams.succes && (
-        <p style={{ color: '#7fffa0', fontSize: 13, marginBottom: 16 }}>✅ {searchParams.succes}</p>
-      )}
 
       {nouvelles.length === 0 ? (
         <p style={{ color: COULEURS.texteAtt, marginBottom: 24 }}>Aucune candidature en attente pour le moment.</p>

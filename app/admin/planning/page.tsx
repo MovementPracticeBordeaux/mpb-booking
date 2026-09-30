@@ -87,6 +87,13 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
     coachingsParJour.set(c.date_seance, liste);
   }
 
+  // Chiffres clés affichés en haut de page (ex-"Vue d'ensemble").
+  const { data: abonnementsActifs } = await admin.from('abonnements').select('categorie, gele').eq('abonnement_actif', true);
+  const nbActifsCollectif = (abonnementsActifs ?? []).filter((a) => a.categorie === 'planning').length;
+  const nbActifsCoaching = (abonnementsActifs ?? []).filter((a) => a.categorie === 'coaching').length;
+  const nbActifsMentorat = (abonnementsActifs ?? []).filter((a) => a.categorie === 'mentorat').length;
+  const nbGeles = (abonnementsActifs ?? []).filter((a) => a.gele).length;
+
   // Crédit d'heures de coaching restant par élève, affiché dans le menu.
   const { data: abosCoaching } = await admin
     .from('abonnements')
@@ -137,20 +144,23 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
 
   return (
     <main style={{ maxWidth: 640, margin: '0 auto', padding: 20 }}>
-      <h1>Planning collectif</h1>
-      {searchParams.erreur && (
-        <p style={{ background: '#5a1a1a', color: '#ffb4b4', padding: 12, borderRadius: 8 }}>
-          ⚠️ {searchParams.erreur}
-        </p>
-      )}
-      {searchParams.succes && (
-        <p style={{ background: '#1a4d2e', color: '#b4ffcc', padding: 12, borderRadius: 8 }}>
-          ✅ {searchParams.succes}
-        </p>
-      )}
+      <h1>Planning</h1>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+        {[
+          { n: nbActifsCollectif, libelle: "cours collectifs" },
+          { n: nbActifsCoaching, libelle: "coaching" },
+          { n: nbActifsMentorat, libelle: "mentorat" },
+          ...(nbGeles > 0 ? [{ n: nbGeles, libelle: "pass gelés" }] : []),
+        ].map((c) => (
+          <div key={c.libelle} style={{ flex: "1 1 90px", border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: "8px 12px", background: COULEURS.surface }}>
+            <div style={{ fontFamily: POLICE_DISPLAY, fontSize: 26, lineHeight: 1.1 }}>{c.n}</div>
+            <div style={{ fontSize: 11, color: COULEURS.texteAtt }}>{c.libelle}</div>
+          </div>
+        ))}
+      </div>
 
       <section style={{ marginBottom: 32 }}>
-        <h2>Séances — inscrits</h2>
+        <h2>Séances</h2>
         <AdminSeancesCarousel
           jours={joursCarousel}
           indexAujourdhui={indexAujourdhuiCarousel}
@@ -165,174 +175,156 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
         />
       </section>
 
-      <section style={{ marginBottom: 32 }}>
-        <h2>Semaine de référence</h2>
-        <p style={{ fontSize: 13, opacity: 0.7 }}>
-          Indique un lundi et si c'est une semaine A ou B, ça sert de point de départ pour calculer l'alternance.
-        </p>
-        <form action={definirSemaineReference} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <input
-            type="date"
-            name="date_lundi_reference"
-            defaultValue={ref?.date_lundi_reference}
-            required
-          />
-          <select name="semaine_ce_lundi" defaultValue={ref?.semaine_ce_lundi ?? 'A'}>
-            <option value="A">Semaine A</option>
-            <option value="B">Semaine B</option>
-          </select>
-          <button type="submit">Enregistrer</button>
-        </form>
-      </section>
-
-      <section style={{ marginBottom: 32 }}>
-        <h2>Périodes de vacances</h2>
-        <p style={{ fontSize: 13, opacity: 0.7 }}>
-          Pendant ces périodes, le planning public affiche un message "en vacances" et les jours
-          concernés sont grisés (non réservables). Tu peux en ajouter plusieurs dans l'année.
-        </p>
-
-        {(periodesVacances ?? []).length > 0 && (
-          <div style={{ marginBottom: 16 }}>
-            {periodesVacances!.map((v) => {
-              const aujourdhui = new Date().toISOString().slice(0, 10);
-              const statut = aujourdhui > v.date_fin ? 'passée' : aujourdhui >= v.date_debut ? 'en cours' : 'à venir';
-              const couleurStatut = statut === 'en cours' ? '#f0a' : statut === 'à venir' ? '#4caf7d' : '#666';
-              const debutAffiche = new Date(v.date_debut + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-              const finAffiche = new Date(v.date_fin + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-              const nbJours = Math.round((new Date(v.date_fin).getTime() - new Date(v.date_debut).getTime()) / 86400000) + 1;
-              return (
-                <div key={v.id} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 8, fontSize: 13, padding: '8px 0', borderBottom: '1px solid #333' }}>
-                  <span>
-                    <span style={{ color: couleurStatut, fontWeight: 600, textTransform: 'uppercase', fontSize: 11, letterSpacing: 0.5 }}>{statut}</span>
-                    {' — '}Du {debutAffiche} au {finAffiche} ({nbJours} jour{nbJours > 1 ? 's' : ''})
-                  </span>
-                  <form action={supprimerVacances}>
-                    <input type="hidden" name="id" value={v.id} />
-                    <button type="submit" style={{ fontSize: 12 }}>Supprimer</button>
-                  </form>
-                </div>
-              );
-            })}
-          </div>
-        )}
-        {(periodesVacances ?? []).length === 0 && (
-          <p style={{ fontSize: 13, opacity: 0.5, marginBottom: 16 }}>Aucune période de vacances définie pour le moment.</p>
-        )}
-
-        <form action={ajouterVacances} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-          <label style={{ fontSize: 13 }}>Du
-            <input type="date" name="date_debut" required style={{ marginLeft: 4 }} />
-          </label>
-          <label style={{ fontSize: 13 }}>Au
-            <input type="date" name="date_fin" required style={{ marginLeft: 4 }} />
-          </label>
-          <button type="submit">Ajouter</button>
-        </form>
-      </section>
-
-      <section style={{ marginBottom: 32 }}>
-        <h2>Ajouter un créneau</h2>
-        <form action={ajouterCours} style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 300 }}>
-          <SelecteurDiscipline disciplinesExistantes={disciplinesExistantes} />
-          <select name="semaine" defaultValue="A">
-            <option value="A">Semaine A</option>
-            <option value="B">Semaine B</option>
-          </select>
-          <select name="jour_semaine" defaultValue="2">
-            {JOURS.map((j, i) => (
-              <option key={i} value={i}>{j}</option>
-            ))}
-          </select>
-          <label style={{ fontSize: 13 }}>Heure début
-            <input type="time" name="heure_debut" required />
-          </label>
-          <label style={{ fontSize: 13 }}>Heure fin
-            <input type="time" name="heure_fin" required />
-          </label>
-          <input name="lieu" placeholder="Lieu (optionnel)" />
-          <button type="submit">Ajouter</button>
-        </form>
-      </section>
-
       <section>
-        <h2 style={{ fontFamily: POLICE_DISPLAY, letterSpacing: 0.5 }}>Créneaux actifs</h2>
-        {(['A', 'B'] as const).map((sem) => {
-          const coursSemaine = (coursListe ?? []).filter((c) => c.semaine === sem);
-          const disciplinesSemaine = [...new Set(coursSemaine.map((c) => c.discipline))];
-          return (
-            <div
-              key={sem}
-              style={{
-                marginBottom: 20,
-                border: `1px solid ${COULEUR_SEMAINE[sem]}44`,
-                borderRadius: 16,
-                padding: 16,
-                background: COULEURS.surface,
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <span
-                  style={{
-                    fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1,
-                    padding: '3px 10px', borderRadius: 999,
-                    background: `${COULEUR_SEMAINE[sem]}22`, color: COULEUR_SEMAINE[sem],
-                  }}
-                >
-                  ● Semaine {sem}
-                </span>
-              </div>
-              <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 12 }}>
-                {disciplinesSemaine.length > 0 ? disciplinesSemaine.join(' · ') : 'Aucun créneau'}
-              </p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10 }}>
-                {JOURS.map((nomJour, i) => {
-                  const coursDuJour = coursSemaine.filter((c) => c.jour_semaine === i);
-                  if (coursDuJour.length === 0) return null;
-                  return (
-                    <div key={i}>
-                      <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, color: COULEURS.texteFaible, marginBottom: 6 }}>
-                        {nomJour}
-                      </p>
-                      {coursDuJour.map((c) => (
-                        <div
-                          key={c.id}
-                          style={{
-                            border: `1px solid ${COULEURS.bordure}`, borderRadius: 10, padding: 10, marginBottom: 8,
-                            fontSize: 12, background: COULEURS.surfaceForte,
-                          }}
-                        >
-                          <strong style={{ display: 'block', fontFamily: POLICE_DISPLAY, fontSize: 14, letterSpacing: 0.3, color: COULEURS.texte }}>
-                            {c.discipline}
-                          </strong>
-                          <span style={{ color: COULEURS.texteAtt }}>{c.heure_debut.slice(0, 5)}-{c.heure_fin.slice(0, 5)}</span>
-                          <div style={{ display: 'flex', gap: 10, marginTop: 6, alignItems: 'center' }}>
-                            <details>
-                              <summary style={{ fontSize: 11, cursor: 'pointer', color: '#f0a' }}>✏️ Modifier</summary>
-                              <form action={modifierCours} style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 6, minWidth: 140 }}>
+        <details>
+          <summary style={{ listStyle: "none" }}>
+            <h2 style={{ margin: 0, display: "flex", justifyContent: "space-between", alignItems: "center" }}>Réglages du planning <span style={{ fontSize: 16, color: COULEURS.texteAtt }}>▾</span></h2>
+            <p style={{ fontSize: 12, color: COULEURS.texteAtt, margin: "4px 0 0" }}>Créneaux récurrents, vacances, semaine A/B</p>
+          </summary>
+        <div style={{ borderTop: `1px solid ${COULEURS.bordure}`, paddingTop: 14, marginTop: 14 }}>
+          <h3 style={{ fontFamily: POLICE_DISPLAY, fontWeight: 400, letterSpacing: 0.5, fontSize: 19, margin: "0 0 10px" }}>Créneaux récurrents</h3>
+          {(['A', 'B'] as const).map((sem) => {
+            const coursSemaine = (coursListe ?? []).filter((c) => c.semaine === sem);
+            const disciplinesSemaine = [...new Set(coursSemaine.map((c) => c.discipline))];
+            return (
+              <div
+                key={sem}
+                style={{
+                  marginBottom: 20,
+                  border: `1px solid ${COULEUR_SEMAINE[sem]}44`,
+                  borderRadius: 16,
+                  padding: 16,
+                  background: COULEURS.surface,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <span
+                    style={{
+                      fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1,
+                      padding: '3px 10px', borderRadius: 999,
+                      background: `${COULEUR_SEMAINE[sem]}22`, color: COULEUR_SEMAINE[sem],
+                    }}
+                  >
+                    ● Semaine {sem}
+                  </span>
+                </div>
+                <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 12 }}>
+                  {disciplinesSemaine.length > 0 ? disciplinesSemaine.join(' · ') : 'Aucun créneau'}
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10 }}>
+                  {JOURS.map((nomJour, i) => {
+                    const coursDuJour = coursSemaine.filter((c) => c.jour_semaine === i);
+                    if (coursDuJour.length === 0) return null;
+                    return (
+                      <div key={i}>
+                        <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, color: COULEURS.texteFaible, marginBottom: 6 }}>
+                          {nomJour}
+                        </p>
+                        {coursDuJour.map((c) => (
+                          <div
+                            key={c.id}
+                            style={{
+                              border: `1px solid ${COULEURS.bordure}`, borderRadius: 10, padding: 10, marginBottom: 8,
+                              fontSize: 12, background: COULEURS.surfaceForte,
+                            }}
+                          >
+                            <strong style={{ display: 'block', fontFamily: POLICE_DISPLAY, fontSize: 14, letterSpacing: 0.3, color: COULEURS.texte }}>
+                              {c.discipline}
+                            </strong>
+                            <span style={{ color: COULEURS.texteAtt }}>{c.heure_debut.slice(0, 5)}-{c.heure_fin.slice(0, 5)}</span>
+                            <div style={{ display: 'flex', gap: 10, marginTop: 6, alignItems: 'center' }}>
+                              <details>
+                                <summary style={{ fontSize: 11, cursor: 'pointer', color: '#f0a' }}>✏️ Modifier</summary>
+                                <form action={modifierCours} style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 6, minWidth: 140 }}>
+                                  <input type="hidden" name="id" value={c.id} />
+                                  <SelecteurDiscipline disciplinesExistantes={disciplinesExistantes} valeurInitiale={c.discipline} />
+                                  <input name="lieu" defaultValue={c.lieu ?? ''} placeholder="Lieu" style={{ fontSize: 11, padding: 4 }} />
+                                  <button type="submit" style={{ fontSize: 11 }}>Enregistrer</button>
+                                  <span style={{ fontSize: 10, color: COULEURS.texteFaible }}>
+                                    Les élèves déjà inscrits sur ce créneau le restent.
+                                  </span>
+                                </form>
+                              </details>
+                              <form action={desactiverCours}>
                                 <input type="hidden" name="id" value={c.id} />
-                                <SelecteurDiscipline disciplinesExistantes={disciplinesExistantes} valeurInitiale={c.discipline} />
-                                <input name="lieu" defaultValue={c.lieu ?? ''} placeholder="Lieu" style={{ fontSize: 11, padding: 4 }} />
-                                <button type="submit" style={{ fontSize: 11 }}>Enregistrer</button>
-                                <span style={{ fontSize: 10, color: COULEURS.texteFaible }}>
-                                  Les élèves déjà inscrits sur ce créneau le restent.
-                                </span>
+                                <button type="submit" style={{ fontSize: 11, color: '#f88' }}>Désactiver</button>
                               </form>
-                            </details>
-                            <form action={desactiverCours}>
-                              <input type="hidden" name="id" value={c.id} />
-                              <button type="submit" style={{ fontSize: 11, color: '#f88' }}>Désactiver</button>
-                            </form>
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })}
+                        ))}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
+            );
+          })}
+        </div>
+        <div style={{ borderTop: `1px solid ${COULEURS.bordure}`, paddingTop: 14, marginTop: 14 }}>
+          <h3 style={{ fontFamily: POLICE_DISPLAY, fontWeight: 400, letterSpacing: 0.5, fontSize: 19, margin: "0 0 10px" }}>Périodes de vacances</h3>
+          <p style={{ fontSize: 13, opacity: 0.7 }}>
+            Pendant ces périodes, le planning public affiche un message "en vacances" et les jours
+            concernés sont grisés (non réservables). Tu peux en ajouter plusieurs dans l'année.
+          </p>
+  
+          {(periodesVacances ?? []).length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              {periodesVacances!.map((v) => {
+                const aujourdhui = new Date().toISOString().slice(0, 10);
+                const statut = aujourdhui > v.date_fin ? 'passée' : aujourdhui >= v.date_debut ? 'en cours' : 'à venir';
+                const couleurStatut = statut === 'en cours' ? '#f0a' : statut === 'à venir' ? '#4caf7d' : '#666';
+                const debutAffiche = new Date(v.date_debut + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+                const finAffiche = new Date(v.date_fin + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+                const nbJours = Math.round((new Date(v.date_fin).getTime() - new Date(v.date_debut).getTime()) / 86400000) + 1;
+                return (
+                  <div key={v.id} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 8, fontSize: 13, padding: '8px 0', borderBottom: '1px solid #333' }}>
+                    <span>
+                      <span style={{ color: couleurStatut, fontWeight: 600, textTransform: 'uppercase', fontSize: 11, letterSpacing: 0.5 }}>{statut}</span>
+                      {' — '}Du {debutAffiche} au {finAffiche} ({nbJours} jour{nbJours > 1 ? 's' : ''})
+                    </span>
+                    <form action={supprimerVacances}>
+                      <input type="hidden" name="id" value={v.id} />
+                      <button type="submit" style={{ fontSize: 12 }}>Supprimer</button>
+                    </form>
+                  </div>
+                );
+              })}
             </div>
-          );
-        })}
+          )}
+          {(periodesVacances ?? []).length === 0 && (
+            <p style={{ fontSize: 13, opacity: 0.5, marginBottom: 16 }}>Aucune période de vacances définie pour le moment.</p>
+          )}
+  
+          <form action={ajouterVacances} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <label style={{ fontSize: 13 }}>Du
+              <input type="date" name="date_debut" required style={{ marginLeft: 4 }} />
+            </label>
+            <label style={{ fontSize: 13 }}>Au
+              <input type="date" name="date_fin" required style={{ marginLeft: 4 }} />
+            </label>
+            <button type="submit">Ajouter</button>
+          </form>
+        </div>
+        <div style={{ borderTop: `1px solid ${COULEURS.bordure}`, paddingTop: 14, marginTop: 14 }}>
+          <h3 style={{ fontFamily: POLICE_DISPLAY, fontWeight: 400, letterSpacing: 0.5, fontSize: 19, margin: "0 0 10px" }}>Semaine de référence (A/B)</h3>
+          <p style={{ fontSize: 13, opacity: 0.7 }}>
+            Indique un lundi et si c'est une semaine A ou B, ça sert de point de départ pour calculer l'alternance.
+          </p>
+          <form action={definirSemaineReference} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <input
+              type="date"
+              name="date_lundi_reference"
+              defaultValue={ref?.date_lundi_reference}
+              required
+            />
+            <select name="semaine_ce_lundi" defaultValue={ref?.semaine_ce_lundi ?? 'A'}>
+              <option value="A">Semaine A</option>
+              <option value="B">Semaine B</option>
+            </select>
+            <button type="submit">Enregistrer</button>
+          </form>
+        </div>
+        </details>
       </section>
     </main>
   );

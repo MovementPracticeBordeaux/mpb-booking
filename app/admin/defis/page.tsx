@@ -54,12 +54,6 @@ export default async function AdminDefisPage({ searchParams }: { searchParams: {
         l'élève gagne alors son étoile (colorée selon le niveau choisi) dans le classement public.
       </p>
 
-      {searchParams.erreur && (
-        <p style={{ background: '#5a1a1a', color: '#ffb4b4', padding: 12, borderRadius: 8 }}>⚠️ {searchParams.erreur}</p>
-      )}
-      {searchParams.succes && (
-        <p style={{ background: '#1a4d2e', color: '#b4ffcc', padding: 12, borderRadius: 8 }}>✅ {searchParams.succes}</p>
-      )}
 
       {defiActuel && (
         <div style={{ border: '1px solid #f0a', borderRadius: 8, padding: 16, marginBottom: 24 }}>

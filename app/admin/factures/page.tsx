@@ -40,12 +40,6 @@ export default async function AdminFacturesPage({ searchParams }: { searchParams
         un email ou un téléphone pour pouvoir l'envoyer ensuite.
       </p>
 
-      {searchParams.erreur && (
-        <p style={{ background: '#5a1a1a', color: '#ffb4b4', padding: 12, borderRadius: 8 }}>⚠️ {searchParams.erreur}</p>
-      )}
-      {searchParams.succes && (
-        <p style={{ background: '#1a3a1a', color: '#b4ffb4', padding: 12, borderRadius: 8 }}>✓ {searchParams.succes}</p>
-      )}
 
       <section style={{ marginBottom: 32 }}>
         <FormulaireFactureManuelle creerFactureManuelle={creerFactureManuelle} eleves={eleves ?? []} />

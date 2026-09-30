@@ -43,17 +43,7 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
 
   return (
     <main style={{ maxWidth: 640, margin: '0 auto', padding: 20 }}>
-      <h1>Élèves & paiements</h1>
-      {searchParams.erreur && (
-        <p style={{ background: '#5a1a1a', color: '#ffb4b4', padding: 12, borderRadius: 8 }}>
-          ⚠️ {searchParams.erreur}
-        </p>
-      )}
-      {searchParams.succes && (
-        <p style={{ background: '#1a4d2e', color: '#b4ffcc', padding: 12, borderRadius: 8 }}>
-          ✅ {searchParams.succes}
-        </p>
-      )}
+      <h1>Élèves</h1>
 
       <section style={{ marginBottom: 32 }}>
         <h2>Ajouter un élève par email</h2>
