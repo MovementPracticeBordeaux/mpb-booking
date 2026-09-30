@@ -1035,3 +1035,127 @@ export async function supprimerEvenement(formData: FormData) {
   revalidatePath('/evenements');
   reussir('/admin/evenements', 'Événement supprimé définitivement.');
 }
+
+// --- Coachings individuels planifiés depuis le planning admin ---
+
+export async function ajouterCoaching(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+
+  const eleveId = (formData.get('eleve_id') as string) || null;
+  const nomLibre = ((formData.get('nom_libre') as string) || '').trim() || null;
+  const dateSeance = formData.get('date_seance') as string;
+  const heureDebut = formData.get('heure_debut') as string;
+  const dureeMinutes = Number(formData.get('duree_minutes'));
+  const lieu = ((formData.get('lieu') as string) || '').trim() || null;
+  const note = ((formData.get('note') as string) || '').trim() || null;
+  const decompter = formData.get('decompter') === 'on';
+
+  if (!eleveId && !nomLibre) echouer('/admin/planning', 'Choisis un élève ou indique un nom.');
+  if (!dateSeance || !heureDebut || !(dureeMinutes > 0)) echouer('/admin/planning', 'Date, heure et durée sont requises.');
+
+  // Décompte du crédit d'heures (le crédit se compte en heures entières).
+  let abonnementId: string | null = null;
+  let heuresDecomptees = 0;
+  let avertissement = '';
+  if (decompter && eleveId) {
+    const heures = dureeMinutes / 60;
+    if (!Number.isInteger(heures)) {
+      avertissement = ' Crédit non décompté : il se compte en heures entières, décompte-le à la main si besoin.';
+    } else {
+      const { data: abos } = await admin
+        .from('abonnements')
+        .select('id, quota_restant, date_expiration')
+        .eq('eleve_id', eleveId)
+        .eq('categorie', 'coaching')
+        .eq('abonnement_actif', true)
+        .gte('quota_restant', heures)
+        .order('date_expiration', { ascending: true });
+      const abo = abos?.[0];
+      if (!abo) {
+        avertissement = " Aucun crédit coaching suffisant à décompter pour cet élève.";
+      } else {
+        const { error } = await admin.from('abonnements').update({ quota_restant: abo.quota_restant - heures }).eq('id', abo.id);
+        if (error) echouer('/admin/planning', error.message);
+        abonnementId = abo.id;
+        heuresDecomptees = heures;
+      }
+    }
+  }
+
+  const { error } = await admin.from('coaching_seances').insert({
+    eleve_id: eleveId,
+    nom_libre: eleveId ? null : nomLibre,
+    date_seance: dateSeance,
+    heure_debut: heureDebut,
+    duree_minutes: dureeMinutes,
+    lieu,
+    note,
+    abonnement_id: abonnementId,
+    heures_decomptees: heuresDecomptees,
+  });
+  if (error) {
+    // La séance n'a pas pu être créée : on rend les heures décomptées.
+    if (abonnementId && heuresDecomptees) {
+      const { data: abo } = await admin.from('abonnements').select('quota_restant').eq('id', abonnementId).single();
+      if (abo) await admin.from('abonnements').update({ quota_restant: abo.quota_restant + heuresDecomptees }).eq('id', abonnementId);
+    }
+    echouer('/admin/planning', error.message);
+  }
+
+  revalidatePath('/admin/planning');
+  revalidatePath('/admin/eleves');
+  reussir('/admin/planning', `Coaching ajouté${heuresDecomptees ? ` (${heuresDecomptees} h décomptée${heuresDecomptees > 1 ? 's' : ''})` : ''}.${avertissement}`);
+}
+
+export async function supprimerCoaching(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+  const id = formData.get('id') as string;
+
+  const { data: seance } = await admin.from('coaching_seances').select('abonnement_id, heures_decomptees').eq('id', id).maybeSingle();
+  if (!seance) echouer('/admin/planning', 'Séance introuvable.');
+
+  const { error } = await admin.from('coaching_seances').delete().eq('id', id);
+  if (error) echouer('/admin/planning', error.message);
+
+  // Rend les heures au crédit de l'élève si elles avaient été décomptées.
+  let recredit = '';
+  if (seance.abonnement_id && seance.heures_decomptees > 0) {
+    const { data: abo } = await admin.from('abonnements').select('quota_restant').eq('id', seance.abonnement_id).maybeSingle();
+    if (abo) {
+      await admin.from('abonnements').update({ quota_restant: abo.quota_restant + seance.heures_decomptees }).eq('id', seance.abonnement_id);
+      recredit = ` ${seance.heures_decomptees} h recréditée${seance.heures_decomptees > 1 ? 's' : ''}.`;
+    }
+  }
+
+  revalidatePath('/admin/planning');
+  revalidatePath('/admin/eleves');
+  reussir('/admin/planning', `Coaching supprimé.${recredit}`);
+}
+
+// Ajout d'un créneau collectif récurrent depuis un jour du carrousel : même
+// effet que le formulaire "Ajouter un créneau", jour et semaine A/B déduits
+// du jour cliqué.
+export async function ajouterCoursDepuisJour(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+  const discipline = ((formData.get('discipline') as string) || '').trim();
+  const heureDebut = formData.get('heure_debut') as string;
+  const heureFin = formData.get('heure_fin') as string;
+  if (!discipline || !heureDebut || !heureFin) echouer('/admin/planning', 'Discipline et horaires sont requis.');
+  if (heureFin <= heureDebut) echouer('/admin/planning', "L'heure de fin doit être après l'heure de début.");
+
+  const { error } = await admin.from('cours').insert({
+    discipline,
+    semaine: formData.get('semaine') as string,
+    jour_semaine: Number(formData.get('jour_semaine')),
+    heure_debut: heureDebut,
+    heure_fin: heureFin,
+    lieu: ((formData.get('lieu') as string) || '').trim(),
+  });
+  if (error) echouer('/admin/planning', error.message);
+  revalidatePath('/admin/planning');
+  revalidatePath('/planning');
+  reussir('/admin/planning', 'Créneau ajouté au planning (chaque semaine ' + (formData.get('semaine') as string) + ').');
+}

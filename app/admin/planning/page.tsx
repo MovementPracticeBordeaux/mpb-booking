@@ -1,7 +1,7 @@
 import { supabaseAdmin } from '@/lib/supabase-server';
-import { ajouterCours, desactiverCours, modifierCours, definirSemaineReference, ajouterVacances, supprimerVacances, reserverCoursPourEleve, annulerReservationAdmin } from '../actions';
+import { ajouterCours, desactiverCours, modifierCours, definirSemaineReference, ajouterVacances, supprimerVacances, reserverCoursPourEleve, annulerReservationAdmin, ajouterCoaching, supprimerCoaching, ajouterCoursDepuisJour } from '../actions';
 import { calculerSemaine } from '@/lib/semaine';
-import AdminSeancesCarousel from '../AdminSeancesCarousel';
+import AdminSeancesCarousel, { type CoachingDuJour } from '../AdminSeancesCarousel';
 import SelecteurDiscipline from '../SelecteurDiscipline';
 import { COULEURS, POLICE_DISPLAY } from '@/lib/theme';
 
@@ -61,11 +61,48 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
   // Regroupe les séances par jour pour le carrousel admin (même principe
   // visuel que le planning public, en un seul jour à la fois plutôt qu'une
   // liste empilée qui prenait beaucoup trop de place).
+  // Coachings individuels sur la même fenêtre de dates.
+  const debutFenetre = new Date(); debutFenetre.setDate(debutFenetre.getDate() - JOURS_PASSES);
+  const finFenetre = new Date(); finFenetre.setDate(finFenetre.getDate() + JOURS_A_VENIR);
+  const { data: coachingsBrut } = await admin
+    .from('coaching_seances')
+    .select('id, eleve_id, nom_libre, date_seance, heure_debut, duree_minutes, lieu, note, heures_decomptees, profiles(nom, email)')
+    .gte('date_seance', debutFenetre.toISOString().slice(0, 10))
+    .lte('date_seance', finFenetre.toISOString().slice(0, 10))
+    .order('heure_debut');
+  const coachingsParJour = new Map<string, CoachingDuJour[]>();
+  for (const c of coachingsBrut ?? []) {
+    const [h, m] = (c.heure_debut as string).split(':').map(Number);
+    const finMin = h * 60 + m + c.duree_minutes;
+    const liste = coachingsParJour.get(c.date_seance) ?? [];
+    liste.push({
+      id: c.id,
+      nom: (c.profiles as any)?.nom || (c.profiles as any)?.email || c.nom_libre || 'Élève',
+      heureDebut: (c.heure_debut as string).slice(0, 5),
+      heureFin: `${String(Math.floor(finMin / 60) % 24).padStart(2, '0')}:${String(finMin % 60).padStart(2, '0')}`,
+      lieu: c.lieu,
+      note: c.note,
+      heuresDecomptees: c.heures_decomptees,
+    });
+    coachingsParJour.set(c.date_seance, liste);
+  }
+
+  // Crédit d'heures de coaching restant par élève, affiché dans le menu.
+  const { data: abosCoaching } = await admin
+    .from('abonnements')
+    .select('eleve_id, quota_restant')
+    .eq('categorie', 'coaching')
+    .eq('abonnement_actif', true);
+  const creditsCoaching: Record<string, number> = {};
+  for (const a of abosCoaching ?? []) creditsCoaching[a.eleve_id] = (creditsCoaching[a.eleve_id] ?? 0) + (a.quota_restant ?? 0);
+
   type JourAdminCarousel = {
     dateISO: string;
     jourSemaine: number;
+    semaine: 'A' | 'B';
     enVacances: boolean;
     cours: { coursId: string; discipline: string; heureDebut: string; heureFin: string; inscrits: Inscrit[] }[];
+    coachings: CoachingDuJour[];
   };
   const joursCarousel: JourAdminCarousel[] = [];
   let indexAujourdhuiCarousel = JOURS_PASSES;
@@ -84,7 +121,9 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
       joursCarousel.push({
         dateISO: dateStr,
         jourSemaine: d.getDay(),
+        semaine,
         enVacances,
+        coachings: coachingsParJour.get(dateStr) ?? [],
         cours: coursDuJour.map((c) => ({
           coursId: c.id,
           discipline: c.discipline as string,
@@ -117,6 +156,11 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
           indexAujourdhui={indexAujourdhuiCarousel}
           eleves={(eleves ?? []).map((e) => ({ id: e.id, nom: e.nom, email: e.email }))}
           reserverCoursPourEleve={reserverCoursPourEleve}
+          ajouterCoaching={ajouterCoaching}
+          supprimerCoaching={supprimerCoaching}
+          ajouterCoursDepuisJour={ajouterCoursDepuisJour}
+          disciplinesExistantes={disciplinesExistantes}
+          creditsCoaching={creditsCoaching}
           annulerReservationAdmin={annulerReservationAdmin}
         />
       </section>
