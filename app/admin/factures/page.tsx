@@ -33,7 +33,7 @@ export default async function AdminFacturesPage({ searchParams }: { searchParams
     .order('nom');
 
   return (
-    <main style={{ maxWidth: 640, margin: '0 auto', padding: 20 }}>
+    <main style={{ maxWidth: 1160, margin: '0 auto', padding: 20 }}>
       <h1>Factures</h1>
       <p style={{ fontSize: 13, opacity: 0.7 }}>
         Pour les prestations hors catalogue (interventions à l'extérieur, ateliers ponctuels...). Renseigne au moins
@@ -41,6 +41,7 @@ export default async function AdminFacturesPage({ searchParams }: { searchParams
       </p>
 
 
+      <div className="deux-colonnes">
       <section style={{ marginBottom: 32 }}>
         <FormulaireFactureManuelle creerFactureManuelle={creerFactureManuelle} eleves={eleves ?? []} />
       </section>
@@ -95,6 +96,7 @@ export default async function AdminFacturesPage({ searchParams }: { searchParams
           );
         })}
       </section>
+      </div>
     </main>
   );
 }

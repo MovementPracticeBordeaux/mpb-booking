@@ -12,10 +12,20 @@ const CSS_ADMIN = `
   .zone-admin { color-scheme: dark; }
   .zone-admin h1 { font-family: ${POLICE_DISPLAY}; letter-spacing: 0.5px; font-weight: 400; font-size: 34px; margin: 8px 0 16px; }
   .zone-admin h2 { font-family: ${POLICE_DISPLAY}; letter-spacing: 0.5px; font-weight: 400; font-size: 24px; margin: 0 0 12px; }
-  .zone-admin main > section {
-    background: ${COULEURS.surface}; border: 1px solid ${COULEURS.bordure}; border-radius: 16px;
-    padding: 16px; margin-bottom: 20px;
+  /* Pages en pleine largeur, sections séparées par un simple filet plutôt
+     qu'enfermées dans des boîtes qui compressaient l'affichage. */
+  .zone-admin main > section { margin: 0 0 28px; padding: 0 0 24px; border-bottom: 1px solid ${COULEURS.bordure}; }
+  .zone-admin main > section:last-child { border-bottom: none; }
+  /* Sur grand écran, les formulaires ne s'étirent pas sur 1100px de large :
+     au-delà de cette largeur, un champ texte devient illisible. */
+  .zone-admin main form { max-width: 720px; }
+  /* Formulaire et liste côte à côte sur grand écran, empilés sur téléphone. */
+  .zone-admin .deux-colonnes {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr));
+    gap: 0 40px; align-items: start; margin-bottom: 28px; padding-bottom: 24px; border-bottom: 1px solid ${COULEURS.bordure};
   }
+  .zone-admin .deux-colonnes > section { min-width: 0; margin: 0 0 24px; }
+  .zone-admin main > .deux-colonnes:last-child { border-bottom: none; }
   .zone-admin select:not([style]),
   .zone-admin textarea:not([style]),
   .zone-admin input:not([style]):not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=submit]) {
@@ -33,7 +43,7 @@ const CSS_ADMIN = `
   .zone-admin button:not([style]):hover { background: rgba(255,45,120,0.12); }
   .zone-admin details > summary { cursor: pointer; }
 
-  .nav-admin { max-width: 640px; margin: 16px auto 0; padding: 0 20px; }
+  .nav-admin { max-width: 1200px; margin: 16px auto 0; padding: 0 20px; box-sizing: border-box; }
   .nav-admin-pastilles, .nav-admin-sous {
     display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 2px;
   }

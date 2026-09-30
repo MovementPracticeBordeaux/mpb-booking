@@ -78,7 +78,7 @@ export default async function AdminStatistiquesPage() {
   });
 
   return (
-    <main style={{ maxWidth: 640, margin: '0 auto', padding: 20 }}>
+    <main style={{ maxWidth: 1160, margin: '0 auto', padding: 20 }}>
       <h1>Statistiques</h1>
 
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
@@ -100,117 +100,129 @@ export default async function AdminStatistiquesPage() {
         </div>
       </div>
 
-      <p style={{ fontSize: 13, fontWeight: 600, opacity: 0.8, marginBottom: 4 }}>Élèves actifs par formule</p>
-      {(() => {
-        const donnees = Object.entries(FORMULES)
-          .map(([cle, f]) => ({ nom: f.nom, n: eleveParFormule.get(cle) ?? 0 }))
-          .filter((d) => d.n > 0)
-          .sort((a, b) => b.n - a.n);
+      {/* Sur grand écran, les blocs se répartissent sur deux colonnes au
+          lieu de s'empiler dans une colonne étroite. */}
+      <style>{`
+        .grille-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr)); gap: 28px 32px; align-items: start; margin-bottom: 8px; }
+        .bloc-stat { min-width: 0; }
+      `}</style>
+      <div className="grille-stats">
+        <div className="bloc-stat">
+        <p style={{ fontSize: 13, fontWeight: 600, opacity: 0.8, marginBottom: 4 }}>Élèves actifs par formule</p>
+        {(() => {
+          const donnees = Object.entries(FORMULES)
+            .map(([cle, f]) => ({ nom: f.nom, n: eleveParFormule.get(cle) ?? 0 }))
+            .filter((d) => d.n > 0)
+            .sort((a, b) => b.n - a.n);
 
-        if (donnees.length === 0) {
-          return <p style={{ fontSize: 12, opacity: 0.6, marginBottom: 20 }}>Aucun abonnement actif pour le moment.</p>;
-        }
+          if (donnees.length === 0) {
+            return <p style={{ fontSize: 12, opacity: 0.6, marginBottom: 20 }}>Aucun abonnement actif pour le moment.</p>;
+          }
 
-        const maxN = Math.max(...donnees.map((d) => d.n));
-        const hauteurBarre = 26, espace = 8;
-        const svgWBarres = 600, padGBarres = 140, padDBarres = 40;
-        const svgHBarres = donnees.length * (hauteurBarre + espace);
+          const maxN = Math.max(...donnees.map((d) => d.n));
+          const hauteurBarre = 26, espace = 8;
+          const svgWBarres = 600, padGBarres = 140, padDBarres = 40;
+          const svgHBarres = donnees.length * (hauteurBarre + espace);
 
-        return (
-          <div style={{ marginBottom: 20 }}>
-            <svg viewBox={`0 0 ${svgWBarres} ${svgHBarres}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
-              {donnees.map((d, i) => {
-                const y = i * (hauteurBarre + espace);
-                const largeurMax = svgWBarres - padGBarres - padDBarres;
-                const largeur = maxN > 0 ? (d.n / maxN) * largeurMax : 0;
+          return (
+            <div style={{ marginBottom: 20 }}>
+              <svg viewBox={`0 0 ${svgWBarres} ${svgHBarres}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
+                {donnees.map((d, i) => {
+                  const y = i * (hauteurBarre + espace);
+                  const largeurMax = svgWBarres - padGBarres - padDBarres;
+                  const largeur = maxN > 0 ? (d.n / maxN) * largeurMax : 0;
+                  return (
+                    <g key={d.nom}>
+                      <text x={padGBarres - 10} y={y + hauteurBarre / 2} textAnchor="end" dominantBaseline="middle" fontSize="13" fill="#ccc">
+                        {d.nom}
+                      </text>
+                      <rect x={padGBarres} y={y} width={largeurMax} height={hauteurBarre} rx={4} fill="#222" />
+                      <rect x={padGBarres} y={y} width={largeur} height={hauteurBarre} rx={4} fill="#f0a" />
+                      <text x={padGBarres + largeur + 8} y={y + hauteurBarre / 2} dominantBaseline="middle" fontSize="13" fontWeight="700" fill="#fff">
+                        {d.n}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
+          );
+        })()}
+        </div>
+        <div className="bloc-stat">
+        <p style={{ fontSize: 13, fontWeight: 600, opacity: 0.8, marginBottom: 4 }}>Évolution des revenus mensuels (encaissé, hors remboursements)</p>
+        {moisTries.length === 0 ? (
+          <p style={{ fontSize: 12, opacity: 0.6, marginBottom: 20 }}>Pas encore de paiement enregistré.</p>
+        ) : (
+          <div style={{ marginBottom: 12 }}>
+            <svg viewBox={`0 0 ${svgW} ${svgH}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
+              {/* ligne de base */}
+              <line x1={padG} y1={svgH - padB} x2={svgW - padD} y2={svgH - padB} stroke="#333" strokeWidth={1} />
+              {/* courbe en deux segments : gris pour l'historique Wix, rose pour le nouveau site */}
+              {pointsCourbe.slice(0, -1).map((p, i) => {
+                const suivant = pointsCourbe[i + 1];
+                const segmentWix = p.estWix && suivant.estWix;
                 return (
-                  <g key={d.nom}>
-                    <text x={padGBarres - 10} y={y + hauteurBarre / 2} textAnchor="end" dominantBaseline="middle" fontSize="13" fill="#ccc">
-                      {d.nom}
-                    </text>
-                    <rect x={padGBarres} y={y} width={largeurMax} height={hauteurBarre} rx={4} fill="#222" />
-                    <rect x={padGBarres} y={y} width={largeur} height={hauteurBarre} rx={4} fill="#f0a" />
-                    <text x={padGBarres + largeur + 8} y={y + hauteurBarre / 2} dominantBaseline="middle" fontSize="13" fontWeight="700" fill="#fff">
-                      {d.n}
-                    </text>
-                  </g>
+                  <line
+                    key={i}
+                    x1={p.x} y1={p.y} x2={suivant.x} y2={suivant.y}
+                    stroke={segmentWix ? '#888' : '#f0a'}
+                    strokeWidth={2}
+                    strokeDasharray={segmentWix ? '4 3' : undefined}
+                  />
                 );
               })}
-            </svg>
-          </div>
-        );
-      })()}
-
-      <p style={{ fontSize: 13, fontWeight: 600, opacity: 0.8, marginBottom: 4 }}>Évolution des revenus mensuels (encaissé, hors remboursements)</p>
-      {moisTries.length === 0 ? (
-        <p style={{ fontSize: 12, opacity: 0.6, marginBottom: 20 }}>Pas encore de paiement enregistré.</p>
-      ) : (
-        <div style={{ marginBottom: 12 }}>
-          <svg viewBox={`0 0 ${svgW} ${svgH}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
-            {/* ligne de base */}
-            <line x1={padG} y1={svgH - padB} x2={svgW - padD} y2={svgH - padB} stroke="#333" strokeWidth={1} />
-            {/* courbe en deux segments : gris pour l'historique Wix, rose pour le nouveau site */}
-            {pointsCourbe.slice(0, -1).map((p, i) => {
-              const suivant = pointsCourbe[i + 1];
-              const segmentWix = p.estWix && suivant.estWix;
-              return (
-                <line
-                  key={i}
-                  x1={p.x} y1={p.y} x2={suivant.x} y2={suivant.y}
-                  stroke={segmentWix ? '#888' : '#f0a'}
-                  strokeWidth={2}
-                  strokeDasharray={segmentWix ? '4 3' : undefined}
-                />
-              );
-            })}
-            {pointsCourbe.map((p, i) => (
-              <g key={i}>
-                <circle cx={p.x} cy={p.y} r={3} fill={p.estWix ? '#888' : '#f0a'} />
-                <text x={p.x} y={p.y - 8} fontSize={10} fill="#eee" textAnchor="middle">{p.montant.toFixed(0)}€</text>
-                <text x={p.x} y={svgH - 6} fontSize={9} fill="#888" textAnchor="middle">
-                  {NOMS_MOIS[Number(moisTries[i][0].split('-')[1]) - 1]} {moisTries[i][0].split('-')[0].slice(2)}
-                </text>
-              </g>
-            ))}
-          </svg>
-          <div style={{ display: 'flex', gap: 14, fontSize: 11, opacity: 0.7, marginTop: 4 }}>
-            <span><span style={{ color: '#888' }}>●</span> Ancien site (Wix)</span>
-            <span><span style={{ color: '#f0a' }}>●</span> Nouveau site</span>
-          </div>
-          {parMoyen.total.size > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, marginTop: 10 }}>
-              {(['mois', 'total'] as const).map((periode) => (
-                <div key={periode} style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
-                  <span style={{ opacity: 0.6, width: 70 }}>{periode === 'mois' ? 'Ce mois' : 'Depuis le lancement'}</span>
-                  {['carte', 'especes', 'virement'].filter((m) => parMoyen[periode].get(m)).map((m) => (
-                    <span key={m} style={{ border: '1px solid #333', borderRadius: 999, padding: '3px 10px' }}>
-                      {LIBELLE_MOYEN[m]} · {parMoyen[periode].get(m)!.toLocaleString('fr-FR')} €
-                    </span>
-                  ))}
-                </div>
+              {pointsCourbe.map((p, i) => (
+                <g key={i}>
+                  <circle cx={p.x} cy={p.y} r={3} fill={p.estWix ? '#888' : '#f0a'} />
+                  <text x={p.x} y={p.y - 8} fontSize={10} fill="#eee" textAnchor="middle">{p.montant.toFixed(0)}€</text>
+                  <text x={p.x} y={svgH - 6} fontSize={9} fill="#888" textAnchor="middle">
+                    {NOMS_MOIS[Number(moisTries[i][0].split('-')[1]) - 1]} {moisTries[i][0].split('-')[0].slice(2)}
+                  </text>
+                </g>
               ))}
+            </svg>
+            <div style={{ display: 'flex', gap: 14, fontSize: 11, opacity: 0.7, marginTop: 4 }}>
+              <span><span style={{ color: '#888' }}>●</span> Ancien site (Wix)</span>
+              <span><span style={{ color: '#f0a' }}>●</span> Nouveau site</span>
             </div>
-          )}
-        </div>
-      )}
-
-      <p style={{ fontSize: 13, fontWeight: 600, opacity: 0.8, marginBottom: 4 }}>
-        Créneaux les plus / moins réservés (total réservations depuis toujours)
-      </p>
-      <p style={{ fontSize: 11, opacity: 0.5, marginBottom: 8 }}>
-        Chiffre brut, pas ramené au nombre d'occurrences passées — à lire comme une tendance relative.
-      </p>
-      {coursAvecStats.map((c) => (
-        <div key={c.id} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 8, fontSize: 12 }}>
-          <span style={{ width: 178, flexShrink: 0 }}>
-            <span style={{ color: COULEUR_SEMAINE[c.semaine as 'A' | 'B'] }}>●</span> {JOURS[c.jour_semaine].slice(0, 3)} {c.heure_debut.slice(0, 5)} — {c.discipline}
-          </span>
-          <div style={{ flex: '1 1 100px', background: '#222', borderRadius: 4, height: 14, overflow: 'hidden' }}>
-            <div style={{ width: `${(c.nbReservations / maxReservations) * 100}%`, height: '100%', background: '#f0a' }} />
+            {parMoyen.total.size > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, marginTop: 10 }}>
+                {(['mois', 'total'] as const).map((periode) => (
+                  <div key={periode} style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
+                    <span style={{ opacity: 0.6, width: 70 }}>{periode === 'mois' ? 'Ce mois' : 'Depuis le lancement'}</span>
+                    {['carte', 'especes', 'virement'].filter((m) => parMoyen[periode].get(m)).map((m) => (
+                      <span key={m} style={{ border: '1px solid #333', borderRadius: 999, padding: '3px 10px' }}>
+                        {LIBELLE_MOYEN[m]} · {parMoyen[periode].get(m)!.toLocaleString('fr-FR')} €
+                      </span>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-          <span style={{ width: 24, textAlign: 'right', flexShrink: 0 }}>{c.nbReservations}</span>
+        )}
         </div>
-      ))}
+        <div className="bloc-stat">
+        <p style={{ fontSize: 13, fontWeight: 600, opacity: 0.8, marginBottom: 4 }}>
+          Créneaux les plus / moins réservés (total réservations depuis toujours)
+        </p>
+        <p style={{ fontSize: 11, opacity: 0.5, marginBottom: 8 }}>
+          Chiffre brut, pas ramené au nombre d'occurrences passées — à lire comme une tendance relative.
+        </p>
+        {coursAvecStats.map((c) => (
+          <div key={c.id} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 8, fontSize: 12 }}>
+            <span style={{ width: 178, flexShrink: 0 }}>
+              <span style={{ color: COULEUR_SEMAINE[c.semaine as 'A' | 'B'] }}>●</span> {JOURS[c.jour_semaine].slice(0, 3)} {c.heure_debut.slice(0, 5)} — {c.discipline}
+            </span>
+            <div style={{ flex: '1 1 100px', background: '#222', borderRadius: 4, height: 14, overflow: 'hidden' }}>
+              <div style={{ width: `${(c.nbReservations / maxReservations) * 100}%`, height: '100%', background: '#f0a' }} />
+            </div>
+            <span style={{ width: 24, textAlign: 'right', flexShrink: 0 }}>{c.nbReservations}</span>
+          </div>
+        ))}
+        </div>
+      </div>
 
       <details style={{ marginTop: 20, border: '1px solid #333', borderRadius: 8, padding: '10px 14px' }}>
         <summary style={{ cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>

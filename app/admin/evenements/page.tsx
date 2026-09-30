@@ -23,10 +23,11 @@ export default async function AdminEvenementsPage({ searchParams }: { searchPara
   }
 
   return (
-    <main style={{ maxWidth: 560, margin: '0 auto', padding: 20 }}>
+    <main style={{ maxWidth: 1160, margin: '0 auto', padding: 20 }}>
       <h1>Événements</h1>
 
 
+      <div className="deux-colonnes">
       <section style={{ marginBottom: 32 }}>
         <h2>Publier un événement</h2>
         <form action={creerEvenement} style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 420 }}>
@@ -119,6 +120,7 @@ export default async function AdminEvenementsPage({ searchParams }: { searchPara
           );
         })}
       </section>
+      </div>
     </main>
   );
 }

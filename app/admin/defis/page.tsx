@@ -39,7 +39,7 @@ export default async function AdminDefisPage({ searchParams }: { searchParams: {
   const validees = (participationsBrut ?? []).filter((p) => p.valide);
 
   return (
-    <main style={{ maxWidth: 560, margin: '0 auto', padding: 20 }}>
+    <main style={{ maxWidth: 1160, margin: '0 auto', padding: 20 }}>
       <style>{`
         @keyframes glow-defi-mythique {
           0%, 100% { text-shadow: 0 0 4px #FF3B30bb, 0 0 8px #FF2D78bb, 0 0 14px #8B5CF6aa; }
@@ -195,6 +195,7 @@ export default async function AdminDefisPage({ searchParams }: { searchParams: {
         </div>
       )}
 
+      <div className="deux-colonnes">
       <section style={{ marginBottom: 32 }}>
         <h2>Publier un nouveau défi</h2>
         <p style={{ fontSize: 13, opacity: 0.7 }}>Remplace immédiatement celui affiché sur le site (les participations au précédent restent conservées dans son historique).</p>
@@ -239,6 +240,7 @@ export default async function AdminDefisPage({ searchParams }: { searchParams: {
           </details>
         ))}
       </section>
+      </div>
     </main>
   );
 }

@@ -52,7 +52,7 @@ export default async function AdminMentorshipPage({ searchParams }: { searchPara
   }
 
   return (
-    <main style={{ maxWidth: 720, margin: '0 auto', padding: 20 }}>
+    <main style={{ maxWidth: 1160, margin: '0 auto', padding: 20 }}>
       <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 'clamp(28px, 7vw, 40px)', letterSpacing: 0.5, marginBottom: 4 }}>
         VALIDATIONS <span style={GRADIENT_TEXTE}>MENTORSHIP</span>
       </h1>

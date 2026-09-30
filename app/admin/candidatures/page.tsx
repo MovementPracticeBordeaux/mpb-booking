@@ -156,7 +156,7 @@ export default async function AdminCandidaturesPage({ searchParams }: { searchPa
   }
 
   return (
-    <main style={{ maxWidth: 720, margin: '0 auto', padding: 20 }}>
+    <main style={{ maxWidth: 1160, margin: '0 auto', padding: 20 }}>
       <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 'clamp(28px, 7vw, 40px)', letterSpacing: 0.5, marginBottom: 4 }}>
         CANDIDATURES <span style={GRADIENT_TEXTE}>MENTORAT</span>
       </h1>

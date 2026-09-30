@@ -23,7 +23,7 @@ export default async function AdminObjectifsPage({ searchParams }: { searchParam
     .select('id, objectif_source_id, objectif_cible_id, type');
 
   return (
-    <main style={{ maxWidth: 720, margin: '0 auto', padding: 20 }}>
+    <main style={{ maxWidth: 1160, margin: '0 auto', padding: 20 }}>
       <h1>Objectifs</h1>
       <p style={{ fontSize: 13, opacity: 0.7 }}>
         {objectifs?.length ?? 0} objectifs, {relations?.length ?? 0} relations "sert à" définies. Clique sur un

@@ -42,9 +42,10 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
     .limit(20);
 
   return (
-    <main style={{ maxWidth: 640, margin: '0 auto', padding: 20 }}>
+    <main style={{ maxWidth: 1160, margin: '0 auto', padding: 20 }}>
       <h1>Élèves</h1>
 
+      <div className="deux-colonnes">
       <section style={{ marginBottom: 32 }}>
         <h2>Ajouter un élève par email</h2>
         <p style={{ fontSize: 13, opacity: 0.7 }}>
@@ -98,6 +99,7 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
           <button type="submit">Attribuer</button>
         </form>
       </section>
+      </div>
 
       <section style={{ marginBottom: 32 }}>
         <ListeElevesRepliable
