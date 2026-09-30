@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { positionCentree, centrerAuChargement } from '@/lib/centrer-carte';
 import { COULEURS, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
 import SelecteurDiscipline from './SelecteurDiscipline';
 
@@ -185,16 +186,13 @@ export default function AdminSeancesCarousel({
     // parfois interrompre par le magnétisme et revient à sa position de
     // départ (même correctif que sur le planning public, PlanningVue.tsx).
     conteneur.scrollTo({
-      left: carte.offsetLeft - (conteneur.offsetWidth - carte.offsetWidth) / 2,
+      left: positionCentree(conteneur, carte),
       behavior: 'auto',
     });
   }
 
   useEffect(() => {
-    const conteneur = carrouselRef.current;
-    const carte = conteneur?.children[indexAujourdhui] as HTMLElement | undefined;
-    if (!conteneur || !carte) return;
-    conteneur.scrollLeft = carte.offsetLeft - (conteneur.offsetWidth - carte.offsetWidth) / 2;
+    centrerAuChargement(carrouselRef.current, indexAujourdhui);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { positionCentree, centrerAuChargement } from '@/lib/centrer-carte';
 import { COULEURS, GRADIENT, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
 
 export type CoursJour = {
@@ -111,17 +112,14 @@ export default function PlanningVue({
     // passe rien au clic/à la sélection d'une date. 'auto' (instantané)
     // évite ce conflit.
     conteneur.scrollTo({
-      left: carte.offsetLeft - (conteneur.offsetWidth - carte.offsetWidth) / 2,
+      left: positionCentree(conteneur, carte),
       behavior: 'auto',
     });
   }
 
   // Centre sur aujourd'hui au premier chargement (sans animation).
   useEffect(() => {
-    const conteneur = carrouselRef.current;
-    const carte = conteneur?.children[indexAujourdhui] as HTMLElement | undefined;
-    if (!conteneur || !carte) return;
-    conteneur.scrollLeft = carte.offsetLeft - (conteneur.offsetWidth - carte.offsetWidth) / 2;
+    centrerAuChargement(carrouselRef.current, indexAujourdhui);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
