@@ -1,5 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase-server';
-import { attribuerFormule, suspendreAcces, decompterCoaching, modifierQuotaRestant, modifierExpiration, gelerPass, degelerPass, definirDateReprise, modifierPrenomEleveAdmin, rembourserPaiement, creerEleve } from '../actions';
+import { attribuerFormule, suspendreAcces, decompterCoaching, modifierQuotaRestant, modifierExpiration, gelerPass, degelerPass, definirDateReprise, modifierPrenomEleveAdmin, modifierTelephoneEleveAdmin, rembourserPaiement, creerEleve } from '../actions';
 import { FORMULES } from '@/lib/formules';
 import ListeElevesRepliable from '../ListeElevesRepliable';
 import ListePaiementsRepliable from '../ListePaiementsRepliable';
@@ -54,6 +54,7 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
         </p>
         <form action={creerEleve} style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 320 }}>
           <input type="email" name="email" placeholder="Adresse email" required />
+          <input type="tel" name="telephone" placeholder="Téléphone (optionnel)" />
           <input type="text" name="nom" placeholder="Nom (optionnel)" />
           <button type="submit">Créer le compte</button>
         </form>
@@ -116,6 +117,7 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
           degelerPass={degelerPass}
           definirDateReprise={definirDateReprise}
           modifierPrenomEleveAdmin={modifierPrenomEleveAdmin}
+          modifierTelephoneEleveAdmin={modifierTelephoneEleveAdmin}
           decompterCoaching={decompterCoaching}
         />
       </section>

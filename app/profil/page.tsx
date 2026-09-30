@@ -4,7 +4,9 @@ import { redirect } from 'next/navigation';
 import BoutonDeconnexion from '../components/BoutonDeconnexion';
 import NotificationsToggle from './NotificationsToggle';
 import EmailPreferences from './EmailPreferences';
-import { modifierMonPrenom, modifierMonTelephone } from './actions';
+import { modifierMonPrenom } from './actions';
+import FormulaireTelephone from '../components/FormulaireTelephone';
+import { formaterTelephone } from '@/lib/telephone';
 import BoutonRenouveler from './BoutonRenouveler';
 import { PRICE_IDS } from '@/lib/prix-stripe';
 
@@ -83,18 +85,11 @@ export default async function ProfilPage({ searchParams }: { searchParams: { pai
           <summary style={{ fontSize: 12, opacity: 0.6, cursor: 'pointer' }}>
             {profil?.telephone ? 'Modifier mon téléphone' : '📱 Ajouter mon téléphone'}
           </summary>
-          <form action={modifierMonTelephone} style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-            <input
-              name="telephone"
-              type="tel"
-              defaultValue={profil?.telephone ?? ''}
-              placeholder="06 12 34 56 78"
-              style={{ flex: 1, padding: '6px 10px', borderRadius: 6, border: '1px solid #444', background: 'rgba(255,255,255,0.04)', color: 'inherit', fontSize: 16 }}
-            />
-            <button type="submit" style={{ fontSize: 13, padding: '10px 14px', minHeight: 40, borderRadius: 6 }}>Enregistrer</button>
-          </form>
+          <div style={{ marginTop: 8 }}>
+            <FormulaireTelephone valeurInitiale={profil?.telephone ? formaterTelephone(profil.telephone) : ''} />
+          </div>
           <p style={{ fontSize: 11, opacity: 0.5, margin: '6px 0 0' }}>
-            Facultatif — pour que Sylvain puisse te contacter directement si besoin.
+            Pour que Sylvain puisse te prévenir en cas de changement de cours.
           </p>
         </details>
       </div>

@@ -9,6 +9,7 @@ import { stripe } from '@/lib/stripe';
 import { envoyerEmail } from '@/lib/resend';
 import { envoyerPushAEleve } from '@/lib/push';
 import { parisVersUTC } from '@/lib/dates-paris';
+import { normaliserTelephone } from '@/lib/telephone';
 
 // Toute erreur dans une action admin redirige vers la page d'où elle vient
 // (avec un message clair), au lieu de crasher (Next.js masque les throw en
@@ -180,7 +181,10 @@ export async function creerEleve(formData: FormData) {
 
   const email = (formData.get('email') as string)?.trim().toLowerCase();
   const nom = (formData.get('nom') as string)?.trim();
+  const telephoneBrut = (formData.get('telephone') as string)?.trim();
+  const telephone = normaliserTelephone(telephoneBrut);
   if (!email) echouer('/admin/eleves', 'Renseigne une adresse email.');
+  if (telephoneBrut && !telephone) echouer('/admin/eleves', 'Numéro de téléphone invalide.');
 
   const { data: creation, error } = await admin.auth.admin.createUser({
     email,
@@ -196,8 +200,8 @@ export async function creerEleve(formData: FormData) {
     echouer('/admin/eleves', error.message);
   }
 
-  if (nom && creation.user) {
-    await admin.from('profiles').update({ nom }).eq('id', creation.user.id);
+  if ((nom || telephone) && creation.user) {
+    await admin.from('profiles').update({ ...(nom ? { nom } : {}), ...(telephone ? { telephone } : {}) }).eq('id', creation.user.id);
   }
 
   revalidatePath('/admin/eleves');
@@ -1171,4 +1175,17 @@ export async function ajouterCoursDepuisJour(formData: FormData) {
   revalidatePath('/admin/planning');
   revalidatePath('/planning');
   reussir('/admin/planning', 'Créneau ajouté au planning (chaque semaine ' + (formData.get('semaine') as string) + ').');
+}
+
+// L'admin renseigne ou corrige le numéro d'un élève (ex. numéro donné de vive voix).
+export async function modifierTelephoneEleveAdmin(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+  const eleveId = formData.get('eleve_id') as string;
+  const telephone = normaliserTelephone(formData.get('telephone') as string);
+  if (!telephone) echouer('/admin/eleves', 'Numéro de téléphone invalide.');
+  const { error } = await admin.from('profiles').update({ telephone }).eq('id', eleveId);
+  if (error) echouer('/admin/eleves', error.message);
+  revalidatePath('/admin/eleves');
+  reussir('/admin/eleves', 'Téléphone enregistré.');
 }

@@ -1,5 +1,7 @@
 'use client';
 
+import { lienWhatsApp, formaterTelephone } from '@/lib/telephone';
+
 import { useState } from 'react';
 
 type Eleve = { id: string; nom: string | null; email: string; telephone: string | null; createdAt: string };
@@ -40,6 +42,7 @@ export default function ListeElevesRepliable({
   degelerPass,
   definirDateReprise,
   modifierPrenomEleveAdmin,
+  modifierTelephoneEleveAdmin,
   decompterCoaching,
 }: {
   eleves: Eleve[];
@@ -52,6 +55,7 @@ export default function ListeElevesRepliable({
   degelerPass: (formData: FormData) => void;
   definirDateReprise: (formData: FormData) => void;
   modifierPrenomEleveAdmin: (formData: FormData) => void;
+  modifierTelephoneEleveAdmin: (formData: FormData) => void;
   decompterCoaching: (formData: FormData) => void;
 }) {
   const [ouvert, setOuvert] = useState(false);
@@ -89,7 +93,7 @@ export default function ListeElevesRepliable({
   const filtres = eleves.filter((e) => {
     if (filtreStatut !== 'tous' && statutEleve(e) !== filtreStatut) return false;
     const abos = abosParEleve.get(e.id) ?? [];
-    const cible = `${e.nom ?? ''} ${e.email} ${abos.map((a) => a.formuleAffichage?.nom ?? '').join(' ')}`.toLowerCase();
+    const cible = `${e.nom ?? ''} ${e.email} ${e.telephone ? `${e.telephone} ${formaterTelephone(e.telephone).replace(/ /g, '')}` : ''} ${abos.map((a) => a.formuleAffichage?.nom ?? '').join(' ')}`.toLowerCase();
     return cible.includes(recherche.toLowerCase());
   });
 
@@ -133,7 +137,7 @@ export default function ListeElevesRepliable({
           </div>
           <input
             type="text"
-            placeholder="Rechercher un élève (nom, email, formule)..."
+            placeholder="Rechercher un élève (nom, email, téléphone, formule)..."
             value={recherche}
             onChange={(e) => setRecherche(e.target.value)}
             style={{ width: '100%', maxWidth: 320, marginBottom: 10, padding: '6px 10px', fontSize: 13 }}
@@ -155,10 +159,19 @@ export default function ListeElevesRepliable({
               <details key={e.id} style={{ borderBottom: '1px solid #333', padding: 8 }}>
                 <summary style={{ fontSize: 14, cursor: 'pointer' }}>
                   {e.nom ?? e.email} — {resume}
-                  {e.telephone && (
-                    <a href={`https://wa.me/${e.telephone.replace(/[^0-9+]/g, '').replace(/^0/, '33')}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#f0a', marginLeft: 6 }}>
-                      📱 {e.telephone}
+                  {e.telephone && lienWhatsApp(e.telephone) ? (
+                    <a
+                      href={lienWhatsApp(e.telephone, `Salut ${e.nom ?? ''}, c'est Sylvain de Movement Practice Bordeaux. `)!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(ev) => ev.stopPropagation()}
+                      title="Écrire sur WhatsApp"
+                      style={{ fontSize: 11, fontWeight: 700, color: '#25D366', marginLeft: 8, textDecoration: 'none', border: '1px solid #25D36688', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}
+                    >
+                      💬 WhatsApp
                     </a>
+                  ) : (
+                    <span style={{ fontSize: 11, color: '#ff8a8a', marginLeft: 8, whiteSpace: 'nowrap' }}>📵 pas de numéro</span>
                   )}
                   {joursRestants !== null && (
                     <span style={{ fontSize: 11, opacity: 0.5 }}> · suppression auto dans {joursRestants} j</span>
@@ -166,6 +179,37 @@ export default function ListeElevesRepliable({
                 </summary>
 
                 <div style={{ marginTop: 10 }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginBottom: 12 }}>
+                    {e.telephone && lienWhatsApp(e.telephone) && (
+                      <>
+                        <a
+                          href={lienWhatsApp(e.telephone, `Salut ${e.nom ?? ''}, c'est Sylvain de Movement Practice Bordeaux. `)!}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ fontSize: 14, fontWeight: 700, color: 'white', background: '#25D366', borderRadius: 999, padding: '9px 16px', textDecoration: 'none' }}
+                        >
+                          💬 WhatsApp
+                        </a>
+                        <a href={`tel:${e.telephone}`} style={{ fontSize: 14, fontWeight: 600, color: 'inherit', border: '1px solid #555', borderRadius: 999, padding: '8px 14px', textDecoration: 'none' }}>
+                          📞 Appeler
+                        </a>
+                        <span style={{ fontSize: 13, opacity: 0.7 }}>{formaterTelephone(e.telephone)}</span>
+                      </>
+                    )}
+                  </div>
+                  <form action={modifierTelephoneEleveAdmin} style={{ display: 'flex', gap: 6, marginBottom: 8, alignItems: 'center' }}>
+                    <input type="hidden" name="eleve_id" value={e.id} />
+                    <input
+                      name="telephone"
+                      type="tel"
+                      defaultValue={e.telephone ? formaterTelephone(e.telephone) : ''}
+                      placeholder="Téléphone de l'élève"
+                      style={{ flex: 1, maxWidth: 220, padding: '6px 10px', borderRadius: 6, border: '1px solid #444', background: '#1a1a1a', color: '#eee', fontSize: 13 }}
+                    />
+                    <button type="submit" style={{ fontSize: 12, padding: '6px 12px', borderRadius: 6, border: '1px solid #555', background: 'none', color: '#ccc', cursor: 'pointer' }}>
+                      {e.telephone ? 'Modifier' : 'Enregistrer le numéro'}
+                    </button>
+                  </form>
                   <form action={modifierPrenomEleveAdmin} style={{ display: 'flex', gap: 6, marginBottom: 12, alignItems: 'center' }}>
                     <input type="hidden" name="eleve_id" value={e.id} />
                     <input

@@ -4,6 +4,7 @@ import ChatWidget from './components/ChatWidget';
 import NavBar from './components/NavBar';
 import PwaRegister from './components/PwaRegister';
 import PwaAccueilAdmin from './components/PwaAccueilAdmin';
+import TelephoneObligatoire from './components/TelephoneObligatoire';
 
 export const metadata = {
   metadataBase: new URL('https://www.movementpracticebordeaux.com'),
@@ -78,13 +79,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const { data: { user } } = await avecTimeout(supabase.auth.getUser(), { data: { user: null } } as any);
   let estAdmin = false;
   let aUneFormuleActive = false;
+  let telephoneManquant = false;
 
   if (user) {
     const { data: profil } = await avecTimeout(
-      supabase.from('profiles').select('role').eq('id', user.id).single(),
+      supabase.from('profiles').select('role, telephone').eq('id', user.id).single(),
       { data: null } as any
     );
     estAdmin = profil?.role === 'admin';
+    // Profil bien chargé (pas un repli après délai dépassé) et sans numéro.
+    telephoneManquant = !!profil && !estAdmin && !profil.telephone;
     const { count } = await avecTimeout(
       supabase.from('abonnements').select('id', { count: 'exact', head: true }).eq('eleve_id', user.id).eq('abonnement_actif', true),
       { count: 0 } as any
@@ -148,6 +152,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <ChatWidget aUneFormuleActive={aUneFormuleActive} />
         <PwaRegister />
         <PwaAccueilAdmin estAdmin={estAdmin} />
+        {telephoneManquant && <TelephoneObligatoire />}
       </body>
     </html>
   );
