@@ -19,6 +19,7 @@ export type JourPlanning = {
   semaine: 'A' | 'B';
   cours: CoursJour[];
   enVacances?: boolean;
+  retourVacances?: string; // YYYY-MM-DD, lendemain du dernier jour de vacances
 };
 
 const NOMS_JOURS_COURTS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
@@ -223,7 +224,16 @@ export default function PlanningVue({
               </div>
 
               {j.enVacances ? (
-                <p style={{ fontSize: 12, color: COULEURS.texteFaible, textAlign: 'center', padding: '20px 0', margin: 0 }}>🏝️ Vacances</p>
+                <div style={{ fontSize: 12, color: COULEURS.texteAtt, textAlign: 'center', padding: '16px 4px', margin: 0, lineHeight: 1.5 }}>
+                  <div style={{ fontSize: 22, marginBottom: 4 }}>🏝️</div>
+                  Sylvain est en vacances
+                  {j.retourVacances && (
+                    <> et revient le <strong style={{ color: COULEURS.texte }}>
+                      {new Date(j.retourVacances + 'T12:00:00Z').toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', weekday: 'long', day: 'numeric', month: 'long' })}
+                    </strong></>
+                  )}.
+                  <div style={{ marginTop: 4 }}>On se retrouve à mon retour ! 🤙</div>
+                </div>
               ) : sansCours ? (
                 <p style={{ fontSize: 12, color: COULEURS.texteFaible, textAlign: 'center', padding: '20px 0', margin: 0 }}>Pas de cours</p>
               ) : (

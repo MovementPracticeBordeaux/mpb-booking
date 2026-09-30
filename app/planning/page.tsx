@@ -4,6 +4,16 @@ import { annulerReservation, reserverCours } from '../booking/actions';
 import { COULEURS, POLICE_DISPLAY } from '@/lib/theme';
 import PlanningVue, { JourPlanning } from '../components/PlanningVue';
 
+// Jour du retour = lendemain du dernier jour de vacances.
+function dateDeRetour(dateFin: string): string {
+  const d = new Date(dateFin + 'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+function formaterRetour(dateISO: string): string {
+  return new Date(dateISO + 'T12:00:00Z').toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', weekday: 'long', day: 'numeric', month: 'long' });
+}
+
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
@@ -56,7 +66,8 @@ export default async function PlanningPage({ searchParams }: { searchParams: { e
       const d = new Date();
       d.setDate(d.getDate() + i);
       const dateStr = d.toISOString().slice(0, 10);
-      const enVacances = (periodesVacances ?? []).some((v) => dateStr >= v.date_debut && dateStr <= v.date_fin);
+      const periodeVacances = (periodesVacances ?? []).find((v) => dateStr >= v.date_debut && dateStr <= v.date_fin);
+      const enVacances = !!periodeVacances;
       const semaine = calculerSemaine(d, lundiRef, ref.semaine_ce_lundi);
       const coursDuJour = enVacances ? [] : (coursListe ?? [])
         .filter((c) => c.jour_semaine === d.getDay() && c.semaine === semaine)
@@ -70,7 +81,7 @@ export default async function PlanningPage({ searchParams }: { searchParams: { e
             dejaReserve: mesReservations.some((r) => r.cours_id === c.id && r.date_seance === dateStr),
           };
         });
-      jours.push({ dateISO: dateStr, jourSemaine: d.getDay(), semaine, cours: coursDuJour, enVacances });
+      jours.push({ dateISO: dateStr, jourSemaine: d.getDay(), semaine, cours: coursDuJour, enVacances, retourVacances: periodeVacances ? dateDeRetour(periodeVacances.date_fin) : undefined });
     }
   }
 
@@ -96,15 +107,8 @@ export default async function PlanningPage({ searchParams }: { searchParams: { e
       )}
       {jours[JOURS_PASSES]?.enVacances && (
         <p style={{ color: COULEURS.texteAtt, marginBottom: 20 }}>
-          🏝️ Sylvain est actuellement en vacances
-          {(() => {
-            const periodeEnCours = (periodesVacances ?? []).find(
-              (v) => jours[JOURS_PASSES].dateISO >= v.date_debut && jours[JOURS_PASSES].dateISO <= v.date_fin
-            );
-            return periodeEnCours
-              ? ` jusqu'au ${new Date(periodeEnCours.date_fin + 'T00:00:00').toLocaleDateString('fr-FR')}`
-              : '';
-          })()}, pas de cours pour le moment — les jours concernés sont grisés ci-dessous.
+          🏝️ Sylvain est en vacances
+          {jours[JOURS_PASSES].retourVacances ? ` et revient le ${formaterRetour(jours[JOURS_PASSES].retourVacances!)}` : ''}. On se retrouve à mon retour ! 🤙
         </p>
       )}
       {ref && (
