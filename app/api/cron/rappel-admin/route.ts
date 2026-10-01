@@ -41,13 +41,23 @@ function maintenantParisNaif(): Date {
   return new Date(`${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:${p.second}Z`);
 }
 
-export async function GET(req: NextRequest) {
-  // Secret dédié (distinct de CRON_SECRET, utilisé par les cron natifs
-  // Vercel) : cette route est appelée depuis l'extérieur par un workflow
-  // GitHub Actions programmé toutes les 15 min, pas par Vercel Cron
-  // lui-même (limité à 1x/jour sur le plan Hobby).
+// Deux appelants autorisés :
+// - la planification Supabase (pg_cron, toutes les 10 min), source
+//   principale, avec un jeton stocké dans config_interne ;
+// - le workflow GitHub Actions (secret RAPPEL_ADMIN_SECRET), conservé en
+//   secours. Constat du 01/10/2026 : GitHub ne le lançait plus qu'environ
+//   toutes les 3 à 6 heures au lieu de 15 min, d'où des rappels manqués.
+async function appelAutorise(req: NextRequest): Promise<boolean> {
   const authHeader = req.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.RAPPEL_ADMIN_SECRET}`) {
+  if (process.env.RAPPEL_ADMIN_SECRET && authHeader === `Bearer ${process.env.RAPPEL_ADMIN_SECRET}`) return true;
+  const jeton = req.headers.get('x-jeton-cron');
+  if (!jeton) return false;
+  const { data } = await supabaseAdmin().from('config_interne').select('valeur').eq('cle', 'jeton_cron_rappel_admin').maybeSingle();
+  return !!data?.valeur && data.valeur.length === jeton.length && data.valeur === jeton;
+}
+
+export async function GET(req: NextRequest) {
+  if (!(await appelAutorise(req))) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
   }
 
