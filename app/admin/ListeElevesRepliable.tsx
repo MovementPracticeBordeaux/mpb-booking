@@ -197,6 +197,18 @@ export default function ListeElevesRepliable({
                       </>
                     )}
                   </div>
+                  <p style={{ fontSize: 13, margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <span>✉️</span>
+                    <a href={`mailto:${e.email}`} style={{ color: 'inherit', wordBreak: 'break-all' }}>{e.email}</a>
+                    <button
+                      type="button"
+                      onClick={() => navigator.clipboard?.writeText(e.email)}
+                      title="Copier l'adresse"
+                      style={{ fontSize: 11, padding: '3px 10px', borderRadius: 999, border: '1px solid #555', background: 'none', color: '#ccc', cursor: 'pointer' }}
+                    >
+                      Copier
+                    </button>
+                  </p>
                   <form action={modifierTelephoneEleveAdmin} style={{ display: 'flex', gap: 6, marginBottom: 8, alignItems: 'center' }}>
                     <input type="hidden" name="eleve_id" value={e.id} />
                     <input
