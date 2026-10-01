@@ -61,7 +61,7 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
             const formule = FORMULES[r.formule_nom];
             const depuis = Math.floor((Date.now() - new Date(r.created_at).getTime()) / 86400000);
             const relance = p?.telephone
-              ? lienWhatsApp(p.telephone, `Salut ${p.nom ?? ''} ! Petit rappel pour ta formule ${formule?.nom ?? ''} : ${formule?.prixIndicatif} € en ligne depuis ton espace sur le site, ou ${prixEspeces(r.formule_nom)} € en espèces au prochain cours. Merci 🙏`)
+              ? lienWhatsApp(p.telephone, `Salut ${p.nom ?? ''} ! Petit rappel pour ta formule ${formule?.nom ?? ''} : ${formule?.prixIndicatif} € en ligne depuis ton espace sur le site, ou en espèces au prochain cours. Merci 🙏`)
               : null;
             return (
               <div key={r.id} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid #2a2a30' }}>

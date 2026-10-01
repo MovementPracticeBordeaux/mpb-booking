@@ -6,7 +6,7 @@ import PwaRegister from './components/PwaRegister';
 import PwaAccueilAdmin from './components/PwaAccueilAdmin';
 import TelephoneObligatoire from './components/TelephoneObligatoire';
 import RappelReglement from './components/RappelReglement';
-import { FORMULES, prixEspeces } from '@/lib/formules';
+import { FORMULES } from '@/lib/formules';
 import { PRICE_IDS } from '@/lib/prix-stripe';
 
 export const metadata = {
@@ -83,7 +83,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   let estAdmin = false;
   let aUneFormuleActive = false;
   let telephoneManquant = false;
-  let reglementsEnAttente: { paiementId: string; formule: string; prixEnLigne: number; prixEspeces: number; enLigne: boolean }[] = [];
+  let reglementsEnAttente: { paiementId: string; formule: string; prixEnLigne: number; enLigne: boolean }[] = [];
 
   if (user) {
     const { data: profil } = await avecTimeout(
@@ -107,7 +107,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         paiementId: r.id,
         formule: FORMULES[r.formule_nom]?.nom ?? r.formule_nom,
         prixEnLigne: FORMULES[r.formule_nom]?.prixIndicatif ?? 0,
-        prixEspeces: prixEspeces(r.formule_nom) ?? 0,
         enLigne: !!PRICE_IDS[r.formule_nom]?.startsWith('price_'),
       }));
     }

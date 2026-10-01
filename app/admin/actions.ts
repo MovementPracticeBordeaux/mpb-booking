@@ -3,7 +3,7 @@
 import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { FORMULES, prixEspeces } from '@/lib/formules';
+import { FORMULES } from '@/lib/formules';
 import { ajouterJours } from '@/lib/vacances';
 import { appliquerProlongationsVacances } from '@/lib/prolongations-vacances';
 import { calculerSemaine } from '@/lib/semaine';
@@ -1192,13 +1192,13 @@ export async function modifierTelephoneEleveAdmin(formData: FormData) {
 // --- Formules à régler plus tard ---------------------------------------
 
 // Prévient l'élève (email + notification) qu'il doit régler sa formule, avec
-// les deux options : en ligne au prix affiché, ou en espèces au tarif réduit.
+// les deux options : en ligne au prix affiché, ou en espèces (montant non
+// précisé à l'élève : le tarif réduit en espèces reste à la main de Sylvain).
 async function relancerReglement(eleveId: string, formuleNom: string) {
   const admin = supabaseAdmin();
   const formule = FORMULES[formuleNom];
   if (!formule) return;
   const { data: profil } = await admin.from('profiles').select('email, nom').eq('id', eleveId).maybeSingle();
-  const especes = prixEspeces(formuleNom);
   const lien = `${process.env.NEXT_PUBLIC_SITE_URL}/profil`;
   if (profil?.email) {
     try {
@@ -1209,13 +1209,13 @@ async function relancerReglement(eleveId: string, formuleNom: string) {
          <p>Ta formule <strong>${formule.nom}</strong> est active, tu peux déjà réserver tes cours. Il ne reste plus qu'à la régler :</p>
          <ul>
            <li><strong>en ligne : ${formule.prixIndicatif} €</strong> par carte, en un clic depuis <a href="${lien}">ton espace</a> ;</li>
-           <li><strong>ou en espèces : ${especes} €</strong>, directement à Sylvain au prochain cours.</li>
+           <li><strong>ou en espèces</strong>, directement à Sylvain au prochain cours.</li>
          </ul>
          <p>Merci et à bientôt !</p>`
       );
     } catch {}
   }
-  await envoyerPushAEleve(eleveId, '💳 Formule à régler', `${formule.nom} : ${formule.prixIndicatif} € en ligne ou ${especes} € en espèces.`, '/profil');
+  await envoyerPushAEleve(eleveId, '💳 Formule à régler', `${formule.nom} : ${formule.prixIndicatif} € en ligne, ou en espèces à Sylvain.`, '/profil');
 }
 
 // Depuis une séance du planning : inscrit un élève qui a participé sans

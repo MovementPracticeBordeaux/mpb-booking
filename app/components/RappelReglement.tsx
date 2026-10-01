@@ -7,7 +7,7 @@ import { useState } from 'react';
 export default function RappelReglement({
   reglements,
 }: {
-  reglements: { paiementId: string; formule: string; prixEnLigne: number; prixEspeces: number; enLigne: boolean }[];
+  reglements: { paiementId: string; formule: string; prixEnLigne: number; enLigne: boolean }[];
 }) {
   const [enCours, setEnCours] = useState<string | null>(null);
   const [erreur, setErreur] = useState('');
@@ -40,7 +40,7 @@ export default function RappelReglement({
           <span>
             💳 Ta formule <strong>{r.formule}</strong> est à régler :{' '}
             {r.enLigne ? `${r.prixEnLigne} € en ligne, ou ` : ''}
-            <strong>{r.prixEspeces} € en espèces</strong> à Sylvain au prochain cours.
+            <strong>en espèces</strong> à Sylvain au prochain cours.
           </span>
           {r.enLigne && (
             <button
