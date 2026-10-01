@@ -3,8 +3,9 @@
 import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { FORMULES } from '@/lib/formules';
-import { joursVacancesDansPeriode, ajouterJours } from '@/lib/vacances';
+import { FORMULES, prixEspeces } from '@/lib/formules';
+import { joursChevauchement, ajouterJours, premierJourDeCours } from '@/lib/vacances';
+import { calculerSemaine } from '@/lib/semaine';
 import { stripe } from '@/lib/stripe';
 import { envoyerEmail } from '@/lib/resend';
 import { envoyerPushAEleve } from '@/lib/push';
@@ -104,6 +105,63 @@ export async function definirSemaineReference(formData: FormData) {
 // cours pour ce jour-là. Plusieurs périodes distinctes peuvent coexister
 // dans l'année (Toussaint, Noël, été...), chacune ajoutable/supprimable
 // individuellement.
+// Prolonge les formules mensuelles actives touchées par une période de
+// vacances, du nombre de jours entre le PREMIER JOUR DE COURS de la période
+// (selon le planning type A/B, pas avant) et la fin des vacances. Ex. :
+// vacances du samedi 3 au dimanche 11 octobre, semaine A sans cours le
+// lundi -> gel du mardi 6 au dimanche 11 = 6 jours.
+// Concerne les formules mensuelles (4/8 cours, Illimité), pas les carnets,
+// pensés pour être consommés à son rythme sur 3 ou 6 mois, ni les pass
+// gelés manuellement. Chaque prolongation est tracée
+// (vacances_prolongations) : jamais appliquée deux fois, et annulée si la
+// période est supprimée.
+const FORMULES_PROLONGEES_PENDANT_VACANCES = ['mensuel_4', 'mensuel_8', 'illimite'];
+
+async function appliquerProlongationsVacances(vacanceId: string): Promise<{ prolongees: number; debutGel: string | null }> {
+  const admin = supabaseAdmin();
+  const { data: vacance } = await admin.from('vacances').select('id, date_debut, date_fin').eq('id', vacanceId).single();
+  const { data: ref } = await admin.from('semaine_reference').select('*').eq('id', 1).maybeSingle();
+  const { data: cours } = await admin.from('cours').select('jour_semaine, semaine').eq('actif', true);
+  if (!vacance || !ref) return { prolongees: 0, debutGel: null };
+
+  const lundiRef = new Date(ref.date_lundi_reference);
+  const debutGel = premierJourDeCours(vacance.date_debut, vacance.date_fin, cours ?? [], (d) =>
+    calculerSemaine(new Date(d + 'T12:00:00Z'), lundiRef, ref.semaine_ce_lundi)
+  );
+  if (!debutGel) return { prolongees: 0, debutGel: null };
+
+  const { data: abonnements } = await admin
+    .from('abonnements')
+    .select('id, formule_nom, date_debut_formule, date_expiration')
+    .eq('abonnement_actif', true)
+    .eq('gele', false)
+    .in('formule_nom', FORMULES_PROLONGEES_PENDANT_VACANCES)
+    .not('date_expiration', 'is', null)
+    .gte('date_expiration', debutGel);
+  const { data: dejaFaites } = await admin.from('vacances_prolongations').select('abonnement_id').eq('vacance_id', vacanceId);
+  const dejaProlonges = new Set((dejaFaites ?? []).map((d) => d.abonnement_id));
+
+  let prolongees = 0;
+  for (const abo of abonnements ?? []) {
+    if (dejaProlonges.has(abo.id)) continue;
+    // Début de formule inconnu (anciens élèves importés) : on le déduit de
+    // la date de fin et de la durée de la formule.
+    let debutFormule = abo.date_debut_formule as string | null;
+    if (!debutFormule) {
+      const d = new Date(abo.date_expiration + 'T12:00:00Z');
+      d.setUTCMonth(d.getUTCMonth() - (FORMULES[abo.formule_nom]?.validiteMois ?? 1));
+      debutFormule = d.toISOString().slice(0, 10);
+    }
+    const jours = joursChevauchement(debutFormule, abo.date_expiration, debutGel, vacance.date_fin);
+    if (jours <= 0) continue;
+    const { error } = await admin.from('vacances_prolongations').insert({ vacance_id: vacanceId, abonnement_id: abo.id, jours });
+    if (error) continue; // déjà tracée entre-temps : ne jamais prolonger deux fois
+    await admin.from('abonnements').update({ date_expiration: ajouterJours(abo.date_expiration, jours) }).eq('id', abo.id);
+    prolongees++;
+  }
+  return { prolongees, debutGel };
+}
+
 export async function ajouterVacances(formData: FormData) {
   await verifierAdmin();
   const admin = supabaseAdmin();
@@ -113,44 +171,16 @@ export async function ajouterVacances(formData: FormData) {
   if (!debut || !fin) echouer('/admin/planning', 'Indique une date de début et une date de fin.');
   if (fin < debut) echouer('/admin/planning', 'La date de fin doit être après la date de début.');
 
-  const { error } = await admin.from('vacances').insert({ date_debut: debut, date_fin: fin });
-  if (error) echouer('/admin/planning', error.message);
+  const { data: vacance, error } = await admin.from('vacances').insert({ date_debut: debut, date_fin: fin }).select('id').single();
+  if (error || !vacance) echouer('/admin/planning', error?.message ?? 'Enregistrement impossible.');
 
-  // Prolonge automatiquement les formules actives qui chevauchent cette
-  // nouvelle période de vacances, pour que l'élève garde un mois (ou la
-  // durée de sa formule) effectivement utilisable. Exemple : formule du 15
-  // juillet au 15 août, vacances du 1er au 15 août -> nouvelle date de fin
-  // le 30 août. Ne concerne QUE les formules mensuelles récurrentes (4
-  // cours/mois, 8 cours/mois, illimité) — pas les carnets (5/10 cours),
-  // dont la validité (3/6 mois) est pensée pour être consommée à son
-  // rythme, indépendamment des périodes de fermeture. Ne concerne pas non
-  // plus les pass déjà gelés manuellement (leur propre mécanisme de dégel
-  // gère déjà leur prolongation), ni les profils sans date de début connue
-  // (élèves déjà migrés depuis Wix, entre autres).
-  const FORMULES_CONCERNEES_PAR_LES_VACANCES = ['mensuel_4', 'mensuel_8', 'illimite'];
-  const { data: profilsActifs } = await admin
-    .from('profiles')
-    .select('id, date_debut_formule, date_expiration')
-    .eq('abonnement_actif', true)
-    .eq('gele', false)
-    .in('formule_nom', FORMULES_CONCERNEES_PAR_LES_VACANCES)
-    .not('date_debut_formule', 'is', null)
-    .not('date_expiration', 'is', null)
-    .lte('date_debut_formule', fin)
-    .gte('date_expiration', debut);
-
-  for (const p of profilsActifs ?? []) {
-    const jours = joursVacancesDansPeriode(p.date_debut_formule, p.date_expiration, [{ date_debut: debut, date_fin: fin }]);
-    if (jours > 0) {
-      await admin.from('profiles')
-        .update({ date_expiration: ajouterJours(p.date_expiration, jours) })
-        .eq('id', p.id);
-    }
-  }
+  const { prolongees, debutGel } = await appliquerProlongationsVacances(vacance.id);
 
   revalidatePath('/admin/planning');
   revalidatePath('/planning');
-  reussir('/admin/planning', 'Période de vacances ajoutée.');
+  reussir('/admin/planning', debutGel
+    ? `Période de vacances ajoutée : ${prolongees} formule${prolongees > 1 ? 's' : ''} prolongée${prolongees > 1 ? 's' : ''} (gel à partir du premier jour de cours, le ${new Date(debutGel + 'T12:00:00Z').toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', day: 'numeric', month: 'long' })}).`
+    : 'Période de vacances ajoutée (aucun cours prévu sur cette période, rien à prolonger).');
 }
 
 export async function supprimerVacances(formData: FormData) {
@@ -158,11 +188,21 @@ export async function supprimerVacances(formData: FormData) {
   const admin = supabaseAdmin();
   const id = formData.get('id') as string;
 
+  // Annule les prolongations accordées pour cette période avant de la
+  // supprimer, sinon les élèves garderaient des jours en trop.
+  const { data: prolongations } = await admin.from('vacances_prolongations').select('abonnement_id, jours').eq('vacance_id', id);
+  for (const pr of prolongations ?? []) {
+    const { data: abo } = await admin.from('abonnements').select('date_expiration').eq('id', pr.abonnement_id).maybeSingle();
+    if (abo?.date_expiration) {
+      await admin.from('abonnements').update({ date_expiration: ajouterJours(abo.date_expiration, -pr.jours) }).eq('id', pr.abonnement_id);
+    }
+  }
+
   const { error } = await admin.from('vacances').delete().eq('id', id);
   if (error) echouer('/admin/planning', error.message);
   revalidatePath('/admin/planning');
   revalidatePath('/planning');
-  reussir('/admin/planning', 'Période de vacances supprimée.');
+  reussir('/admin/planning', `Période de vacances supprimée${(prolongations?.length ?? 0) > 0 ? ` (${prolongations!.length} prolongation${prolongations!.length > 1 ? 's' : ''} annulée${prolongations!.length > 1 ? 's' : ''})` : ''}.`);
 }
 
 // --- Élèves & paiements -------------------------------------------------
@@ -285,8 +325,8 @@ export async function attribuerFormule(formData: FormData) {
   const eleveId = formData.get('eleve_id') as string;
   const formuleNom = formData.get('formule_nom') as string;
   const moyenPaiement = (formData.get('moyen_paiement') as string) || 'especes';
-  if (!['especes', 'virement', 'carte', 'offert'].includes(moyenPaiement)) echouer('/admin/eleves', 'Moyen de paiement invalide.');
-  const paye = moyenPaiement !== 'offert';
+  if (!['especes', 'virement', 'carte', 'offert', 'a_regler'].includes(moyenPaiement)) echouer('/admin/eleves', 'Moyen de paiement invalide.');
+  const paye = moyenPaiement !== 'offert' && moyenPaiement !== 'a_regler';
   const montant = Number(formData.get('montant') || 0);
   // Sans montant, un abonnement payé comptait 0 € dans les statistiques.
   if (paye && !(montant > 0)) echouer('/admin/eleves', 'Indique le montant reçu (ou choisis « Offert »).');
@@ -327,7 +367,7 @@ export async function attribuerFormule(formData: FormData) {
     .eq('categorie', formule.categorie)
     .eq('abonnement_actif', true);
 
-  const { error } = await admin.from('abonnements').insert({
+  const { data: nouvelAbo, error } = await admin.from('abonnements').insert({
     eleve_id: eleveId,
     categorie: formule.categorie,
     formule_nom: formuleNom,
@@ -339,10 +379,11 @@ export async function attribuerFormule(formData: FormData) {
     origine: 'manuel',
     paye,
     branches,
-  });
+  }).select('id').single();
   if (error) echouer('/admin/eleves', error.message);
 
-  // Historise le paiement (ou le don) pour que l'élève puisse générer sa facture
+  // Historise le paiement (ou le don, ou le règlement en attente) pour la
+  // facture, les statistiques et la liste "À encaisser".
   const { error: errPaiement } = await admin.from('paiements').insert({
     eleve_id: eleveId,
     formule_nom: formuleNom,
@@ -350,11 +391,15 @@ export async function attribuerFormule(formData: FormData) {
     origine: 'manuel',
     paye,
     moyen_paiement: moyenPaiement,
+    abonnement_id: nouvelAbo?.id ?? null,
   });
   if (errPaiement) echouer('/admin/eleves', errPaiement.message);
 
+  if (moyenPaiement === 'a_regler') await relancerReglement(eleveId, formuleNom);
+
   revalidatePath('/admin/eleves');
-  reussir('/admin/eleves', 'Formule attribuée.');
+  revalidatePath('/', 'layout');
+  reussir('/admin/eleves', moyenPaiement === 'a_regler' ? "Formule attribuée, à régler : l'élève a été prévenu." : 'Formule attribuée.');
 }
 
 
@@ -1188,4 +1233,109 @@ export async function modifierTelephoneEleveAdmin(formData: FormData) {
   if (error) echouer('/admin/eleves', error.message);
   revalidatePath('/admin/eleves');
   reussir('/admin/eleves', 'Téléphone enregistré.');
+}
+
+// --- Formules à régler plus tard ---------------------------------------
+
+// Prévient l'élève (email + notification) qu'il doit régler sa formule, avec
+// les deux options : en ligne au prix affiché, ou en espèces au tarif réduit.
+async function relancerReglement(eleveId: string, formuleNom: string) {
+  const admin = supabaseAdmin();
+  const formule = FORMULES[formuleNom];
+  if (!formule) return;
+  const { data: profil } = await admin.from('profiles').select('email, nom').eq('id', eleveId).maybeSingle();
+  const especes = prixEspeces(formuleNom);
+  const lien = `${process.env.NEXT_PUBLIC_SITE_URL}/profil`;
+  if (profil?.email) {
+    try {
+      await envoyerEmail(
+        profil.email,
+        `Pense à régler ta formule ${formule.nom}`,
+        `<p>Salut ${profil.nom ?? ''},</p>
+         <p>Ta formule <strong>${formule.nom}</strong> est active, tu peux déjà réserver tes cours. Il ne reste plus qu'à la régler :</p>
+         <ul>
+           <li><strong>en ligne : ${formule.prixIndicatif} €</strong> par carte, en un clic depuis <a href="${lien}">ton espace</a> ;</li>
+           <li><strong>ou en espèces : ${especes} €</strong>, directement à Sylvain au prochain cours.</li>
+         </ul>
+         <p>Merci et à bientôt !</p>`
+      );
+    } catch {}
+  }
+  await envoyerPushAEleve(eleveId, '💳 Formule à régler', `${formule.nom} : ${formule.prixIndicatif} € en ligne ou ${especes} € en espèces.`, '/profil');
+}
+
+// Depuis une séance du planning : inscrit un élève qui a participé sans
+// réserver ni payer, en lui attribuant une formule "à régler" dans la foulée.
+// Pas d'email de confirmation de réservation (il était déjà au cours), mais
+// la relance de règlement part.
+export async function inscrireAvecFormuleARegler(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+  const eleveId = formData.get('eleve_id') as string;
+  const seance = formData.get('seance') as string;
+  const formuleNom = formData.get('formule_nom') as string;
+  if (!eleveId || !seance || !formuleNom) echouer('/admin/planning', 'Choisis un élève et une formule.');
+  const formule = FORMULES[formuleNom];
+  if (!formule || formule.retiree || formule.categorie !== 'planning') echouer('/admin/planning', 'Formule invalide.');
+  const [coursId, dateSeance] = seance.split('::');
+
+  const debut = new Date().toISOString().slice(0, 10);
+  const expiration = new Date();
+  expiration.setMonth(expiration.getMonth() + formule.validiteMois);
+
+  await admin.from('abonnements').update({ abonnement_actif: false })
+    .eq('eleve_id', eleveId).eq('categorie', 'planning').eq('abonnement_actif', true);
+  const { data: abo, error } = await admin.from('abonnements').insert({
+    eleve_id: eleveId,
+    categorie: 'planning',
+    formule_nom: formuleNom,
+    quota_total: formule.quota,
+    quota_restant: formule.quota,
+    date_debut_formule: debut,
+    date_expiration: expiration.toISOString().slice(0, 10),
+    abonnement_actif: true,
+    origine: 'manuel',
+    paye: false,
+  }).select('id').single();
+  if (error || !abo) echouer('/admin/planning', error?.message ?? 'Attribution impossible.');
+
+  await admin.from('paiements').insert({
+    eleve_id: eleveId, formule_nom: formuleNom, montant: 0, origine: 'manuel',
+    paye: false, moyen_paiement: 'a_regler', abonnement_id: abo.id,
+  });
+
+  const { data: resultat, error: errResa } = await admin.rpc('reserver_creneau', {
+    p_eleve_id: eleveId, p_cours_id: coursId, p_date_seance: dateSeance, p_ignorer_delai: true,
+  });
+  await relancerReglement(eleveId, formuleNom);
+
+  revalidatePath('/admin/planning');
+  revalidatePath('/admin/eleves');
+  if (errResa || resultat !== 'ok') {
+    echouer('/admin/planning', `Formule attribuée (à régler), mais inscription au cours impossible : ${errResa?.message ?? resultat}.`);
+  }
+  reussir('/admin/planning', `Inscrit au cours avec la formule ${formule.nom}, à régler (élève prévenu).`);
+}
+
+// Encaissement d'une formule à régler (espèces ou virement, en direct).
+export async function encaisserReglement(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+  const paiementId = formData.get('paiement_id') as string;
+  const moyen = formData.get('moyen_paiement') as string;
+  const montant = Number(formData.get('montant') || 0);
+  if (!['especes', 'virement', 'carte'].includes(moyen)) echouer('/admin/eleves', 'Moyen de paiement invalide.');
+  if (!(montant > 0)) echouer('/admin/eleves', 'Indique le montant reçu.');
+
+  const { data: paiement, error } = await admin.from('paiements')
+    .update({ paye: true, montant, moyen_paiement: moyen, created_at: new Date().toISOString() })
+    .eq('id', paiementId).eq('moyen_paiement', 'a_regler')
+    .select('abonnement_id').maybeSingle();
+  if (error || !paiement) echouer('/admin/eleves', error?.message ?? 'Règlement introuvable ou déjà encaissé.');
+  if (paiement.abonnement_id) await admin.from('abonnements').update({ paye: true }).eq('id', paiement.abonnement_id);
+
+  revalidatePath('/admin/eleves');
+  revalidatePath('/admin/statistiques');
+  revalidatePath('/', 'layout');
+  reussir('/admin/eleves', 'Règlement encaissé.');
 }

@@ -48,3 +48,22 @@ export function ajouterJours(dateISO: string, jours: number): string {
   d.setDate(d.getDate() + jours);
   return d.toISOString().slice(0, 10);
 }
+
+// Premier jour, dans la période de vacances, où il y aurait normalement eu
+// cours (selon le planning type A/B). Le gel des formules commence ce
+// jour-là et pas avant : des vacances qui démarrent un samedi ne doivent pas
+// "consommer" le week-end, ni un lundi sans cours. Retourne null si aucun
+// cours n'était prévu sur toute la période (rien à compenser).
+export function premierJourDeCours(
+  debutVacances: string,
+  finVacances: string,
+  cours: { jour_semaine: number; semaine: 'A' | 'B' | string }[],
+  semaineDuJour: (dateISO: string) => 'A' | 'B'
+): string | null {
+  for (let d = debutVacances; d <= finVacances; d = ajouterJours(d, 1)) {
+    const jour = new Date(d + 'T12:00:00Z').getUTCDay();
+    const semaine = semaineDuJour(d);
+    if (cours.some((c) => c.jour_semaine === jour && c.semaine === semaine)) return d;
+  }
+  return null;
+}

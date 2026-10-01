@@ -1,10 +1,13 @@
-import { supabaseServer } from '@/lib/supabase-server';
+import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { COULEURS, FONTS_IMPORT_URL, POLICE_CORPS } from '@/lib/theme';
 import ChatWidget from './components/ChatWidget';
 import NavBar from './components/NavBar';
 import PwaRegister from './components/PwaRegister';
 import PwaAccueilAdmin from './components/PwaAccueilAdmin';
 import TelephoneObligatoire from './components/TelephoneObligatoire';
+import RappelReglement from './components/RappelReglement';
+import { FORMULES, prixEspeces } from '@/lib/formules';
+import { PRICE_IDS } from '@/lib/prix-stripe';
 
 export const metadata = {
   metadataBase: new URL('https://www.movementpracticebordeaux.com'),
@@ -80,6 +83,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   let estAdmin = false;
   let aUneFormuleActive = false;
   let telephoneManquant = false;
+  let reglementsEnAttente: { paiementId: string; formule: string; prixEnLigne: number; prixEspeces: number; enLigne: boolean }[] = [];
 
   if (user) {
     const { data: profil } = await avecTimeout(
@@ -94,6 +98,19 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       { count: 0 } as any
     );
     aUneFormuleActive = (count ?? 0) > 0;
+    if (!estAdmin) {
+      const { data: aRegler } = await avecTimeout(
+        supabaseAdmin().from('paiements').select('id, formule_nom').eq('eleve_id', user.id).eq('moyen_paiement', 'a_regler'),
+        { data: [] } as any
+      );
+      reglementsEnAttente = ((aRegler ?? []) as { id: string; formule_nom: string }[]).map((r) => ({
+        paiementId: r.id,
+        formule: FORMULES[r.formule_nom]?.nom ?? r.formule_nom,
+        prixEnLigne: FORMULES[r.formule_nom]?.prixIndicatif ?? 0,
+        prixEspeces: prixEspeces(r.formule_nom) ?? 0,
+        enLigne: !!PRICE_IDS[r.formule_nom]?.startsWith('price_'),
+      }));
+    }
   }
 
   return (
@@ -148,6 +165,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           pointerEvents: 'none',
         }} />
         <NavBar liens={LIENS} estAdmin={estAdmin} userEmail={user?.email ?? null} />
+        {reglementsEnAttente.length > 0 && <RappelReglement reglements={reglementsEnAttente} />}
         {children}
         <ChatWidget aUneFormuleActive={aUneFormuleActive} />
         <PwaRegister />

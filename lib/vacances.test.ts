@@ -38,3 +38,22 @@ describe("ajouterJours (exemple de Louis)", () => {
     expect(ajouterJours('2026-08-15', 15)).toBe('2026-08-30');
   });
 });
+
+import { premierJourDeCours } from './vacances';
+
+describe('premierJourDeCours', () => {
+  // Planning type de Sylvain : semaine A du mardi au vendredi, semaine B du lundi au jeudi.
+  const cours = [2, 3, 4, 5].map((j) => ({ jour_semaine: j, semaine: 'A' })).concat([1, 2, 3, 4].map((j) => ({ jour_semaine: j, semaine: 'B' })));
+  const semaineA = () => 'A' as const;
+  const semaineB = () => 'B' as const;
+
+  it("vacances du samedi 3 au dimanche 11 octobre 2026, semaine A : le gel démarre le mardi 6", () => {
+    expect(premierJourDeCours('2026-10-03', '2026-10-11', cours, semaineA)).toBe('2026-10-06');
+  });
+  it('en semaine B, il démarre dès le lundi', () => {
+    expect(premierJourDeCours('2026-10-03', '2026-10-11', cours, semaineB)).toBe('2026-10-05');
+  });
+  it("rien à geler si aucun cours n'était prévu", () => {
+    expect(premierJourDeCours('2026-10-03', '2026-10-04', cours, semaineA)).toBeNull();
+  });
+});

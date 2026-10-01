@@ -31,7 +31,7 @@ function makeChainable(result: { data?: any; error?: any }) {
   const chainable: any = {
     then: (resolve: any) => resolve(result),
   };
-  for (const methode of ['select', 'eq', 'update', 'insert', 'upsert', 'single', 'order', 'in', 'not', 'lte', 'gte']) {
+  for (const methode of ['select', 'eq', 'update', 'insert', 'upsert', 'single', 'maybeSingle', 'order', 'in', 'not', 'lte', 'gte', 'neq', 'limit']) {
     chainable[methode] = vi.fn(() => chainable);
   }
   return chainable;
@@ -199,11 +199,20 @@ describe('rembourserPaiement', () => {
 });
 
 describe('ajouterVacances', () => {
-  it("ne cible que les formules mensuelles (4/8 cours et illimité), pas les carnets — et prolonge selon l'exemple de Louis (15 jours -> 30 août)", async () => {
+  it("gèle à partir du premier jour de cours de la période (pas avant), uniquement les formules mensuelles", async () => {
+    // Exemple de Louis : formule du 15 juillet au 15 août, vacances du samedi
+    // 1er au samedi 15 août 2026. Semaine du 3 août = semaine B, avec cours
+    // le lundi : le gel démarre le lundi 3 (pas le samedi 1er) -> 13 jours,
+    // nouvelle date de fin le 28 août.
     const admin = mockAdminClient([
-      { error: null }, // insertion de la période de vacances
-      { data: [{ id: 'e1', date_debut_formule: '2026-07-15', date_expiration: '2026-08-15' }], error: null }, // profils actifs concernés
-      { error: null }, // mise à jour de la date d'expiration de e1
+      { data: { id: 'v1' }, error: null }, // insertion de la période
+      { data: { id: 'v1', date_debut: '2026-08-01', date_fin: '2026-08-15' }, error: null }, // relecture de la période
+      { data: { date_lundi_reference: '2026-08-17', semaine_ce_lundi: 'B' }, error: null }, // semaine de référence
+      { data: [{ jour_semaine: 1, semaine: 'B' }, { jour_semaine: 2, semaine: 'A' }], error: null }, // planning type
+      { data: [{ id: 'e1', formule_nom: 'mensuel_4', date_debut_formule: '2026-07-15', date_expiration: '2026-08-15' }], error: null }, // formules concernées
+      { data: [], error: null }, // prolongations déjà appliquées
+      { error: null }, // trace de la prolongation
+      { error: null }, // mise à jour de la date de fin
     ]);
     vi.mocked(supabaseAdmin).mockReturnValue(admin as any);
 
@@ -211,10 +220,8 @@ describe('ajouterVacances', () => {
       /REDIRECT:\/admin\/planning\?succes=/
     );
 
-    const chaineSelect = admin.from.mock.results[1].value;
-    expect(chaineSelect.in).toHaveBeenCalledWith('formule_nom', ['mensuel_4', 'mensuel_8', 'illimite']);
-
-    const chaineUpdate = admin.from.mock.results[2].value;
-    expect(chaineUpdate.update).toHaveBeenCalledWith({ date_expiration: '2026-08-30' });
+    expect(admin.from.mock.results[4].value.in).toHaveBeenCalledWith('formule_nom', ['mensuel_4', 'mensuel_8', 'illimite']);
+    expect(admin.from.mock.results[6].value.insert).toHaveBeenCalledWith({ vacance_id: 'v1', abonnement_id: 'e1', jours: 13 });
+    expect(admin.from.mock.results[7].value.update).toHaveBeenCalledWith({ date_expiration: '2026-08-28' });
   });
 });

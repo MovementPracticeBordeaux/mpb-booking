@@ -1,6 +1,7 @@
 import { supabaseAdmin } from '@/lib/supabase-server';
-import { attribuerFormule, suspendreAcces, decompterCoaching, modifierQuotaRestant, modifierExpiration, gelerPass, degelerPass, definirDateReprise, modifierPrenomEleveAdmin, modifierTelephoneEleveAdmin, rembourserPaiement, creerEleve } from '../actions';
-import { FORMULES } from '@/lib/formules';
+import { attribuerFormule, suspendreAcces, decompterCoaching, modifierQuotaRestant, modifierExpiration, gelerPass, degelerPass, definirDateReprise, modifierPrenomEleveAdmin, modifierTelephoneEleveAdmin, rembourserPaiement, creerEleve, encaisserReglement } from '../actions';
+import { FORMULES, prixEspeces } from '@/lib/formules';
+import { lienWhatsApp } from '@/lib/telephone';
 import ListeElevesRepliable from '../ListeElevesRepliable';
 import ListePaiementsRepliable from '../ListePaiementsRepliable';
 
@@ -8,6 +9,13 @@ export const dynamic = 'force-dynamic';
 
 export default async function AdminElevesPage({ searchParams }: { searchParams: { erreur?: string; succes?: string } }) {
   const admin = supabaseAdmin();
+
+  // Formules attribuées "à régler plus tard", en attente d'encaissement.
+  const { data: aEncaisser } = await admin
+    .from('paiements')
+    .select('id, formule_nom, created_at, profiles(nom, email, telephone)')
+    .eq('moyen_paiement', 'a_regler')
+    .order('created_at', { ascending: true });
 
   const { data: eleves } = await admin
     .from('profiles')
@@ -44,6 +52,45 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
   return (
     <main style={{ maxWidth: 1160, margin: '0 auto', padding: 20 }}>
       <h1>Élèves</h1>
+
+      {(aEncaisser ?? []).length > 0 && (
+        <section>
+          <h2>⏳ À encaisser ({aEncaisser!.length})</h2>
+          {aEncaisser!.map((r) => {
+            const p = r.profiles as any;
+            const formule = FORMULES[r.formule_nom];
+            const depuis = Math.floor((Date.now() - new Date(r.created_at).getTime()) / 86400000);
+            const relance = p?.telephone
+              ? lienWhatsApp(p.telephone, `Salut ${p.nom ?? ''} ! Petit rappel pour ta formule ${formule?.nom ?? ''} : ${formule?.prixIndicatif} € en ligne depuis ton espace sur le site, ou ${prixEspeces(r.formule_nom)} € en espèces au prochain cours. Merci 🙏`)
+              : null;
+            return (
+              <div key={r.id} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid #2a2a30' }}>
+                <div style={{ flex: '1 1 220px', fontSize: 14 }}>
+                  <strong>{p?.nom || p?.email}</strong> — {formule?.nom ?? r.formule_nom}
+                  <div style={{ fontSize: 12, opacity: 0.6 }}>
+                    {depuis === 0 ? "aujourd'hui" : `depuis ${depuis} jour${depuis > 1 ? 's' : ''}`} · {formule?.prixIndicatif} € en ligne ou {prixEspeces(r.formule_nom)} € en espèces
+                  </div>
+                </div>
+                <form action={encaisserReglement} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <input type="hidden" name="paiement_id" value={r.id} />
+                  <select name="moyen_paiement" defaultValue="especes">
+                    <option value="especes">💶 Espèces</option>
+                    <option value="virement">🏦 Virement</option>
+                    <option value="carte">💳 Carte (TPE)</option>
+                  </select>
+                  <input type="number" name="montant" step="0.01" min="0" defaultValue={prixEspeces(r.formule_nom) ?? ''} style={{ width: 80, padding: '8px 10px', borderRadius: 8, border: '1px solid #2a2a30', background: '#1a1a1e', color: '#eee', fontSize: 14 }} />
+                  <button type="submit">Encaissé</button>
+                </form>
+                {relance && (
+                  <a href={relance} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, fontWeight: 700, color: '#25D366', textDecoration: 'none' }}>
+                    💬 Relancer
+                  </a>
+                )}
+              </div>
+            );
+          })}
+        </section>
+      )}
 
       <div className="deux-colonnes">
       <section style={{ marginBottom: 32 }}>
@@ -94,9 +141,10 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
             <option value="especes">💶 Espèces</option>
             <option value="virement">🏦 Virement</option>
             <option value="carte">💳 Carte (TPE)</option>
+            <option value="a_regler">⏳ À régler plus tard</option>
             <option value="offert">🎁 Offert</option>
           </select>
-          <input type="number" step="0.01" min="0" name="montant" placeholder="Montant reçu (€)" />
+          <input type="number" step="0.01" min="0" name="montant" placeholder="Montant reçu (€) — vide si à régler ou offert" />
           <button type="submit">Attribuer</button>
         </form>
       </section>

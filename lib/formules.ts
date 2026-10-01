@@ -25,6 +25,8 @@ export type Formule = {
   quota: number | null; // null = illimité, pas de décompte
   validiteMois: number;
   prixIndicatif: number; // en euros
+  // Tarif réduit pratiqué pour un règlement en espèces (si différent).
+  prixEspeces?: number;
   // Formule plus proposée : conservée uniquement pour les abonnements déjà
   // existants (affichage, factures), jamais proposée à l'attribution.
   retiree?: boolean;
@@ -46,8 +48,8 @@ export const MENTORAT_PLACES_PAR_SESSION = 12;
 
 export const FORMULES: Record<string, Formule> = {
   // --- Cours collectifs ---
-  illimite: { nom: 'Illimité', categorie: 'planning', unite: null, quota: null, validiteMois: 1, prixIndicatif: 89 },
-  mensuel_8: { nom: '8 cours / mois', categorie: 'planning', unite: 'séance', quota: 8, validiteMois: 1, prixIndicatif: 79 },
+  illimite: { nom: 'Illimité', categorie: 'planning', unite: null, quota: null, validiteMois: 1, prixIndicatif: 89, prixEspeces: 80 },
+  mensuel_8: { nom: '8 cours / mois', categorie: 'planning', unite: 'séance', quota: 8, validiteMois: 1, prixIndicatif: 79, prixEspeces: 70 },
   mensuel_4: { nom: '4 cours / mois', categorie: 'planning', unite: 'séance', quota: 4, validiteMois: 1, prixIndicatif: 49 },
   carnet_10: { nom: 'Carnet 10 cours', categorie: 'planning', unite: 'séance', quota: 10, validiteMois: 6, prixIndicatif: 149 },
   carnet_5: { nom: 'Carnet 5 cours', categorie: 'planning', unite: 'séance', quota: 5, validiteMois: 3, prixIndicatif: 85 },
@@ -157,4 +159,9 @@ export const BRANCHES_MENTORAT: { cle: string; nom: string }[] = [
 // niveau sur les 5 branches) reste le seul mécanisme de déblocage.
 export function palierMaxDeFormule(_cleFormule: string): number | null {
   return null;
+}
+
+export function prixEspeces(formuleNom: string): number | null {
+  const f = FORMULES[formuleNom];
+  return f ? f.prixEspeces ?? f.prixIndicatif : null;
 }

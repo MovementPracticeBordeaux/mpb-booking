@@ -22,6 +22,26 @@ export async function POST(req: NextRequest) {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
     const evenementId = session.metadata?.evenement_id;
+    const reglementPaiementId = session.metadata?.reglement_paiement_id;
+
+    // Règlement en ligne d'une formule déjà attribuée "à régler" : on solde
+    // simplement ce règlement, aucun abonnement créé ni prolongé.
+    if (reglementPaiementId) {
+      const montant = (session.amount_total ?? 0) / 100;
+      const { data: regle } = await admin
+        .from('paiements')
+        .update({ paye: true, montant, moyen_paiement: 'carte', stripe_session_id: session.id, created_at: new Date().toISOString() })
+        .eq('id', reglementPaiementId)
+        .eq('moyen_paiement', 'a_regler')
+        .select('abonnement_id, formule_nom, eleve_id')
+        .maybeSingle();
+      if (regle) {
+        if (regle.abonnement_id) await admin.from('abonnements').update({ paye: true }).eq('id', regle.abonnement_id);
+        const { data: profil } = await admin.from('profiles').select('nom, email').eq('id', regle.eleve_id).maybeSingle();
+        await alerterAdminPush('💰 Règlement reçu', `${profil?.nom ?? profil?.email ?? 'Un élève'} — ${FORMULES[regle.formule_nom]?.nom ?? regle.formule_nom} (${montant.toFixed(2)} €, en ligne)`, '/admin/eleves');
+      }
+      return NextResponse.json({ received: true });
+    }
 
     // Paiement d'un événement ponctuel (atelier, stage...) : logique
     // séparée des formules classiques, pas de compte élève requis.

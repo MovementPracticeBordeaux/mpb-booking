@@ -1,5 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase-server';
-import { ajouterCours, desactiverCours, modifierCours, definirSemaineReference, ajouterVacances, supprimerVacances, reserverCoursPourEleve, annulerReservationAdmin, ajouterCoaching, supprimerCoaching, ajouterCoursDepuisJour } from '../actions';
+import { ajouterCours, desactiverCours, modifierCours, definirSemaineReference, ajouterVacances, supprimerVacances, reserverCoursPourEleve, annulerReservationAdmin, ajouterCoaching, supprimerCoaching, ajouterCoursDepuisJour, inscrireAvecFormuleARegler } from '../actions';
 import { calculerSemaine } from '@/lib/semaine';
 import AdminSeancesCarousel, { type CoachingDuJour } from '../AdminSeancesCarousel';
 import SelecteurDiscipline from '../SelecteurDiscipline';
@@ -169,6 +169,7 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
           ajouterCoaching={ajouterCoaching}
           supprimerCoaching={supprimerCoaching}
           ajouterCoursDepuisJour={ajouterCoursDepuisJour}
+          inscrireAvecFormuleARegler={inscrireAvecFormuleARegler}
           disciplinesExistantes={disciplinesExistantes}
           creditsCoaching={creditsCoaching}
           annulerReservationAdmin={annulerReservationAdmin}

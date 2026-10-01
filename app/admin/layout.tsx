@@ -95,7 +95,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     ? await admin.from('defi_participations').select('*', { count: 'exact', head: true }).eq('defi_id', defiActuel.id).eq('valide', false)
     : { count: 0 };
 
+  const { count: aEncaisser } = await admin.from('paiements').select('*', { count: 'exact', head: true }).eq('moyen_paiement', 'a_regler');
+
   const badges: Record<string, number> = {
+    '/admin/eleves': aEncaisser ?? 0,
     '/admin/mentorship': soumissions ?? 0,
     '/admin/candidatures': candidatures ?? 0,
     '/admin/defis': defisEnAttente ?? 0,

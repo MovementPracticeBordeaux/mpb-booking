@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 import { positionCentree, centrerAuChargement } from '@/lib/centrer-carte';
 import { COULEURS, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
 import SelecteurDiscipline from './SelecteurDiscipline';
+import { FORMULES } from '@/lib/formules';
+
+const FORMULES_COLLECTIF = Object.entries(FORMULES).filter(([, f]) => f.categorie === 'planning' && !f.retiree);
 
 export type Inscrit = { eleveId: string; nom: string };
 export type Eleve = { id: string; nom: string | null; email: string };
@@ -159,6 +162,7 @@ export default function AdminSeancesCarousel({
   ajouterCoaching,
   supprimerCoaching,
   ajouterCoursDepuisJour,
+  inscrireAvecFormuleARegler,
   disciplinesExistantes,
   creditsCoaching,
 }: {
@@ -170,6 +174,7 @@ export default function AdminSeancesCarousel({
   ajouterCoaching: Action;
   supprimerCoaching: Action;
   ajouterCoursDepuisJour: Action;
+  inscrireAvecFormuleARegler: Action;
   disciplinesExistantes: string[];
   creditsCoaching: Record<string, number>;
 }) {
@@ -373,24 +378,47 @@ export default function AdminSeancesCarousel({
                       <summary style={{ fontSize: 10, color: COULEURS.texteAtt, cursor: 'pointer', marginTop: c.inscrits.length > 0 ? 6 : 0 }}>
                         + Ajouter un élève
                       </summary>
-                      <form action={reserverCoursPourEleve} style={{ display: 'flex', gap: 4, marginTop: 6 }}>
+                      <form action={reserverCoursPourEleve} style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 6 }}>
                         <input type="hidden" name="seance" value={`${c.coursId}::${j.dateISO}`} />
-                        <select
-                          name="eleve_id"
-                          required
-                          style={{ flex: 1, fontSize: 10, padding: '4px 6px', borderRadius: 6, border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surfaceForte, color: COULEURS.texte }}
-                        >
-                          <option value="">-- Élève --</option>
-                          {eleves.map((e) => (
-                            <option key={e.id} value={e.id}>{e.nom ?? e.email}</option>
-                          ))}
-                        </select>
-                        <button
-                          type="submit"
-                          style={{ fontSize: 10, padding: '4px 10px', borderRadius: 6, border: '1px solid #4a4', background: 'none', color: '#8f8', cursor: 'pointer', flexShrink: 0 }}
-                        >
-                          Réserver
-                        </button>
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          <select
+                            name="eleve_id"
+                            required
+                            style={{ flex: 1, fontSize: 11, padding: '4px 6px', borderRadius: 6, border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surfaceForte, color: COULEURS.texte }}
+                          >
+                            <option value="">-- Élève --</option>
+                            {eleves.map((e) => (
+                              <option key={e.id} value={e.id}>{e.nom ?? e.email}</option>
+                            ))}
+                          </select>
+                          <button
+                            type="submit"
+                            style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, border: '1px solid #4a4', background: 'none', color: '#8f8', cursor: 'pointer', flexShrink: 0 }}
+                          >
+                            Réserver
+                          </button>
+                        </div>
+                        {/* Élève venu sans réserver et sans formule : on l'inscrit
+                            et on lui attribue une formule à régler plus tard. */}
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          <select
+                            name="formule_nom"
+                            defaultValue=""
+                            style={{ flex: 1, fontSize: 11, padding: '4px 6px', borderRadius: 6, border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surfaceForte, color: COULEURS.texte }}
+                          >
+                            <option value="">Pas de formule ? Choisir…</option>
+                            {FORMULES_COLLECTIF.map(([cle, f]) => (
+                              <option key={cle} value={cle}>{f.nom}</option>
+                            ))}
+                          </select>
+                          <button
+                            type="submit"
+                            formAction={inscrireAvecFormuleARegler}
+                            style={{ fontSize: 11, padding: '4px 8px', borderRadius: 6, border: '1px solid #FF8A00', background: 'none', color: '#FF8A00', cursor: 'pointer', flexShrink: 0 }}
+                          >
+                            ⏳ À régler
+                          </button>
+                        </div>
                       </form>
                     </details>
                   </div>
