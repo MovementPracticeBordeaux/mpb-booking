@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-server';
 import { calculerSemaine } from '@/lib/semaine';
 import { envoyerPushAEleve } from '@/lib/push';
+import { appliquerProlongationsVacancesAVenir } from '@/lib/prolongations-vacances';
 
 // Appelée fréquemment (toutes les ~15 min, voir le déclencheur choisi —
 // Vercel Cron limité à 1x/jour sur le plan Hobby, donc probablement un
@@ -59,6 +60,16 @@ async function appelAutorise(req: NextRequest): Promise<boolean> {
 export async function GET(req: NextRequest) {
   if (!(await appelAutorise(req))) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+  }
+
+  // Rattrapage automatique des prolongations de vacances (formules achetées
+  // après la saisie d'une période). Indépendant du rappel : un échec ici ne
+  // doit pas empêcher la notification.
+  let formulesProlongees = 0;
+  try {
+    formulesProlongees = await appliquerProlongationsVacancesAVenir();
+  } catch (e: any) {
+    console.error('Prolongations vacances :', e?.message);
   }
 
   try {
@@ -160,7 +171,7 @@ export async function GET(req: NextRequest) {
       notifies++;
     }
 
-    return NextResponse.json({ ok: true, notifies, coursExamines: (coursListe ?? []).length });
+    return NextResponse.json({ ok: true, notifies, coursExamines: (coursListe ?? []).length, formulesProlongees });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
