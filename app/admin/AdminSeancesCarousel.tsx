@@ -153,6 +153,54 @@ function formaterDate(dateISO: string) {
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 }
 
+
+// Ajout d'un élève sur une séance : un seul bouton "Réserver". Le serveur
+// décide : réservation normale si l'élève a une formule utilisable, sinon
+// séance "à régler". Le choix d'une formule n'apparaît que pour un élève
+// sans formule collective, et reste facultatif.
+function FormAjoutEleve({
+  seance, eleves, elevesAvecFormule, reserverCoursPourEleve,
+}: {
+  seance: string;
+  eleves: Eleve[];
+  elevesAvecFormule: string[];
+  reserverCoursPourEleve: Action;
+}) {
+  const [eleveId, setEleveId] = useState('');
+  const sansFormule = eleveId !== '' && !elevesAvecFormule.includes(eleveId);
+  const style: React.CSSProperties = {
+    flex: 1, fontSize: 11, padding: '4px 6px', borderRadius: 6, border: `1px solid ${COULEURS.bordure}`,
+    background: COULEURS.surfaceForte, color: COULEURS.texte,
+  };
+  return (
+    <form action={reserverCoursPourEleve} style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 6 }}>
+      <input type="hidden" name="seance" value={seance} />
+      <div style={{ display: 'flex', gap: 4 }}>
+        <select name="eleve_id" required value={eleveId} onChange={(e) => setEleveId(e.target.value)} style={style}>
+          <option value="">-- Élève --</option>
+          {eleves.map((e) => (
+            <option key={e.id} value={e.id}>{e.nom ?? e.email}</option>
+          ))}
+        </select>
+        <button
+          type="submit"
+          style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, border: '1px solid #4a4', background: 'none', color: '#8f8', cursor: 'pointer', flexShrink: 0 }}
+        >
+          Réserver
+        </button>
+      </div>
+      {sansFormule && (
+        <select name="formule_nom" defaultValue="" style={style}>
+          <option value="">⏳ Pas de formule : séance à régler</option>
+          {FORMULES_COLLECTIF.map(([cle, f]) => (
+            <option key={cle} value={cle}>⏳ {f.nom} à régler</option>
+          ))}
+        </select>
+      )}
+    </form>
+  );
+}
+
 export default function AdminSeancesCarousel({
   jours,
   indexAujourdhui,
@@ -162,7 +210,7 @@ export default function AdminSeancesCarousel({
   ajouterCoaching,
   supprimerCoaching,
   ajouterCoursDepuisJour,
-  inscrireAvecFormuleARegler,
+  elevesAvecFormule,
   disciplinesExistantes,
   creditsCoaching,
 }: {
@@ -174,7 +222,7 @@ export default function AdminSeancesCarousel({
   ajouterCoaching: Action;
   supprimerCoaching: Action;
   ajouterCoursDepuisJour: Action;
-  inscrireAvecFormuleARegler: Action;
+  elevesAvecFormule: string[];
   disciplinesExistantes: string[];
   creditsCoaching: Record<string, number>;
 }) {
@@ -378,49 +426,12 @@ export default function AdminSeancesCarousel({
                       <summary style={{ fontSize: 10, color: COULEURS.texteAtt, cursor: 'pointer', marginTop: c.inscrits.length > 0 ? 6 : 0 }}>
                         + Ajouter un élève
                       </summary>
-                      <form action={reserverCoursPourEleve} style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 6 }}>
-                        <input type="hidden" name="seance" value={`${c.coursId}::${j.dateISO}`} />
-                        <div style={{ display: 'flex', gap: 4 }}>
-                          <select
-                            name="eleve_id"
-                            required
-                            style={{ flex: 1, fontSize: 11, padding: '4px 6px', borderRadius: 6, border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surfaceForte, color: COULEURS.texte }}
-                          >
-                            <option value="">-- Élève --</option>
-                            {eleves.map((e) => (
-                              <option key={e.id} value={e.id}>{e.nom ?? e.email}</option>
-                            ))}
-                          </select>
-                          <button
-                            type="submit"
-                            style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, border: '1px solid #4a4', background: 'none', color: '#8f8', cursor: 'pointer', flexShrink: 0 }}
-                          >
-                            Réserver
-                          </button>
-                        </div>
-                        {/* Élève venu sans réserver et sans formule : on l'inscrit,
-                            avec une formule à régler, ou sans formule (la séance sera
-                            déduite de celle qu'il prendra, ou réglée à l'unité). */}
-                        <div style={{ display: 'flex', gap: 4 }}>
-                          <select
-                            name="formule_nom"
-                            defaultValue=""
-                            style={{ flex: 1, fontSize: 11, padding: '4px 6px', borderRadius: 6, border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surfaceForte, color: COULEURS.texte }}
-                          >
-                            <option value="">Sans formule (choisie plus tard)</option>
-                            {FORMULES_COLLECTIF.map(([cle, f]) => (
-                              <option key={cle} value={cle}>{f.nom}</option>
-                            ))}
-                          </select>
-                          <button
-                            type="submit"
-                            formAction={inscrireAvecFormuleARegler}
-                            style={{ fontSize: 11, padding: '4px 8px', borderRadius: 6, border: '1px solid #FF8A00', background: 'none', color: '#FF8A00', cursor: 'pointer', flexShrink: 0 }}
-                          >
-                            ⏳ À régler
-                          </button>
-                        </div>
-                      </form>
+                      <FormAjoutEleve
+                        seance={`${c.coursId}::${j.dateISO}`}
+                        eleves={eleves}
+                        elevesAvecFormule={elevesAvecFormule}
+                        reserverCoursPourEleve={reserverCoursPourEleve}
+                      />
                     </details>
                   </div>
                 ))(el.c))

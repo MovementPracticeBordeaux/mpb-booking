@@ -1,5 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase-server';
-import { ajouterCours, desactiverCours, modifierCours, definirSemaineReference, ajouterVacances, supprimerVacances, reserverCoursPourEleve, annulerReservationAdmin, ajouterCoaching, supprimerCoaching, ajouterCoursDepuisJour, inscrireAvecFormuleARegler } from '../actions';
+import { ajouterCours, desactiverCours, modifierCours, definirSemaineReference, ajouterVacances, supprimerVacances, reserverCoursPourEleve, annulerReservationAdmin, ajouterCoaching, supprimerCoaching, ajouterCoursDepuisJour } from '../actions';
 import { calculerSemaine } from '@/lib/semaine';
 import AdminSeancesCarousel, { type CoachingDuJour } from '../AdminSeancesCarousel';
 import SelecteurDiscipline from '../SelecteurDiscipline';
@@ -88,7 +88,9 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
   }
 
   // Chiffres clés affichés en haut de page (ex-"Vue d'ensemble").
-  const { data: abonnementsActifs } = await admin.from('abonnements').select('categorie, gele').eq('abonnement_actif', true);
+  const { data: abonnementsActifs } = await admin.from('abonnements').select('eleve_id, categorie, gele').eq('abonnement_actif', true);
+  // Élèves ayant déjà une formule collective : pas besoin de leur proposer une formule à régler.
+  const elevesAvecFormule = [...new Set((abonnementsActifs ?? []).filter((a) => a.categorie === 'planning').map((a) => a.eleve_id as string))];
   const nbActifsCollectif = (abonnementsActifs ?? []).filter((a) => a.categorie === 'planning').length;
   const nbActifsCoaching = (abonnementsActifs ?? []).filter((a) => a.categorie === 'coaching').length;
   const nbActifsMentorat = (abonnementsActifs ?? []).filter((a) => a.categorie === 'mentorat').length;
@@ -169,9 +171,9 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
           ajouterCoaching={ajouterCoaching}
           supprimerCoaching={supprimerCoaching}
           ajouterCoursDepuisJour={ajouterCoursDepuisJour}
-          inscrireAvecFormuleARegler={inscrireAvecFormuleARegler}
           disciplinesExistantes={disciplinesExistantes}
           creditsCoaching={creditsCoaching}
+          elevesAvecFormule={elevesAvecFormule}
           annulerReservationAdmin={annulerReservationAdmin}
         />
       </section>

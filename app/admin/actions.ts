@@ -220,6 +220,9 @@ export async function reserverCoursPourEleve(formData: FormData) {
   if (!eleveId || !seance) echouer('/admin/planning', 'Choisis un élève et une séance.');
   const [coursId, dateSeance] = seance.split('::');
 
+  // Formule choisie pour un élève qui n'en avait pas : attribuée à régler.
+  if (formData.get('formule_nom')) return inscrireAvecFormuleARegler(formData);
+
   const { data: resultat, error } = await admin.rpc('reserver_creneau', {
     p_eleve_id: eleveId,
     p_cours_id: coursId,
@@ -235,6 +238,9 @@ export async function reserverCoursPourEleve(formData: FormData) {
     quota_epuise: 'Le quota de cet élève est épuisé.',
     deja_reserve: 'Cet élève a déjà réservé cette séance.',
   };
+  // Pas de formule utilisable : l'élève est inscrit quand même, séance à
+  // régler (déduite de sa prochaine formule, ou réglée à l'unité).
+  if (['pas_abonne', 'expire', 'quota_epuise'].includes(resultat as string)) return inscrireSeanceARegler(eleveId, seance);
   if (resultat !== 'ok') echouer('/admin/planning', messages[resultat as string] ?? 'Réservation impossible.');
 
   // Même confirmation (email + push) que si l'élève avait réservé
@@ -242,7 +248,7 @@ export async function reserverCoursPourEleve(formData: FormData) {
   const { data: cours } = await admin.from('cours').select('discipline, heure_debut, heure_fin, lieu').eq('id', coursId).single();
   const { data: profilEleve } = await admin.from('profiles').select('email, notif_email_confirmation').eq('id', eleveId).single();
   if (cours) {
-    const dateAffichee = new Date(dateSeance + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+    const dateAffichee = new Date(dateSeance + 'T12:00:00Z').toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', weekday: 'long', day: 'numeric', month: 'long' });
     if (profilEleve?.email && profilEleve.notif_email_confirmation !== false) {
       try {
         await envoyerEmail(
