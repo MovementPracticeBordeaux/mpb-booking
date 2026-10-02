@@ -1,5 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase-server';
-import { attribuerFormule, suspendreAcces, decompterCoaching, modifierQuotaRestant, modifierExpiration, gelerPass, degelerPass, definirDateReprise, modifierPrenomEleveAdmin, modifierTelephoneEleveAdmin, rembourserPaiement, creerEleve, encaisserReglement } from '../actions';
+import { attribuerFormule, suspendreAcces, decompterCoaching, modifierQuotaRestant, modifierExpiration, gelerPass, degelerPass, definirDateReprise, modifierPrenomEleveAdmin, modifierTelephoneEleveAdmin, rembourserPaiement, creerEleve, encaisserReglement, encaisserSeanceARegler } from '../actions';
 import { FORMULES, prixEspeces } from '@/lib/formules';
 import { lienWhatsApp } from '@/lib/telephone';
 import ListeElevesRepliable from '../ListeElevesRepliable';
@@ -16,6 +16,15 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
     .select('id, formule_nom, created_at, profiles(nom, email, telephone)')
     .eq('moyen_paiement', 'a_regler')
     .order('created_at', { ascending: true });
+
+  // Séances suivies sans formule (inscrites depuis le planning), pas encore
+  // déduites d'une formule ni réglées à l'unité.
+  const { data: seancesARegler } = await admin
+    .from('reservations')
+    .select('id, date_seance, profiles(nom, email, telephone), cours(discipline)')
+    .eq('a_regler', true)
+    .eq('statut', 'confirmee')
+    .order('date_seance', { ascending: true });
 
   const { data: eleves } = await admin
     .from('profiles')
@@ -53,10 +62,43 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
     <main style={{ maxWidth: 1160, margin: '0 auto', padding: 20 }}>
       <h1>Élèves</h1>
 
-      {(aEncaisser ?? []).length > 0 && (
+      {((aEncaisser ?? []).length > 0 || (seancesARegler ?? []).length > 0) && (
         <section>
-          <h2>⏳ À encaisser ({aEncaisser!.length})</h2>
-          {aEncaisser!.map((r) => {
+          <h2>⏳ À encaisser ({(aEncaisser ?? []).length + (seancesARegler ?? []).length})</h2>
+          {(seancesARegler ?? []).map((r) => {
+            const p = r.profiles as any;
+            const cours = r.cours as any;
+            const date = new Date(r.date_seance + 'T12:00:00Z').toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', weekday: 'short', day: 'numeric', month: 'short' });
+            const relance = p?.telephone
+              ? lienWhatsApp(p.telephone, `Salut ${p.nom ?? ''} ! Petit rappel pour le cours de ${cours?.discipline ?? ''} du ${date} : pense à prendre ta formule, en ligne depuis la page Tarifs du site ou en espèces au prochain cours. La séance y sera déduite. Merci 🙏`)
+              : null;
+            return (
+              <div key={r.id} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid #2a2a30' }}>
+                <div style={{ flex: '1 1 220px', fontSize: 14 }}>
+                  <strong>{p?.nom || p?.email}</strong> — séance {cours?.discipline ?? ''} du {date}, sans formule
+                  <div style={{ fontSize: 12, opacity: 0.6 }}>
+                    Déduite automatiquement dès qu'il prend une formule collective, ou à encaisser à l'unité
+                  </div>
+                </div>
+                <form action={encaisserSeanceARegler} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <input type="hidden" name="reservation_id" value={r.id} />
+                  <select name="moyen_paiement" defaultValue="especes">
+                    <option value="especes">💶 Espèces</option>
+                    <option value="virement">🏦 Virement</option>
+                    <option value="carte">💳 Carte (TPE)</option>
+                  </select>
+                  <input type="number" name="montant" step="0.01" min="0" defaultValue={FORMULES.cours_unite?.prixIndicatif ?? ''} style={{ width: 80, padding: '8px 10px', borderRadius: 8, border: '1px solid #2a2a30', background: '#1a1a1e', color: '#eee', fontSize: 14 }} />
+                  <button type="submit">Réglée à l'unité</button>
+                </form>
+                {relance && (
+                  <a href={relance} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, fontWeight: 700, color: '#25D366', textDecoration: 'none' }}>
+                    💬 Relancer
+                  </a>
+                )}
+              </div>
+            );
+          })}
+          {(aEncaisser ?? []).map((r) => {
             const p = r.profiles as any;
             const formule = FORMULES[r.formule_nom];
             const depuis = Math.floor((Date.now() - new Date(r.created_at).getTime()) / 86400000);

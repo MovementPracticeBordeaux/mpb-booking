@@ -84,6 +84,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   let aUneFormuleActive = false;
   let telephoneManquant = false;
   let reglementsEnAttente: { paiementId: string; formule: string; prixEnLigne: number; enLigne: boolean }[] = [];
+  let seancesARegler = 0;
 
   if (user) {
     const { data: profil } = await avecTimeout(
@@ -109,6 +110,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         prixEnLigne: FORMULES[r.formule_nom]?.prixIndicatif ?? 0,
         enLigne: !!PRICE_IDS[r.formule_nom]?.startsWith('price_'),
       }));
+      const { count: nbSeances } = await avecTimeout(
+        supabaseAdmin().from('reservations').select('id', { count: 'exact', head: true }).eq('eleve_id', user.id).eq('a_regler', true).eq('statut', 'confirmee'),
+        { count: 0 } as any
+      );
+      seancesARegler = nbSeances ?? 0;
     }
   }
 
@@ -164,7 +170,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           pointerEvents: 'none',
         }} />
         <NavBar liens={LIENS} estAdmin={estAdmin} userEmail={user?.email ?? null} />
-        {reglementsEnAttente.length > 0 && <RappelReglement reglements={reglementsEnAttente} />}
+        {(reglementsEnAttente.length > 0 || seancesARegler > 0) && <RappelReglement reglements={reglementsEnAttente} seancesARegler={seancesARegler} />}
         {children}
         <ChatWidget aUneFormuleActive={aUneFormuleActive} />
         <PwaRegister />

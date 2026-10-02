@@ -40,7 +40,7 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
   // séance (y compris passée) et de le recréditer. Jamais visible côté élève.
   const { data: reservationsAVenir } = await admin
     .from('reservations')
-    .select('eleve_id, cours_id, date_seance')
+    .select('eleve_id, cours_id, date_seance, a_regler')
     .eq('statut', 'confirmee');
 
   const idsEleves = [...new Set((reservationsAVenir ?? []).map((r) => r.eleve_id))];
@@ -49,12 +49,12 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
     : { data: [] as { id: string; nom: string | null; email: string | null }[] };
   const nomParEleveId = new Map((profilsEleves ?? []).map((p) => [p.id, p.nom || p.email || 'Élève']));
 
-  type Inscrit = { eleveId: string; nom: string };
+  type Inscrit = { eleveId: string; nom: string; aRegler?: boolean };
   const inscritsParSeance = new Map<string, Inscrit[]>();
   for (const r of reservationsAVenir ?? []) {
     const cle = `${r.cours_id}::${r.date_seance}`;
     const liste = inscritsParSeance.get(cle) ?? [];
-    liste.push({ eleveId: r.eleve_id, nom: nomParEleveId.get(r.eleve_id) ?? 'Élève' });
+    liste.push({ eleveId: r.eleve_id, nom: nomParEleveId.get(r.eleve_id) ?? 'Élève', aRegler: r.a_regler });
     inscritsParSeance.set(cle, liste);
   }
 

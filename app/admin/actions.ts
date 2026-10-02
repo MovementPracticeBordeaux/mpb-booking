@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import { FORMULES } from '@/lib/formules';
 import { ajouterJours } from '@/lib/vacances';
 import { appliquerProlongationsVacances } from '@/lib/prolongations-vacances';
+import { imputerSeancesARegler } from '@/lib/seances-a-regler';
 import { calculerSemaine } from '@/lib/semaine';
 import { stripe } from '@/lib/stripe';
 import { envoyerEmail } from '@/lib/resend';
@@ -351,6 +352,9 @@ export async function attribuerFormule(formData: FormData) {
 
   if (moyenPaiement === 'a_regler') await relancerReglement(eleveId, formuleNom);
 
+  // Séances suivies sans formule : déduites de la nouvelle formule collective.
+  if (formule.categorie === 'planning') await imputerSeancesARegler(eleveId);
+
   revalidatePath('/admin/eleves');
   revalidatePath('/', 'layout');
   reussir('/admin/eleves', moyenPaiement === 'a_regler' ? "Formule attribuée, à régler : l'élève a été prévenu." : 'Formule attribuée.');
@@ -578,7 +582,7 @@ export async function annulerReservationAdmin(formData: FormData) {
 
   const { data: reservation } = await admin
     .from('reservations')
-    .select('id')
+    .select('id, a_regler')
     .eq('eleve_id', eleveId)
     .eq('cours_id', coursId)
     .eq('date_seance', dateSeance)
@@ -589,9 +593,16 @@ export async function annulerReservationAdmin(formData: FormData) {
 
   const { error } = await admin
     .from('reservations')
-    .update({ statut: 'annulee' })
+    .update({ statut: 'annulee', a_regler: false })
     .eq('id', reservation.id);
   if (error) echouer('/admin/planning', error.message);
+
+  // Séance suivie sans formule : rien n'avait été décompté, rien à rendre.
+  if (reservation.a_regler) {
+    revalidatePath('/admin/planning');
+    revalidatePath('/admin/eleves');
+    reussir('/admin/planning', 'Élève retiré de la séance.');
+  }
 
   const { data: abo } = await admin
     .from('abonnements')
@@ -1228,7 +1239,10 @@ export async function inscrireAvecFormuleARegler(formData: FormData) {
   const eleveId = formData.get('eleve_id') as string;
   const seance = formData.get('seance') as string;
   const formuleNom = formData.get('formule_nom') as string;
-  if (!eleveId || !seance || !formuleNom) echouer('/admin/planning', 'Choisis un élève et une formule.');
+  if (!eleveId || !seance) echouer('/admin/planning', 'Choisis un élève.');
+  // Sans formule choisie : on l'inscrit quand même, la séance sera déduite
+  // de la formule qu'il prendra ensuite (ou réglée à l'unité).
+  if (!formuleNom) return inscrireSeanceARegler(eleveId, seance);
   const formule = FORMULES[formuleNom];
   if (!formule || formule.retiree || formule.categorie !== 'planning') echouer('/admin/planning', 'Formule invalide.');
   const [coursId, dateSeance] = seance.split('::');
@@ -1258,6 +1272,8 @@ export async function inscrireAvecFormuleARegler(formData: FormData) {
     paye: false, moyen_paiement: 'a_regler', abonnement_id: abo.id,
   });
 
+  // Séances déjà suivies sans formule : déduites de celle-ci.
+  await imputerSeancesARegler(eleveId);
   const { data: resultat, error: errResa } = await admin.rpc('reserver_creneau', {
     p_eleve_id: eleveId, p_cours_id: coursId, p_date_seance: dateSeance, p_ignorer_delai: true,
   });
@@ -1292,4 +1308,75 @@ export async function encaisserReglement(formData: FormData) {
   revalidatePath('/admin/statistiques');
   revalidatePath('/', 'layout');
   reussir('/admin/eleves', 'Règlement encaissé.');
+}
+
+// Élève venu en cours sans formule, qui n'a pas encore choisi laquelle prendre :
+// inscrit sur la séance, marquée "à régler". Elle sera déduite de sa
+// prochaine formule collective (imputerSeancesARegler), ou réglée à l'unité.
+async function inscrireSeanceARegler(eleveId: string, seance: string) {
+  const admin = supabaseAdmin();
+  const [coursId, dateSeance] = seance.split('::');
+
+  const { data: dejaInscrit } = await admin.from('reservations').select('id')
+    .eq('eleve_id', eleveId).eq('cours_id', coursId).eq('date_seance', dateSeance).eq('statut', 'confirmee').maybeSingle();
+  if (dejaInscrit) echouer('/admin/planning', 'Cet élève est déjà inscrit à cette séance.');
+
+  const { error } = await admin.from('reservations').insert({
+    eleve_id: eleveId, cours_id: coursId, date_seance: dateSeance, statut: 'confirmee', a_regler: true,
+  });
+  if (error) echouer('/admin/planning', error.message);
+
+  // Si l'élève a en fait déjà une formule active, la séance y est déduite tout de suite.
+  const imputees = await imputerSeancesARegler(eleveId);
+
+  if (!imputees) {
+    const { data: profil } = await admin.from('profiles').select('email, nom').eq('id', eleveId).maybeSingle();
+    const { data: cours } = await admin.from('cours').select('discipline').eq('id', coursId).maybeSingle();
+    const date = new Date(dateSeance + 'T12:00:00Z').toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', weekday: 'long', day: 'numeric', month: 'long' });
+    const lien = `${process.env.NEXT_PUBLIC_SITE_URL}/tarifs`;
+    if (profil?.email) {
+      try {
+        await envoyerEmail(
+          profil.email,
+          'Pense à prendre ta formule',
+          `<p>Salut ${profil.nom ?? ''},</p>
+           <p>Merci d'être venu·e au cours de <strong>${cours?.discipline ?? ''}</strong> du ${date} !</p>
+           <p>Il ne te reste plus qu'à prendre ta formule : en ligne depuis <a href="${lien}">la page des tarifs</a>, ou en espèces auprès de Sylvain au prochain cours. Cette séance y sera automatiquement déduite.</p>
+           <p>À bientôt !</p>`
+        );
+      } catch {}
+    }
+    await envoyerPushAEleve(eleveId, '💳 Séance à régler', `Cours de ${cours?.discipline ?? ''} du ${date} : pense à prendre ta formule.`, '/tarifs');
+  }
+
+  revalidatePath('/admin/planning');
+  revalidatePath('/admin/eleves');
+  revalidatePath('/', 'layout');
+  reussir('/admin/planning', imputees
+    ? "Inscrit au cours (déduit de sa formule active)."
+    : "Inscrit au cours, séance à régler : elle sera déduite de sa prochaine formule (élève prévenu).");
+}
+
+// Séance suivie sans formule, finalement réglée à l'unité (espèces, virement...).
+export async function encaisserSeanceARegler(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+  const reservationId = formData.get('reservation_id') as string;
+  const moyen = formData.get('moyen_paiement') as string;
+  const montant = Number(formData.get('montant') || 0);
+  if (!['especes', 'virement', 'carte'].includes(moyen)) echouer('/admin/eleves', 'Moyen de paiement invalide.');
+  if (!(montant > 0)) echouer('/admin/eleves', 'Indique le montant reçu.');
+
+  const { data: resa, error } = await admin.from('reservations').update({ a_regler: false })
+    .eq('id', reservationId).eq('a_regler', true).select('eleve_id').maybeSingle();
+  if (error || !resa) echouer('/admin/eleves', error?.message ?? 'Séance introuvable ou déjà réglée.');
+
+  await admin.from('paiements').insert({
+    eleve_id: resa.eleve_id, formule_nom: 'cours_unite', montant, origine: 'manuel', paye: true, moyen_paiement: moyen,
+  });
+
+  revalidatePath('/admin/eleves');
+  revalidatePath('/admin/statistiques');
+  revalidatePath('/', 'layout');
+  reussir('/admin/eleves', 'Séance encaissée.');
 }

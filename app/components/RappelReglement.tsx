@@ -6,8 +6,10 @@ import { useState } from 'react';
 // formule attribuée "à régler" : il ne peut pas l'oublier.
 export default function RappelReglement({
   reglements,
+  seancesARegler = 0,
 }: {
   reglements: { paiementId: string; formule: string; prixEnLigne: number; enLigne: boolean }[];
+  seancesARegler?: number;
 }) {
   const [enCours, setEnCours] = useState<string | null>(null);
   const [erreur, setErreur] = useState('');
@@ -54,6 +56,17 @@ export default function RappelReglement({
           )}
         </div>
       ))}
+      {seancesARegler > 0 && (
+        <div style={{ maxWidth: 1160, margin: '0 auto', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, fontSize: 14 }}>
+          <span>
+            💳 Tu as suivi {seancesARegler > 1 ? `${seancesARegler} cours` : 'un cours'} sans formule : prends ta formule en ligne, ou
+            <strong> en espèces</strong> à Sylvain au prochain cours. {seancesARegler > 1 ? 'Ces séances y seront déduites.' : 'La séance y sera déduite.'}
+          </span>
+          <a href="/tarifs" style={{ padding: '7px 14px', borderRadius: 999, background: '#FF8A00', color: '#111', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
+            Voir les formules
+          </a>
+        </div>
+      )}
       {erreur && <p style={{ maxWidth: 1160, margin: '6px auto 0', color: '#ff8a8a', fontSize: 13 }}>{erreur}</p>}
     </div>
   );

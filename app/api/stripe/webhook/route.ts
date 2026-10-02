@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase-server';
 import { FORMULES } from '@/lib/formules';
 import { envoyerEmail } from '@/lib/resend';
 import { alerterAdmin, alerterAdminPush } from '@/lib/alerte-admin';
+import { imputerSeancesARegler } from '@/lib/seances-a-regler';
 import Stripe from 'stripe';
 
 export async function POST(req: NextRequest) {
@@ -202,6 +203,8 @@ export async function POST(req: NextRequest) {
           paye: true,
         });
       }
+      // Séances suivies sans formule : déduites de la formule achetée.
+      if (formule.categorie === 'planning') await imputerSeancesARegler(userId);
       await admin.from('profiles').update({ stripe_customer_id: session.customer as string }).eq('id', userId);
 
       // Historise le paiement pour que l'élève puisse générer sa facture.

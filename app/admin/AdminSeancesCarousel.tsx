@@ -8,7 +8,7 @@ import { FORMULES } from '@/lib/formules';
 
 const FORMULES_COLLECTIF = Object.entries(FORMULES).filter(([, f]) => f.categorie === 'planning' && !f.retiree);
 
-export type Inscrit = { eleveId: string; nom: string };
+export type Inscrit = { eleveId: string; nom: string; aRegler?: boolean };
 export type Eleve = { id: string; nom: string | null; email: string };
 
 export type CoursDuJour = {
@@ -358,7 +358,7 @@ export default function AdminSeancesCarousel({
                             key={inscrit.eleveId}
                             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, fontSize: 11, padding: '3px 0' }}
                           >
-                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{inscrit.nom}</span>
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={inscrit.aRegler ? 'Séance à régler (sans formule)' : undefined}>{inscrit.aRegler ? '⏳ ' : ''}{inscrit.nom}</span>
                             <form action={annulerReservationAdmin}>
                               <input type="hidden" name="eleve_id" value={inscrit.eleveId} />
                               <input type="hidden" name="cours_id" value={c.coursId} />
@@ -398,15 +398,16 @@ export default function AdminSeancesCarousel({
                             Réserver
                           </button>
                         </div>
-                        {/* Élève venu sans réserver et sans formule : on l'inscrit
-                            et on lui attribue une formule à régler plus tard. */}
+                        {/* Élève venu sans réserver et sans formule : on l'inscrit,
+                            avec une formule à régler, ou sans formule (la séance sera
+                            déduite de celle qu'il prendra, ou réglée à l'unité). */}
                         <div style={{ display: 'flex', gap: 4 }}>
                           <select
                             name="formule_nom"
                             defaultValue=""
                             style={{ flex: 1, fontSize: 11, padding: '4px 6px', borderRadius: 6, border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surfaceForte, color: COULEURS.texte }}
                           >
-                            <option value="">Pas de formule ? Choisir…</option>
+                            <option value="">Sans formule (choisie plus tard)</option>
                             {FORMULES_COLLECTIF.map(([cle, f]) => (
                               <option key={cle} value={cle}>{f.nom}</option>
                             ))}
