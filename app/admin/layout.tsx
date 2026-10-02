@@ -97,7 +97,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   const { count: aEncaisser } = await admin.from('paiements').select('*', { count: 'exact', head: true }).eq('moyen_paiement', 'a_regler');
 
+  // Ce qui reste à encaisser : formules "à régler" et séances suivies sans formule.
+  const [{ count: formulesARegler }, { count: seancesARegler }] = await Promise.all([
+    admin.from('paiements').select('*', { count: 'exact', head: true }).eq('moyen_paiement', 'a_regler'),
+    admin.from('reservations').select('*', { count: 'exact', head: true }).eq('a_regler', true).eq('statut', 'confirmee'),
+  ]);
+
   const badges: Record<string, number> = {
+    '/admin/eleves': (formulesARegler ?? 0) + (seancesARegler ?? 0),
     '/admin/eleves': aEncaisser ?? 0,
     '/admin/mentorship': soumissions ?? 0,
     '/admin/candidatures': candidatures ?? 0,
