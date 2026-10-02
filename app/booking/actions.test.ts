@@ -214,12 +214,13 @@ describe('annulerReservation', () => {
       user: USER,
       fromResults: [
         { data: { heure_debut: heureDebut }, error: null }, // cours dans 2h, annulable
-        { data: { id: 'r1' }, error: null }, // réservation trouvée
-        { error: null }, // update statut annulee
-        { data: { formule_nom: 'illimite', quota_restant: null }, error: null }, // profil
+        { data: { id: 'r1', a_regler: false }, error: null }, // réservation trouvée
+        { data: { formule_nom: 'illimite', quota_restant: null }, error: null }, // abonnement
       ],
     });
     vi.mocked(supabaseServer).mockReturnValue(client as any);
+    // L'annulation elle-même est écrite côté serveur (client admin).
+    vi.mocked(supabaseAdmin).mockReturnValue({ from: vi.fn(() => makeChainable({ error: null })) } as any);
 
     await annulerReservation(formData({ cours_id: 'c1', date_seance: dateSeance }));
 
@@ -247,24 +248,23 @@ describe('annulerReservation', () => {
       user: USER,
       fromResults: [
         { data: { heure_debut: '18:00:00' }, error: null }, // cours
-        { data: { id: 'r1' }, error: null }, // réservation trouvée
-        { error: null }, // update statut annulee
-        { data: { formule_nom: 'mensuel_4', quota_restant: 2 }, error: null }, // profil
+        { data: { id: 'r1', a_regler: false }, error: null }, // réservation trouvée
+        { data: { formule_nom: 'mensuel_4', quota_restant: 2 }, error: null }, // abonnement
       ],
     });
     vi.mocked(supabaseServer).mockReturnValue(client as any);
 
-    // La restitution du crédit passe volontairement par le client admin
-    // (bypass RLS), pas par la session de l'élève — voir le commentaire dans
-    // actions.ts. On mocke donc un second client dédié à cet appel.
+    // Les écritures (annulation puis restitution du crédit) passent par le
+    // client admin : l'élève n'a aucun droit d'écriture direct sur ses
+    // réservations ni sur ses abonnements.
     const adminClient = { from: vi.fn(() => makeChainable({ error: null })) };
     vi.mocked(supabaseAdmin).mockReturnValue(adminClient as any);
 
     await annulerReservation(formData({ cours_id: 'c1', date_seance: '2099-01-01' }));
 
-    const annulationChain = client.from.mock.results[2].value;
-    expect(annulationChain.update).toHaveBeenCalledWith({ statut: 'annulee' });
-    const quotaChain = adminClient.from.mock.results[0].value;
+    const annulationChain = adminClient.from.mock.results[0].value;
+    expect(annulationChain.update).toHaveBeenCalledWith({ statut: 'annulee', a_regler: false });
+    const quotaChain = adminClient.from.mock.results[1].value;
     expect(quotaChain.update).toHaveBeenCalledWith({ quota_restant: 3 });
     expect(revalidatePath).toHaveBeenCalledWith('/planning');
     expect(revalidatePath).toHaveBeenCalledWith('/profil');
@@ -276,15 +276,34 @@ describe('annulerReservation', () => {
       user: USER,
       fromResults: [
         { data: { heure_debut: '18:00:00' }, error: null }, // cours
-        { data: { id: 'r1' }, error: null }, // réservation trouvée
-        { error: null }, // update statut annulee
-        { data: { formule_nom: 'illimite', quota_restant: null }, error: null }, // profil
+        { data: { id: 'r1', a_regler: false }, error: null }, // réservation trouvée
+        { data: { formule_nom: 'illimite', quota_restant: null }, error: null }, // abonnement
       ],
     });
     vi.mocked(supabaseServer).mockReturnValue(client as any);
+    const adminClient = { from: vi.fn(() => makeChainable({ error: null })) };
+    vi.mocked(supabaseAdmin).mockReturnValue(adminClient as any);
 
     await annulerReservation(formData({ cours_id: 'c1', date_seance: '2099-01-01' }));
 
-    expect(client.from).toHaveBeenCalledTimes(4); // pas d'appel update quota supplémentaire
+    expect(adminClient.from).toHaveBeenCalledTimes(1); // annulation seule, aucune mise à jour de quota
+  });
+
+  it('ne recrédite rien pour une séance à régler (sans formule)', async () => {
+    const client = mockClient({
+      user: USER,
+      fromResults: [
+        { data: { heure_debut: '18:00:00' }, error: null }, // cours
+        { data: { id: 'r1', a_regler: true }, error: null }, // séance à régler
+      ],
+    });
+    vi.mocked(supabaseServer).mockReturnValue(client as any);
+    const adminClient = { from: vi.fn(() => makeChainable({ error: null })) };
+    vi.mocked(supabaseAdmin).mockReturnValue(adminClient as any);
+
+    await annulerReservation(formData({ cours_id: 'c1', date_seance: '2099-01-01' }));
+
+    expect(adminClient.from).toHaveBeenCalledTimes(1); // annulation seule
+    expect(client.from).toHaveBeenCalledTimes(2); // l'abonnement n'est même pas consulté
   });
 });
