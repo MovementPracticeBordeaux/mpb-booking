@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
-import { supabaseServer } from '@/lib/supabase-server';
+import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { FORMULES } from '@/lib/formules';
 import { PRICE_IDS } from '@/lib/prix-stripe';
 
@@ -22,6 +22,27 @@ export async function POST(req: NextRequest) {
   const price_id = PRICE_IDS[formule_nom];
   if (!price_id || !price_id.startsWith('price_')) {
     return NextResponse.json({ error: "Cette formule n'est pas disponible au paiement en ligne." }, { status: 400 });
+  }
+
+  // Formules à conditions, vérifiées ici car l'API reste appelable en
+  // direct, même pour une formule qui n'est pas affichée sur le site.
+  const admin = supabaseAdmin();
+  if (formule_nom === 'cours_decouverte') {
+    // Réservé aux personnes qui n'ont encore jamais eu de formule collective.
+    const { count } = await admin.from('abonnements').select('id', { count: 'exact', head: true })
+      .eq('eleve_id', user.id).eq('categorie', 'planning');
+    if ((count ?? 0) > 0) {
+      return NextResponse.json({ error: 'Le cours découverte est réservé à une première venue : choisis le cours à l’unité ou une formule.' }, { status: 400 });
+    }
+  }
+  if (formule.categorie === 'mentorat') {
+    // Le Mentorat se fait sur candidature : le suivi post-Mentorat n'est
+    // achetable que par un ancien élève du Mentorat.
+    const { count } = await admin.from('abonnements').select('id', { count: 'exact', head: true })
+      .eq('eleve_id', user.id).eq('categorie', 'mentorat');
+    if ((count ?? 0) === 0) {
+      return NextResponse.json({ error: 'Le Mentorat se fait sur candidature.' }, { status: 403 });
+    }
   }
 
   // Validation stricte de la date de début choisie par l'élève : format

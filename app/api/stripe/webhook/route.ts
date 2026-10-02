@@ -22,6 +22,11 @@ export async function POST(req: NextRequest) {
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
+    // Sécurité : on ne crédite rien tant que l'argent n'est pas réellement
+    // encaissé (cas des moyens de paiement différés).
+    if (session.payment_status !== 'paid') {
+      return NextResponse.json({ received: true, en_attente: true });
+    }
     const evenementId = session.metadata?.evenement_id;
     const reglementPaiementId = session.metadata?.reglement_paiement_id;
 
@@ -33,6 +38,7 @@ export async function POST(req: NextRequest) {
         .from('paiements')
         .update({ paye: true, montant, moyen_paiement: 'carte', stripe_session_id: session.id, created_at: new Date().toISOString() })
         .eq('id', reglementPaiementId)
+        .eq('eleve_id', session.metadata?.user_id ?? '')
         .eq('moyen_paiement', 'a_regler')
         .select('abonnement_id, formule_nom, eleve_id')
         .maybeSingle();
@@ -137,6 +143,28 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ received: true, deja_traite: true });
       }
 
+      // Le paiement est enregistré AVANT de toucher à l'abonnement : la
+      // contrainte unique sur stripe_session_id fait office de verrou. Si
+      // deux notifications Stripe arrivent en même temps, la seconde échoue
+      // ici (23505) et s'arrête, au lieu de prolonger la formule deux fois.
+      const { error: erreurPaiement } = await admin.from('paiements').insert({
+        eleve_id: userId,
+        formule_nom: formuleNom,
+        montant: (session.amount_total ?? 0) / 100, // Stripe donne le montant en centimes
+        moyen_paiement: 'carte',
+        origine: 'stripe',
+        paye: true,
+        stripe_session_id: session.id,
+      });
+      if (erreurPaiement?.code === '23505') {
+        return NextResponse.json({ received: true, deja_traite: true });
+      }
+      if (erreurPaiement) {
+        console.error('Erreur insertion paiement:', erreurPaiement.message);
+        // On renvoie une erreur pour que Stripe renvoie la notification plus tard.
+        return NextResponse.json({ error: 'Enregistrement du paiement impossible' }, { status: 500 });
+      }
+
       // La date de début choisie par l'élève sur /tarifs sert de point de
       // départ pour la validité (au lieu de toujours partir du jour du
       // paiement) — utile pour démarrer un pass au retour de vacances, etc.
@@ -207,33 +235,11 @@ export async function POST(req: NextRequest) {
       if (formule.categorie === 'planning') await imputerSeancesARegler(userId);
       await admin.from('profiles').update({ stripe_customer_id: session.customer as string }).eq('id', userId);
 
-      // Historise le paiement pour que l'élève puisse générer sa facture.
-      // stripe_session_id a une contrainte unique en base (voir
-      // supabase/migration_idempotence_webhook.sql) : si malgré la
-      // vérification ci-dessus deux webhooks arrivaient en même temps, cet
-      // insert échouerait proprement au lieu de dupliquer la ligne.
-      const { error: erreurInsert } = await admin.from('paiements').insert({
-        eleve_id: userId,
-        formule_nom: formuleNom,
-        montant: (session.amount_total ?? 0) / 100, // Stripe donne le montant en centimes
-        moyen_paiement: 'carte',
-        origine: 'stripe',
-        paye: true,
-        stripe_session_id: session.id,
-      });
-
-      // Code 23505 = violation de contrainte unique : un autre appel du
-      // webhook a inséré la ligne entre-temps, ce n'est pas une vraie
-      // erreur, juste la sécurité anti-doublon qui a fonctionné.
-      if (erreurInsert && erreurInsert.code !== '23505') {
-        console.error('Erreur insertion paiement:', erreurInsert.message);
-      }
-
       // Email de confirmation d'achat — seulement lors du tout premier
       // traitement réussi de ce paiement (pas en cas de doublon détecté
       // ci-dessus). Ne doit jamais faire échouer le webhook si Resend est
       // indisponible, d'où le try/catch silencieux.
-      if (!erreurInsert) {
+      {
         try {
           const email = session.customer_details?.email ?? session.customer_email;
           if (email) {

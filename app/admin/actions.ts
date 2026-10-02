@@ -7,6 +7,7 @@ import { FORMULES } from '@/lib/formules';
 import { ajouterJours } from '@/lib/vacances';
 import { appliquerProlongationsVacances } from '@/lib/prolongations-vacances';
 import { imputerSeancesARegler } from '@/lib/seances-a-regler';
+import { degelerAbonnement } from '@/lib/degel';
 import { calculerSemaine } from '@/lib/semaine';
 import { stripe } from '@/lib/stripe';
 import { envoyerEmail } from '@/lib/resend';
@@ -487,38 +488,6 @@ export async function definirDateReprise(formData: FormData) {
   reussir('/admin/eleves', 'Date de reprise mise à jour.');
 }
 
-// Dégel : prolonge automatiquement la date de validité du nombre de jours
-// pendant lesquels l'abonnement est resté gelé (comme sur le site actuel).
-// Factorisée pour être réutilisée par le dégel manuel (bouton admin) et par
-// le dégel automatique planifié (cron quotidien, voir api/cron/rappels).
-// Cible un abonnement précis (abonnementId) plutôt qu'un élève : depuis la
-// refonte multi-abonnements, un élève peut avoir plusieurs abonnements
-// actifs (planning/coaching/mentorat), chacun se gèle/dégèle indépendamment.
-export async function degelerAbonnement(abonnementId: string): Promise<{ ok: boolean; erreur?: string }> {
-  const admin = supabaseAdmin();
-
-  const { data: abo } = await admin.from('abonnements')
-    .select('date_gel_debut, date_expiration')
-    .eq('id', abonnementId)
-    .single();
-  if (!abo?.date_gel_debut) return { ok: false, erreur: "Cet abonnement n'est pas gelé." };
-
-  const debutGel = new Date(abo.date_gel_debut);
-  const joursGeles = Math.max(0, Math.round((Date.now() - debutGel.getTime()) / (1000 * 60 * 60 * 24)));
-
-  const nouvelleExpiration = new Date(abo.date_expiration ?? new Date());
-  nouvelleExpiration.setDate(nouvelleExpiration.getDate() + joursGeles);
-
-  const { error } = await admin.from('abonnements').update({
-    gele: false,
-    date_gel_debut: null,
-    date_fin_gel_prevue: null,
-    date_expiration: nouvelleExpiration.toISOString().slice(0, 10),
-  }).eq('id', abonnementId);
-
-  return error ? { ok: false, erreur: error.message } : { ok: true };
-}
-
 export async function degelerPass(formData: FormData) {
   await verifierAdmin();
   const abonnementId = formData.get('abonnement_id') as string;
@@ -639,7 +608,7 @@ export async function creerFactureManuelle(formData: FormData) {
   const admin = supabaseAdmin();
 
   const nomClient = (formData.get('nom_client') as string)?.trim();
-  const emailClient = ((formData.get('email_client') as string) || '').trim() || null;
+  const emailClient = ((formData.get('email_client') as string) || '').trim().toLowerCase() || null;
   const telephoneClient = ((formData.get('telephone_client') as string) || '').trim() || null;
   const lignesJson = formData.get('lignes') as string;
 

@@ -65,7 +65,7 @@ export const FORMULES: Record<string, Formule> = {
   // 11/09/2026) - conservé uniquement pour les élèves qui l'ont déjà en
   // base (factures, accès en cours), même principe que l'ancienne formule
   // Mentorship ci-dessous.
-  coaching_online: { nom: 'Coaching Online', categorie: 'coaching', unite: null, quota: null, validiteMois: 1, prixIndicatif: 80 },
+  coaching_online: { nom: 'Coaching Online', categorie: 'coaching', unite: null, quota: null, validiteMois: 1, prixIndicatif: 80 , retiree: true },
   coaching_unite: { nom: 'Coaching 1-to-1 à l\'unité', categorie: 'coaching', unite: 'heure', quota: 1, validiteMois: 1, prixIndicatif: 60 },
   coaching_carnet_3h: { nom: 'Carnet coaching 3h', categorie: 'coaching', unite: 'heure', quota: 3, validiteMois: 3, prixIndicatif: 165 },
   coaching_carnet_4h: { nom: 'Carnet coaching 4h', categorie: 'coaching', unite: 'heure', quota: 4, validiteMois: 1, prixIndicatif: 199 },

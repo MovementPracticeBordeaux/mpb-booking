@@ -1,4 +1,4 @@
-import { supabaseServer } from '@/lib/supabase-server';
+import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { FORMULES } from '@/lib/formules';
 import { redirect } from 'next/navigation';
 
@@ -19,13 +19,14 @@ export default async function FacturesPage() {
   // ponctuelles...) créées par Sylvain avec cette même adresse email —
   // aucun lien technique direct avec le compte (la table ne connaît que
   // l'email en texte libre), on les fait juste correspondre à l'affichage
-  // pour que l'élève retrouve tout au même endroit. Lecture publique déjà
-  // autorisée par la policy RLS de cette table, pas besoin de droits admin.
+  // pour que l'élève retrouve tout au même endroit. Lecture faite côté
+  // serveur, limitée à SON adresse email (la table n'est plus lisible
+  // directement depuis le navigateur : elle contient les factures de tous).
   const { data: facturesManuelles } = user.email
-    ? await supabase
+    ? await supabaseAdmin()
         .from('factures_manuelles')
         .select('id, total, created_at')
-        .ilike('email_client', user.email)
+        .eq('email_client', user.email.toLowerCase())
         .order('created_at', { ascending: false })
     : { data: [] };
 

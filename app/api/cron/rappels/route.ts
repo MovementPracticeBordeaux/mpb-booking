@@ -2,14 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-server';
 import { envoyerEmail } from '@/lib/resend';
 import { envoyerPushAEleve } from '@/lib/push';
-import { degelerAbonnement } from '@/app/admin/actions';
+import { degelerAbonnement } from '@/lib/degel';
 import { alerterAdmin } from '@/lib/alerte-admin';
 
 // Appelée automatiquement une fois par jour par Vercel Cron (voir vercel.json).
 // Envoie un email de rappel à chaque élève ayant un cours réservé le lendemain.
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  // Sans secret configuré, l'en-tête attendu serait 'Bearer undefined' :
+  // n'importe qui pourrait déclencher la tâche en l'envoyant.
+  if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
   }
 

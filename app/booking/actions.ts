@@ -135,7 +135,7 @@ export async function annulerReservation(formData: FormData) {
 
   const { data: reservation } = await supabase
     .from('reservations')
-    .select('id')
+    .select('id, a_regler')
     .eq('eleve_id', user.id)
     .eq('cours_id', coursId)
     .eq('date_seance', dateSeance)
@@ -147,13 +147,26 @@ export async function annulerReservation(formData: FormData) {
     return;
   }
 
-  const { error } = await supabase
+  // Écriture côté serveur : l'élève n'a plus le droit de modifier lui-même
+  // ses réservations depuis le navigateur. La réservation a été retrouvée
+  // ci-dessus avec SA session, donc elle lui appartient bien.
+  const admin = supabaseAdmin();
+  const { error } = await admin
     .from('reservations')
-    .update({ statut: 'annulee' })
-    .eq('id', reservation.id);
+    .update({ statut: 'annulee', a_regler: false })
+    .eq('id', reservation.id)
+    .eq('eleve_id', user.id);
 
   if (error) {
     echouer(error.message);
+    return;
+  }
+
+  // Séance inscrite "à régler" (sans formule) : rien n'avait été décompté,
+  // donc rien à recréditer.
+  if (reservation.a_regler) {
+    revalidatePath('/planning');
+    revalidatePath('/profil');
     return;
   }
 
@@ -172,7 +185,6 @@ export async function annulerReservation(formData: FormData) {
     // s'auto-modifier son propre quota en manipulant le client depuis le
     // navigateur. Le client admin ignore RLS et ne fait que ce que ce code
     // précis autorise.
-    const admin = supabaseAdmin();
     await admin
       .from('abonnements')
       .update({ quota_restant: abo.quota_restant + 1 })
