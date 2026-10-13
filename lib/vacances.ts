@@ -44,8 +44,10 @@ export function joursVacancesDansPeriode(
 // Ajoute un nombre de jours à une date (format YYYY-MM-DD), retourne le
 // résultat au même format.
 export function ajouterJours(dateISO: string, jours: number): string {
-  const d = new Date(dateISO + 'T00:00:00');
-  d.setDate(d.getDate() + jours);
+  // Calcul en UTC : indépendant du fuseau de la machine (en heure de Paris,
+  // l'ancienne version renvoyait la même date et pouvait boucler sans fin).
+  const d = new Date(dateISO + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() + jours);
   return d.toISOString().slice(0, 10);
 }
 

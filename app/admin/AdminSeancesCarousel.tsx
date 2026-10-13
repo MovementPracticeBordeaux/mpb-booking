@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { positionCentree, centrerAuChargement } from '@/lib/centrer-carte';
 import { COULEURS, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
 import SelecteurDiscipline from './SelecteurDiscipline';
+import RechercheEleve from './RechercheEleve';
 import { FORMULES } from '@/lib/formules';
 
 const FORMULES_COLLECTIF = Object.entries(FORMULES).filter(([, f]) => f.categorie === 'planning' && !f.retiree);
@@ -98,14 +99,12 @@ function PanneauAjout({
       {onglet === 'coaching' ? (
         <form action={ajouterCoaching} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <input type="hidden" name="date_seance" value={j.dateISO} />
-          <select name="eleve_id" defaultValue="" style={styleChamp}>
-            <option value="">-- Élève --</option>
-            {eleves.map((e) => (
-              <option key={e.id} value={e.id}>
-                {e.nom ?? e.email}{creditsCoaching[e.id] ? ` (${creditsCoaching[e.id]} h)` : ''}
-              </option>
-            ))}
-          </select>
+          <RechercheEleve
+            eleves={eleves}
+            name="eleve_id"
+            taille={12}
+            suffixe={(id) => (creditsCoaching[id] ? ` (${creditsCoaching[id]} h)` : '')}
+          />
           <input name="nom_libre" placeholder="ou nom, si pas de compte" style={styleChamp} />
           <div style={{ display: 'flex', gap: 6 }}>
             <input name="heure_debut" type="time" required style={styleChamp} />
@@ -159,9 +158,10 @@ function formaterDate(dateISO: string) {
 // séance "à régler". Le choix d'une formule n'apparaît que pour un élève
 // sans formule collective, et reste facultatif.
 function FormAjoutEleve({
-  seance, eleves, elevesAvecFormule, reserverCoursPourEleve,
+  seance, eleves, elevesAvecFormule, reserverCoursPourEleve, dejaInscrits,
 }: {
   seance: string;
+  dejaInscrits: string[];
   eleves: Eleve[];
   elevesAvecFormule: string[];
   reserverCoursPourEleve: Action;
@@ -176,15 +176,11 @@ function FormAjoutEleve({
     <form action={reserverCoursPourEleve} style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 6 }}>
       <input type="hidden" name="seance" value={seance} />
       <div style={{ display: 'flex', gap: 4 }}>
-        <select name="eleve_id" required value={eleveId} onChange={(e) => setEleveId(e.target.value)} style={style}>
-          <option value="">-- Élève --</option>
-          {eleves.map((e) => (
-            <option key={e.id} value={e.id}>{e.nom ?? e.email}</option>
-          ))}
-        </select>
+        <RechercheEleve eleves={eleves} name="eleve_id" onChoix={setEleveId} exclure={dejaInscrits} />
         <button
           type="submit"
-          style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, border: '1px solid #4a4', background: 'none', color: '#8f8', cursor: 'pointer', flexShrink: 0 }}
+          disabled={eleveId === ''}
+          style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, border: '1px solid #4a4', background: 'none', color: '#8f8', cursor: eleveId === '' ? 'default' : 'pointer', opacity: eleveId === '' ? 0.4 : 1, flexShrink: 0, alignSelf: 'flex-start' }}
         >
           Réserver
         </button>
@@ -431,6 +427,7 @@ export default function AdminSeancesCarousel({
                         eleves={eleves}
                         elevesAvecFormule={elevesAvecFormule}
                         reserverCoursPourEleve={reserverCoursPourEleve}
+                        dejaInscrits={c.inscrits.map((i) => i.eleveId)}
                       />
                     </details>
                   </div>
