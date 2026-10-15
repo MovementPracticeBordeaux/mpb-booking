@@ -984,6 +984,10 @@ export default function ArbreCompetences({
                 const aDesExercices = (noeud.exercices?.length ?? 0) > 0;
                 const outil = noeud.domaine !== 'tronc' ? OUTIL_PAR_BRANCHE[noeud.domaine as Domaine] : undefined;
                 const progUnique = progression.get(noeud.id);
+                // Modèle à exercices : le QCM du niveau est la porte d'entrée --
+                // tant qu'il n'est pas réussi, l'envoi des vidéos reste verrouillé
+                // (vérifié aussi côté serveur dans soumettreVideoExercice).
+                const qcmABloquer = aDesExercices && !estAdmin && noeud.qcm.length > 0 && statut !== 'acquis' && !progUnique?.quiz_reussi;
 
                 if (statut === 'locked') {
                   return (
@@ -1054,6 +1058,9 @@ export default function ArbreCompetences({
                               const pct = exercicesValides.length > 0 ? Math.round((nbValides / exercicesValides.length) * 100) : 0;
                               return (
                                 <>
+                                  {qcmABloquer && (
+                                    <BandeauQCMRequis couleur={couleur} onPasserQCM={() => setOngletNoeud('theorie')} />
+                                  )}
                                   <div style={{ background: 'transparent', border: `1px solid ${BORDURE_PANNEAU}`, borderRadius: 14, padding: 14, marginBottom: 14 }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 14 }}>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -1083,7 +1090,7 @@ export default function ArbreCompetences({
                                           <IconeExercice type="force" taille={16} couleur={couleur} /> FORCE
                                         </p>
                                         {parTheme('force').map((ex) => (
-                                          <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} icone="force" couleurIcone={couleur} />
+                                          <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} icone="force" couleurIcone={couleur} envoiBloque={qcmABloquer} />
                                         ))}
                                       </div>
                                     )}
@@ -1093,12 +1100,12 @@ export default function ArbreCompetences({
                                           <IconeExercice type="mobilite" taille={16} couleur={couleur} /> MOBILITÉ
                                         </p>
                                         {parTheme('mobilite').map((ex) => (
-                                          <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} icone="mobilite" couleurIcone={couleur} />
+                                          <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} icone="mobilite" couleurIcone={couleur} envoiBloque={qcmABloquer} />
                                         ))}
                                       </div>
                                     )}
                                     {sansTheme.map((ex) => (
-                                      <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} couleurIcone={couleur} />
+                                      <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} couleurIcone={couleur} envoiBloque={qcmABloquer} />
                                     ))}
                                   </div>
 
@@ -1129,7 +1136,7 @@ export default function ArbreCompetences({
                               <div style={{ marginTop: 14 }}>
                                 <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>✦ Quête secondaire (facultative)</p>
                                 {noeud.progressionBonus!.map((ex) => (
-                                  <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} />
+                                  <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progression.get(moduleIdExercice(noeud, ex))} estBonus estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} objectifIdParUrl={objectifIdParUrl} envoiBloque={qcmABloquer} />
                                 ))}
                               </div>
                             )}
@@ -1233,6 +1240,9 @@ export default function ArbreCompetences({
                           <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: 0 }}>Théorie à venir pour ce niveau.</p>
                         ) : (
                           <BlocTheorie theorie={noeud.theorie} couleur={couleur} objectif={noeud.objectifPedagogique} />
+                        )}
+                        {aDesExercices && !estAdmin && noeud.qcm.length > 0 && statut !== 'acquis' && (
+                          <BlocQCM noeud={noeud} couleur={couleur} reussi={!!progUnique?.quiz_reussi} score={progUnique?.quiz_score} reponsesQCM={reponsesQCM} setReponsesQCM={setReponsesQCM} />
                         )}
                       </div>
                     )}
@@ -2179,8 +2189,71 @@ function LecteurVideoModal({ url, titre, onFermer }: { url: string; titre: strin
 
 // Un exercice indépendant (obligatoire ou progression bonus), avec son
 // propre statut et son propre formulaire de soumission vidéo.
+// Bandeau affiché en tête des objectifs tant que le QCM du niveau n'est pas
+// réussi : l'envoi des vidéos est verrouillé, le QCM se passe à la fin de
+// l'onglet Théorie.
+function BandeauQCMRequis({ couleur, onPasserQCM }: { couleur: string; onPasserQCM: () => void }) {
+  return (
+    <div style={{ border: `1px solid ${couleur}66`, background: `${couleur}12`, borderRadius: 14, padding: '12px 14px', marginBottom: 14, display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+      <p style={{ margin: 0, fontSize: 13, color: COULEURS.texte, lineHeight: 1.5, flex: '1 1 220px' }}>
+        🔒 <strong>Envoi des vidéos verrouillé.</strong> Lis la théorie puis réussis le QCM de ce niveau pour pouvoir soumettre tes exercices.
+      </p>
+      <button type="button" onClick={onPasserQCM} style={{ fontSize: 13, fontWeight: 600, padding: '8px 16px', borderRadius: 999, border: `1px solid ${couleur}`, background: 'transparent', color: couleur, cursor: 'pointer' }}>
+        Passer le QCM →
+      </button>
+    </div>
+  );
+}
+
+// QCM d'un nœud à exercices : porte d'entrée du niveau. Correction côté
+// serveur (repondreQCM), aucune erreur tolérée avec 4 questions (seuil 80 %).
+function BlocQCM({
+  noeud, couleur, reussi, score, reponsesQCM, setReponsesQCM,
+}: {
+  noeud: NoeudMentorshipPublic;
+  couleur: string;
+  reussi: boolean;
+  score?: number | null;
+  reponsesQCM: Record<string, number>;
+  setReponsesQCM: (fn: (r: Record<string, number>) => Record<string, number>) => void;
+}) {
+  if (reussi) {
+    return (
+      <div style={{ marginTop: 18, border: `1px solid ${VERT_VALIDATION}66`, borderRadius: 14, padding: '12px 14px' }}>
+        <p style={{ margin: 0, fontSize: 13, color: VERT_VALIDATION, fontWeight: 600 }}>✓ QCM réussi{typeof score === 'number' ? ` (${score} %)` : ''} — l'envoi de tes vidéos est débloqué.</p>
+      </div>
+    );
+  }
+  return (
+    <form action={repondreQCM} style={{ marginTop: 22, border: `1px solid ${couleur}66`, borderRadius: 14, padding: '16px 16px 14px' }}>
+      <input type="hidden" name="noeud_id" value={noeud.id} />
+      <p style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 700, color: couleur }}>QCM du niveau</p>
+      <p style={{ margin: '0 0 14px', fontSize: 12, color: COULEURS.texteFaible, lineHeight: 1.5 }}>
+        Toutes les réponses se trouvent dans la théorie. Aucune erreur n'est tolérée : réussis-le pour débloquer l'envoi de tes vidéos. Tu peux retenter autant de fois que tu veux.
+      </p>
+      {noeud.qcm.map((q, i) => (
+        <fieldset key={q.id} style={{ border: 'none', padding: 0, margin: '0 0 16px' }}>
+          <legend style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 8, color: COULEURS.texte, lineHeight: 1.45, padding: 0 }}>{i + 1}. {q.question}</legend>
+          {q.choix.map((choix, idx) => {
+            const coche = reponsesQCM[q.id] === idx;
+            return (
+              <label key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 13, color: coche ? COULEURS.texte : COULEURS.texteAtt, marginBottom: 6, cursor: 'pointer', padding: '8px 10px', borderRadius: 10, border: `1px solid ${coche ? couleur : COULEURS.bordure}`, background: coche ? `${couleur}14` : 'transparent', lineHeight: 1.45 }}>
+                <input type="radio" name={`reponse-${q.id}`} value={idx} required checked={coche} onChange={() => setReponsesQCM((r) => ({ ...r, [q.id]: idx }))} style={{ marginTop: 3, accentColor: couleur }} />
+                {choix}
+              </label>
+            );
+          })}
+        </fieldset>
+      ))}
+      <button type="submit" style={{ fontSize: 13, fontWeight: 600, padding: '9px 18px', borderRadius: 999, border: `1px solid ${couleur}`, background: `${couleur}1a`, color: couleur, cursor: 'pointer' }}>
+        Valider mes réponses
+      </button>
+    </form>
+  );
+}
+
 function BlocExercice({
-  noeud, exercice, prog, estBonus, estAdmin, onOuvrirVideo, objectifIdParUrl, icone, couleurIcone,
+  noeud, exercice, prog, estBonus, estAdmin, onOuvrirVideo, objectifIdParUrl, icone, couleurIcone, envoiBloque,
 }: {
   noeud: NoeudMentorshipPublic;
   exercice: ExerciceMentorship;
@@ -2191,6 +2264,7 @@ function BlocExercice({
   objectifIdParUrl: Record<string, string>;
   icone?: TypeIcone;
   couleurIcone?: string;
+  envoiBloque?: boolean; // QCM du niveau pas encore réussi
 }) {
   const statutEx: 'a_faire' | 'en_attente' | 'acquis' | 'refuse' =
     prog?.statut === 'acquis' ? 'acquis' : prog?.statut === 'refuse' ? 'refuse' : prog?.statut === 'en_attente' ? 'en_attente' : 'a_faire';
@@ -2286,7 +2360,10 @@ function BlocExercice({
               Envoyée —{' '}<a href={prog?.video_url ?? '#'} target="_blank" rel="noopener noreferrer" style={{ color: '#FF00BE' }}>revoir ce que tu as envoyé</a>
             </p>
           )}
-          {!estOutilSante && !estAdmin && (statutEx === 'a_faire' || statutEx === 'refuse') && (
+          {!estOutilSante && !estAdmin && statutEx === 'a_faire' && envoiBloque && (
+            <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: '8px 0 0' }}>🔒 Réussis le QCM de ce niveau pour débloquer l'envoi de ta vidéo.</p>
+          )}
+          {!estOutilSante && !estAdmin && ((statutEx === 'a_faire' && !envoiBloque) || statutEx === 'refuse') && (
             <form action={soumettreVideoExercice} style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
               <input type="hidden" name="noeud_id" value={noeud.id} />
               <input type="hidden" name="exercice_id" value={exercice.id} />
@@ -2320,6 +2397,7 @@ function PanneauNoeud({
 }) {
   const label = noeud.domaine === 'tronc' ? 'Armure Organique' : DOMAINE_LABELS[noeud.domaine as Domaine];
   const aDesExercices = (noeud.exercices?.length ?? 0) > 0;
+  const qcmABloquer = aDesExercices && !estAdmin && noeud.qcm.length > 0 && statut !== 'acquis' && !progression?.quiz_reussi;
   const [videoOuverte, setVideoOuverte] = useState<{ url: string; titre: string } | null>(null);
 
   return (
@@ -2351,12 +2429,16 @@ function PanneauNoeud({
             </p>
           )}
 
+          {!estAdmin && noeud.qcm.length > 0 && statut !== 'acquis' && (
+            <BlocQCM noeud={noeud} couleur={couleur} reussi={!!progression?.quiz_reussi} score={progression?.quiz_score} reponsesQCM={reponsesQCM} setReponsesQCM={setReponsesQCM} />
+          )}
+
           <div style={{ marginTop: 16 }}>
             <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>
               Exercices à valider ({noeud.exercices!.filter((ex) => progressionMap.get(moduleIdExercice(noeud, ex))?.statut === 'acquis').length}/{noeud.exercices!.length})
             </p>
             {noeud.exercices!.map((ex) => (
-              <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progressionMap.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverte({ url, titre })} objectifIdParUrl={objectifIdParUrl} couleurIcone={couleur} />
+              <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progressionMap.get(moduleIdExercice(noeud, ex))} estBonus={false} estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverte({ url, titre })} objectifIdParUrl={objectifIdParUrl} couleurIcone={couleur} envoiBloque={qcmABloquer} />
             ))}
           </div>
 
@@ -2366,7 +2448,7 @@ function PanneauNoeud({
                 ✦ Quête secondaire (facultative, dépassement)
               </p>
               {noeud.progressionBonus!.map((ex) => (
-                <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progressionMap.get(moduleIdExercice(noeud, ex))} estBonus estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverte({ url, titre })} objectifIdParUrl={objectifIdParUrl} couleurIcone={couleur} />
+                <BlocExercice key={ex.id} noeud={noeud} exercice={ex} prog={progressionMap.get(moduleIdExercice(noeud, ex))} estBonus estAdmin={estAdmin} onOuvrirVideo={(url, titre) => setVideoOuverte({ url, titre })} objectifIdParUrl={objectifIdParUrl} couleurIcone={couleur} envoiBloque={qcmABloquer} />
               ))}
             </div>
           )}

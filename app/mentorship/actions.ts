@@ -147,6 +147,17 @@ export async function soumettreVideoExercice(formData: FormData) {
   );
   if (!estNoeudDeverrouille(noeud, idsNoeudsAcquis)) echouer('Ce niveau est encore verrouillé.');
 
+  // Le QCM du niveau est la porte d'entrée : tant qu'il n'est pas réussi,
+  // aucune vidéo d'exercice (obligatoire ou bonus) ne peut être soumise.
+  if (noeud.qcm.length > 0 && exercice.theme !== 'recuperation') {
+    const { data: ligneNoeud } = await supabase
+      .from('mentorship_progression')
+      .select('quiz_reussi')
+      .eq('eleve_id', user.id).eq('module_id', noeud.id)
+      .maybeSingle();
+    if (!ligneNoeud?.quiz_reussi) echouer('Réussis le QCM de ce niveau avant de soumettre tes vidéos.');
+  }
+
   const moduleId = moduleIdExercice(noeud, exercice);
 
   const { data: ligneActuelle } = await supabase
