@@ -4,7 +4,7 @@ import { lienWhatsApp, formaterTelephone } from '@/lib/telephone';
 
 import { useEffect, useState } from 'react';
 
-type Eleve = { id: string; nom: string | null; email: string; telephone: string | null; createdAt: string };
+type Eleve = { id: string; nom: string | null; email: string; telephone: string | null; createdAt: string; invite: boolean };
 
 // Reçoit les abonnements déjà enrichis de leur formule (nom, unité, quota,
 // catégorie) pour ne pas avoir à repasser tout le catalogue FORMULES en prop.
@@ -45,6 +45,7 @@ export default function ListeElevesRepliable({
   modifierPrenomEleveAdmin,
   modifierTelephoneEleveAdmin,
   decompterCoaching,
+  basculerInviteEleve,
 }: {
   eleveOuvert?: string | null;
   eleves: Eleve[];
@@ -59,13 +60,14 @@ export default function ListeElevesRepliable({
   modifierPrenomEleveAdmin: (formData: FormData) => void;
   modifierTelephoneEleveAdmin: (formData: FormData) => void;
   decompterCoaching: (formData: FormData) => void;
+  basculerInviteEleve: (formData: FormData) => void;
 }) {
   // Arrivée depuis le planning (clic sur un nom) : liste ouverte sur "Tous"
   // et fiche de l'élève dépliée.
   const cibleValide = !!eleveOuvert && eleves.some((e) => e.id === eleveOuvert);
   const [ouvert, setOuvert] = useState(cibleValide);
   const [recherche, setRecherche] = useState('');
-  const [filtreStatut, setFiltreStatut] = useState<'actifs' | 'geles' | 'anciens' | 'jamais' | 'tous'>(cibleValide ? 'tous' : 'actifs');
+  const [filtreStatut, setFiltreStatut] = useState<'actifs' | 'geles' | 'anciens' | 'invites' | 'jamais' | 'tous'>(cibleValide ? 'tous' : 'actifs');
 
   useEffect(() => {
     if (!cibleValide) return;
@@ -85,10 +87,11 @@ export default function ListeElevesRepliable({
     abosParEleve.set(a.eleve_id, liste);
   }
 
-  function statutEleve(e: Eleve): 'actifs' | 'geles' | 'anciens' | 'jamais' {
+  function statutEleve(e: Eleve): 'actifs' | 'geles' | 'anciens' | 'invites' | 'jamais' {
     const abos = abosParEleve.get(e.id) ?? [];
     if (abos.some((a) => a.gele)) return 'geles';
     if (abos.length > 0) return 'actifs';
+    if (e.invite) return 'invites';
     if (ensembleDejaEuFormule.has(e.id)) return 'anciens';
     return 'jamais';
   }
@@ -98,7 +101,7 @@ export default function ListeElevesRepliable({
     return Math.floor((Date.now() - new Date(e.createdAt).getTime()) / (1000 * 60 * 60 * 24));
   }
 
-  const compteurs = { actifs: 0, geles: 0, anciens: 0, jamais: 0 };
+  const compteurs = { actifs: 0, geles: 0, anciens: 0, invites: 0, jamais: 0 };
   for (const e of eleves) compteurs[statutEleve(e)]++;
 
   const filtres = eleves.filter((e) => {
@@ -138,6 +141,9 @@ export default function ListeElevesRepliable({
             </button>
             <button type="button" onClick={() => setFiltreStatut('anciens')} style={boutonFiltre('anciens', 'Anciens clients')}>
               Anciens clients ({compteurs.anciens})
+            </button>
+            <button type="button" onClick={() => setFiltreStatut('invites')} style={boutonFiltre('invites', 'Invités')}>
+              Invités ({compteurs.invites})
             </button>
             <button type="button" onClick={() => setFiltreStatut('jamais')} style={boutonFiltre('jamais', 'Jamais de formule')}>
               Jamais de formule ({compteurs.jamais})
@@ -192,6 +198,11 @@ export default function ListeElevesRepliable({
                   ) : (
                     <span style={{ fontSize: 11, color: '#ff8a8a', marginLeft: 8, whiteSpace: 'nowrap' }}>📵 pas de numéro</span>
                   )}
+                  {e.invite && (
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#8B5CF6', marginLeft: 8, border: '1px solid #8B5CF688', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}>
+                      Invité
+                    </span>
+                  )}
                   {joursRestants !== null && (
                     <span style={{ fontSize: 11, opacity: 0.5 }}> · suppression auto dans {joursRestants} j</span>
                   )}
@@ -239,6 +250,13 @@ export default function ListeElevesRepliable({
                     />
                     <button type="submit" style={{ fontSize: 12, padding: '6px 12px', borderRadius: 6, border: '1px solid #555', background: 'none', color: '#ccc', cursor: 'pointer' }}>
                       {e.telephone ? 'Modifier' : 'Enregistrer le numéro'}
+                    </button>
+                  </form>
+                  <form action={basculerInviteEleve} style={{ marginBottom: 12 }}>
+                    <input type="hidden" name="eleve_id" value={e.id} />
+                    <input type="hidden" name="invite" value={e.invite ? 'false' : 'true'} />
+                    <button type="submit" style={{ fontSize: 12, padding: '6px 12px', borderRadius: 999, border: '1px solid #8B5CF6', background: e.invite ? '#8B5CF6' : 'none', color: e.invite ? 'white' : '#b9a3ff', cursor: 'pointer' }}>
+                      {e.invite ? '✓ Invité — retirer le statut' : 'Passer en invité (garder le compte sans formule)'}
                     </button>
                   </form>
                   <form action={modifierPrenomEleveAdmin} style={{ display: 'flex', gap: 6, marginBottom: 12, alignItems: 'center' }}>

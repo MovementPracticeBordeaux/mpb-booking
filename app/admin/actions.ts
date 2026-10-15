@@ -196,12 +196,17 @@ export async function creerEleve(formData: FormData) {
     echouer('/admin/eleves', error.message);
   }
 
-  if ((nom || telephone) && creation.user) {
-    await admin.from('profiles').update({ ...(nom ? { nom } : {}), ...(telephone ? { telephone } : {}) }).eq('id', creation.user.id);
+  const invite = formData.get('invite') === 'on';
+  if ((nom || telephone || invite) && creation.user) {
+    await admin.from('profiles').update({
+      ...(nom ? { nom } : {}),
+      ...(telephone ? { telephone } : {}),
+      ...(invite ? { invite: true } : {}),
+    }).eq('id', creation.user.id);
   }
 
   revalidatePath('/admin/eleves');
-  reussir('/admin/eleves', `Compte créé pour ${email}.`);
+  reussir('/admin/eleves', invite ? `Compte invité créé pour ${email}.` : `Compte créé pour ${email}.`);
 }
 
 // Réserve une séance datée pour le compte d'un élève, depuis l'admin —
@@ -1173,6 +1178,20 @@ export async function modifierTelephoneEleveAdmin(formData: FormData) {
   if (error) echouer('/admin/eleves', error.message);
   revalidatePath('/admin/eleves');
   reussir('/admin/eleves', 'Téléphone enregistré.');
+}
+
+// Statut "invité" : l'élève garde son compte sans formule (il n'est jamais
+// supprimé par le nettoyage automatique des comptes sans historique).
+export async function basculerInviteEleve(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+  const eleveId = formData.get('eleve_id') as string;
+  const invite = formData.get('invite') === 'true';
+  if (!eleveId) echouer('/admin/eleves', 'Élève introuvable.');
+  const { error } = await admin.from('profiles').update({ invite }).eq('id', eleveId);
+  if (error) echouer('/admin/eleves', error.message);
+  revalidatePath('/admin/eleves');
+  reussir('/admin/eleves', invite ? 'Statut invité attribué : le compte est conservé.' : 'Statut invité retiré.');
 }
 
 // --- Formules à régler plus tard ---------------------------------------

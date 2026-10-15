@@ -54,7 +54,9 @@ export async function GET(req: NextRequest) {
       const { data: profilsAnciens } = await admin
         .from('profiles')
         .select('id, created_at')
-        .lt('created_at', seuil.toISOString());
+        .lt('created_at', seuil.toISOString())
+        // Comptes "invités" : conservés volontairement par l'admin.
+        .eq('invite', false);
 
       if (profilsAnciens && profilsAnciens.length > 0) {
         const ids = profilsAnciens.map((p) => p.id);

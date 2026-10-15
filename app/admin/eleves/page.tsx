@@ -1,5 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase-server';
-import { attribuerFormule, suspendreAcces, decompterCoaching, modifierQuotaRestant, modifierExpiration, gelerPass, degelerPass, definirDateReprise, modifierPrenomEleveAdmin, modifierTelephoneEleveAdmin, rembourserPaiement, creerEleve, encaisserReglement, encaisserSeanceARegler } from '../actions';
+import { basculerInviteEleve, attribuerFormule, suspendreAcces, decompterCoaching, modifierQuotaRestant, modifierExpiration, gelerPass, degelerPass, definirDateReprise, modifierPrenomEleveAdmin, modifierTelephoneEleveAdmin, rembourserPaiement, creerEleve, encaisserReglement, encaisserSeanceARegler } from '../actions';
 import { FORMULES, prixEspeces } from '@/lib/formules';
 import { lienWhatsApp } from '@/lib/telephone';
 import ListeElevesRepliable from '../ListeElevesRepliable';
@@ -29,7 +29,7 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
 
   const { data: eleves } = await admin
     .from('profiles')
-    .select('id, nom, email, telephone, created_at')
+    .select('id, nom, email, telephone, created_at, invite')
     .order('nom', { ascending: true, nullsFirst: false });
 
   // Un élève peut avoir plusieurs abonnements actifs (planning + coaching +
@@ -113,6 +113,9 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
           <input type="email" name="email" placeholder="Adresse email" required />
           <input type="tel" name="telephone" placeholder="Téléphone (optionnel)" />
           <input type="text" name="nom" placeholder="Nom (optionnel)" />
+          <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13 }}>
+            <input type="checkbox" name="invite" /> Statut invité (garde son compte sans formule)
+          </label>
           <button type="submit">Créer le compte</button>
         </form>
             ),
@@ -208,7 +211,7 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
       <section style={{ marginBottom: 32 }}>
         <ListeElevesRepliable
           eleveOuvert={searchParams.eleve ?? null}
-          eleves={(eleves ?? []).map((e) => ({ id: e.id, nom: e.nom, email: e.email, telephone: e.telephone, createdAt: e.created_at }))}
+          eleves={(eleves ?? []).map((e) => ({ id: e.id, nom: e.nom, email: e.email, telephone: e.telephone, createdAt: e.created_at, invite: !!e.invite }))}
           abonnements={(abonnementsBrut ?? []).map((a) => ({
             ...a,
             formuleAffichage: FORMULES[a.formule_nom] ?? null,
@@ -223,6 +226,7 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
           modifierPrenomEleveAdmin={modifierPrenomEleveAdmin}
           modifierTelephoneEleveAdmin={modifierTelephoneEleveAdmin}
           decompterCoaching={decompterCoaching}
+          basculerInviteEleve={basculerInviteEleve}
         />
       </section>
 
