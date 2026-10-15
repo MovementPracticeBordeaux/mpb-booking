@@ -22,6 +22,7 @@ export type CoursDuJour = {
 
 export type CoachingDuJour = {
   id: string;
+  eleveId: string | null;
   nom: string;
   heureDebut: string;
   heureFin: string;
@@ -52,7 +53,11 @@ function CarteCoaching({ k, supprimerCoaching }: { k: CoachingDuJour; supprimerC
   return (
     <div style={{ border: `1px solid ${VIOLET}66`, background: 'rgba(139,92,246,0.08)', borderRadius: 8, padding: '8px 10px', marginBottom: 8 }}>
       <strong style={{ fontFamily: POLICE_DISPLAY, fontSize: 13, letterSpacing: 0.3, display: 'block', color: VIOLET }}>
-        COACHING · {k.nom}
+        COACHING · {k.eleveId ? (
+          <a href={lienFiche(k.eleveId)} title="Voir la fiche de l'élève" style={{ color: 'inherit', textDecoration: 'underline', textDecorationColor: `${VIOLET}88`, textUnderlineOffset: 2 }}>
+            {k.nom}
+          </a>
+        ) : k.nom}
       </strong>
       <div style={{ fontSize: 10, color: COULEURS.texteAtt }}>
         {k.heureDebut} – {k.heureFin}{k.lieu ? ` · ${k.lieu}` : ''}
@@ -143,6 +148,11 @@ function PanneauAjout({
       )}
     </div>
   );
+}
+
+// Lien vers la fiche de l'élève (page Élèves, fiche dépliée).
+function lienFiche(eleveId: string) {
+  return `/admin/eleves?eleve=${encodeURIComponent(eleveId)}`;
 }
 
 const NOMS_JOURS_COURTS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
@@ -402,7 +412,13 @@ export default function AdminSeancesCarousel({
                             key={inscrit.eleveId}
                             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, fontSize: 11, padding: '3px 0' }}
                           >
-                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={inscrit.aRegler ? 'Séance à régler (sans formule)' : undefined}>{inscrit.aRegler ? '⏳ ' : ''}{inscrit.nom}</span>
+                            <a
+                              href={lienFiche(inscrit.eleveId)}
+                              title={inscrit.aRegler ? 'Séance à régler (sans formule) — voir la fiche' : 'Voir la fiche de l\'élève'}
+                              style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'inherit', textDecoration: 'underline', textDecorationColor: 'rgba(245,245,240,0.3)', textUnderlineOffset: 2 }}
+                            >
+                              {inscrit.aRegler ? '⏳ ' : ''}{inscrit.nom}
+                            </a>
                             <form action={annulerReservationAdmin}>
                               <input type="hidden" name="eleve_id" value={inscrit.eleveId} />
                               <input type="hidden" name="cours_id" value={c.coursId} />

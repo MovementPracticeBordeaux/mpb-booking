@@ -2,7 +2,7 @@
 
 import { lienWhatsApp, formaterTelephone } from '@/lib/telephone';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 type Eleve = { id: string; nom: string | null; email: string; telephone: string | null; createdAt: string };
 
@@ -32,6 +32,7 @@ const LIBELLE_CATEGORIE: Record<string, string> = {
 };
 
 export default function ListeElevesRepliable({
+  eleveOuvert,
   eleves,
   abonnements,
   idsAyantDejaEuFormule,
@@ -45,6 +46,7 @@ export default function ListeElevesRepliable({
   modifierTelephoneEleveAdmin,
   decompterCoaching,
 }: {
+  eleveOuvert?: string | null;
   eleves: Eleve[];
   abonnements: Abonnement[];
   idsAyantDejaEuFormule: string[];
@@ -58,9 +60,18 @@ export default function ListeElevesRepliable({
   modifierTelephoneEleveAdmin: (formData: FormData) => void;
   decompterCoaching: (formData: FormData) => void;
 }) {
-  const [ouvert, setOuvert] = useState(false);
+  // Arrivée depuis le planning (clic sur un nom) : liste ouverte sur "Tous"
+  // et fiche de l'élève dépliée.
+  const cibleValide = !!eleveOuvert && eleves.some((e) => e.id === eleveOuvert);
+  const [ouvert, setOuvert] = useState(cibleValide);
   const [recherche, setRecherche] = useState('');
-  const [filtreStatut, setFiltreStatut] = useState<'actifs' | 'geles' | 'anciens' | 'jamais' | 'tous'>('actifs');
+  const [filtreStatut, setFiltreStatut] = useState<'actifs' | 'geles' | 'anciens' | 'jamais' | 'tous'>(cibleValide ? 'tous' : 'actifs');
+
+  useEffect(() => {
+    if (!cibleValide) return;
+    const el = document.getElementById(`fiche-${eleveOuvert}`);
+    if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }, [cibleValide, eleveOuvert]);
 
   const ensembleDejaEuFormule = new Set(idsAyantDejaEuFormule);
 
@@ -156,7 +167,15 @@ export default function ListeElevesRepliable({
               : abos.map((a) => `${LIBELLE_CATEGORIE[a.categorie] ?? a.categorie}: ${a.formuleAffichage?.nom ?? a.formule_nom}`).join(' + ');
             const joursRestants = statutEleve(e) === 'jamais' ? Math.max(0, NB_JOURS_AVANT_SUPPRESSION_AUTO - joursDepuisCreation(e)) : null;
             return (
-              <details key={e.id} style={{ borderBottom: '1px solid #333', padding: 8 }}>
+              <details
+                key={e.id}
+                id={`fiche-${e.id}`}
+                open={cibleValide && e.id === eleveOuvert ? true : undefined}
+                style={{
+                  borderBottom: '1px solid #333', padding: 8, scrollMarginTop: 80,
+                  ...(cibleValide && e.id === eleveOuvert ? { border: '1px solid #FF2D78', borderRadius: 8 } : {}),
+                }}
+              >
                 <summary style={{ fontSize: 14, cursor: 'pointer' }}>
                   {e.nom ?? e.email} — {resume}
                   {e.telephone && lienWhatsApp(e.telephone) ? (

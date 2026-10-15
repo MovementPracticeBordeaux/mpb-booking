@@ -8,7 +8,7 @@ import ListePaiementsRepliable from '../ListePaiementsRepliable';
 
 export const dynamic = 'force-dynamic';
 
-export default async function AdminElevesPage({ searchParams }: { searchParams: { erreur?: string; succes?: string } }) {
+export default async function AdminElevesPage({ searchParams }: { searchParams: { erreur?: string; succes?: string; eleve?: string } }) {
   const admin = supabaseAdmin();
 
   // Formules attribuées "à régler plus tard", en attente d'encaissement.
@@ -207,6 +207,7 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
 
       <section style={{ marginBottom: 32 }}>
         <ListeElevesRepliable
+          eleveOuvert={searchParams.eleve ?? null}
           eleves={(eleves ?? []).map((e) => ({ id: e.id, nom: e.nom, email: e.email, telephone: e.telephone, createdAt: e.created_at }))}
           abonnements={(abonnementsBrut ?? []).map((a) => ({
             ...a,

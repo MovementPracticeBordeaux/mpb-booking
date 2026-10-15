@@ -77,6 +77,7 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
     const liste = coachingsParJour.get(c.date_seance) ?? [];
     liste.push({
       id: c.id,
+      eleveId: c.eleve_id ?? null,
       nom: (c.profiles as any)?.nom || (c.profiles as any)?.email || c.nom_libre || 'Élève',
       heureDebut: (c.heure_debut as string).slice(0, 5),
       heureFin: `${String(Math.floor(finMin / 60) % 24).padStart(2, '0')}:${String(finMin % 60).padStart(2, '0')}`,
