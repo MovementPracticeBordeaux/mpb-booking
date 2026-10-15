@@ -2339,7 +2339,11 @@ function BlocExercice({
             <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px dashed ${COULEURS.bordure}` }}>
               <p style={{ fontSize: 10, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 0.6, margin: '0 0 8px', fontWeight: 700 }}>Outils pour progresser</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {exercice.outils.map((o) => (
+                {exercice.outils.map((o) => !o.videoUrl ? (
+                  <span key={o.nom} style={{ display: 'flex', alignItems: 'center', fontSize: 12, fontWeight: 600, color: COULEURS.texteAtt, border: `1px dashed ${teinte}`, borderRadius: 999, padding: '6px 14px' }}>
+                    {o.nom}
+                  </span>
+                ) : (
                   <button
                     key={o.nom} onClick={() => onOuvrirVideo(o.videoUrl, o.nom)}
                     style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 600, color: COULEURS.texte, background: BLEU_NUIT, border: `1px solid ${teinte}`, borderRadius: 999, padding: '6px 14px 6px 6px', cursor: 'pointer' }}
