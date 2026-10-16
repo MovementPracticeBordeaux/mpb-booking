@@ -1033,7 +1033,6 @@ const FLEXIBILITE: NoeudMentorship[] = [
         outils: [{ nom: 'Papillon avec charge', videoUrl: 'https://youtu.be/baLUesFruG0' }, { nom: 'Straddle fermeture', videoUrl: 'https://youtu.be/7zLuNIW3qm0' }, { nom: 'Routine stretch actif 1 — full', videoUrl: 'https://youtu.be/0XyyLXF1tAo' }] },
     ],
     progressionBonus: [
-      { id: 'straddle-swing', nom: 'Straddle swing', videoUrl: 'https://youtu.be/35ov0kOlB78' },
       { id: 'papillon-avec-charge', nom: 'Papillon avec charge', videoUrl: 'https://youtu.be/baLUesFruG0' },
     ],
   },
@@ -1114,7 +1113,7 @@ const FLEXIBILITE: NoeudMentorship[] = [
         critereValidation: '3 séries de 5 répétitions, ligne genoux-hanches-épaules conservée, 3 min de récupération entre chaque série.' },
     ],
     progressionBonus: [
-      { id: 'straddle-fermeture', nom: 'Straddle fermeture', videoUrl: 'https://youtu.be/7zLuNIW3qm0' },
+      { id: 'straddle-swing', nom: 'Straddle swing', videoUrl: 'https://youtu.be/35ov0kOlB78' },
     ],
   },
   {
