@@ -1102,7 +1102,7 @@ const FLEXIBILITE: NoeudMentorship[] = [
     exercices: [
       { id: 'horse-squat', nom: 'Horse squat', videoUrl: 'https://youtu.be/sxyP-W2ql2g', theme: 'mobilite',
         consigne: "Squat large, pieds tournés vers l'extérieur, descends en gardant le dos droit et les genoux dans l'axe des pieds. Ouvre la hanche en rotation externe, base de tous les squats unilatéraux qui suivent.",
-        critereValidation: '3 séries de 10 répétitions, amplitude complète, genoux qui ne rentrent pas vers l\'intérieur, 3 min de récupération entre chaque série.',
+        critereValidation: '3 séries de 10 répétitions, amplitude complète avec le bassin légèrement en dessous du niveau des genoux, genoux qui ne rentrent pas vers l\'intérieur, 3 min de récupération entre chaque série.',
         outils: [{ nom: 'Squat cosaque ouvert', videoUrl: 'https://youtu.be/rwQvten_dg0' }, { nom: 'Straddle swing', videoUrl: 'https://youtu.be/35ov0kOlB78' }] },
       { id: 'dragon-squat-unilateral', nom: 'Dragon squat unilatéral', videoUrl: 'https://youtu.be/-HPktyi536s', theme: 'mobilite',
         consigne: "Squat sur une jambe, l'autre tendue sur le côté (position dragon). La cheville de la jambe porteuse doit fléchir librement — c'est souvent elle, plus que la force du quadriceps, qui limite la descente.",
