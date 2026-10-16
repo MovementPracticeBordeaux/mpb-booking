@@ -1188,8 +1188,8 @@ const FLEXIBILITE: NoeudMentorship[] = [
         critereValidation: 'Les 4 squats enchaînés, 3 répétitions chacun par jambe, sans pause prolongée entre eux.',
         outils: [{ nom: 'Flexion cheville active', videoUrl: 'https://youtu.be/Q6CHGnGFJRM' }, { nom: 'Stretch mollets', videoUrl: 'https://youtu.be/xM9sP2J1d6E' }] },
       { id: 'front-splits-to-straddle', nom: 'Front splits to straddle', videoUrl: 'https://youtu.be/wjFaZOS4SkI', theme: 'mobilite',
-        consigne: "Depuis le grand écart facial, fais pivoter le bassin pour passer en straddle (grand écart latéral) en restant au plus près du sol, puis reviens. Le bassin tourne sans que le buste s'effondre : garde le dos long et les jambes tendues tout au long du passage.",
-        critereValidation: '3 séries de 3 passages de chaque côté, jambes tendues, bassin bas et contrôlé, 3 min de récupération entre chaque série.' },
+        consigne: "Exercice réalisé en actif : seuls les pieds sont en contact avec le sol, ni les mains ni le bassin ne s'y posent. Depuis la position de grand écart facial, fais pivoter le bassin pour passer en straddle (grand écart latéral), puis reviens, jambes tendues et dos long. L'idéal : ne pas remonter le bassin pendant les transitions, qui restent à la même hauteur du début à la fin.",
+        critereValidation: '3 séries de 3 passages de chaque côté, uniquement en appui sur les pieds, jambes tendues, bassin qui ne remonte pas pendant les transitions, 3 min de récupération entre chaque série.' },
     ],
     progressionBonus: [
       { id: 'pancake-loaded', nom: 'Pancake loaded', videoUrl: 'https://youtu.be/-0JIuM_S6zg',
