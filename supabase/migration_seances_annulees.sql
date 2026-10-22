@@ -14,6 +14,9 @@ drop policy if exists "seances_annulees lecture" on public.seances_annulees;
 create policy "seances_annulees lecture" on public.seances_annulees for select to anon, authenticated using (true);
 revoke insert, update, delete, truncate on public.seances_annulees from anon, authenticated;
 grant select on public.seances_annulees to anon, authenticated;
+-- IMPORTANT sur ce projet : depuis l'audit de sécurité, les nouvelles tables ne reçoivent plus
+-- automatiquement de droits. Sans cette ligne, le site (service_role) ne peut pas écrire.
+grant select, insert, update, delete on public.seances_annulees to service_role;
 
 -- Garde-fou : aucune réservation possible sur une séance annulée, quel que soit le chemin d'insertion.
 create or replace function public.bloquer_reservation_seance_annulee()
