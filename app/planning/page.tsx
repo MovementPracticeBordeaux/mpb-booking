@@ -41,6 +41,9 @@ export default async function PlanningPage({ searchParams }: { searchParams: { e
     .order('heure_debut');
 
   const { data: periodesVacances } = await supabase.from('vacances').select('date_debut, date_fin');
+  // Séances annulées ponctuellement par Sylvain.
+  const { data: seancesAnnulees } = await supabase.from('seances_annulees').select('cours_id, date_seance');
+  const clesAnnulees = new Set((seancesAnnulees ?? []).map((a) => `${a.cours_id}::${a.date_seance}`));
 
   let mesReservations: { cours_id: string; date_seance: string }[] = [];
   if (user) {
@@ -79,6 +82,7 @@ export default async function PlanningPage({ searchParams }: { searchParams: { e
             heureFin: (c.heure_fin as string).slice(0, 5),
             lieu: c.lieu as string | null,
             dejaReserve: mesReservations.some((r) => r.cours_id === c.id && r.date_seance === dateStr),
+            annule: clesAnnulees.has(`${c.id}::${dateStr}`),
           };
         });
       jours.push({ dateISO: dateStr, jourSemaine: d.getDay(), semaine, cours: coursDuJour, enVacances, retourVacances: periodeVacances ? dateDeRetour(periodeVacances.date_fin) : undefined });

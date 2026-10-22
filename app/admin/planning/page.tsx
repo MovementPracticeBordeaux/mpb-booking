@@ -1,5 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase-server';
-import { ajouterCours, desactiverCours, modifierCours, definirSemaineReference, ajouterVacances, supprimerVacances, reserverCoursPourEleve, annulerReservationAdmin, ajouterCoaching, supprimerCoaching, ajouterCoursDepuisJour } from '../actions';
+import { ajouterCours, desactiverCours, modifierCours, definirSemaineReference, ajouterVacances, supprimerVacances, reserverCoursPourEleve, annulerReservationAdmin, annulerSeance, retablirSeance, ajouterCoaching, supprimerCoaching, ajouterCoursDepuisJour } from '../actions';
 import { calculerSemaine } from '@/lib/semaine';
 import AdminSeancesCarousel, { type CoachingDuJour } from '../AdminSeancesCarousel';
 import SelecteurDiscipline from '../SelecteurDiscipline';
@@ -42,6 +42,10 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
     .from('reservations')
     .select('eleve_id, cours_id, date_seance, a_regler')
     .eq('statut', 'confirmee');
+
+  // Séances annulées ponctuellement (table absente avant migration : simplement ignorée).
+  const { data: seancesAnnulees } = await admin.from('seances_annulees').select('cours_id, date_seance');
+  const clesAnnulees = new Set((seancesAnnulees ?? []).map((a) => `${a.cours_id}::${a.date_seance}`));
 
   const idsEleves = [...new Set((reservationsAVenir ?? []).map((r) => r.eleve_id))];
   const { data: profilsEleves } = idsEleves.length > 0
@@ -111,7 +115,7 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
     jourSemaine: number;
     semaine: 'A' | 'B';
     enVacances: boolean;
-    cours: { coursId: string; discipline: string; heureDebut: string; heureFin: string; inscrits: Inscrit[] }[];
+    cours: { coursId: string; discipline: string; heureDebut: string; heureFin: string; inscrits: Inscrit[]; annule: boolean }[];
     coachings: CoachingDuJour[];
   };
   const joursCarousel: JourAdminCarousel[] = [];
@@ -140,6 +144,7 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
           heureDebut: (c.heure_debut as string).slice(0, 5),
           heureFin: (c.heure_fin as string).slice(0, 5),
           inscrits: inscritsParSeance.get(`${c.id}::${dateStr}`) ?? [],
+          annule: clesAnnulees.has(`${c.id}::${dateStr}`),
         })),
       });
     }
@@ -176,6 +181,8 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
           creditsCoaching={creditsCoaching}
           elevesAvecFormule={elevesAvecFormule}
           annulerReservationAdmin={annulerReservationAdmin}
+          annulerSeance={annulerSeance}
+          retablirSeance={retablirSeance}
         />
       </section>
 

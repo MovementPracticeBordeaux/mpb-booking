@@ -108,6 +108,10 @@ export async function GET(req: NextRequest) {
       // Marque la séance comme notifiée AVANT d'envoyer (insert avec
       // contrainte d'unicité) : si ça échoue, c'est qu'un appel précédent
       // l'a déjà traitée, on saute sans renvoyer une seconde fois.
+      const { data: annulee } = await admin.from('seances_annulees').select('id')
+        .eq('cours_id', cours.id).eq('date_seance', dateStr).maybeSingle();
+      if (annulee) continue; // séance annulée : pas de rappel
+
       const { error: erreurDedup } = await admin
         .from('admin_rappels_envoyes')
         .insert({ cours_id: cours.id, date_seance: dateStr });

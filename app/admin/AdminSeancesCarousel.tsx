@@ -18,6 +18,7 @@ export type CoursDuJour = {
   heureDebut: string;
   heureFin: string;
   inscrits: Inscrit[];
+  annule?: boolean;
 };
 
 export type CoachingDuJour = {
@@ -155,6 +156,11 @@ function lienFiche(eleveId: string) {
   return `/admin/eleves?eleve=${encodeURIComponent(eleveId)}`;
 }
 
+// Date du jour à Paris (YYYY-MM-DD) : on n'annule pas une séance déjà passée.
+function aujourdhuiParis() {
+  return new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Paris' });
+}
+
 const NOMS_JOURS_COURTS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 
 function formaterDate(dateISO: string) {
@@ -213,6 +219,8 @@ export default function AdminSeancesCarousel({
   eleves,
   reserverCoursPourEleve,
   annulerReservationAdmin,
+  annulerSeance,
+  retablirSeance,
   ajouterCoaching,
   supprimerCoaching,
   ajouterCoursDepuisJour,
@@ -225,6 +233,8 @@ export default function AdminSeancesCarousel({
   eleves: Eleve[];
   reserverCoursPourEleve: Action;
   annulerReservationAdmin: Action;
+  annulerSeance: Action;
+  retablirSeance: Action;
   ajouterCoaching: Action;
   supprimerCoaching: Action;
   ajouterCoursDepuisJour: Action;
@@ -395,6 +405,26 @@ export default function AdminSeancesCarousel({
                 elements.map((el) => el.type === 'coaching' ? (
                   <CarteCoaching key={el.k.id} k={el.k} supprimerCoaching={supprimerCoaching} />
                 ) : ((c: CoursDuJour) => (
+                  c.annule ? (
+                  <div
+                    key={c.coursId}
+                    style={{ border: '1px dashed #a44', borderRadius: 8, padding: '8px 10px', marginBottom: 8, opacity: 0.8 }}
+                  >
+                    <strong style={{ fontFamily: POLICE_DISPLAY, fontSize: 13, letterSpacing: 0.3, display: 'block', textDecoration: 'line-through' }}>
+                      {c.discipline.toUpperCase()}
+                    </strong>
+                    <div style={{ fontSize: 10, color: '#f88', marginBottom: 6 }}>
+                      {c.heureDebut} – {c.heureFin} · Annulé
+                    </div>
+                    <form action={retablirSeance}>
+                      <input type="hidden" name="cours_id" value={c.coursId} />
+                      <input type="hidden" name="date_seance" value={j.dateISO} />
+                      <button type="submit" style={{ fontSize: 10, padding: '2px 10px', borderRadius: 999, border: `1px solid ${COULEURS.bordure}`, background: 'none', color: COULEURS.texteAtt, cursor: 'pointer' }}>
+                        Rétablir la séance
+                      </button>
+                    </form>
+                  </div>
+                  ) : (
                   <div
                     key={c.coursId}
                     style={{ border: `1px solid ${COULEURS.bordure}`, borderRadius: 8, padding: '8px 10px', marginBottom: 8 }}
@@ -446,7 +476,22 @@ export default function AdminSeancesCarousel({
                         dejaInscrits={c.inscrits.map((i) => i.eleveId)}
                       />
                     </details>
+                    {j.dateISO >= aujourdhuiParis() && (
+                      <details>
+                        <summary style={{ fontSize: 10, color: '#f88', cursor: 'pointer', marginTop: 4 }}>
+                          Annuler cette séance
+                        </summary>
+                        <form action={annulerSeance} style={{ marginTop: 4 }}>
+                          <input type="hidden" name="cours_id" value={c.coursId} />
+                          <input type="hidden" name="date_seance" value={j.dateISO} />
+                          <button type="submit" style={{ fontSize: 10, padding: '3px 10px', borderRadius: 999, border: '1px solid #a44', background: 'none', color: '#f88', cursor: 'pointer' }}>
+                            Confirmer l'annulation{c.inscrits.length > 0 ? ` (${c.inscrits.length} prévenu${c.inscrits.length > 1 ? 's' : ''})` : ''}
+                          </button>
+                        </form>
+                      </details>
+                    )}
                   </div>
+                  )
                 ))(el.c))
               )}
             </div>

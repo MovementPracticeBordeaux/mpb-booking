@@ -14,6 +14,7 @@ import { envoyerEmail } from '@/lib/resend';
 import { envoyerPushAEleve } from '@/lib/push';
 import { parisVersUTC } from '@/lib/dates-paris';
 import { normaliserTelephone } from '@/lib/telephone';
+import { annulerSeanceEtPrevenir } from '@/lib/annulation-seance';
 
 // Toute erreur dans une action admin redirige vers la page d'où elle vient
 // (avec un message clair), au lieu de crasher (Next.js masque les throw en
@@ -243,6 +244,7 @@ export async function reserverCoursPourEleve(formData: FormData) {
     expire: 'Le pass de cet élève a expiré.',
     quota_epuise: 'Le quota de cet élève est épuisé.',
     deja_reserve: 'Cet élève a déjà réservé cette séance.',
+    annulee: 'Cette séance est annulée.',
   };
   // Pas de formule utilisable : l'élève est inscrit quand même, séance à
   // régler (déduite de sa prochaine formule, ou réglée à l'unité).
@@ -603,6 +605,40 @@ export async function annulerReservationAdmin(formData: FormData) {
   revalidatePath('/planning');
   revalidatePath('/profil');
   reussir('/admin/planning', 'Élève retiré du cours, formule recréditée.');
+}
+
+// Annulation ponctuelle d'une séance (un cours à une date précise) : les
+// inscrits sont désinscrits, leur séance n'est pas décomptée, et ils sont
+// prévenus (email + notification). Les autres semaines ne changent pas.
+export async function annulerSeance(formData: FormData) {
+  await verifierAdmin();
+  const coursId = formData.get('cours_id') as string;
+  const dateSeance = formData.get('date_seance') as string;
+  if (!coursId || !/^\d{4}-\d{2}-\d{2}$/.test(dateSeance ?? '')) echouer('/admin/planning', 'Séance introuvable.');
+
+  const resultat = await annulerSeanceEtPrevenir(coursId, dateSeance);
+  if (!resultat.ok) echouer('/admin/planning', resultat.erreur ?? 'Annulation impossible.');
+
+  revalidatePath('/admin/planning');
+  revalidatePath('/planning');
+  revalidatePath('/profil');
+  reussir('/admin/planning', resultat.prevenus > 0
+    ? `Séance annulée, ${resultat.prevenus} inscrit${resultat.prevenus > 1 ? 's' : ''} prévenu${resultat.prevenus > 1 ? 's' : ''}.`
+    : 'Séance annulée (personne n\'était inscrit).');
+}
+
+// Annule l'annulation : la séance redevient réservable. Les élèves désinscrits
+// ne sont pas réinscrits automatiquement (ils ont été prévenus de l'annulation).
+export async function retablirSeance(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+  const coursId = formData.get('cours_id') as string;
+  const dateSeance = formData.get('date_seance') as string;
+  const { error } = await admin.from('seances_annulees').delete().eq('cours_id', coursId).eq('date_seance', dateSeance);
+  if (error) echouer('/admin/planning', error.message);
+  revalidatePath('/admin/planning');
+  revalidatePath('/planning');
+  reussir('/admin/planning', 'Séance rétablie : elle est de nouveau réservable.');
 }
 
 // --- Factures manuelles (prestations hors catalogue, ex. interventions à
@@ -1318,7 +1354,7 @@ async function inscrireSeanceARegler(eleveId: string, seance: string) {
   const { error } = await admin.from('reservations').insert({
     eleve_id: eleveId, cours_id: coursId, date_seance: dateSeance, statut: 'confirmee', a_regler: true,
   });
-  if (error) echouer('/admin/planning', error.message);
+  if (error) echouer('/admin/planning', error.message.includes('seance_annulee') ? 'Cette séance est annulée.' : error.message);
 
   // Si l'élève a en fait déjà une formule active, la séance y est déduite tout de suite.
   const imputees = await imputerSeancesARegler(eleveId);
