@@ -82,11 +82,37 @@ function formatTitre(titre: string): string {
   return minuscule.charAt(0).toUpperCase() + minuscule.slice(1);
 }
 
-// Étend une recherche à tous les synonymes du ou des groupes concernés.
+// Liens par qualité travaillée : l'élève cherche souvent une QUALITÉ
+// ("flexion d'épaule", "flexion de hanche"...) alors que les vidéos portent
+// le nom de l'EXERCICE qui la développe ("Trap raise", "L-sit"...). Chaque
+// entrée relie une ou plusieurs expressions (sans accents, apostrophes et
+// tirets remplacés par des espaces) aux mots de titres des exercices qui
+// travaillent cette qualité. Liens validés avec Sylvain au fil des
+// corrections du Mentorat : flexion d'épaule -> trap raise, flexion de
+// hanche -> L-sit / compression / pike, extension vertébrale -> pont...
+const LIENS_QUALITES: { expressions: string[]; mots: string[] }[] = [
+  { expressions: ['flexion d epaule', 'flexion de l epaule', 'flexion epaule', 'ouverture d epaule', 'ouverture epaule'], mots: ['trap'] },
+  { expressions: ['flexion de hanche', 'flexion hanche', 'compression'], mots: ['sit', 'compression', 'pike'] },
+  { expressions: ['extension vertebrale', 'extension de la colonne', 'extension colonne', 'extension thoracique', 'extension du dos'], mots: ['extension', 'pont'] },
+  { expressions: ['protraction'], mots: ['protraction', 'pike'] },
+  { expressions: ['rotation externe d epaule', 'rotation externe de l epaule', 'rotation externe epaule'], mots: ['cubaine'] },
+  { expressions: ['flexion de cheville', 'mobilite de cheville', 'mobilite cheville'], mots: ['cheville'] },
+  { expressions: ['gainage', 'sangle abdominale'], mots: ['hollow', 'gainage', 'plank', 'planche'] },
+  { expressions: ['grip', 'prise', 'avant bras'], mots: ['suspension', 'hang', 'grip'] },
+];
+
+// Étend une recherche à tous les synonymes du ou des groupes concernés,
+// puis aux exercices liés à la qualité cherchée (LIENS_QUALITES).
 function elargirRecherche(q: string): string[] {
   const base = sansAccents(q.toLowerCase().trim());
   const motsTrouves = GROUPES_SYNONYMES.filter((groupe) => groupe.some((mot) => mot.startsWith(base) || base.startsWith(mot)));
   const elargis = new Set<string>([base, ...motsTrouves.flat()]);
+  const phrase = base.replace(/['’\-]/g, ' ').replace(/\s+/g, ' ');
+  for (const lien of LIENS_QUALITES) {
+    if (lien.expressions.some((e) => phrase.includes(e) || (phrase.length >= 4 && e.startsWith(phrase)))) {
+      lien.mots.forEach((m) => elargis.add(m));
+    }
+  }
   return [...elargis];
 }
 
