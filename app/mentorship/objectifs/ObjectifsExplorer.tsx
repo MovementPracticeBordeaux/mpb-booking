@@ -95,7 +95,7 @@ const LIENS_QUALITES: { expressions: string[]; mots: string[] }[] = [
   { expressions: ['flexion de hanche', 'flexion hanche', 'compression'], mots: ['sit', 'compression', 'pike'] },
   { expressions: ['extension vertebrale', 'extension de la colonne', 'extension colonne', 'extension thoracique', 'extension du dos'], mots: ['extension', 'pont'] },
   { expressions: ['protraction'], mots: ['protraction', 'pike'] },
-  { expressions: ['rotation externe d epaule', 'rotation externe de l epaule', 'rotation externe epaule'], mots: ['cubaine'] },
+  { expressions: ['rotation externe d epaule', 'rotation externe de l epaule', 'rotation externe epaule'], mots: ['cubaine', 'rotateur', 'rotateurs', 'sleeper'] },
   { expressions: ['flexion de cheville', 'mobilite de cheville', 'mobilite cheville'], mots: ['cheville'] },
   { expressions: ['gainage', 'sangle abdominale'], mots: ['hollow', 'gainage', 'plank', 'planche'] },
   { expressions: ['grip', 'prise', 'avant bras'], mots: ['suspension', 'hang', 'grip'] },
