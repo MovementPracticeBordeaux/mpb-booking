@@ -1,4 +1,4 @@
-import { supabaseServer } from '@/lib/supabase-server';
+import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { calculerSemaine } from '@/lib/semaine';
 import { annulerReservation, reserverCours } from '../booking/actions';
 import { COULEURS, POLICE_DISPLAY } from '@/lib/theme';
@@ -41,8 +41,9 @@ export default async function PlanningPage({ searchParams }: { searchParams: { e
     .order('heure_debut');
 
   const { data: periodesVacances } = await supabase.from('vacances').select('date_debut, date_fin');
-  // Séances annulées ponctuellement par Sylvain.
-  const { data: seancesAnnulees } = await supabase.from('seances_annulees').select('cours_id, date_seance');
+  // Séances annulées ponctuellement par Sylvain : simplement retirées du
+  // planning public (aucune mention "annulé"). Lues côté serveur uniquement.
+  const { data: seancesAnnulees } = await supabaseAdmin().from('seances_annulees').select('cours_id, date_seance');
   const clesAnnulees = new Set((seancesAnnulees ?? []).map((a) => `${a.cours_id}::${a.date_seance}`));
 
   let mesReservations: { cours_id: string; date_seance: string }[] = [];
@@ -74,6 +75,7 @@ export default async function PlanningPage({ searchParams }: { searchParams: { e
       const semaine = calculerSemaine(d, lundiRef, ref.semaine_ce_lundi);
       const coursDuJour = enVacances ? [] : (coursListe ?? [])
         .filter((c) => c.jour_semaine === d.getDay() && c.semaine === semaine)
+        .filter((c) => !clesAnnulees.has(`${c.id}::${dateStr}`))
         .map((c) => {
           return {
             id: c.id as string,
@@ -82,7 +84,6 @@ export default async function PlanningPage({ searchParams }: { searchParams: { e
             heureFin: (c.heure_fin as string).slice(0, 5),
             lieu: c.lieu as string | null,
             dejaReserve: mesReservations.some((r) => r.cours_id === c.id && r.date_seance === dateStr),
-            annule: clesAnnulees.has(`${c.id}::${dateStr}`),
           };
         });
       jours.push({ dateISO: dateStr, jourSemaine: d.getDay(), semaine, cours: coursDuJour, enVacances, retourVacances: periodeVacances ? dateDeRetour(periodeVacances.date_fin) : undefined });

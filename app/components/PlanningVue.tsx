@@ -11,7 +11,6 @@ export type CoursJour = {
   heureFin: string;
   lieu: string | null;
   dejaReserve: boolean;
-  annule?: boolean;
 };
 
 export type JourPlanning = {
@@ -37,18 +36,6 @@ function CarteCours({ c, connecte, reserverCours, annulerReservation, dateISO }:
   annulerReservation: (formData: FormData) => void;
   dateISO: string;
 }) {
-  if (c.annule) {
-    return (
-      <div style={{ border: `1px dashed ${COULEURS.bordure}`, borderRadius: 8, padding: '8px 10px', marginBottom: 8, opacity: 0.6 }}>
-        <strong style={{ fontFamily: POLICE_DISPLAY, fontSize: 15, letterSpacing: 0.4, display: 'block', textDecoration: 'line-through' }}>
-          {c.discipline.toUpperCase()}
-        </strong>
-        <div style={{ fontSize: 11, color: COULEURS.texteAtt }}>
-          {c.heureDebut} – {c.heureFin} · <span style={{ color: '#ff8a8a', fontWeight: 600 }}>Annulé</span>
-        </div>
-      </div>
-    );
-  }
   return (
     <div
       style={{
