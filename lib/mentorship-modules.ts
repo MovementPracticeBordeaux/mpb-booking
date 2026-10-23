@@ -471,14 +471,14 @@ export const TRONC: NoeudMentorship[] = [
     id: 'armure-3',
     domaine: 'tronc',
     niveau: 3,
-    titre: 'Intégration',
+    titre: 'Préparation au mouvement',
     resume: "L'armure organique se consolide : les principes qui portent toute la pratique, quel que soit le domaine, et qui ouvrent la porte aux cinq branches.",
     objectifPedagogique: "Consolider les principes fondamentaux de l'entraînement, et se préparer physiquement à l'ouverture simultanée des branches spécialisées.",
     theorie: [
       {
-        titre: "Intégration",
+        titre: "Préparation au mouvement",
         sousTitre: "Faire fonctionner le corps comme un tout",
-        texte: "Ce troisième niveau porte bien son nom : les outils travaillés en Fondations et en Consolidation s'intègrent maintenant les uns aux autres, et ton corps apprend à fonctionner comme un tout.\n\nCe niveau pose aussi les grands principes qui porteront toute la suite de ta pratique, quel que soit le domaine.",
+        texte: "Ce troisième niveau prépare ton corps au mouvement : les outils travaillés en Fondations et en Consolidation se combinent maintenant les uns aux autres, et ton corps apprend à fonctionner comme un tout, prêt pour l'ouverture des cinq branches.\n\nCe niveau pose aussi les grands principes qui porteront toute la suite de ta pratique, quel que soit le domaine.",
       },
       {
         titre: "La répétition, matière première de l'entraînement",
