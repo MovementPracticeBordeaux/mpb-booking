@@ -795,6 +795,35 @@ export default function ArbreCompetences({
 
     return (
       <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 560, marginInline: 'auto' }}>
+        {/* XP et niveau du pratiquant — le détail (courbe, régularité) reste dans l'onglet Progression */}
+        <button
+          type="button" onClick={() => setOnglet('progression')}
+          style={{ ...carte, display: 'flex', alignItems: 'center', gap: 14, width: '100%', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit' }}
+        >
+          <svg width="26" height="26" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+            <defs>
+              <linearGradient id="flamme-accueil" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#FF3B30" /><stop offset="100%" stopColor="#FF8A00" />
+              </linearGradient>
+            </defs>
+            <path fill="url(#flamme-accueil)" d="M8.5 15.5A3 3 0 0012 12.5c0-1.5-.6-2.4-1.2-3.6-1.3-2.6-.3-4.9 2.4-7.2.6 3 2.4 5.9 4.8 7.8 2.4 1.9 3.6 4.2 3.6 6.6a8.4 8.4 0 11-16.8 0c0-1.4.5-2.75 1.2-3.6a3 3 0 003 3z" />
+          </svg>
+          <span style={{ flexGrow: 1, minWidth: 0 }}>
+            <span style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ fontFamily: POLICE_DISPLAY, fontSize: 17, color: COULEURS.texte }}>{xpTotal.toLocaleString('fr-FR')} XP</span>
+              <span style={{ fontFamily: POLICE_DISPLAY, fontSize: 15, color: '#ff00aa' }}>Niveau {niveau.niveau}</span>
+              <span style={{ fontSize: 12, color: COULEURS.texteFaible }}>{niveau.titre}</span>
+            </span>
+            <span style={{ display: 'block', height: 5, borderRadius: 3, background: COULEURS.surfaceForte, overflow: 'hidden', marginTop: 8 }}>
+              <span style={{ display: 'block', height: '100%', width: `${(niveau.xpDansPalier / niveau.xpProchainPalier) * 100}%`, background: 'linear-gradient(90deg,#FF3B30,#8B5CF6)', borderRadius: 3 }} />
+            </span>
+            <span style={{ display: 'block', fontSize: 11, color: COULEURS.texteFaible, marginTop: 4 }}>
+              {niveau.xpProchainPalier - niveau.xpDansPalier} XP avant le niveau {niveau.niveau + 1}
+            </span>
+          </span>
+          <ChevronRight size={16} color={COULEURS.texteFaible} style={{ flexShrink: 0 }} />
+        </button>
+
         {/* Étape en cours */}
         <div style={carte}>
           <p style={titreCarte}>{noeudsEtape.length > 0 ? 'Ton étape en cours' : 'Parcours terminé'}</p>
