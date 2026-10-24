@@ -15,7 +15,6 @@ import {
   ExerciceMentorship,
   FragmentTheorie,
   PalierFlamme,
-  XP_BONUS_DEFI_QUOTIDIEN,
   estNoeudAcquisDepuisProgression,
   moduleIdExercice,
   pourcentageFlammeNoeud,
@@ -23,7 +22,7 @@ import {
   badgeEleve,
 } from '@/lib/mentorship-modules';
 import { COULEURS, POLICE_DISPLAY, POLICE_CORPS } from '@/lib/theme';
-import { soumettreVideo, repondreQCM, validerDefiQuotidien, soumettreVideoExercice } from './actions';
+import { soumettreVideo, repondreQCM, soumettreVideoExercice } from './actions';
 import ChecklistNoeud from './ChecklistNoeud';
 import JournalDuNoeud from './JournalDuNoeud';
 import JournalComplet from './JournalComplet';
@@ -506,7 +505,6 @@ export default function ArbreCompetences({
   xpTotal,
   niveau,
   badge,
-  defisValidesAujourdhui,
   courbeXP,
   statsProgression,
   objectifIdParUrl,
@@ -521,7 +519,6 @@ export default function ArbreCompetences({
   xpTotal: number;
   niveau: Niveau;
   badge?: PalierFlamme;
-  defisValidesAujourdhui: Set<string>;
   courbeXP: { jour: string; xp: number }[];
   statsProgression: StatsProgression;
   objectifIdParUrl: Record<string, string>;
@@ -710,6 +707,9 @@ export default function ArbreCompetences({
   }, [vueBranche, tronc, branches, idsAcquis.size]);
 
   const noeudCibleRef = useRef<string | null>(null);
+  // Onglet du nœud à ouvrir en entrant dans une branche (par défaut :
+  // Objectifs). Utilisé par l'accueil pour ouvrir directement la théorie.
+  const ongletCibleRef = useRef<'theorie' | 'pratique' | null>(null);
 
   useEffect(() => {
     if (vueBranche) {
@@ -719,13 +719,185 @@ export default function ArbreCompetences({
       const cible = noeudCibleRef.current ?? noeudCourantId;
       setNoeudPanneauId(cible);
       noeudCibleRef.current = null; // consommé, ne doit pas influencer les prochains changements de vue
-      setOngletNoeud('pratique');
+      setOngletNoeud(ongletCibleRef.current ?? 'pratique');
+      ongletCibleRef.current = null;
       // Laisse le DOM se peindre avant de scroller (le rail vient d'apparaître).
       requestAnimationFrame(() => refNoeudCourant.current?.scrollIntoView({ block: 'center', behavior: 'auto' }));
     }
   }, [vueBranche, noeudCourantId]);
 
-  function entrerBranche(d: Domaine | 'tronc', noeudCibleId?: string) {
+  // --- Accueil du tableau de bord (sous l'arbre) ------------------------
+  // Complémentaire de l'arbre (qui montre OÙ on en est) et des onglets (qui
+  // détaillent) : ce qu'il y a à FAIRE maintenant, une idée clé de la
+  // théorie déjà débloquée, et une quête secondaire à tenter.
+  function exercicesAValider(n: NoeudMentorshipPublic) {
+    return (n.exercices ?? []).filter((ex) => ex.theme !== 'recuperation');
+  }
+  function statutExercice(n: NoeudMentorshipPublic, ex: ExerciceMentorship) {
+    if (estModuleAcquisDansMap(moduleIdExercice(n, ex))) return 'acquis' as const;
+    return progression.get(moduleIdExercice(n, ex))?.statut ?? null;
+  }
+  const jourIndex = Math.floor(Date.now() / 86400000);
+
+  function renderAccueil() {
+    const tousNoeuds = [...tronc, ...branches];
+    // Étape en cours : le niveau de l'Armure à valider, ou le palier commun
+    // aux 5 branches (règle de progression horizontale).
+    let titreEtape = '';
+    let sousTitreEtape = '';
+    let noeudsEtape: NoeudMentorshipPublic[] = [];
+    if (!troncComplet) {
+      const n = [...tronc].sort((a, b) => a.niveau - b.niveau).find((t) => !idsAcquis.has(t.id));
+      if (n) {
+        noeudsEtape = [n];
+        titreEtape = `Armure Organique · niveau ${n.niveau}`;
+        sousTitreEtape = "Valide l'Armure Organique en entier pour ouvrir les cinq branches.";
+      }
+    } else {
+      const palier = [1, 2, 3].find((nv) => branches.some((b) => b.niveau === nv && !idsAcquis.has(b.id)));
+      if (palier) {
+        noeudsEtape = ORDRE_DOMAINES.map((d) => branches.find((b) => b.domaine === d && b.niveau === palier)).filter((b): b is NoeudMentorshipPublic => !!b);
+        const restants = noeudsEtape.filter((b) => !idsAcquis.has(b.id)).length;
+        titreEtape = `Palier ${palier} · les cinq branches`;
+        sousTitreEtape = palier < 3
+          ? `Encore ${restants} branche${restants > 1 ? 's' : ''} à valider au niveau ${palier} pour débloquer le niveau ${palier + 1} partout.`
+          : `Dernier palier : encore ${restants} branche${restants > 1 ? 's' : ''} à valider.`;
+      }
+    }
+
+    // Retours en cours (vidéos envoyées / à retravailler), tous niveaux confondus.
+    let enAttente = 0;
+    let aRetravailler = 0;
+    for (const n of tousNoeuds) {
+      for (const ex of [...(n.exercices ?? []), ...(n.progressionBonus ?? [])]) {
+        const st = statutExercice(n, ex);
+        if (st === 'en_attente') enAttente += 1;
+        if (st === 'refuse') aRetravailler += 1;
+      }
+    }
+
+    // Idée clé du jour : un « À retenir » de la théorie déjà débloquée.
+    const idees = tousNoeuds
+      .filter((n) => estDeverrouille(n))
+      .flatMap((n) => n.theorie.filter((f) => f.aRetenir).map((f) => ({ noeud: n, fragment: f })));
+    const idee = idees.length > 0 ? idees[jourIndex % idees.length] : null;
+
+    // Quête secondaire du moment : une progression bonus pas encore tentée.
+    const quetes = tousNoeuds
+      .filter((n) => estDeverrouille(n))
+      .flatMap((n) => (n.progressionBonus ?? []).filter((ex) => statutExercice(n, ex) === null).map((ex) => ({ noeud: n, ex })));
+    const quete = quetes.length > 0 ? quetes[(jourIndex * 7) % quetes.length] : null;
+
+    const carte: React.CSSProperties = { background: FOND_CARTE, border: `1px solid ${BORDURE_CARTE}`, borderRadius: 12, padding: '16px 18px' };
+    const titreCarte: React.CSSProperties = { fontFamily: POLICE_DISPLAY, fontSize: 15, letterSpacing: 0.3, margin: '0 0 4px', color: COULEURS.texte };
+    const labelNoeud = (n: NoeudMentorshipPublic) => (n.domaine === 'tronc' ? 'Armure Organique' : DOMAINE_LABELS[n.domaine as Domaine]);
+    const couleurNoeud = (n: NoeudMentorshipPublic) => (n.domaine === 'tronc' ? COULEUR_TRONC : DOMAINE_COULEURS[n.domaine as Domaine]);
+
+    return (
+      <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 560, marginInline: 'auto' }}>
+        {/* Étape en cours */}
+        <div style={carte}>
+          <p style={titreCarte}>{noeudsEtape.length > 0 ? 'Ton étape en cours' : 'Parcours terminé'}</p>
+          {noeudsEtape.length > 0 ? (
+            <>
+              <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: '0 0 10px' }}>{titreEtape} — {sousTitreEtape}</p>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {noeudsEtape.map((n) => {
+                  const c = couleurNoeud(n);
+                  const exos = exercicesAValider(n);
+                  const faits = exos.filter((ex) => statutExercice(n, ex) === 'acquis').length;
+                  const acquis = idsAcquis.has(n.id);
+                  const accessible = estDeverrouille(n);
+                  const qcmOk = n.qcm.length === 0 || !!progression.get(n.id)?.quiz_reussi;
+                  const aRefaire = exos.find((ex) => statutExercice(n, ex) === 'refuse');
+                  const prochain = exos.find((ex) => statutExercice(n, ex) === null);
+                  const action = acquis ? 'Niveau validé'
+                    : !accessible ? 'Pas inclus dans ta formule actuelle'
+                    : !qcmOk ? 'Commence par le QCM du niveau (onglet Théorie)'
+                    : aRefaire ? `À retravailler : ${aRefaire.nom}`
+                    : prochain ? `Prochain objectif : ${prochain.nom}`
+                    : 'En attente du retour de Sylvain';
+                  return (
+                    <button
+                      key={n.id} type="button"
+                      onClick={() => entrerBranche(n.domaine as Domaine | 'tronc', n.id, !acquis && accessible && !qcmOk ? 'theorie' : 'pratique')}
+                      style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left', background: 'none', border: 'none', borderTop: `1px solid ${COULEURS.bordure}`, padding: '10px 0', cursor: 'pointer', fontFamily: 'inherit' }}
+                    >
+                      <span style={{ flexShrink: 0, width: 26, height: 26, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1.5px solid ${acquis ? VERT_VALIDATION : c}`, background: acquis ? VERT_VALIDATION : 'transparent', color: '#04121A', fontSize: 13 }}>
+                        {acquis ? '✓' : ''}
+                      </span>
+                      <span style={{ flexGrow: 1, minWidth: 0 }}>
+                        <span style={{ display: 'block', fontSize: 11, color: c, letterSpacing: 0.8, fontWeight: 600 }}>{labelNoeud(n).toUpperCase()} · NIVEAU {n.niveau}</span>
+                        <span style={{ display: 'block', fontSize: 13, color: acquis ? COULEURS.texteFaible : COULEURS.texte, marginTop: 1 }}>{action}</span>
+                      </span>
+                      {!acquis && exos.length > 0 && (
+                        <span style={{ flexShrink: 0, fontSize: 12, fontWeight: 700, color: c }}>{faits}/{exos.length}</span>
+                      )}
+                      <ChevronRight size={16} color={COULEURS.texteFaible} style={{ flexShrink: 0 }} />
+                    </button>
+                  );
+                })}
+              </div>
+              {(enAttente > 0 || aRetravailler > 0) && (
+                <button
+                  type="button" onClick={() => setOnglet('validation')}
+                  style={{ marginTop: 8, width: '100%', textAlign: 'left', background: 'none', border: `1px solid ${COULEURS.bordure}`, borderRadius: 10, padding: '9px 12px', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, color: COULEURS.texteAtt }}
+                >
+                  {enAttente > 0 && <span style={{ color: '#FFC24B' }}>{enAttente} vidéo{enAttente > 1 ? 's' : ''} en attente de retour</span>}
+                  {enAttente > 0 && aRetravailler > 0 && ' · '}
+                  {aRetravailler > 0 && <span style={{ color: '#ff6b6b' }}>{aRetravailler} à retravailler</span>}
+                  {' — voir le détail →'}
+                </button>
+              )}
+            </>
+          ) : (
+            <p style={{ fontSize: 13, color: COULEURS.texteAtt, margin: '4px 0 0' }}>Tous les niveaux sont validés. Les quêtes secondaires restent ouvertes pour faire grandir tes flammes.</p>
+          )}
+        </div>
+
+        {/* Idée clé du jour */}
+        {idee && (
+          <div style={{ ...carte, borderLeft: `3px solid ${couleurNoeud(idee.noeud)}` }}>
+            <p style={{ ...titreCarte, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Lightbulb size={16} color={couleurNoeud(idee.noeud)} /> À retenir aujourd'hui
+            </p>
+            <p style={{ fontSize: 11, color: couleurNoeud(idee.noeud), letterSpacing: 0.8, fontWeight: 600, margin: '6px 0 2px' }}>
+              {labelNoeud(idee.noeud).toUpperCase()} · NIVEAU {idee.noeud.niveau} · {idee.fragment.titre}
+            </p>
+            <p style={{ fontSize: 15, lineHeight: 1.5, color: COULEURS.texte, margin: '4px 0 10px', fontStyle: 'italic' }}>« {idee.fragment.aRetenir} »</p>
+            <button
+              type="button" onClick={() => entrerBranche(idee.noeud.domaine as Domaine | 'tronc', idee.noeud.id, 'theorie')}
+              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, color: couleurNoeud(idee.noeud), textDecoration: 'underline', textUnderlineOffset: 2 }}
+            >
+              Relire la théorie de ce niveau →
+            </button>
+          </div>
+        )}
+
+        {/* Quête secondaire du moment */}
+        {quete && (
+          <div style={carte}>
+            <p style={titreCarte}>Quête secondaire du moment</p>
+            <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: '0 0 10px' }}>Facultative : chaque quête secondaire validée fait grandir la flamme de son niveau.</p>
+            <button
+              type="button" onClick={() => entrerBranche(quete.noeud.domaine as Domaine | 'tronc', quete.noeud.id, 'pratique')}
+              style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left', background: 'none', border: `1px solid ${COULEUR_FLAMME.normal}55`, borderRadius: 10, padding: '10px 12px', cursor: 'pointer', fontFamily: 'inherit' }}
+            >
+              <span style={{ fontSize: 18 }}>🔥</span>
+              <span style={{ flexGrow: 1, minWidth: 0 }}>
+                <span style={{ display: 'block', fontSize: 14, color: COULEURS.texte }}>{quete.ex.nom}</span>
+                <span style={{ display: 'block', fontSize: 11, color: couleurNoeud(quete.noeud), marginTop: 2 }}>{labelNoeud(quete.noeud)} · niveau {quete.noeud.niveau}</span>
+              </span>
+              <ChevronRight size={16} color={COULEURS.texteFaible} />
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  function entrerBranche(d: Domaine | 'tronc', noeudCibleId?: string, ongletCible?: 'theorie' | 'pratique') {
+    ongletCibleRef.current = ongletCible ?? null;
     // Avec le nouveau modèle par palier, une branche n'est plus jamais
     // entièrement exclue -- seuls certains de ses niveaux peuvent être
     // verrouillés (géré par estDeverrouille/niveauInclus, nœud par nœud).
@@ -734,21 +906,6 @@ export default function ArbreCompetences({
     setVueBranche(d);
   }
 
-  // Entraînement du jour : la programmation des compétences débloquées mais
-  // pas encore acquises (tronc + branches) — un résumé du travail à faire.
-  const defisDuJour = useMemo(() => {
-    const candidats = [...tronc, ...branches].filter((n) => estDeverrouille(n) && !idsAcquis.has(n.id) && n.programmation.length > 0);
-    return candidats.flatMap((n) =>
-      n.programmation.map((p, i) => ({
-        id: n.programmation.length > 1 ? `${n.id}-${i}` : n.id,
-        titre: `${n.domaine === 'tronc' ? 'Armure Organique' : DOMAINE_LABELS[n.domaine as Domaine]} · niveau ${n.niveau}`,
-        cible: p.cible,
-        couleur: n.domaine === 'tronc' ? COULEUR_TRONC : DOMAINE_COULEURS[n.domaine as Domaine],
-        domaine: n.domaine,
-      }))
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tronc, branches, idsAcquis.size, troncComplet]);
 
   // Billes de connexion ET arrêt des traits calculés dans le MÊME repère
   // (0-100, celui des traits) avec les MÊMES marges fixes -- alignement
@@ -1435,44 +1592,7 @@ export default function ArbreCompetences({
             </p>
           )}
 
-          {/* Entraînement du jour, comme sur le croquis */}
-          <div style={{ marginTop: 24, background: FOND_CARTE, border: `1px solid ${BORDURE_CARTE}`, borderRadius: 12, padding: '16px 18px', maxWidth: 560, marginInline: 'auto' }}>
-              <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 15, letterSpacing: 0.3, margin: '0 0 4px', color: COULEURS.texte }}>Entraînement du jour</p>
-              <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 4px' }}>Le travail à faire aujourd'hui ou en prévision.</p>
-              {defisDuJour.length === 0 ? (
-                <p style={{ fontSize: 13, color: COULEURS.texteFaible, marginTop: 10 }}>
-                  Rien de débloqué pour l'instant — ça se remplira dès que tu auras une compétence en cours.
-                </p>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {defisDuJour.map((d) => {
-                    const fait = defisValidesAujourdhui.has(d.id);
-                    return (
-                      <form key={d.id} action={validerDefiQuotidien} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderTop: `1px solid ${COULEURS.bordure}` }}>
-                        <input type="hidden" name="noeud_id" value={d.id} />
-                        <button
-                          type="submit"
-                          disabled={fait}
-                          aria-label={fait ? 'Fait aujourd\'hui' : 'Marquer comme fait'}
-                          style={{
-                            width: 22, height: 22, borderRadius: 6, flexShrink: 0, cursor: fait ? 'default' : 'pointer',
-                            border: `2px solid ${fait ? '#9ef29e' : d.couleur}`, background: fait ? '#9ef29e' : 'transparent',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
-                          }}
-                        >
-                          {fait && <span style={{ color: '#0b0b0d', fontSize: 13, lineHeight: 1 }}>✓</span>}
-                        </button>
-                        <div style={{ flexGrow: 1 }}>
-                          <p style={{ margin: 0, fontSize: 13, color: COULEURS.texte }}>{d.cible}</p>
-                          <p style={{ margin: '1px 0 0', fontSize: 11, color: COULEURS.texteFaible }}>{d.titre}</p>
-                        </div>
-                        <span style={{ fontSize: 11, color: fait ? COULEURS.texteFaible : '#FF8A00', flexShrink: 0 }}>+{XP_BONUS_DEFI_QUOTIDIEN} XP</span>
-                      </form>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+          {renderAccueil()}
         </>
       )}
 
@@ -2459,7 +2579,7 @@ function PanneauNoeud({
         </>
       ) : !noeud.contenuDefini ? (
         <p style={{ color: COULEURS.texteAtt, fontSize: 13, marginTop: 8, lineHeight: 1.6 }}>
-          Ce niveau n'a pas encore de contenu détaillé — théorie, programmation et QCM restent à définir avec Sylvain.
+          Ce niveau n'a pas encore de contenu détaillé — théorie et QCM restent à définir avec Sylvain.
         </p>
       ) : (
         <>
@@ -2467,19 +2587,6 @@ function PanneauNoeud({
           <div style={{ marginTop: 14 }}>
             <BlocTheorie theorie={noeud.theorie} couleur={couleur} objectif={noeud.objectifPedagogique} />
           </div>
-
-          {noeud.programmation.length > 0 && (
-            <div style={{ marginTop: 16 }}>
-              <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>Programmation</p>
-              {noeud.programmation.map((p, i) => (
-                <div key={i} style={{ background: COULEURS.surface, borderRadius: 8, padding: '10px 14px', marginBottom: 8, fontSize: 13, lineHeight: 1.6 }}>
-                  <p style={{ margin: 0 }}><strong>Cible :</strong> {p.cible}</p>
-                  <p style={{ margin: '4px 0 0', color: COULEURS.texteAtt }}><strong>Régression :</strong> {p.regression}</p>
-                  <p style={{ margin: '4px 0 0', color: COULEURS.texteAtt }}><strong>Progression :</strong> {p.progression}</p>
-                </div>
-              ))}
-            </div>
-          )}
 
           {!estAdmin && (
             <div style={{ marginTop: 18, paddingTop: 16, borderTop: `1px solid ${COULEURS.bordure}` }}>

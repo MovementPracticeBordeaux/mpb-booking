@@ -11,11 +11,11 @@
 // de niveau entre branches).
 //
 // Chaque niveau (tronc ou branche) est un petit module complet : théorie/
-// philosophie, une programmation (cible + régression + progression, fidèle
-// à la méthodologie de Sylvain), et un QCM propre à ce niveau.
+// philosophie, des objectifs d'exercices à valider en vidéo, et un QCM
+// propre à ce niveau.
 //
 // Parcours de validation d'un niveau déverrouillé :
-//   1. L'élève lit la théorie, s'entraîne avec la programmation fournie.
+//   1. L'élève lit la théorie et travaille les objectifs du niveau.
 //   2. Il passe le QCM de ce niveau -> doit le réussir pour débloquer
 //      l'envoi de sa vidéo (le QCM sert de filtre : Sylvain ne regarde une
 //      vidéo que si l'élève a prouvé qu'il maîtrise la théorie).
@@ -86,12 +86,6 @@ export type FragmentTheorie = {
   legende?: string; // légende affichée sous l'image
 };
 
-export type CiblesProgrammation = {
-  cible: string;       // l'exercice/la compétence visée à ce niveau
-  regression: string;  // variante plus accessible si la cible est hors de portée
-  progression: string; // variante plus exigeante pour aller plus loin
-};
-
 export type QuestionQCM = {
   id: string;
   question: string;
@@ -126,7 +120,6 @@ export type NoeudMentorship = {
   resume: string;
   objectifPedagogique: string;
   theorie: FragmentTheorie[];
-  programmation: CiblesProgrammation[];
   qcm: QuestionQCM[];
   contenuDefini: boolean; // false = squelette provisoire, contenu à rédiger ensemble
   // Modèle "exercices indépendants" (branches, v4). Absent/vide = le nœud
@@ -219,13 +212,6 @@ export const TRONC: NoeudMentorship[] = [
         sousTitre: "Une protection vivante, qui se forge et s'adapte",
         texte: "Les mains d'un forgeron s'adaptent au fil du temps à son travail : des callosités se forment en réponse aux frictions répétées, ses mains, ses poignets et ses avant-bras se renforcent. Elles deviennent un mélange de rigidité, pour tenir fermement les outils, et de souplesse, pour les gestes délicats.\n\nC'est exactement cette dynamique d'adaptation que symbolise l'« armure organique ». Le mot « armure » (du latin armatura) évoque une protection, un rempart contre les agressions extérieures ; « organique » (du grec organikos) évoque ce qui est vivant, capable de croître et de s'adapter.\n\nL'armure organique n'est donc pas une protection statique, mais un système dynamique, forgé non pas de métal mais de muscles, d'os, de tendons et d'une conscience aiguë du corps. Ce premier niveau en pose les toutes premières pièces.",
         aRetenir: "L'armure organique n'est pas une carapace figée : c'est un système vivant qui se forge par la répétition.",
-      },
-    ],
-    programmation: [
-      {
-        cible: "Routine complète (santé des épaules, élastique) + un exercice de respiration, chaque jour — 10 à 15 minutes",
-        regression: "Isoler 2-3 exercices de la routine plutôt que l'ensemble, à faible amplitude",
-        progression: "Ajouter du temps sous tension sur les fins d'amplitude, ralentir chaque mouvement",
       },
     ],
     exercices: [
@@ -367,13 +353,6 @@ export const TRONC: NoeudMentorship[] = [
         titre: "Une bibliothèque qui grandit",
         sousTitre: "Des outils qui s'ajoutent, sans jamais se remplacer",
         texte: "À ce niveau, ta pratique de récupération et de bien-être s'enrichit : chaque nouvel outil rejoint ceux déjà acquis, pour te constituer une véritable bibliothèque de routines mobilisables selon ton besoin du moment.\n\nCe n'est pas un remplacement du travail précédent, mais un ajout.",
-      },
-    ],
-    programmation: [
-      {
-        cible: "Ajouter les nouveaux outils (bâton, balancier, routine assise) à ta pratique quotidienne existante, sur 2 semaines",
-        regression: "Se limiter à intégrer un seul nouvel outil à la fois plutôt que tous simultanément",
-        progression: "Enchaîner deux outils différents sans pause entre eux (chunk), en gardant la qualité d'exécution",
       },
     ],
     exercices: [
@@ -520,13 +499,6 @@ export const TRONC: NoeudMentorship[] = [
         legende: "Les cinq branches se chevauchent volontairement : aucune ne se pratique jamais complètement isolée des autres. La « zone passerelle » au centre symbolise tout ce qui les relie.",
       },
     ],
-    programmation: [
-      {
-        cible: "Routine complète (bien-être + force + mobilité) enchaînée en une seule séance de 25-30 minutes, sans pause entre les blocs",
-        regression: "Garder une courte pause entre chaque bloc (bien-être / force / mobilité)",
-        progression: "Enchaîner deux exercices de blocs différents sans transition (chunk), en gardant la qualité d'exécution",
-      },
-    ],
     exercices: [
       {
         id: 'uddiyana-bandha', nom: 'Uddiyana bandha', videoUrl: 'https://youtu.be/8wxUZdLyYBY',
@@ -618,7 +590,7 @@ export const TRONC: NoeudMentorship[] = [
 
 // --- BRANCHES ---------------------------------------------------------------
 // Squelette pour l'instant (contenuDefini: false) : titres et résumés
-// provisoires. Théorie, programmation et QCM à rédiger ensemble, branche
+// provisoires. Théorie et QCM à rédiger ensemble, branche
 // par branche, une fois le tronc et le visuel validés.
 
 function squelette(domaine: Domaine, niveau: 1 | 2 | 3, titre: string, resume: string): NoeudMentorship {
@@ -630,7 +602,6 @@ function squelette(domaine: Domaine, niveau: 1 | 2 | 3, titre: string, resume: s
     resume,
     objectifPedagogique: 'À définir ensemble.',
     theorie: [],
-    programmation: [],
     qcm: [],
     contenuDefini: false,
   };
@@ -694,7 +665,6 @@ const FORCE: NoeudMentorship[] = [
         source: "Watson et al., « High-Intensity Resistance and Impact Training Improves Bone Mineral Density and Physical Function in Postmenopausal Women With Osteopenia and Osteoporosis: The LIFTMOR Randomized Controlled Trial », Journal of Bone and Mineral Research, 2018.",
       },
     ],
-    programmation: [],
     qcm: [
       {
         id: 'force1-q1',
@@ -785,7 +755,6 @@ const FORCE: NoeudMentorship[] = [
         aRetenir: "Focalisé, priorisé ou diversifié : choisis l'organisation qui correspond à ta vie, pas l'inverse.",
       },
     ],
-    programmation: [],
     qcm: [
       {
         id: 'force2-q1',
@@ -882,7 +851,6 @@ const FORCE: NoeudMentorship[] = [
         source: "Nassim Nicholas Taleb, Jouer sa peau (Skin in the Game), 2017.",
       },
     ],
-    programmation: [],
     qcm: [
       {
         id: 'force3-q1',
@@ -986,7 +954,6 @@ const FLEXIBILITE: NoeudMentorship[] = [
         source: "Weppler et Magnusson, « Increasing muscle extensibility: a matter of increasing length or modifying sensation? », Physical Therapy, 2010.",
       },
     ],
-    programmation: [],
     qcm: [
       {
         id: 'flexibilite1-q1',
@@ -1071,7 +1038,6 @@ const FLEXIBILITE: NoeudMentorship[] = [
         aRetenir: "Au niveau 2, on ne travaille plus une articulation à la fois : on les fait collaborer.",
       },
     ],
-    programmation: [],
     qcm: [
       {
         id: 'flexibilite2-q1',
@@ -1150,7 +1116,6 @@ const FLEXIBILITE: NoeudMentorship[] = [
         aRetenir: "Au sommet de la branche, la souplesse n'est plus un objectif : c'est une ressource.",
       },
     ],
-    programmation: [],
     qcm: [
       {
         id: 'flexibilite3-q1',
@@ -1265,7 +1230,6 @@ const LOCOMOTION: NoeudMentorship[] = [
         aRetenir: "Un blocage en Locomotion se résout souvent ailleurs : en Force, en Flexibilité ou en Connexion.",
       },
     ],
-    programmation: [],
     qcm: [
       {
         id: 'locomotion1-q1',
@@ -1354,7 +1318,6 @@ const LOCOMOTION: NoeudMentorship[] = [
         aRetenir: "À chaque fermeture son ouverture : c'est la compensation qui rend une pratique durable.",
       },
     ],
-    programmation: [],
     qcm: [
       {
         id: 'locomotion2-q1',
@@ -1453,7 +1416,6 @@ const LOCOMOTION: NoeudMentorship[] = [
         aRetenir: "Savoir décoder un mouvement te rend autonome : c'est la clé pour progresser après ce parcours.",
       },
     ],
-    programmation: [],
     qcm: [
       {
         id: 'locomotion3-q1',
@@ -1552,7 +1514,6 @@ const CONNEXION: NoeudMentorship[] = [
         aRetenir: "Le système nerveux renforce ce qui est répété avec attention, que le geste soit sérieux ou ludique.",
       },
     ],
-    programmation: [],
     qcm: [
       {
         id: 'connexion1-q1',
@@ -1649,7 +1610,6 @@ const CONNEXION: NoeudMentorship[] = [
         aRetenir: "Une séance de Connexion repose le corps de l'intensité sans arrêter de progresser.",
       },
     ],
-    programmation: [],
     qcm: [
       {
         id: 'connexion2-q1',
@@ -1738,7 +1698,6 @@ const CONNEXION: NoeudMentorship[] = [
         aRetenir: "La Connexion ne se voit pas, mais elle se lit dans la qualité de chaque geste.",
       },
     ],
-    programmation: [],
     qcm: [
       {
         id: 'connexion3-q1',
@@ -1838,7 +1797,6 @@ const FIGURES: NoeudMentorship[] = [
         aRetenir: "Une figure bloque ? Cherche la qualité manquante : force, souplesse ou contrôle.",
       },
     ],
-    programmation: [],
     qcm: [
       {
         id: 'figures1-q1',
@@ -1927,7 +1885,6 @@ const FIGURES: NoeudMentorship[] = [
         legende: "Le volume de conditionnement (en bleu) reste présent tout du long mais diminue progressivement, pendant que les drills spécifiques (en orange) prennent le relais, jusqu'à ce que le handstand en équilibre libre (en vert) devienne possible. Les trois phases se chevauchent.",
       },
     ],
-    programmation: [],
     qcm: [
       {
         id: 'figures2-q1',
@@ -2018,7 +1975,6 @@ const FIGURES: NoeudMentorship[] = [
         aRetenir: "Chaque qualité a son contrepoids : c'est l'équilibre entre eux qui protège et fait progresser.",
       },
     ],
-    programmation: [],
     qcm: [
       {
         id: 'figures3-q1',

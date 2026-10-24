@@ -57,7 +57,7 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
     );
   }
 
-  const [{ data: progressionData }, { data: suiviData }, { data: defisAujourdhuiData }, { data: defisHistoriqueData }] = await Promise.all([
+  const [{ data: progressionData }, { data: suiviData }, { data: defisHistoriqueData }] = await Promise.all([
     supabase
       .from('mentorship_progression')
       .select('module_id, statut, quiz_reussi, quiz_score, quiz_valide_le, reviewed_at, video_url, commentaire_coach, premiere_video_url, premiere_video_date')
@@ -66,11 +66,6 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
       .from('mentorship_suivi_competence')
       .select('domaine, exercice_ou_theme, statut, commentaire, updated_at')
       .eq('eleve_id', user.id),
-    supabase
-      .from('mentorship_defi_valide')
-      .select('noeud_id')
-      .eq('eleve_id', user.id)
-      .eq('jour', new Date().toISOString().slice(0, 10)),
     supabase
       .from('mentorship_defi_valide')
       .select('jour')
@@ -150,7 +145,6 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
   // Les nœuds envoyés au client n'ont jamais les bonnes réponses du QCM.
   const troncPublic = TRONC.map(noeudSansReponses);
   const branchesPublic = BRANCHES.map(noeudSansReponses);
-  const defisValidesAujourdhui = new Set((defisAujourdhuiData ?? []).map((d) => d.noeud_id));
 
   return (
     <main style={{ maxWidth: 900, margin: '0 auto', padding: 20 }}>
@@ -174,7 +168,6 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
         xpTotal={xpTotal}
         niveau={niveau}
         badge={badge}
-        defisValidesAujourdhui={defisValidesAujourdhui}
         courbeXP={courbeXP}
         statsProgression={statsProgression}
         objectifIdParUrl={objectifIdParUrl}
