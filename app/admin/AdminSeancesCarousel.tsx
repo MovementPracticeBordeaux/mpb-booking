@@ -477,18 +477,22 @@ export default function AdminSeancesCarousel({
                       />
                     </details>
                     {j.dateISO >= aujourdhuiParis() && (
-                      <details>
-                        <summary style={{ fontSize: 10, color: '#f88', cursor: 'pointer', marginTop: 4 }}>
+                      <form
+                        action={annulerSeance}
+                        onSubmit={(ev) => {
+                          const n = c.inscrits.length;
+                          const message = `Annuler ${c.discipline} du ${formaterDate(j.dateISO)} (${c.heureDebut}) ?`
+                            + (n > 0 ? `\n\n${n} inscrit${n > 1 ? 's' : ''} ser${n > 1 ? 'ont' : 'a'} prévenu${n > 1 ? 's' : ''} et recrédité${n > 1 ? 's' : ''}.` : '\n\nPersonne n\'est inscrit.');
+                          if (!window.confirm(message)) ev.preventDefault();
+                        }}
+                        style={{ marginTop: 4 }}
+                      >
+                        <input type="hidden" name="cours_id" value={c.coursId} />
+                        <input type="hidden" name="date_seance" value={j.dateISO} />
+                        <button type="submit" style={{ fontSize: 10, padding: '3px 10px', borderRadius: 999, border: '1px solid #a44', background: 'none', color: '#f88', cursor: 'pointer' }}>
                           Annuler cette séance
-                        </summary>
-                        <form action={annulerSeance} style={{ marginTop: 4 }}>
-                          <input type="hidden" name="cours_id" value={c.coursId} />
-                          <input type="hidden" name="date_seance" value={j.dateISO} />
-                          <button type="submit" style={{ fontSize: 10, padding: '3px 10px', borderRadius: 999, border: '1px solid #a44', background: 'none', color: '#f88', cursor: 'pointer' }}>
-                            Confirmer l'annulation{c.inscrits.length > 0 ? ` (${c.inscrits.length} prévenu${c.inscrits.length > 1 ? 's' : ''})` : ''}
-                          </button>
-                        </form>
-                      </details>
+                        </button>
+                      </form>
                     )}
                   </div>
                   )
