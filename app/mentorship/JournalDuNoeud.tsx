@@ -3,19 +3,22 @@
 import { useState, useEffect } from 'react';
 import { COULEURS, GRADIENT } from '@/lib/theme';
 import { supabaseBrowser } from '@/lib/supabase-browser';
+import { EditeurNote, RenduNote, contenuAEnregistrer, type FormatNote } from './NoteJournal';
 
-type Entree = { id: string; contenu: string; cree_le: string };
+type Entree = { id: string; contenu: string; cree_le: string; format: string | null };
 
 export default function JournalDuNoeud({ noeudId, branche }: { noeudId: string; branche: string }) {
   const [entrees, setEntrees] = useState<Entree[] | null>(null);
   const [texte, setTexte] = useState('');
+  const [format, setFormat] = useState<FormatNote>('texte');
+  const [points, setPoints] = useState<string[]>(['']);
   const supabase = supabaseBrowser();
 
   useEffect(() => {
     let annule = false;
     supabase
       .from('journal_entrainement')
-      .select('id, contenu, cree_le')
+      .select('id, contenu, cree_le, format')
       .eq('noeud_id', noeudId)
       .order('cree_le', { ascending: false })
       .then(({ data }) => { if (!annule) setEntrees((data as Entree[]) ?? []); });
@@ -23,35 +26,31 @@ export default function JournalDuNoeud({ noeudId, branche }: { noeudId: string; 
   }, [noeudId]);
 
   async function ajouter() {
-    const contenu = texte.trim();
+    const contenu = contenuAEnregistrer(format, texte, points);
     if (!contenu) return;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     const { data } = await supabase
       .from('journal_entrainement')
-      .insert({ eleve_id: user.id, branche, noeud_id: noeudId, contenu })
-      .select('id, contenu, cree_le')
+      .insert({ eleve_id: user.id, branche, noeud_id: noeudId, contenu, format })
+      .select('id, contenu, cree_le, format')
       .single();
     if (data) setEntrees((prev) => [data as Entree, ...(prev ?? [])]);
     setTexte('');
+    setPoints(['']);
   }
 
   if (entrees === null) return null;
 
   return (
     <div>
-      <textarea
-        value={texte}
-        onChange={(e) => setTexte(e.target.value)}
-        rows={3}
-        placeholder="Ex. : 3 tractions strictes aujourd'hui, ressenti correct."
-        style={{ width: '100%', boxSizing: 'border-box', background: COULEURS.surfaceForte, border: `1px solid ${COULEURS.bordure}`, borderRadius: 8, padding: '10px 12px', color: COULEURS.texte, fontSize: 13, resize: 'vertical', fontFamily: 'inherit', marginBottom: 8 }}
-      />
+      <EditeurNote format={format} setFormat={setFormat} texte={texte} setTexte={setTexte} points={points} setPoints={setPoints} lignesTexte={3} placeholder="Ex. : 3 tractions strictes aujourd'hui, ressenti correct." />
+      <div style={{ height: 8 }} />
       <button
         type="button"
         onClick={ajouter}
-        disabled={!texte.trim()}
-        style={{ fontSize: 12, padding: '7px 16px', borderRadius: 999, border: 'none', background: texte.trim() ? GRADIENT : COULEURS.surfaceForte, color: texte.trim() ? 'white' : COULEURS.texteFaible, fontWeight: 600, cursor: texte.trim() ? 'pointer' : 'not-allowed' }}
+        disabled={!contenuAEnregistrer(format, texte, points)}
+        style={{ fontSize: 12, padding: '7px 16px', borderRadius: 999, border: 'none', background: contenuAEnregistrer(format, texte, points) ? GRADIENT : COULEURS.surfaceForte, color: contenuAEnregistrer(format, texte, points) ? 'white' : COULEURS.texteFaible, fontWeight: 600, cursor: contenuAEnregistrer(format, texte, points) ? 'pointer' : 'not-allowed' }}
       >
         Ajouter au journal
       </button>
@@ -63,7 +62,7 @@ export default function JournalDuNoeud({ noeudId, branche }: { noeudId: string; 
               <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 2px' }}>
                 {new Date(e.cree_le).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
               </p>
-              <p style={{ fontSize: 13, color: COULEURS.texteAtt, margin: 0, whiteSpace: 'pre-wrap' }}>{e.contenu}</p>
+              <RenduNote contenu={e.contenu} format={e.format} taille={13} couleur={COULEURS.texteAtt} />
             </div>
           ))}
         </div>
