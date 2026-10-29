@@ -469,21 +469,20 @@ const ONGLETS: { id: Onglet; label: string; icone: (c: string) => React.ReactNod
   { id: 'journal', label: 'Journal', icone: (c) => <><rect x="4" y="3" width="16" height="18" rx="2" stroke={c} strokeWidth={2} fill="none" /><path d="M8 8h8M8 12h8M8 16h5" stroke={c} strokeWidth={1.6} strokeLinecap="round" /></> },
   { id: 'outils', label: 'Outils', icone: (c) => <path d="M14.7 6.3a4 4 0 00-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 005.4-5.4l-2.3 2.3-2-2z" stroke={c} strokeWidth={1.6} fill="none" strokeLinejoin="round" /> },
   { id: 'validation', label: 'Validation', icone: (c) => <><rect x="3" y="6" width="18" height="13" rx="2" stroke={c} strokeWidth={2} fill="none" /><path d="M3 8l9 6 9-6" stroke={c} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" /></> },
-  { id: 'progression', label: 'Progression', icone: (c) => <path d="M3 17l5-5 4 4 8-8M14 8h6v6" stroke={c} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" /> },
 ];
 
 // --- Bandeau XP permanent, au-dessus des onglets ---------------------------
 // Toujours visible quel que soit l'onglet : XP, niveau et titre du
 // pratiquant, barre vers le niveau suivant. Le détail reste dans Progression.
-function BandeauXP({ xpTotal, niveau, onOuvrir }: { xpTotal: number; niveau: Niveau; onOuvrir: () => void }) {
+function BandeauXP({ xpTotal, niveau, actif, onOuvrir }: { xpTotal: number; niveau: Niveau; actif: boolean; onOuvrir: () => void }) {
   const pct = Math.max(0, Math.min(100, (niveau.xpDansPalier / niveau.xpProchainPalier) * 100));
   return (
     // Compact et calé à droite, comme un badge de statut : il reste visible
     // sur tous les onglets sans occuper toute la largeur.
-    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
+    <div style={{ flex: '0 0 auto', display: 'flex', justifyContent: 'flex-end', marginLeft: 'auto', padding: '4px 0' }}>
       <button
         type="button" onClick={onOuvrir} aria-label="Voir ma progression"
-        style={{ display: 'flex', alignItems: 'center', gap: 10, width: 'min(100%, 320px)', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit', background: FOND_CARTE, border: `1px solid ${BORDURE_CARTE}`, borderRadius: 12, padding: '8px 12px' }}
+        style={{ display: 'flex', alignItems: 'center', gap: 10, width: 236, maxWidth: '100%', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit', background: actif ? 'rgba(255,0,170,0.10)' : FOND_CARTE, border: `1px solid ${actif ? '#ff00aa' : BORDURE_CARTE}`, borderRadius: 12, padding: '6px 10px' }}
       >
         <svg width="20" height="20" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
           <defs>
@@ -513,7 +512,7 @@ function BandeauXP({ xpTotal, niveau, onOuvrir }: { xpTotal: number; niveau: Niv
 
 function MenuOnglets({ actif, onChange }: { actif: Onglet; onChange: (o: Onglet) => void }) {
   return (
-    <div style={{ display: 'flex', gap: 6, marginBottom: 24, borderBottom: `1px solid ${COULEURS.bordure}`, overflowX: 'auto' }}>
+    <div style={{ display: 'flex', gap: 2, overflowX: 'auto', flex: '1 1 auto', minWidth: 0, alignSelf: 'stretch' }}>
       {ONGLETS.map((o) => {
         const est = o.id === actif;
         const c = est ? '#ff00aa' : COULEURS.texteFaible;
@@ -523,7 +522,7 @@ function MenuOnglets({ actif, onChange }: { actif: Onglet; onChange: (o: Onglet)
             onClick={() => onChange(o.id)}
             style={{
               display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer',
-              padding: '10px 14px', fontSize: 13, fontFamily: POLICE_DISPLAY, letterSpacing: 0.3, color: c,
+              padding: '10px 10px', fontSize: 13, fontFamily: POLICE_DISPLAY, letterSpacing: 0.3, color: c,
               borderBottom: `2px solid ${est ? '#ff00aa' : 'transparent'}`, whiteSpace: 'nowrap',
             }}
           >
@@ -1046,8 +1045,11 @@ export default function ArbreCompetences({
         }
       `}</style>
 
-      <BandeauXP xpTotal={xpTotal} niveau={niveau} onOuvrir={() => { setVueBranche(null); setOnglet('progression'); }} />
-      <MenuOnglets actif={onglet} onChange={setOnglet} />
+      {/* Onglets et badge XP sur la même ligne ; le badge ouvre la vue Progression (plus d'onglet dédié). */}
+      <div style={{ display: 'flex', flexWrap: 'wrap-reverse', alignItems: 'center', columnGap: 12, rowGap: 6, marginBottom: 24, borderBottom: `1px solid ${COULEURS.bordure}` }}>
+        <MenuOnglets actif={onglet} onChange={setOnglet} />
+        <BandeauXP xpTotal={xpTotal} niveau={niveau} actif={onglet === 'progression'} onOuvrir={() => { setVueBranche(null); setOnglet('progression'); }} />
+      </div>
 
       {estAdmin && (
         <div style={{ marginBottom: 12, padding: '10px 12px', border: `1px dashed ${COULEURS.bordure}`, borderRadius: 8 }}>
