@@ -4,13 +4,19 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { COULEURS, GRADIENT } from '@/lib/theme';
 import { supabaseBrowser } from '@/lib/supabase-browser';
 import { BRANCHES_MENTORAT } from '@/lib/formules';
-import { EditeurNote, RenduNote, contenuAEnregistrer, type FormatNote } from './NoteJournal';
+import { EditeurNote, RenduNote, contenuAEnregistrer, encoderNote, decoderNote, type FormatNote } from './NoteJournal';
 
-type Entree = { id: string; branche: string; contenu: string; cree_le: string; format: string | null; sujet: string | null };
+type Ligne = { id: string; branche: string; contenu: string; cree_le: string; noeud_id: string | null };
+type Entree = Ligne & { format: FormatNote; sujet: string | null };
+
+function versEntree(l: Ligne): Entree {
+  const d = decoderNote(l.contenu);
+  return { ...l, contenu: d.contenu, format: d.format, sujet: d.sujet };
+}
 
 const OPTIONS_BRANCHE = [{ cle: 'tronc', nom: 'Armure Organique (tronc commun)' }, ...BRANCHES_MENTORAT];
 const NOM_BRANCHE = Object.fromEntries(OPTIONS_BRANCHE.map((b) => [b.cle, b.nom]));
-const COLONNES = 'id, branche, contenu, cree_le, format, sujet';
+const COLONNES = 'id, branche, contenu, cree_le, noeud_id';
 
 function cleJour(iso: string) {
   const d = new Date(iso);
@@ -45,7 +51,7 @@ export default function JournalComplet() {
       .select(COLONNES)
       .order('cree_le', { ascending: false })
       .limit(300)
-      .then(({ data }) => { if (!annule) setEntrees((data as Entree[]) ?? []); });
+      .then(({ data }) => { if (!annule) setEntrees(((data as Ligne[]) ?? []).map(versEntree)); });
     return () => { annule = true; };
   }, []);
 
@@ -63,10 +69,10 @@ export default function JournalComplet() {
     if (!user) return;
     const { data } = await supabase
       .from('journal_entrainement')
-      .insert({ eleve_id: user.id, branche, contenu, format, sujet: sujet.trim() || null })
+      .insert({ eleve_id: user.id, branche, contenu: encoderNote(contenu, format, sujet) })
       .select(COLONNES)
       .single();
-    if (data) setEntrees((prev) => [data as Entree, ...(prev ?? [])]);
+    if (data) setEntrees((prev) => [versEntree(data as Ligne), ...(prev ?? [])]);
     setTexte('');
     setPoints(['']);
   }
@@ -76,11 +82,24 @@ export default function JournalComplet() {
     await supabase.from('journal_entrainement').delete().eq('id', id);
   }
 
+  // Changer de sujet = recréer la note à l'identique (même date, même
+  // branche, même niveau) avec le nouveau sujet, puis supprimer l'ancienne :
+  // la table n'autorise pas la modification d'une note existante.
   async function enregistrerSujet(id: string, valeur: string) {
-    const nouveau = valeur.trim() || null;
-    setEntrees((prev) => (prev ?? []).map((e) => (e.id === id ? { ...e, sujet: nouveau } : e)));
     setEditionSujet(null);
-    await supabase.from('journal_entrainement').update({ sujet: nouveau }).eq('id', id);
+    const e = (entrees ?? []).find((x) => x.id === id);
+    if (!e || (valeur.trim() || null) === e.sujet) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data } = await supabase
+      .from('journal_entrainement')
+      .insert({ eleve_id: user.id, branche: e.branche, noeud_id: e.noeud_id, cree_le: e.cree_le, contenu: encoderNote(e.contenu, e.format, valeur) })
+      .select(COLONNES)
+      .single();
+    if (!data) return;
+    await supabase.from('journal_entrainement').delete().eq('id', id);
+    const nouvelle = versEntree(data as Ligne);
+    setEntrees((prev) => (prev ?? []).map((x) => (x.id === id ? nouvelle : x)));
   }
 
   // Prépare une nouvelle note dans le même sujet (et la même branche).

@@ -8,7 +8,10 @@
 import { useRef } from 'react';
 import { COULEURS } from '@/lib/theme';
 
-export type FormatNote = 'texte' | 'liste';
+import type { FormatNote } from './noteJournalFormat';
+export type { FormatNote } from './noteJournalFormat';
+
+export { encoderNote, decoderNote } from './noteJournalFormat';
 
 export function pointsDepuisContenu(contenu: string): string[] {
   return contenu.split('\n').map((l) => l.trim()).filter(Boolean);

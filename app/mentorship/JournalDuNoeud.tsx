@@ -3,9 +3,14 @@
 import { useState, useEffect } from 'react';
 import { COULEURS, GRADIENT } from '@/lib/theme';
 import { supabaseBrowser } from '@/lib/supabase-browser';
-import { EditeurNote, RenduNote, contenuAEnregistrer, type FormatNote } from './NoteJournal';
+import { EditeurNote, RenduNote, contenuAEnregistrer, encoderNote, decoderNote, type FormatNote } from './NoteJournal';
 
-type Entree = { id: string; contenu: string; cree_le: string; format: string | null };
+type Entree = { id: string; contenu: string; cree_le: string; format: FormatNote };
+
+function versEntree(l: { id: string; contenu: string; cree_le: string }): Entree {
+  const d = decoderNote(l.contenu);
+  return { id: l.id, cree_le: l.cree_le, contenu: d.contenu, format: d.format };
+}
 
 export default function JournalDuNoeud({ noeudId, branche }: { noeudId: string; branche: string }) {
   const [entrees, setEntrees] = useState<Entree[] | null>(null);
@@ -18,10 +23,10 @@ export default function JournalDuNoeud({ noeudId, branche }: { noeudId: string; 
     let annule = false;
     supabase
       .from('journal_entrainement')
-      .select('id, contenu, cree_le, format')
+      .select('id, contenu, cree_le')
       .eq('noeud_id', noeudId)
       .order('cree_le', { ascending: false })
-      .then(({ data }) => { if (!annule) setEntrees((data as Entree[]) ?? []); });
+      .then(({ data }) => { if (!annule) setEntrees(((data as { id: string; contenu: string; cree_le: string }[]) ?? []).map(versEntree)); });
     return () => { annule = true; };
   }, [noeudId]);
 
@@ -32,10 +37,10 @@ export default function JournalDuNoeud({ noeudId, branche }: { noeudId: string; 
     if (!user) return;
     const { data } = await supabase
       .from('journal_entrainement')
-      .insert({ eleve_id: user.id, branche, noeud_id: noeudId, contenu, format })
-      .select('id, contenu, cree_le, format')
+      .insert({ eleve_id: user.id, branche, noeud_id: noeudId, contenu: encoderNote(contenu, format, null) })
+      .select('id, contenu, cree_le')
       .single();
-    if (data) setEntrees((prev) => [data as Entree, ...(prev ?? [])]);
+    if (data) setEntrees((prev) => [versEntree(data as { id: string; contenu: string; cree_le: string }), ...(prev ?? [])]);
     setTexte('');
     setPoints(['']);
   }
