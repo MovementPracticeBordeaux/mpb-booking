@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-server';
-import { envoyerEmail } from '@/lib/resend';
+import { envoyerFactureManuelle } from '@/lib/envoi-facture';
 import { alerterAdminPush } from '@/lib/alerte-admin';
 import { CLIENT_FACTURE_MENSUELLE as CLIENT, seancesTenuesDuMois, moisPrecedent, libelleMois } from '@/lib/facture-mensuelle';
 
@@ -63,19 +63,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: false, erreur: error?.message }, { status: 500 });
   }
 
-  const lien = `${process.env.NEXT_PUBLIC_SITE_URL}/facture-externe/${facture.id}`;
   try {
-    await envoyerEmail(
-      CLIENT.email,
-      `Facture Movement Practice Bordeaux — ${total.toFixed(2)} €`,
-      `<p>Bonjour ${CLIENT.nom},</p>
-       <p>Voici la facture pour la prestation convenue :</p>
-       <ul><li>${libelle} — ${dates.length} × ${CLIENT.prixUnitaire.toFixed(2)} € — ${total.toFixed(2)} €</li></ul>
-       <p><strong>Total : ${total.toFixed(2)} €</strong></p>
-       <p><a href="${lien}">Voir et imprimer la facture</a></p>
-       <p>Merci !</p>`
-    );
-    await admin.from('factures_manuelles').update({ envoyee_le: new Date().toISOString() }).eq('id', facture.id);
+    await envoyerFactureManuelle(facture.id);
     await alerterAdminPush('Facture envoyée à Anne Laudoyer', `${libelleMois(mois)} : ${dates.length} cours, ${total} €.`, '/admin/factures');
   } catch (e: any) {
     await alerterAdminPush('Facture Anne Laudoyer', `Créée mais email non envoyé : ${e?.message ?? 'erreur'}. À envoyer depuis Admin → Factures.`, '/admin/factures');

@@ -15,6 +15,7 @@ import { envoyerPushAEleve } from '@/lib/push';
 import { parisVersUTC } from '@/lib/dates-paris';
 import { normaliserTelephone } from '@/lib/telephone';
 import { annulerSeanceEtPrevenir } from '@/lib/annulation-seance';
+import { envoyerFactureManuelle } from '@/lib/envoi-facture';
 
 // Toute erreur dans une action admin redirige vers la page d'où elle vient
 // (avec un message clair), au lieu de crasher (Next.js masque les throw en
@@ -685,37 +686,15 @@ export async function creerFactureManuelle(formData: FormData) {
 
 export async function envoyerFactureEmail(formData: FormData) {
   await verifierAdmin();
-  const admin = supabaseAdmin();
   const factureId = formData.get('facture_id') as string;
-
-  const { data: facture } = await admin.from('factures_manuelles').select('*').eq('id', factureId).single();
-  if (!facture) echouer('/admin/factures', 'Facture introuvable.');
-  if (!facture.email_client) echouer('/admin/factures', "Cette facture n'a pas d'email renseigné.");
-
-  const lien = `${process.env.NEXT_PUBLIC_SITE_URL}/facture-externe/${facture.id}`;
-  const lignesHtml = (facture.lignes as { description: string; prixUnitaire: number; quantite: number }[])
-    .map((l) => `<li>${l.description}${l.quantite > 1 ? ` — ${l.quantite} × ${l.prixUnitaire.toFixed(2)} €` : ''} — ${(l.prixUnitaire * l.quantite).toFixed(2)} €</li>`)
-    .join('');
-
   try {
-    await envoyerEmail(
-      facture.email_client,
-      `Facture Movement Practice Bordeaux — ${facture.total.toFixed(2)} €`,
-      `<p>Bonjour ${facture.nom_client},</p>
-       <p>Voici la facture pour la prestation convenue :</p>
-       <ul>${lignesHtml}</ul>
-       <p><strong>Total : ${facture.total.toFixed(2)} €</strong></p>
-       <p><a href="${lien}">Voir et imprimer la facture</a></p>
-       <p>Merci !</p>`
-    );
+    await envoyerFactureManuelle(factureId);
   } catch (e: any) {
-    echouer('/admin/factures', `Échec de l'envoi de l'email : ${e.message ?? 'erreur inconnue'}`);
+    echouer('/admin/factures', `Échec de l'envoi : ${e?.message ?? 'erreur inconnue'}`);
     return;
   }
-
-  await admin.from('factures_manuelles').update({ envoyee_le: new Date().toISOString() }).eq('id', factureId);
   revalidatePath('/admin/factures');
-  reussir('/admin/factures', 'Facture envoyée par email.');
+  reussir('/admin/factures', 'Facture envoyée par email (PDF joint).');
 }
 
 // --- Défi du mois (partagé par tous les élèves ayant un abonnement actif,
