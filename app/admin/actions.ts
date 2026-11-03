@@ -1389,3 +1389,63 @@ export async function encaisserSeanceARegler(formData: FormData) {
   revalidatePath('/', 'layout');
   reussir('/admin/eleves', 'Séance encaissée.');
 }
+
+// Séances suivies sans formule, réglées après coup : soit à l'unité, soit
+// avec une formule collective (ex. illimité) qui démarre à la date de la
+// première séance due, pour les couvrir.
+export async function reglerSeancesARegler(formData: FormData) {
+  await verifierAdmin();
+  const admin = supabaseAdmin();
+  const eleveId = formData.get('eleve_id') as string;
+  const formuleNom = formData.get('formule_nom') as string;
+  const moyen = formData.get('moyen_paiement') as string;
+  const montant = Number(formData.get('montant') || 0);
+  if (!['especes', 'virement', 'carte', 'offert'].includes(moyen)) echouer('/admin/eleves', 'Moyen de paiement invalide.');
+  const paye = moyen !== 'offert';
+  if (paye && !(montant > 0)) echouer('/admin/eleves', 'Indique le montant reçu.');
+  const formule = FORMULES[formuleNom];
+  if (!formule || formule.categorie !== 'planning' || formule.retiree) echouer('/admin/eleves', 'Formule invalide.');
+
+  const { data: seances } = await admin.from('reservations').select('id, date_seance')
+    .eq('eleve_id', eleveId).eq('a_regler', true).eq('statut', 'confirmee')
+    .order('date_seance', { ascending: true });
+  if (!seances?.length) echouer('/admin/eleves', 'Aucune séance à régler pour cet élève.');
+
+  if (formuleNom === 'cours_unite') {
+    const parSeance = Math.round((paye ? montant : 0) / seances.length * 100) / 100;
+    for (const s of seances) {
+      const { data: maj } = await admin.from('reservations').update({ a_regler: false })
+        .eq('id', s.id).eq('a_regler', true).select('id').maybeSingle();
+      if (!maj) continue;
+      await admin.from('paiements').insert({
+        eleve_id: eleveId, formule_nom: 'cours_unite', montant: parSeance, origine: 'manuel', paye, moyen_paiement: moyen,
+      });
+    }
+  } else {
+    const debut = seances[0].date_seance as string;
+    const fin = new Date(debut + 'T12:00:00Z');
+    fin.setUTCMonth(fin.getUTCMonth() + formule.validiteMois);
+
+    await admin.from('abonnements').update({ abonnement_actif: false })
+      .eq('eleve_id', eleveId).eq('categorie', 'planning').eq('abonnement_actif', true);
+    const { data: abo, error } = await admin.from('abonnements').insert({
+      eleve_id: eleveId, categorie: 'planning', formule_nom: formuleNom,
+      quota_total: formule.quota, quota_restant: formule.quota,
+      date_debut_formule: debut, date_expiration: fin.toISOString().slice(0, 10),
+      abonnement_actif: true, origine: 'manuel', paye,
+    }).select('id').single();
+    if (error || !abo) echouer('/admin/eleves', error?.message ?? 'Création de la formule impossible.');
+
+    await admin.from('paiements').insert({
+      eleve_id: eleveId, formule_nom: formuleNom, montant: paye ? montant : 0, origine: 'manuel',
+      paye, moyen_paiement: moyen, abonnement_id: abo.id,
+    });
+    await imputerSeancesARegler(eleveId);
+  }
+
+  revalidatePath('/admin/eleves');
+  revalidatePath('/admin/planning');
+  revalidatePath('/admin/statistiques');
+  revalidatePath('/', 'layout');
+  reussir('/admin/eleves', formuleNom === 'cours_unite' ? 'Séances encaissées à l\'unité.' : `Formule ${formule.nom} attribuée, séances couvertes.`);
+}

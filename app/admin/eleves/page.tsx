@@ -1,9 +1,10 @@
 import { supabaseAdmin } from '@/lib/supabase-server';
-import { basculerInviteEleve, attribuerFormule, suspendreAcces, decompterCoaching, modifierQuotaRestant, modifierExpiration, gelerPass, degelerPass, definirDateReprise, modifierPrenomEleveAdmin, modifierTelephoneEleveAdmin, rembourserPaiement, creerEleve, encaisserReglement, encaisserSeanceARegler } from '../actions';
+import { basculerInviteEleve, attribuerFormule, suspendreAcces, decompterCoaching, modifierQuotaRestant, modifierExpiration, gelerPass, degelerPass, definirDateReprise, modifierPrenomEleveAdmin, modifierTelephoneEleveAdmin, rembourserPaiement, creerEleve, encaisserReglement, reglerSeancesARegler } from '../actions';
 import { FORMULES, prixEspeces } from '@/lib/formules';
 import { lienWhatsApp } from '@/lib/telephone';
 import ListeElevesRepliable from '../ListeElevesRepliable';
 import PanneauxActions from '../PanneauxActions';
+import FormReglementSeances from '../FormReglementSeances';
 import ListePaiementsRepliable from '../ListePaiementsRepliable';
 
 export const dynamic = 'force-dynamic';
@@ -22,10 +23,25 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
   // déduites d'une formule ni réglées à l'unité.
   const { data: seancesARegler } = await admin
     .from('reservations')
-    .select('id, date_seance, profiles(nom, email, telephone), cours(discipline)')
+    .select('id, eleve_id, date_seance, profiles(nom, email, telephone), cours(discipline)')
     .eq('a_regler', true)
     .eq('statut', 'confirmee')
     .order('date_seance', { ascending: true });
+
+  // Regroupées par élève, avec sa dernière formule collective (proposée par défaut).
+  const groupesARegler = new Map<string, { eleveId: string; profil: any; seances: { date: string; discipline: string }[] }>();
+  for (const r of seancesARegler ?? []) {
+    const g = groupesARegler.get(r.eleve_id) ?? { eleveId: r.eleve_id, profil: r.profiles, seances: [] as { date: string; discipline: string }[] };
+    g.seances.push({ date: r.date_seance, discipline: (r.cours as any)?.discipline ?? '' });
+    groupesARegler.set(r.eleve_id, g);
+  }
+  const { data: dernieresFormules } = groupesARegler.size
+    ? await admin.from('abonnements').select('eleve_id, formule_nom, created_at')
+        .in('eleve_id', [...groupesARegler.keys()]).eq('categorie', 'planning').order('created_at', { ascending: false })
+    : { data: [] as { eleve_id: string; formule_nom: string }[] };
+  const derniereFormule = new Map<string, string>();
+  for (const a of dernieresFormules ?? []) if (!derniereFormule.has(a.eleve_id) && FORMULES[a.formule_nom] && !FORMULES[a.formule_nom].retiree) derniereFormule.set(a.eleve_id, a.formule_nom);
+  const formulesCollectives = Object.entries(FORMULES).filter(([, f]) => f.categorie === 'planning' && !f.retiree);
 
   const { data: eleves } = await admin
     .from('profiles')
@@ -138,7 +154,7 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
             .ligne-encaisser form { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
             @media (max-width: 720px) { .ligne-encaisser { grid-template-columns: 1fr; } }
           `}</style>
-          <h2>⏳ À encaisser ({(aEncaisser ?? []).length + (seancesARegler ?? []).length})</h2>
+          <h2>⏳ À encaisser ({(aEncaisser ?? []).length + groupesARegler.size})</h2>
           {(aEncaisser ?? []).map((r) => {
             const p = r.profiles as any;
             const formule = FORMULES[r.formule_nom];
@@ -172,31 +188,32 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
               </div>
             );
           })}
-          {(seancesARegler ?? []).map((r) => {
-            const p = r.profiles as any;
-            const cours = r.cours as any;
-            const date = new Date(r.date_seance + 'T12:00:00Z').toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', weekday: 'short', day: 'numeric', month: 'short' });
+          {[...groupesARegler.values()].map((g) => {
+            const p = g.profil;
+            const fmt = (d: string) => new Date(d + 'T12:00:00Z').toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', weekday: 'short', day: 'numeric', month: 'short' });
+            const n = g.seances.length;
             const relance = p?.telephone
-              ? lienWhatsApp(p.telephone, `Salut ${p.nom ?? ''} ! Petit rappel pour le cours de ${cours?.discipline ?? ''} du ${date} : pense à prendre ta formule, en ligne depuis la page Tarifs du site ou en espèces au prochain cours. La séance y sera déduite. Merci 🙏`)
+              ? lienWhatsApp(p.telephone, `Salut ${p.nom ?? ''} ! Petit rappel : ${n > 1 ? `tes ${n} derniers cours` : `le cours de ${g.seances[0].discipline} du ${fmt(g.seances[0].date)}`} ${n > 1 ? 'sont' : 'est'} à régler. Tu peux prendre ta formule en ligne depuis la page Tarifs du site ou en espèces au prochain cours. Merci 🙏`)
               : null;
+            const options = formulesCollectives.map(([cle, f]) => ({
+              cle,
+              libelle: cle === 'cours_unite' ? `À l'unité (×${n})` : f.nom,
+              montant: cle === 'cours_unite' ? (f.prixIndicatif ?? 0) * n : (prixEspeces(cle) ?? 0),
+            }));
             return (
-              <div key={r.id} className="ligne-encaisser">
+              <div key={g.eleveId} className="ligne-encaisser">
                 <div style={{ fontSize: 14, minWidth: 0 }}>
-                  <strong>{p?.nom || p?.email}</strong> — séance sans formule
+                  <strong>{p?.nom || p?.email}</strong> — {n} séance{n > 1 ? 's' : ''} sans formule
                   <div style={{ fontSize: 12, opacity: 0.6 }}>
-                    {cours?.discipline ?? ''} du {date}
+                    {g.seances.map((s) => `${s.discipline} du ${fmt(s.date)}`).join(' · ')}
                   </div>
                 </div>
-                <form action={encaisserSeanceARegler} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                  <input type="hidden" name="reservation_id" value={r.id} />
-                  <select name="moyen_paiement" defaultValue="especes">
-                    <option value="especes">💶 Espèces</option>
-                    <option value="virement">🏦 Virement</option>
-                    <option value="carte">💳 Carte (TPE)</option>
-                  </select>
-                  <input type="number" name="montant" step="0.01" min="0" defaultValue={FORMULES.cours_unite?.prixIndicatif ?? ''} style={{ width: 80, padding: '8px 10px', borderRadius: 8, border: '1px solid #2a2a30', background: '#1a1a1e', color: '#eee', fontSize: 14 }} />
-                  <button type="submit">Réglée à l'unité</button>
-                </form>
+                <FormReglementSeances
+                  action={reglerSeancesARegler}
+                  eleveId={g.eleveId}
+                  options={options}
+                  formuleParDefaut={derniereFormule.get(g.eleveId) ?? 'cours_unite'}
+                />
                 {relance && (
                   <a href={relance} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, fontWeight: 700, color: '#25D366', textDecoration: 'none' }}>
                     💬 Relancer
