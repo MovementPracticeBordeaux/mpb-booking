@@ -16,7 +16,9 @@ export async function envoyerFactureManuelle(factureId: string): Promise<void> {
   const lignes = f.lignes as { description: string; prixUnitaire: number; quantite: number }[];
   const total = Number(f.total);
   const numero = numeroFacture(f);
-  const pdf = await genererFacturePdf({ id: f.id, nom_client: f.nom_client, lignes, total, created_at: f.created_at });
+  const { data: sig } = await admin.from('config_interne').select('valeur').eq('cle', 'signature_facture_png').maybeSingle();
+  const signature = sig?.valeur ? Uint8Array.from(Buffer.from(sig.valeur, 'base64')) : null;
+  const pdf = await genererFacturePdf({ id: f.id, nom_client: f.nom_client, lignes, total, created_at: f.created_at }, signature);
   const lien = `${process.env.NEXT_PUBLIC_SITE_URL}/facture-externe/${f.id}`;
   const lignesHtml = lignes
     .map((l) => `<li>${l.description}${l.quantite > 1 ? ` — ${l.quantite} × ${l.prixUnitaire.toFixed(2)} €` : ''} — ${(l.prixUnitaire * l.quantite).toFixed(2)} €</li>`)

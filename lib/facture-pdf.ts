@@ -19,7 +19,9 @@ export function numeroFacture(f: { id: string; created_at: string }) {
 
 const euros = (n: number) => `${n.toFixed(2).replace('.', ',')} €`;
 
-export async function genererFacturePdf(f: FacturePdf): Promise<Uint8Array> {
+// signaturePng : signature manuscrite de Sylvain (PNG transparent), stockée
+// dans config_interne.signature_facture_png — jamais dans le code (dépôt public).
+export async function genererFacturePdf(f: FacturePdf, signaturePng?: Uint8Array | null): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
   const page = pdf.addPage([595.28, 841.89]); // A4
   const normal = await pdf.embedFont(StandardFonts.Helvetica);
@@ -77,6 +79,34 @@ export async function genererFacturePdf(f: FacturePdf): Promise<Uint8Array> {
   aDroite(`Total : ${euros(Number(f.total))}`, y, 13, gras);
   y -= 16;
   aDroite(ENTREPRISE.mentionTva, y, 8, normal, gris);
+
+  // Cachet de l'entreprise + signature, en bas à droite.
+  const encre = rgb(0.1, 0.16, 0.42);
+  const lignesCachet: [string, number, typeof normal][] = [
+    ['MOVEMENT PRACTICE BORDEAUX', 9.5, gras],
+    ['Sylvain Noury — Entrepreneur individuel', 8, normal],
+    [ENTREPRISE.adresse, 8, normal],
+    [`SIRET ${ENTREPRISE.siret}`, 8, normal],
+  ];
+  const largeurCachet = Math.max(...lignesCachet.map(([t, taille, police]) => police.widthOfTextAtSize(t, taille))) + 24;
+  const hauteurCachet = 70;
+  const xCachet = droite - largeurCachet;
+  y -= 40 + hauteurCachet;
+  page.drawRectangle({ x: xCachet, y, width: largeurCachet, height: hauteurCachet, borderColor: encre, borderWidth: 1.6, opacity: 0 });
+  page.drawRectangle({ x: xCachet + 3, y: y + 3, width: largeurCachet - 6, height: hauteurCachet - 6, borderColor: encre, borderWidth: 0.6, opacity: 0 });
+  let yc = y + hauteurCachet - 20;
+  for (const [t, taille, police] of lignesCachet) {
+    const l = police.widthOfTextAtSize(t, taille);
+    texte(t, xCachet + (largeurCachet - l) / 2, yc, taille, police, encre);
+    yc -= taille + 5;
+  }
+  if (signaturePng) {
+    const img = await pdf.embedPng(signaturePng);
+    const largeurSig = 150;
+    const hauteurSig = (img.height / img.width) * largeurSig;
+    texte('Signature', xCachet, y - 16, 8, normal, gris);
+    page.drawImage(img, { x: xCachet + 10, y: y - 22 - hauteurSig, width: largeurSig, height: hauteurSig });
+  }
 
   return pdf.save();
 
