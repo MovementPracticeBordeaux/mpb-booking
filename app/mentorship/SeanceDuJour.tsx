@@ -25,7 +25,7 @@ export type ElementSeance = {
 };
 
 type BrancheCycle = { domaine: string; label: string; couleur: string; noeudId: string };
-export type InfosCycle = { prio: BrancheCycle; sec: BrancheCycle | null; options: BrancheCycle[] };
+export type InfosCycle = { axe: string; options: { cle: string; label: string }[]; branches: BrancheCycle[]; baseValidee: boolean };
 
 function debutSemaine(): Date {
   const d = new Date();
@@ -37,7 +37,7 @@ function debutSemaine(): Date {
 export default function SeanceDuJour({ elements, cycle, onChangerCycle, onOuvrirVideo, onFermer }: {
   elements: ElementSeance[];
   cycle: InfosCycle | null;
-  onChangerCycle: (c: { prio?: any; sec?: any }) => void;
+  onChangerCycle: (c: { axe?: any }) => void;
   onOuvrirVideo: (url: string, titre: string) => void;
   onFermer: () => void;
 }) {
@@ -95,28 +95,22 @@ export default function SeanceDuJour({ elements, cycle, onChangerCycle, onOuvrir
         <div style={{ border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: '14px 16px', marginBottom: 14 }}>
           <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 15, margin: '0 0 4px', color: COULEURS.texte }}>Mon cycle</p>
           <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: '0 0 12px', lineHeight: 1.5 }}>
-            Une branche prioritaire et une secondaire, à travailler environ 3 fois par semaine pendant 3 à 5 semaines. Les autres branches attendent le cycle suivant.
+            {cycle.baseValidee
+              ? "La qualité de base de cet axe est validée à ce palier : la séance s'attache maintenant à valider la branche qu'elle sert."
+              : "On valide d'abord la qualité de base (Force ou Mobilité), puis la branche qu'elle sert (Figures ou Locomotion)."}
+            {' '}Vise environ 3 séances par semaine sur le même axe, pendant 3 à 5 semaines.
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 10 }}>
-            <label style={{ fontSize: 11, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 0.6, fontWeight: 700 }}>
-              Priorité
-              <span style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 5 }}>
-                <select value={cycle.prio.domaine} onChange={(ev) => onChangerCycle({ prio: ev.target.value, sec: cycle.sec && cycle.sec.domaine !== ev.target.value ? cycle.sec.domaine : undefined })} style={select}>
-                  {cycle.options.map((o) => <option key={o.domaine} value={o.domaine}>{o.label}</option>)}
-                </select>
-                <span style={{ fontSize: 12, color: cycle.prio.couleur, fontWeight: 600, textTransform: 'none', letterSpacing: 0, whiteSpace: 'nowrap' }}>{seancesSemaine(cycle.prio.noeudId)}/3 cette semaine</span>
-              </span>
-            </label>
-            <label style={{ fontSize: 11, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 0.6, fontWeight: 700 }}>
-              Secondaire
-              <span style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 5 }}>
-                <select value={cycle.sec?.domaine ?? 'aucune'} onChange={(ev) => onChangerCycle({ prio: cycle.prio.domaine, sec: ev.target.value })} style={select}>
-                  {cycle.options.filter((o) => o.domaine !== cycle.prio.domaine).map((o) => <option key={o.domaine} value={o.domaine}>{o.label}</option>)}
-                  <option value="aucune">Aucune</option>
-                </select>
-                {cycle.sec && <span style={{ fontSize: 12, color: cycle.sec.couleur, fontWeight: 600, textTransform: 'none', letterSpacing: 0, whiteSpace: 'nowrap' }}>{seancesSemaine(cycle.sec.noeudId)}/3 cette semaine</span>}
-              </span>
-            </label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px 16px' }}>
+            {cycle.options.length > 1 ? (
+              <select aria-label="Axe du cycle" value={cycle.axe} onChange={(ev) => onChangerCycle({ axe: ev.target.value })} style={select}>
+                {cycle.options.map((o) => <option key={o.cle} value={o.cle}>{o.label}</option>)}
+              </select>
+            ) : (
+              <span style={{ fontSize: 13, color: COULEURS.texte, fontWeight: 600 }}>{cycle.options[0]?.label}</span>
+            )}
+            {cycle.branches.map((b) => (
+              <span key={b.domaine} style={{ fontSize: 12, color: b.couleur, fontWeight: 600, whiteSpace: 'nowrap' }}>{b.label} : {seancesSemaine(b.noeudId)}/3 cette semaine</span>
+            ))}
           </div>
         </div>
       )}

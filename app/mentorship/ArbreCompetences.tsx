@@ -592,14 +592,14 @@ export default function ArbreCompetences({
   // Cycle d'entraînement choisi par l'élève pour ses séances : une branche
   // prioritaire et une secondaire (méthode « Mon entraînement » du dossier).
   // Gardé sur l'appareil ; sans choix, des valeurs par défaut s'appliquent.
-  const [cycle, setCycle] = useState<{ prio?: Domaine; sec?: Domaine | 'aucune' }>({});
+  const [cycle, setCycle] = useState<{ axe?: 'force' | 'flexibilite' }>({});
   useEffect(() => {
     try {
       const brut = window.localStorage.getItem('mentorat-cycle');
       if (brut) setCycle(JSON.parse(brut));
     } catch { /* stockage indisponible : valeurs par défaut */ }
   }, []);
-  function changerCycle(c: { prio?: Domaine; sec?: Domaine | 'aucune' }) {
+  function changerCycle(c: { axe?: 'force' | 'flexibilite' }) {
     setCycle(c);
     try { window.localStorage.setItem('mentorat-cycle', JSON.stringify(c)); } catch { /* idem */ }
   }
@@ -817,16 +817,23 @@ export default function ArbreCompetences({
     return ORDRE_DOMAINES.map((d) => branches.find((b) => b.domaine === d && b.niveau === palier)).filter((b): b is NoeudMentorshipPublic => !!b);
   }
 
-  // Séance du jour, composée selon la méthode « Mon entraînement » :
+  // Séance du jour, composée selon la méthode de Sylvain :
   // - Armure : 4 exercices du niveau + 1 outil de récupération.
-  // - Branches : un cycle = UNE branche prioritaire (2 exercices) + UNE
-  //   secondaire (1 exercice), à travailler ~3 fois par semaine pendant 3 à
-  //   5 semaines. La Connexion (manipulation, coordination) demande de la
-  //   fréquence plus que du volume : un exercice en fin de chaque séance,
-  //   pendant 15 minutes. Ordre du reste : mobilité -> stretch -> force.
+  // - Branches, dans cet ordre :
+  //     1. la qualité de base de l'axe : Force OU Mobilité (Flexibilité) ;
+  //     2. la branche qu'elle sert : Figures (après la Force) OU Locomotion
+  //        (après la Mobilité) ;
+  //     3. fin de séance en Connexion, 15 minutes ;
+  //     4. récupération (un outil santé de l'Armure).
+  //   Tant que la qualité de base du palier n'est pas validée, elle porte
+  //   l'essentiel de la séance (2 exercices, 1 pour la branche servie). Une
+  //   fois validée, on s'attache à valider la branche servie (2 exercices).
   // Les exercices « à retravailler » passent d'abord, puis rotation quotidienne.
-  const ORDRE_SEANCE: Record<string, number> = { connexion: 0, locomotion: 1, flexibilite: 2, figures: 3, force: 4, tronc: 5 };
-  const FIN_CONNEXION = 'Fin de séance · Connexion, 15 min';
+  const BLOC_CONNEXION = 'Fin de séance · Connexion, 15 min';
+  const AXES = [
+    { cle: 'force' as const, base: 'force' as Domaine, cible: 'figures' as Domaine, label: 'Force → Figures' },
+    { cle: 'flexibilite' as const, base: 'flexibilite' as Domaine, cible: 'locomotion' as Domaine, label: 'Mobilité → Locomotion' },
+  ];
   function planSeance(): { elements: ElementSeance[]; cycle: InfosCycle | null } {
     const element = (n: NoeudMentorshipPublic, ex: ExerciceMentorship, bloc: string, recuperation = false): ElementSeance => ({
       moduleId: moduleIdExercice(n, ex),
@@ -856,23 +863,32 @@ export default function ArbreCompetences({
     }
 
     const parDomaine = new Map(etape.map((n) => [n.domaine as Domaine, n]));
-    const dispo = [...parDomaine.keys()];
-    const premier = (ordre: Domaine[], sauf?: Domaine) => ordre.find((d) => parDomaine.has(d) && d !== sauf);
-    // Recommandations du dossier : priorité à la Locomotion ou aux Figures,
-    // la Force (ou une autre qualité physique) en soutien.
-    const prio = (cycle.prio && parDomaine.has(cycle.prio) ? cycle.prio : premier(['locomotion', 'figures', 'force', 'flexibilite', 'connexion']))!;
-    const sec = cycle.sec === 'aucune' ? undefined
-      : cycle.sec && cycle.sec !== prio && parDomaine.has(cycle.sec) ? cycle.sec
-      : premier(['force', 'flexibilite', 'figures', 'locomotion'], prio);
+    // Axes encore ouverts à ce palier (au moins une des deux branches reste à valider).
+    const axesOuverts = AXES.filter((x) => parDomaine.has(x.base) || parDomaine.has(x.cible));
+    const axe = axesOuverts.find((x) => x.cle === cycle.axe) ?? axesOuverts[0];
     const elements: ElementSeance[] = [];
+    if (axe) {
+      const base = parDomaine.get(axe.base);
+      const cible = parDomaine.get(axe.cible);
+      if (base) elements.push(...choisir(base, cible ? 2 : 3, `1 · ${DOMAINE_LABELS[axe.base]}`));
+      if (cible) elements.push(...choisir(cible, base ? 1 : 2, `${base ? 2 : 1} · ${DOMAINE_LABELS[axe.cible]}`));
+    }
     const connexion = parDomaine.get('connexion');
-    if (connexion && prio !== 'connexion' && sec !== 'connexion') elements.push(...choisir(connexion, 1, FIN_CONNEXION));
-    elements.push(...choisir(parDomaine.get(prio)!, 2, 'Objectif prioritaire'));
-    if (sec) elements.push(...choisir(parDomaine.get(sec)!, 1, 'Objectif secondaire'));
-    const rang = (e: ElementSeance) => (e.bloc === FIN_CONNEXION ? 99 : ORDRE_SEANCE[e.brancheJournal] ?? 9);
-    elements.sort((x, y) => rang(x) - rang(y));
+    if (connexion) elements.push(...choisir(connexion, 1, BLOC_CONNEXION));
+    if (elements.length > 0) {
+      const recup = tronc.flatMap((t) => (t.exercices ?? []).filter((ex) => ex.theme === 'recuperation').map((ex) => ({ t, ex })));
+      if (recup.length > 0) { const r = recup[jourIndex % recup.length]; elements.push(element(r.t, r.ex, 'Récupération', true)); }
+    }
     const info = (d: Domaine) => ({ domaine: d, label: DOMAINE_LABELS[d], couleur: DOMAINE_COULEURS[d], noeudId: parDomaine.get(d)!.id });
-    return { elements, cycle: { prio: info(prio), sec: sec ? info(sec) : null, options: dispo.map(info) } };
+    return {
+      elements,
+      cycle: axe ? {
+        axe: axe.cle,
+        options: axesOuverts.map((x) => ({ cle: x.cle, label: x.label })),
+        branches: [axe.base, axe.cible].filter((d) => parDomaine.has(d)).map(info),
+        baseValidee: !parDomaine.has(axe.base),
+      } : null,
+    };
   }
 
   function renderAccueil() {
