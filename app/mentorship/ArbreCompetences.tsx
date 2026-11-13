@@ -26,6 +26,8 @@ import { soumettreVideo, repondreQCM, soumettreVideoExercice } from './actions';
 import ChecklistNoeud from './ChecklistNoeud';
 import JournalDuNoeud from './JournalDuNoeud';
 import JournalComplet from './JournalComplet';
+import SuiviPerf from './SuiviPerf';
+import SeanceDuJour, { type ElementSeance } from './SeanceDuJour';
 import type { StatsProgression } from '@/lib/stats-progression';
 
 type Progression = {
@@ -575,6 +577,7 @@ export default function ArbreCompetences({
   const [ongletNoeud, setOngletNoeud] = useState<'theorie' | 'pratique' | 'outil' | 'journal'>('pratique');
   const [avantApresOuvert, setAvantApresOuvert] = useState(false);
   const [videoOuverteChemin, setVideoOuverteChemin] = useState<{ url: string; titre: string } | null>(null);
+  const [seanceOuverte, setSeanceOuverte] = useState(false);
   const refNoeudCourant = useRef<HTMLDivElement | null>(null);
   const [reponsesQCM, setReponsesQCM] = useState<Record<string, number>>({});
   const [onglet, setOnglet] = useState<Onglet>('arbre');
@@ -777,8 +780,54 @@ export default function ArbreCompetences({
   }
   const jourIndex = Math.floor(Date.now() / 86400000);
 
+  // Étape en cours : le niveau de l'Armure à valider, ou le palier commun
+  // aux 5 branches. Sert à l'accueil et à la composition de la séance.
+  function noeudsEtapeEnCours(): NoeudMentorshipPublic[] {
+    if (!troncComplet) {
+      const n = [...tronc].sort((a, b) => a.niveau - b.niveau).find((t) => !idsAcquis.has(t.id));
+      return n ? [n] : [];
+    }
+    const palier = [1, 2, 3].find((nv) => branches.some((b) => b.niveau === nv && !idsAcquis.has(b.id)));
+    if (!palier) return [];
+    return ORDRE_DOMAINES.map((d) => branches.find((b) => b.domaine === d && b.niveau === palier)).filter((b): b is NoeudMentorshipPublic => !!b);
+  }
+
+  // Séance du jour : objectifs pas encore acquis de l'étape en cours, ceux
+  // « à retravailler » d'abord, puis une rotation quotidienne. Armure : 4
+  // exercices du niveau + 1 outil de récupération. Branches : 1 exercice
+  // par branche encore à valider.
+  function composerSeance(): ElementSeance[] {
+    const element = (n: NoeudMentorshipPublic, ex: ExerciceMentorship, recuperation = false): ElementSeance => ({
+      moduleId: moduleIdExercice(n, ex),
+      exercice: ex,
+      libelleNiveau: `${n.domaine === 'tronc' ? 'Armure Organique' : DOMAINE_LABELS[n.domaine as Domaine]} · niveau ${n.niveau}`,
+      couleur: recuperation ? '#4FC3F7' : n.domaine === 'tronc' ? COULEUR_TRONC : DOMAINE_COULEURS[n.domaine as Domaine],
+      brancheJournal: n.domaine,
+      aRetravailler: statutExercice(n, ex) === 'refuse',
+      recuperation,
+    });
+    const choisir = (n: NoeudMentorshipPublic, combien: number): ElementSeance[] => {
+      const candidats = exercicesAValider(n).filter((ex) => { const st = statutExercice(n, ex); return st !== 'acquis' && st !== 'en_attente'; });
+      const refuses = candidats.filter((ex) => statutExercice(n, ex) === 'refuse');
+      const autres = candidats.filter((ex) => statutExercice(n, ex) !== 'refuse');
+      const decal = autres.length > 0 ? jourIndex % autres.length : 0;
+      return [...refuses, ...autres.slice(decal), ...autres.slice(0, decal)].slice(0, combien).map((ex) => element(n, ex));
+    };
+    const etape = noeudsEtapeEnCours().filter((n) => !idsAcquis.has(n.id) && estDeverrouille(n));
+    if (etape.length === 0) return [];
+    if (etape.length === 1 && etape[0].domaine === 'tronc') {
+      const n = etape[0];
+      const seance = choisir(n, 4);
+      const recup = (n.exercices ?? []).filter((ex) => ex.theme === 'recuperation');
+      if (seance.length > 0 && recup.length > 0) seance.push(element(n, recup[jourIndex % recup.length], true));
+      return seance;
+    }
+    return etape.flatMap((n) => choisir(n, 1));
+  }
+
   function renderAccueil() {
     const tousNoeuds = [...tronc, ...branches];
+    const seanceDuJour = composerSeance();
     // Étape en cours : le niveau de l'Armure à valider, ou le palier commun
     // aux 5 branches (règle de progression horizontale).
     let titreEtape = '';
@@ -833,6 +882,23 @@ export default function ArbreCompetences({
 
     return (
       <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 560, marginInline: 'auto' }}>
+        {/* Séance du jour */}
+        {seanceDuJour.length > 0 && (
+          <button
+            type="button" onClick={() => setSeanceOuverte(true)}
+            style={{ ...carte, display: 'flex', alignItems: 'center', gap: 14, width: '100%', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit', borderColor: '#ff00aa88', background: 'rgba(255,0,170,0.07)' }}
+          >
+            <Play size={22} color="#ff00aa" style={{ flexShrink: 0 }} />
+            <span style={{ flexGrow: 1, minWidth: 0 }}>
+              <span style={{ display: 'block', fontFamily: POLICE_DISPLAY, fontSize: 16, color: COULEURS.texte }}>Ma séance du jour</span>
+              <span style={{ display: 'block', fontSize: 12, color: COULEURS.texteFaible, marginTop: 2 }}>
+                {seanceDuJour.length} exercice{seanceDuJour.length > 1 ? 's' : ''} tirés de tes objectifs en cours : {seanceDuJour.filter((e) => !e.recuperation).slice(0, 2).map((e) => e.exercice.nom).join(', ')}…
+              </span>
+            </span>
+            <ChevronRight size={16} color={COULEURS.texteFaible} style={{ flexShrink: 0 }} />
+          </button>
+        )}
+
         {/* Étape en cours */}
         <div style={carte}>
           <p style={titreCarte}>{noeudsEtape.length > 0 ? 'Ton étape en cours' : 'Parcours terminé'}</p>
@@ -1477,7 +1543,16 @@ export default function ArbreCompetences({
         </div>
       )}
 
-      {onglet === 'arbre' && !vueBranche && (
+      {onglet === 'arbre' && !vueBranche && seanceOuverte && (
+        <>
+          <SeanceDuJour elements={composerSeance()} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} onFermer={() => setSeanceOuverte(false)} />
+          {videoOuverteChemin && (
+            <LecteurVideoModal url={videoOuverteChemin.url} titre={videoOuverteChemin.titre} onFermer={() => setVideoOuverteChemin(null)} />
+          )}
+        </>
+      )}
+
+      {onglet === 'arbre' && !vueBranche && !seanceOuverte && (
         <>
           {/* En-têtes de branches — icône, nom, accroche, avant l'arbre lui-même. Cliquable : entre dans le chemin isolé de la branche. */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 4, maxWidth: 560, marginInline: 'auto', marginBottom: 4 }}>
@@ -2496,6 +2571,10 @@ function BlocExercice({
               </a>
             )}
           </div>
+
+          {!estOutilSante && (
+            <SuiviPerf moduleId={moduleIdExercice(noeud, exercice)} couleur={teinte} critere={exercice.critereValidation} />
+          )}
 
           {exercice.outils && exercice.outils.length > 0 && (
             <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px dashed ${COULEURS.bordure}` }}>

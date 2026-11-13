@@ -5,6 +5,7 @@ import { calculerStatsProgression } from '@/lib/stats-progression';
 import { palierMaxDeFormule } from '@/lib/formules';
 import { COULEURS, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
 import ArbreCompetences from './ArbreCompetences';
+import { PerfsProvider, type Perf } from './SuiviPerf';
 
 export const dynamic = 'force-dynamic';
 
@@ -143,6 +144,15 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
   const badge = badgeEleve(flammesNoeudsAcquis);
 
   // Les nœuds envoyés au client n'ont jamais les bonnes réponses du QCM.
+  // Suivi chiffré par objectif (table mentorship_perf) : chargé une fois, partagé à toute la page.
+  const { data: perfsData } = await supabase
+    .from('mentorship_perf')
+    .select('id, module_id, series, valeur, unite, charge_kg, cree_le')
+    .eq('eleve_id', user.id)
+    .order('cree_le', { ascending: false })
+    .limit(1000);
+  const perfsInitiales = (perfsData ?? []) as Perf[];
+
   const troncPublic = TRONC.map(noeudSansReponses);
   const branchesPublic = BRANCHES.map(noeudSansReponses);
 
@@ -160,6 +170,7 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
         <p style={{ color: '#ff6b6b', fontSize: 13, marginBottom: 12 }}>{searchParams.erreur}</p>
       )}
 
+      <PerfsProvider initial={perfsInitiales}>
       <ArbreCompetences
         tronc={troncPublic}
         branches={branchesPublic}
@@ -175,6 +186,7 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
         estAdmin={profil?.role === 'admin'}
         palierAutorise={palierAutorise}
       />
+      </PerfsProvider>
     </main>
   );
 }

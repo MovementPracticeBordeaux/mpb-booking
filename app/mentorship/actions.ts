@@ -35,7 +35,13 @@ export async function repondreQCM(formData: FormData) {
     .select('module_id')
     .eq('eleve_id', user.id)
     .eq('statut', 'acquis');
-  const idsAcquis = new Set((acquisData ?? []).map((d) => d.module_id));
+  // Les niveaux à exercices sont acquis via leurs exercices (module_id
+  // « niveau::exercice ») : on en déduit les niveaux acquis avant de
+  // vérifier le déverrouillage, sinon le QCM du niveau suivant serait refusé.
+  const idsModulesAcquis = new Set((acquisData ?? []).map((d) => d.module_id));
+  const idsAcquis = new Set(
+    TOUS_LES_NOEUDS.filter((n) => estNoeudAcquisDepuisProgression(n, (id) => idsModulesAcquis.has(id))).map((n) => n.id)
+  );
   if (!estNoeudDeverrouille(noeud, idsAcquis)) echouer('Ce niveau est encore verrouillé.');
 
   // Déjà réussi précédemment : rien à refaire, on renvoie directement vers

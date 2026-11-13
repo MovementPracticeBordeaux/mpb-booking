@@ -18,11 +18,25 @@ export default async function AdminMentorshipPage({ searchParams }: { searchPara
 
   const admin = supabaseAdmin();
 
-  const { data: soumissions } = await admin
+  // Pas de jointure automatique ici : mentorship_progression.eleve_id pointe
+  // vers auth.users (pas vers profiles), donc on charge les profils à part.
+  const { data: soumissionsBrutes } = await admin
     .from('mentorship_progression')
-    .select('*, profiles:eleve_id(email, prenom, nom)')
+    .select('*')
     .eq('statut', 'en_attente')
     .order('submitted_at', { ascending: true });
+  const idsEleves = [...new Set((soumissionsBrutes ?? []).map((s) => s.eleve_id))];
+  const { data: profilsEleves } = idsEleves.length > 0
+    ? await admin.from('profiles').select('id, email, nom').in('id', idsEleves)
+    : { data: [] as { id: string; email: string; nom: string | null }[] };
+  const profilParId = new Map((profilsEleves ?? []).map((p) => [p.id, p]));
+  const soumissions = (soumissionsBrutes ?? []).map((s) => ({ ...s, profiles: profilParId.get(s.eleve_id) ?? null }));
+
+  // Suivi chiffré de l'élève sur l'exercice soumis (ses dernières perfs notées).
+  const { data: perfsEleves } = idsEleves.length > 0
+    ? await admin.from('mentorship_perf').select('eleve_id, module_id, series, valeur, unite, charge_kg, cree_le').in('eleve_id', idsEleves).order('cree_le', { ascending: false }).limit(2000)
+    : { data: [] as any[] };
+  const perfsDe = (eleveId: string, moduleId: string) => (perfsEleves ?? []).filter((p: any) => p.eleve_id === eleveId && p.module_id === moduleId).slice(0, 5);
 
   const noeudParId = Object.fromEntries(BRANCHES.map((n) => [n.id, { titre: n.titre, sousTitre: `${DOMAINE_LABELS[n.domaine as Domaine]} niveau ${n.niveau}` }]));
   const troncParId = Object.fromEntries(TRONC.map((t) => [t.id, { titre: t.titre, sousTitre: `Tronc niveau ${t.niveau}` }]));
@@ -73,7 +87,7 @@ export default async function AdminMentorshipPage({ searchParams }: { searchPara
               style={{ border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: 20, marginBottom: 16 }}
             >
               <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: 0 }}>
-                {eleve?.prenom ?? ''} {eleve?.nom ?? eleve?.email ?? s.eleve_id}
+                {eleve?.nom ?? eleve?.email ?? s.eleve_id}
                 {info.sousTitre ? ` — ${info.sousTitre}` : ''}
               </p>
               <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 22, letterSpacing: 0.3, margin: '2px 0 10px' }}>
@@ -88,6 +102,12 @@ export default async function AdminMentorshipPage({ searchParams }: { searchPara
               >
                 ▶ Voir la vidéo soumise
               </a>
+
+              {perfsDe(s.eleve_id, s.module_id).length > 0 && (
+                <p style={{ fontSize: 12, color: COULEURS.texteAtt, margin: '10px 0 0' }}>
+                  Son suivi : {perfsDe(s.eleve_id, s.module_id).map((p: any) => `${new Date(p.cree_le).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} ${p.series}×${Number(p.valeur)}${p.unite === 'sec' ? 's' : ''}${p.charge_kg ? ` (${Number(p.charge_kg)} kg)` : ''}`).join(' · ')}
+                </p>
+              )}
 
               <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap' }}>
                 <form action={validerSoumission} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', flexGrow: 1 }}>
