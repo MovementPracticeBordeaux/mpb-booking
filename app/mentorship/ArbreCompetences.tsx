@@ -822,10 +822,11 @@ export default function ArbreCompetences({
   // - Branches : un cycle = UNE branche prioritaire (2 exercices) + UNE
   //   secondaire (1 exercice), à travailler ~3 fois par semaine pendant 3 à
   //   5 semaines. La Connexion (manipulation, coordination) demande de la
-  //   fréquence plus que du volume : un exercice en échauffement de chaque
-  //   séance. Ordre : cognitif -> mobilité -> stretch -> force.
+  //   fréquence plus que du volume : un exercice en fin de chaque séance,
+  //   pendant 15 minutes. Ordre du reste : mobilité -> stretch -> force.
   // Les exercices « à retravailler » passent d'abord, puis rotation quotidienne.
   const ORDRE_SEANCE: Record<string, number> = { connexion: 0, locomotion: 1, flexibilite: 2, figures: 3, force: 4, tronc: 5 };
+  const FIN_CONNEXION = 'Fin de séance · Connexion, 15 min';
   function planSeance(): { elements: ElementSeance[]; cycle: InfosCycle | null } {
     const element = (n: NoeudMentorshipPublic, ex: ExerciceMentorship, bloc: string, recuperation = false): ElementSeance => ({
       moduleId: moduleIdExercice(n, ex),
@@ -865,10 +866,10 @@ export default function ArbreCompetences({
       : premier(['force', 'flexibilite', 'figures', 'locomotion'], prio);
     const elements: ElementSeance[] = [];
     const connexion = parDomaine.get('connexion');
-    if (connexion && prio !== 'connexion' && sec !== 'connexion') elements.push(...choisir(connexion, 1, 'Échauffement cognitif'));
+    if (connexion && prio !== 'connexion' && sec !== 'connexion') elements.push(...choisir(connexion, 1, FIN_CONNEXION));
     elements.push(...choisir(parDomaine.get(prio)!, 2, 'Objectif prioritaire'));
     if (sec) elements.push(...choisir(parDomaine.get(sec)!, 1, 'Objectif secondaire'));
-    const rang = (e: ElementSeance) => (e.bloc === 'Échauffement cognitif' ? -1 : ORDRE_SEANCE[e.brancheJournal] ?? 9);
+    const rang = (e: ElementSeance) => (e.bloc === FIN_CONNEXION ? 99 : ORDRE_SEANCE[e.brancheJournal] ?? 9);
     elements.sort((x, y) => rang(x) - rang(y));
     const info = (d: Domaine) => ({ domaine: d, label: DOMAINE_LABELS[d], couleur: DOMAINE_COULEURS[d], noeudId: parDomaine.get(d)!.id });
     return { elements, cycle: { prio: info(prio), sec: sec ? info(sec) : null, options: dispo.map(info) } };
