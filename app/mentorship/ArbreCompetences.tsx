@@ -28,6 +28,8 @@ import JournalDuNoeud from './JournalDuNoeud';
 import JournalComplet from './JournalComplet';
 import SuiviPerf from './SuiviPerf';
 import SeanceDuJour, { type ElementSeance } from './SeanceDuJour';
+import RevisionDuJour, { type QuestionRevision } from './RevisionDuJour';
+import type { Badge } from '@/lib/mentorship-engagement';
 import type { StatsProgression } from '@/lib/stats-progression';
 
 type Progression = {
@@ -476,7 +478,7 @@ const ONGLETS: { id: Onglet; label: string; icone: (c: string) => React.ReactNod
 // --- Bandeau XP permanent, au-dessus des onglets ---------------------------
 // Toujours visible quel que soit l'onglet : XP, niveau et titre du
 // pratiquant, barre vers le niveau suivant. Le détail reste dans Progression.
-function BandeauXP({ xpTotal, niveau, actif, onOuvrir }: { xpTotal: number; niveau: Niveau; actif: boolean; onOuvrir: () => void }) {
+function BandeauXP({ xpTotal, niveau, actif, serie, onOuvrir }: { xpTotal: number; niveau: Niveau; actif: boolean; serie: { semaines: number; activeCetteSemaine: boolean }; onOuvrir: () => void }) {
   const pct = Math.max(0, Math.min(100, (niveau.xpDansPalier / niveau.xpProchainPalier) * 100));
   return (
     // Compact et calé à droite, comme un badge de statut : il reste visible
@@ -505,6 +507,9 @@ function BandeauXP({ xpTotal, niveau, actif, onOuvrir }: { xpTotal: number; nive
           </span>
           <span style={{ display: 'block', fontSize: 10.5, color: COULEURS.texteFaible, marginTop: 3 }}>
             {(niveau.xpProchainPalier - niveau.xpDansPalier).toLocaleString('fr-FR')} XP avant le niveau {niveau.niveau + 1}
+            {serie.semaines > 0 && (
+              <span style={{ color: serie.activeCetteSemaine ? '#FF8A00' : COULEURS.texteFaible }}> · série {serie.semaines} sem.</span>
+            )}
           </span>
         </span>
       </button>
@@ -551,6 +556,9 @@ export default function ArbreCompetences({
   structureSeance,
   estAdmin,
   palierAutorise,
+  serie,
+  badges,
+  revision,
 }: {
   tronc: NoeudMentorshipPublic[];
   branches: NoeudMentorshipPublic[];
@@ -569,6 +577,9 @@ export default function ArbreCompetences({
   // ce niveau sur les 5 branches). null/undefined = pas de restriction
   // (admin, aperçu, ou ancienne formule globale) : accès complet.
   palierAutorise?: number | null;
+  serie: { semaines: number; activeCetteSemaine: boolean };
+  badges: Badge[];
+  revision: { question: QuestionRevision | null; faiteAujourdhui: boolean };
 }) {
   const [selection, setSelection] = useState<string | null>(null);
   // Vue isolée d'une branche (chemin vertical) — null = vue globale (dashboard).
@@ -881,7 +892,7 @@ export default function ArbreCompetences({
     const couleurNoeud = (n: NoeudMentorshipPublic) => (n.domaine === 'tronc' ? COULEUR_TRONC : DOMAINE_COULEURS[n.domaine as Domaine]);
 
     return (
-      <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 560, marginInline: 'auto' }}>
+      <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 860, marginInline: 'auto' }}>
         {/* Séance du jour */}
         {seanceDuJour.length > 0 && (
           <button
@@ -959,6 +970,8 @@ export default function ArbreCompetences({
           )}
         </div>
 
+        {/* Cartes secondaires : côte à côte dès que la largeur le permet */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: 12, alignItems: 'start' }}>
         {/* Idée clé du jour */}
         {idee && (
           <div style={{ ...carte, borderLeft: `3px solid ${couleurNoeud(idee.noeud)}` }}>
@@ -978,6 +991,15 @@ export default function ArbreCompetences({
           </div>
         )}
 
+        {/* Révision espacée */}
+        <RevisionDuJour
+          question={revision.question} faiteAujourdhui={revision.faiteAujourdhui} carte={carte}
+          onRelire={() => {
+            const n = tousNoeuds.find((x) => x.qcm.some((q) => q.id === revision.question?.id));
+            if (n) entrerBranche(n.domaine as Domaine | 'tronc', n.id, 'theorie');
+          }}
+        />
+
         {/* Quête secondaire du moment */}
         {quete && (
           <div style={carte}>
@@ -996,6 +1018,7 @@ export default function ArbreCompetences({
             </button>
           </div>
         )}
+        </div>
       </div>
     );
   }
@@ -1114,7 +1137,7 @@ export default function ArbreCompetences({
       {/* Onglets et badge XP sur la même ligne ; le badge ouvre la vue Progression (plus d'onglet dédié). */}
       <div style={{ display: 'flex', flexWrap: 'wrap-reverse', alignItems: 'center', columnGap: 12, rowGap: 6, marginBottom: 24, borderBottom: `1px solid ${COULEURS.bordure}` }}>
         <MenuOnglets actif={onglet} onChange={setOnglet} />
-        <BandeauXP xpTotal={xpTotal} niveau={niveau} actif={onglet === 'progression'} onOuvrir={() => { setVueBranche(null); setOnglet('progression'); }} />
+        <BandeauXP xpTotal={xpTotal} niveau={niveau} serie={serie} actif={onglet === 'progression'} onOuvrir={() => { setVueBranche(null); setOnglet('progression'); }} />
       </div>
 
       {estAdmin && (
@@ -1854,12 +1877,38 @@ export default function ArbreCompetences({
             <CourbeXP points={courbeXP} />
           </div>
 
-          {/* Régularité */}
+          {/* Régularité : série de semaines actives + jours actifs */}
           <div style={{ background: FOND_CARTE, border: `1px solid ${BORDURE_CARTE}`, borderRadius: 12, padding: '16px 18px' }}>
             <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 15, letterSpacing: 0.3, margin: '0 0 4px', color: COULEURS.texte }}>Régularité</p>
-            <p style={{ fontSize: 24, fontWeight: 700, margin: '4px 0 0', color: COULEURS.texte }}>
-              {statsProgression.joursActifs30j} <span style={{ fontSize: 13, fontWeight: 400, color: COULEURS.texteFaible }}>jour{statsProgression.joursActifs30j !== 1 ? 's' : ''} actif{statsProgression.joursActifs30j !== 1 ? 's' : ''} sur les 30 derniers jours</span>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 28px', alignItems: 'baseline' }}>
+              <p style={{ fontSize: 24, fontWeight: 700, margin: '4px 0 0', color: serie.semaines > 0 ? '#FF8A00' : COULEURS.texte }}>
+                {serie.semaines} <span style={{ fontSize: 13, fontWeight: 400, color: COULEURS.texteFaible }}>semaine{serie.semaines !== 1 ? 's' : ''} active{serie.semaines !== 1 ? 's' : ''} d'affilée</span>
+              </p>
+              <p style={{ fontSize: 24, fontWeight: 700, margin: '4px 0 0', color: COULEURS.texte }}>
+                {statsProgression.joursActifs30j} <span style={{ fontSize: 13, fontWeight: 400, color: COULEURS.texteFaible }}>jour{statsProgression.joursActifs30j !== 1 ? 's' : ''} actif{statsProgression.joursActifs30j !== 1 ? 's' : ''} sur 30</span>
+              </p>
+            </div>
+            <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: '8px 0 0', lineHeight: 1.5 }}>
+              {serie.semaines === 0
+                ? 'Une semaine compte dès que tu notes une perf, écris dans le journal, fais une révision ou envoies une vidéo.'
+                : serie.activeCetteSemaine
+                  ? 'Cette semaine est déjà comptée.'
+                  : 'Rien de noté cette semaine pour l\'instant : une seule action suffit pour prolonger la série.'}
             </p>
+          </div>
+
+          {/* Badges */}
+          <div style={{ background: FOND_CARTE, border: `1px solid ${BORDURE_CARTE}`, borderRadius: 12, padding: '16px 18px' }}>
+            <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 15, letterSpacing: 0.3, margin: '0 0 4px', color: COULEURS.texte }}>Badges</p>
+            <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 12px' }}>{badges.filter((b) => b.obtenu).length} sur {badges.length} obtenus.</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 200px), 1fr))', gap: 8 }}>
+              {badges.map((b) => (
+                <div key={b.id} style={{ border: `1px solid ${b.obtenu ? '#ff00aa88' : COULEURS.bordure}`, background: b.obtenu ? 'rgba(255,0,170,0.07)' : 'transparent', borderRadius: 10, padding: '10px 12px', opacity: b.obtenu ? 1 : 0.6 }}>
+                  <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: b.obtenu ? COULEURS.texte : COULEURS.texteAtt }}>{b.obtenu ? '★ ' : '☆ '}{b.nom}</p>
+                  <p style={{ margin: '3px 0 0', fontSize: 11, color: COULEURS.texteFaible, lineHeight: 1.4 }}>{b.description}</p>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Volume Force */}

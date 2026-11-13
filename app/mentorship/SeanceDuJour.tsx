@@ -59,7 +59,7 @@ export default function SeanceDuJour({ elements, onOuvrirVideo, onFermer }: {
   const peutTerminer = faits > 0 || !!ressenti.trim();
 
   return (
-    <div style={{ maxWidth: 560, marginInline: 'auto' }}>
+    <div style={{ maxWidth: 720, marginInline: 'auto' }}>
       <button type="button" onClick={onFermer} style={{ background: 'none', border: 'none', color: COULEURS.texteFaible, cursor: 'pointer', fontSize: 13, padding: 0, fontFamily: 'inherit' }}>← Retour au tableau de bord</button>
       <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 24, letterSpacing: 0.5, margin: '10px 0 4px', color: COULEURS.texte }}>MA SÉANCE DU JOUR</h2>
       <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: '0 0 16px', lineHeight: 1.5 }}>

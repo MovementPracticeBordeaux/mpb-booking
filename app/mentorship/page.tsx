@@ -6,6 +6,9 @@ import { palierMaxDeFormule } from '@/lib/formules';
 import { COULEURS, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
 import ArbreCompetences from './ArbreCompetences';
 import { PerfsProvider, type Perf } from './SuiviPerf';
+import type { QuestionRevision } from './RevisionDuJour';
+import { choisirQuestionDuJour, serieSemaines, calculerBadges, type LigneRevision } from '@/lib/mentorship-engagement';
+import { DOMAINE_COULEURS, DOMAINE_LABELS, COULEUR_TRONC, type Domaine } from '@/lib/mentorship-modules';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,7 +64,7 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
   const [{ data: progressionData }, { data: suiviData }, { data: defisHistoriqueData }] = await Promise.all([
     supabase
       .from('mentorship_progression')
-      .select('module_id, statut, quiz_reussi, quiz_score, quiz_valide_le, reviewed_at, video_url, commentaire_coach, premiere_video_url, premiere_video_date')
+      .select('module_id, statut, quiz_reussi, quiz_score, quiz_valide_le, reviewed_at, submitted_at, video_url, commentaire_coach, premiere_video_url, premiere_video_date')
       .eq('eleve_id', user.id),
     supabase
       .from('mentorship_suivi_competence')
@@ -153,6 +156,55 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
     .limit(1000);
   const perfsInitiales = (perfsData ?? []) as Perf[];
 
+  // --- Révision espacée : question du jour parmi les QCM déjà réussis ---
+  const { data: revisionsData } = await supabase
+    .from('mentorship_revision')
+    .select('question_id, boite, prochaine_le, derniere_le, nb_justes')
+    .eq('eleve_id', user.id);
+  const revisions = (revisionsData ?? []) as (LigneRevision & { nb_justes: number })[];
+  const noeudsQcmReussi = TOUS_LES_NOEUDS.filter((n) => n.qcm.length > 0 && progression.get(n.id)?.quiz_reussi);
+  const maintenant = new Date();
+  const choix = choisirQuestionDuJour(noeudsQcmReussi.flatMap((n) => n.qcm.map((q) => q.id)), revisions, maintenant);
+  let questionRevision: QuestionRevision | null = null;
+  if (choix.questionId) {
+    const n = noeudsQcmReussi.find((x) => x.qcm.some((q) => q.id === choix.questionId))!;
+    const q = n.qcm.find((x) => x.id === choix.questionId)!;
+    questionRevision = {
+      id: q.id, question: q.question, choix: q.choix,
+      libelleNiveau: `${n.domaine === 'tronc' ? 'Armure Organique' : DOMAINE_LABELS[n.domaine as Domaine]} · niveau ${n.niveau}`,
+      couleur: n.domaine === 'tronc' ? COULEUR_TRONC : DOMAINE_COULEURS[n.domaine as Domaine],
+    };
+  }
+
+  // --- Série de semaines actives et badges ---
+  const datesActivite: string[] = [
+    ...(historiqueJournal ?? []).map((e) => e.cree_le),
+    ...perfsInitiales.map((p) => p.cree_le),
+    ...revisions.map((r) => r.derniere_le),
+    ...(historiqueForce ?? []).map((e) => e.cree_le),
+    ...(historiqueFigures ?? []).map((e) => e.cree_le),
+    ...(historiqueLocomotion ?? []).map((e) => e.cree_le),
+    ...(progressionData ?? []).flatMap((p: any) => [p.submitted_at, p.quiz_valide_le]).filter((d: string | null): d is string => !!d),
+  ];
+  const serie = serieSemaines(datesActivite, maintenant);
+  const idsBonus = new Set(TOUS_LES_NOEUDS.flatMap((n) => (n.progressionBonus ?? []).map((ex) => `${n.id}::${ex.id}`)));
+  const exercicesAcquis = [...idsModulesAcquis].filter((id) => id.includes('::'));
+  const idsNoeudsAcquis = new Set(noeudsAcquis.map((n) => n.id));
+  let paliersBranchesValides = 0;
+  for (const nv of [1, 2, 3]) {
+    if (BRANCHES.filter((b) => b.niveau === nv).every((b) => idsNoeudsAcquis.has(b.id))) paliersBranchesValides = nv; else break;
+  }
+  const badges = calculerBadges({
+    nbPerfs: perfsInitiales.length,
+    nbNotesJournal: (historiqueJournal ?? []).length,
+    nbExercicesValides: exercicesAcquis.filter((id) => !idsBonus.has(id)).length,
+    nbQuetesSecondairesValidees: exercicesAcquis.filter((id) => idsBonus.has(id)).length,
+    armureComplete: TRONC.every((t) => idsNoeudsAcquis.has(t.id)),
+    paliersBranchesValides,
+    serieSemaines: serie.semaines,
+    nbRevisionsJustes: revisions.reduce((s, r) => s + (r.nb_justes ?? 0), 0),
+  });
+
   const troncPublic = TRONC.map(noeudSansReponses);
   const branchesPublic = BRANCHES.map(noeudSansReponses);
 
@@ -185,6 +237,9 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
         structureSeance={STRUCTURE_SEANCE}
         estAdmin={profil?.role === 'admin'}
         palierAutorise={palierAutorise}
+        serie={serie}
+        badges={badges}
+        revision={{ question: questionRevision, faiteAujourdhui: choix.faiteAujourdhui }}
       />
       </PerfsProvider>
     </main>

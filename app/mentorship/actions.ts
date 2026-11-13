@@ -1,6 +1,7 @@
 'use server';
 
 import { notifierVideoSoumise } from '@/lib/mentorship-notifs';
+import { prochaineRevision, INTERVALLES_REVISION_JOURS } from '@/lib/mentorship-engagement';
 import { supabaseServer } from '@/lib/supabase-server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -187,4 +188,47 @@ export async function soumettreVideoExercice(formData: FormData) {
   await notifierVideoSoumise(user.id, moduleId);
 
   revalidatePath('/mentorship');
+}
+
+// Révision espacée : l'élève répond à une question d'un QCM qu'il a déjà
+// réussi. La bonne réponse n'est révélée qu'ici, après sa réponse.
+export async function repondreRevision(questionId: string, reponse: number): Promise<{ ok: boolean; juste: boolean; bonneReponse: number; prochaineDansJours: number }> {
+  const echec = { ok: false, juste: false, bonneReponse: -1, prochaineDansJours: 0 };
+  const supabase = supabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return echec;
+
+  const noeud = TOUS_LES_NOEUDS.find((n) => n.qcm.some((q) => q.id === questionId));
+  const question = noeud?.qcm.find((q) => q.id === questionId);
+  if (!noeud || !question) return echec;
+
+  const { data: ligneNoeud } = await supabase
+    .from('mentorship_progression')
+    .select('quiz_reussi')
+    .eq('eleve_id', user.id).eq('module_id', noeud.id)
+    .maybeSingle();
+  if (!ligneNoeud?.quiz_reussi) return echec;
+
+  const { data: existante } = await supabase
+    .from('mentorship_revision')
+    .select('boite, nb_justes, nb_reponses')
+    .eq('eleve_id', user.id).eq('question_id', questionId)
+    .maybeSingle();
+
+  const juste = reponse === question.bonneReponse;
+  const maintenant = new Date();
+  const suite = prochaineRevision(existante ? existante.boite : null, juste, maintenant);
+  const { error } = await supabase.from('mentorship_revision').upsert({
+    eleve_id: user.id,
+    question_id: questionId,
+    boite: suite.boite,
+    prochaine_le: suite.prochaine_le,
+    derniere_le: maintenant.toISOString(),
+    derniere_juste: juste,
+    nb_justes: (existante?.nb_justes ?? 0) + (juste ? 1 : 0),
+    nb_reponses: (existante?.nb_reponses ?? 0) + 1,
+  }, { onConflict: 'eleve_id,question_id' });
+  if (error) return echec;
+
+  return { ok: true, juste, bonneReponse: question.bonneReponse, prochaineDansJours: INTERVALLES_REVISION_JOURS[suite.boite] };
 }
