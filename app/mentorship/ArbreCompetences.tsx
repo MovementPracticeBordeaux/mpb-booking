@@ -26,7 +26,7 @@ import { soumettreVideo, repondreQCM, soumettreVideoExercice } from './actions';
 import ChecklistNoeud from './ChecklistNoeud';
 import JournalDuNoeud from './JournalDuNoeud';
 import JournalComplet from './JournalComplet';
-import SuiviPerf from './SuiviPerf';
+import SuiviPerf, { usePerfs } from './SuiviPerf';
 import SeanceDuJour, { type ElementSeance, type InfosCycle } from './SeanceDuJour';
 import RevisionDuJour, { type QuestionRevision } from './RevisionDuJour';
 import type { Badge } from '@/lib/mentorship-engagement';
@@ -589,19 +589,24 @@ export default function ArbreCompetences({
   const [avantApresOuvert, setAvantApresOuvert] = useState(false);
   const [videoOuverteChemin, setVideoOuverteChemin] = useState<{ url: string; titre: string } | null>(null);
   const [seanceOuverte, setSeanceOuverte] = useState(false);
-  // Cycle d'entraînement choisi par l'élève pour ses séances : une branche
-  // prioritaire et une secondaire (méthode « Mon entraînement » du dossier).
-  // Gardé sur l'appareil ; sans choix, des valeurs par défaut s'appliquent.
-  const [cycle, setCycle] = useState<{ axe?: 'force' | 'flexibilite' }>({});
+  // Axe de la séance : alterné automatiquement d'une séance à l'autre
+  // (Force -> Figures, puis Mobilité -> Locomotion), d'après les perfs
+  // notées. L'élève peut forcer l'autre axe pour la journée (choix gardé
+  // sur l'appareil, valable le jour même seulement).
+  const { parModule: perfsParModule } = usePerfs();
+  const [axeForce, setAxeForce] = useState<{ jour: string; axe: 'force' | 'flexibilite' } | null>(null);
+  const jourLocal = new Date().toDateString();
   useEffect(() => {
     try {
-      const brut = window.localStorage.getItem('mentorat-cycle');
-      if (brut) setCycle(JSON.parse(brut));
-    } catch { /* stockage indisponible : valeurs par défaut */ }
+      const brut = window.localStorage.getItem('mentorat-axe-du-jour');
+      if (brut) setAxeForce(JSON.parse(brut));
+    } catch { /* stockage indisponible : alternance automatique seule */ }
   }, []);
   function changerCycle(c: { axe?: 'force' | 'flexibilite' }) {
-    setCycle(c);
-    try { window.localStorage.setItem('mentorat-cycle', JSON.stringify(c)); } catch { /* idem */ }
+    if (!c.axe) return;
+    const v = { jour: jourLocal, axe: c.axe };
+    setAxeForce(v);
+    try { window.localStorage.setItem('mentorat-axe-du-jour', JSON.stringify(v)); } catch { /* idem */ }
   }
   const refNoeudCourant = useRef<HTMLDivElement | null>(null);
   const [reponsesQCM, setReponsesQCM] = useState<Record<string, number>>({});
@@ -865,7 +870,26 @@ export default function ArbreCompetences({
     const parDomaine = new Map(etape.map((n) => [n.domaine as Domaine, n]));
     // Axes encore ouverts à ce palier (au moins une des deux branches reste à valider).
     const axesOuverts = AXES.filter((x) => parDomaine.has(x.base) || parDomaine.has(x.cible));
-    const axe = axesOuverts.find((x) => x.cle === cycle.axe) ?? axesOuverts[0];
+    // Dernier jour travaillé sur chaque axe (perfs notées sur ses deux branches).
+    const dernierJour = (x: typeof AXES[number]) => {
+      let max = '';
+      for (const [moduleId, perfs] of perfsParModule) {
+        const d = moduleId.split('-')[0];
+        if ((d === x.base || d === x.cible) && perfs[0] && perfs[0].cree_le > max) max = perfs[0].cree_le;
+      }
+      return max;
+    };
+    let cleAxe: string | undefined;
+    if (axeForce && axeForce.jour === jourLocal) cleAxe = axeForce.axe;
+    else if (axesOuverts.length > 1) {
+      const [a, b] = axesOuverts;
+      const da = dernierJour(a), db = dernierJour(b);
+      const aujourdhui = (iso: string) => !!iso && new Date(iso).toDateString() === jourLocal;
+      // Séance déjà entamée aujourd'hui : on reste sur son axe. Sinon, l'axe
+      // travaillé le moins récemment (la Force d'abord, faute d'historique).
+      cleAxe = aujourdhui(da) && da >= db ? a.cle : aujourdhui(db) ? b.cle : da <= db ? a.cle : b.cle;
+    }
+    const axe = axesOuverts.find((x) => x.cle === cleAxe) ?? axesOuverts[0];
     const elements: ElementSeance[] = [];
     if (axe) {
       const base = parDomaine.get(axe.base);

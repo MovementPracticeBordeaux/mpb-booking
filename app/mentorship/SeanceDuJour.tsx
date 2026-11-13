@@ -81,7 +81,6 @@ export default function SeanceDuJour({ elements, cycle, onChangerCycle, onOuvrir
     }
     return jours.size;
   };
-  const select: React.CSSProperties = { background: COULEURS.surfaceForte, border: `1px solid ${COULEURS.bordure}`, borderRadius: 8, padding: '7px 8px', color: COULEURS.texte, fontSize: 13, fontFamily: 'inherit', maxWidth: '100%' };
 
   return (
     <div style={{ maxWidth: 720, marginInline: 'auto' }}>
@@ -98,20 +97,19 @@ export default function SeanceDuJour({ elements, cycle, onChangerCycle, onOuvrir
             {cycle.baseValidee
               ? "La qualité de base de cet axe est validée à ce palier : la séance s'attache maintenant à valider la branche qu'elle sert."
               : "On valide d'abord la qualité de base (Force ou Mobilité), puis la branche qu'elle sert (Figures ou Locomotion)."}
-            {' '}Vise environ 3 séances par semaine sur le même axe, pendant 3 à 5 semaines.
+            {' '}Les deux axes alternent d'une séance à l'autre : vise environ 3 séances par semaine sur chacun.
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px 16px' }}>
-            {cycle.options.length > 1 ? (
-              <select aria-label="Axe du cycle" value={cycle.axe} onChange={(ev) => onChangerCycle({ axe: ev.target.value })} style={select}>
-                {cycle.options.map((o) => <option key={o.cle} value={o.cle}>{o.label}</option>)}
-              </select>
-            ) : (
-              <span style={{ fontSize: 13, color: COULEURS.texte, fontWeight: 600 }}>{cycle.options[0]?.label}</span>
-            )}
+            <span style={{ fontSize: 13, color: COULEURS.texte, fontWeight: 600 }}>Aujourd'hui : {cycle.options.find((o) => o.cle === cycle.axe)?.label}</span>
             {cycle.branches.map((b) => (
               <span key={b.domaine} style={{ fontSize: 12, color: b.couleur, fontWeight: 600, whiteSpace: 'nowrap' }}>{b.label} : {seancesSemaine(b.noeudId)}/3 cette semaine</span>
             ))}
           </div>
+          {cycle.options.filter((o) => o.cle !== cycle.axe).map((o) => (
+            <button key={o.cle} type="button" onClick={() => onChangerCycle({ axe: o.cle })} style={{ marginTop: 10, background: 'none', border: 'none', padding: 0, color: COULEURS.texteFaible, fontSize: 12, textDecoration: 'underline', textUnderlineOffset: 2, cursor: 'pointer', fontFamily: 'inherit' }}>
+              Faire plutôt {o.label} aujourd'hui
+            </button>
+          ))}
         </div>
       )}
 
