@@ -27,7 +27,7 @@ import ChecklistNoeud from './ChecklistNoeud';
 import JournalDuNoeud from './JournalDuNoeud';
 import JournalComplet from './JournalComplet';
 import SuiviPerf from './SuiviPerf';
-import SeanceDuJour, { type ElementSeance } from './SeanceDuJour';
+import SeanceDuJour, { type ElementSeance, type InfosCycle } from './SeanceDuJour';
 import RevisionDuJour, { type QuestionRevision } from './RevisionDuJour';
 import type { Badge } from '@/lib/mentorship-engagement';
 import type { StatsProgression } from '@/lib/stats-progression';
@@ -589,6 +589,20 @@ export default function ArbreCompetences({
   const [avantApresOuvert, setAvantApresOuvert] = useState(false);
   const [videoOuverteChemin, setVideoOuverteChemin] = useState<{ url: string; titre: string } | null>(null);
   const [seanceOuverte, setSeanceOuverte] = useState(false);
+  // Cycle d'entraînement choisi par l'élève pour ses séances : une branche
+  // prioritaire et une secondaire (méthode « Mon entraînement » du dossier).
+  // Gardé sur l'appareil ; sans choix, des valeurs par défaut s'appliquent.
+  const [cycle, setCycle] = useState<{ prio?: Domaine; sec?: Domaine | 'aucune' }>({});
+  useEffect(() => {
+    try {
+      const brut = window.localStorage.getItem('mentorat-cycle');
+      if (brut) setCycle(JSON.parse(brut));
+    } catch { /* stockage indisponible : valeurs par défaut */ }
+  }, []);
+  function changerCycle(c: { prio?: Domaine; sec?: Domaine | 'aucune' }) {
+    setCycle(c);
+    try { window.localStorage.setItem('mentorat-cycle', JSON.stringify(c)); } catch { /* idem */ }
+  }
   const refNoeudCourant = useRef<HTMLDivElement | null>(null);
   const [reponsesQCM, setReponsesQCM] = useState<Record<string, number>>({});
   const [onglet, setOnglet] = useState<Onglet>('arbre');
@@ -803,12 +817,17 @@ export default function ArbreCompetences({
     return ORDRE_DOMAINES.map((d) => branches.find((b) => b.domaine === d && b.niveau === palier)).filter((b): b is NoeudMentorshipPublic => !!b);
   }
 
-  // Séance du jour : objectifs pas encore acquis de l'étape en cours, ceux
-  // « à retravailler » d'abord, puis une rotation quotidienne. Armure : 4
-  // exercices du niveau + 1 outil de récupération. Branches : 1 exercice
-  // par branche encore à valider.
-  function composerSeance(): ElementSeance[] {
-    const element = (n: NoeudMentorshipPublic, ex: ExerciceMentorship, recuperation = false): ElementSeance => ({
+  // Séance du jour, composée selon la méthode « Mon entraînement » :
+  // - Armure : 4 exercices du niveau + 1 outil de récupération.
+  // - Branches : un cycle = UNE branche prioritaire (2 exercices) + UNE
+  //   secondaire (1 exercice), à travailler ~3 fois par semaine pendant 3 à
+  //   5 semaines. La Connexion (manipulation, coordination) demande de la
+  //   fréquence plus que du volume : un exercice en échauffement de chaque
+  //   séance. Ordre : cognitif -> mobilité -> stretch -> force.
+  // Les exercices « à retravailler » passent d'abord, puis rotation quotidienne.
+  const ORDRE_SEANCE: Record<string, number> = { connexion: 0, locomotion: 1, flexibilite: 2, figures: 3, force: 4, tronc: 5 };
+  function planSeance(): { elements: ElementSeance[]; cycle: InfosCycle | null } {
+    const element = (n: NoeudMentorshipPublic, ex: ExerciceMentorship, bloc: string, recuperation = false): ElementSeance => ({
       moduleId: moduleIdExercice(n, ex),
       exercice: ex,
       libelleNiveau: `${n.domaine === 'tronc' ? 'Armure Organique' : DOMAINE_LABELS[n.domaine as Domaine]} · niveau ${n.niveau}`,
@@ -816,29 +835,48 @@ export default function ArbreCompetences({
       brancheJournal: n.domaine,
       aRetravailler: statutExercice(n, ex) === 'refuse',
       recuperation,
+      bloc,
     });
-    const choisir = (n: NoeudMentorshipPublic, combien: number): ElementSeance[] => {
+    const choisir = (n: NoeudMentorshipPublic, combien: number, bloc: string): ElementSeance[] => {
       const candidats = exercicesAValider(n).filter((ex) => { const st = statutExercice(n, ex); return st !== 'acquis' && st !== 'en_attente'; });
       const refuses = candidats.filter((ex) => statutExercice(n, ex) === 'refuse');
       const autres = candidats.filter((ex) => statutExercice(n, ex) !== 'refuse');
       const decal = autres.length > 0 ? jourIndex % autres.length : 0;
-      return [...refuses, ...autres.slice(decal), ...autres.slice(0, decal)].slice(0, combien).map((ex) => element(n, ex));
+      return [...refuses, ...autres.slice(decal), ...autres.slice(0, decal)].slice(0, combien).map((ex) => element(n, ex, bloc));
     };
-    const etape = noeudsEtapeEnCours().filter((n) => !idsAcquis.has(n.id) && estDeverrouille(n));
-    if (etape.length === 0) return [];
-    if (etape.length === 1 && etape[0].domaine === 'tronc') {
+    const etape = noeudsEtapeEnCours().filter((n) => !idsAcquis.has(n.id) && estDeverrouille(n) && choisir(n, 1, '').length > 0);
+    if (etape.length === 0) return { elements: [], cycle: null };
+    if (etape[0].domaine === 'tronc') {
       const n = etape[0];
-      const seance = choisir(n, 4);
+      const elements = choisir(n, 4, 'Armure Organique');
       const recup = (n.exercices ?? []).filter((ex) => ex.theme === 'recuperation');
-      if (seance.length > 0 && recup.length > 0) seance.push(element(n, recup[jourIndex % recup.length], true));
-      return seance;
+      if (elements.length > 0 && recup.length > 0) elements.push(element(n, recup[jourIndex % recup.length], 'Récupération', true));
+      return { elements, cycle: null };
     }
-    return etape.flatMap((n) => choisir(n, 1));
+
+    const parDomaine = new Map(etape.map((n) => [n.domaine as Domaine, n]));
+    const dispo = [...parDomaine.keys()];
+    const premier = (ordre: Domaine[], sauf?: Domaine) => ordre.find((d) => parDomaine.has(d) && d !== sauf);
+    // Recommandations du dossier : priorité à la Locomotion ou aux Figures,
+    // la Force (ou une autre qualité physique) en soutien.
+    const prio = (cycle.prio && parDomaine.has(cycle.prio) ? cycle.prio : premier(['locomotion', 'figures', 'force', 'flexibilite', 'connexion']))!;
+    const sec = cycle.sec === 'aucune' ? undefined
+      : cycle.sec && cycle.sec !== prio && parDomaine.has(cycle.sec) ? cycle.sec
+      : premier(['force', 'flexibilite', 'figures', 'locomotion'], prio);
+    const elements: ElementSeance[] = [];
+    const connexion = parDomaine.get('connexion');
+    if (connexion && prio !== 'connexion' && sec !== 'connexion') elements.push(...choisir(connexion, 1, 'Échauffement cognitif'));
+    elements.push(...choisir(parDomaine.get(prio)!, 2, 'Objectif prioritaire'));
+    if (sec) elements.push(...choisir(parDomaine.get(sec)!, 1, 'Objectif secondaire'));
+    const rang = (e: ElementSeance) => (e.bloc === 'Échauffement cognitif' ? -1 : ORDRE_SEANCE[e.brancheJournal] ?? 9);
+    elements.sort((x, y) => rang(x) - rang(y));
+    const info = (d: Domaine) => ({ domaine: d, label: DOMAINE_LABELS[d], couleur: DOMAINE_COULEURS[d], noeudId: parDomaine.get(d)!.id });
+    return { elements, cycle: { prio: info(prio), sec: sec ? info(sec) : null, options: dispo.map(info) } };
   }
 
   function renderAccueil() {
     const tousNoeuds = [...tronc, ...branches];
-    const seanceDuJour = composerSeance();
+    const seanceDuJour = planSeance().elements;
     // Étape en cours : le niveau de l'Armure à valider, ou le palier commun
     // aux 5 branches (règle de progression horizontale).
     let titreEtape = '';
@@ -903,7 +941,7 @@ export default function ArbreCompetences({
             <span style={{ flexGrow: 1, minWidth: 0 }}>
               <span style={{ display: 'block', fontFamily: POLICE_DISPLAY, fontSize: 16, color: COULEURS.texte }}>Ma séance du jour</span>
               <span style={{ display: 'block', fontSize: 12, color: COULEURS.texteFaible, marginTop: 2 }}>
-                {seanceDuJour.length} exercice{seanceDuJour.length > 1 ? 's' : ''} tirés de tes objectifs en cours : {seanceDuJour.filter((e) => !e.recuperation).slice(0, 2).map((e) => e.exercice.nom).join(', ')}…
+{seanceDuJour.length} exercice{seanceDuJour.length > 1 ? 's' : ''} · {[...new Set(seanceDuJour.filter((e) => !e.recuperation).map((e) => e.libelleNiveau.split(' · ')[0]))].join(' + ')}
               </span>
             </span>
             <ChevronRight size={16} color={COULEURS.texteFaible} style={{ flexShrink: 0 }} />
@@ -1568,7 +1606,7 @@ export default function ArbreCompetences({
 
       {onglet === 'arbre' && !vueBranche && seanceOuverte && (
         <>
-          <SeanceDuJour elements={composerSeance()} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} onFermer={() => setSeanceOuverte(false)} />
+          <SeanceDuJour {...planSeance()} onChangerCycle={changerCycle} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} onFermer={() => setSeanceOuverte(false)} />
           {videoOuverteChemin && (
             <LecteurVideoModal url={videoOuverteChemin.url} titre={videoOuverteChemin.titre} onFermer={() => setVideoOuverteChemin(null)} />
           )}
@@ -2556,6 +2594,16 @@ function BlocExercice({
     prog?.statut === 'acquis' ? 'acquis' : prog?.statut === 'refuse' ? 'refuse' : prog?.statut === 'en_attente' ? 'en_attente' : 'a_faire';
   const objectifId = exercice.videoUrl ? objectifIdParUrl[exercice.videoUrl] : undefined;
   const [ouvert, setOuvert] = useState(false);
+  const zoneEnvoiRef = useRef<HTMLDivElement>(null);
+  function allerALEnvoi(e: React.MouseEvent) {
+    e.stopPropagation();
+    setOuvert(true);
+    setTimeout(() => {
+      zoneEnvoiRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      zoneEnvoiRef.current?.querySelector('input[type=url]')?.dispatchEvent(new Event('focus'));
+      (zoneEnvoiRef.current?.querySelector('input[type=url]') as HTMLInputElement | null)?.focus();
+    }, 60);
+  }
   const estOutilSante = exercice.theme === 'recuperation';
   const estAcquis = statutEx === 'acquis';
   const teinte = couleurIcone ?? '#FF00BE';
@@ -2587,7 +2635,9 @@ function BlocExercice({
         </span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
           {estOutilSante && <ChevronRight size={14} color={COULEURS.texteFaible} />}
-          <StatutExercicePastille statut={statutEx} estOutilSante={estOutilSante} couleur={teinte} />
+          <span role="button" tabIndex={0} aria-label="Aller à l'envoi de la vidéo" onClick={allerALEnvoi} onKeyDown={(e) => { if (e.key === 'Enter') allerALEnvoi(e as unknown as React.MouseEvent); }} style={{ display: 'inline-flex', padding: 6, margin: -6, cursor: 'pointer' }}>
+            <StatutExercicePastille statut={statutEx} estOutilSante={estOutilSante} couleur={teinte} />
+          </span>
         </span>
       </button>
 
@@ -2654,6 +2704,7 @@ function BlocExercice({
               Envoyée —{' '}<a href={prog?.video_url ?? '#'} target="_blank" rel="noopener noreferrer" style={{ color: '#FF00BE' }}>revoir ce que tu as envoyé</a>
             </p>
           )}
+          <div ref={zoneEnvoiRef}>
           {!estOutilSante && !estAdmin && statutEx === 'a_faire' && envoiBloque && (
             <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: '8px 0 0' }}>🔒 Réussis le QCM de ce niveau pour débloquer l'envoi de ta vidéo.</p>
           )}
@@ -2668,6 +2719,12 @@ function BlocExercice({
               </button>
             </form>
           )}
+          {!estOutilSante && estAdmin && statutEx !== 'acquis' && (
+            <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: '10px 0 0', border: `1px dashed ${COULEURS.bordure}`, borderRadius: 8, padding: '8px 10px' }}>
+              Aperçu admin : ici, l'élève colle le lien de sa vidéo et l'envoie pour validation. L'envoi n'est actif que sur un compte élève.
+            </p>
+          )}
+          </div>
         </div>
       )}
     </div>

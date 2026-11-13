@@ -21,10 +21,23 @@ export type ElementSeance = {
   brancheJournal: string; // clé de branche pour le journal ('tronc', 'force'...)
   aRetravailler: boolean;
   recuperation?: boolean; // outil de récupération : pas de suivi chiffré
+  bloc: string; // « Échauffement cognitif », « Objectif prioritaire »…
 };
 
-export default function SeanceDuJour({ elements, onOuvrirVideo, onFermer }: {
+type BrancheCycle = { domaine: string; label: string; couleur: string; noeudId: string };
+export type InfosCycle = { prio: BrancheCycle; sec: BrancheCycle | null; options: BrancheCycle[] };
+
+function debutSemaine(): Date {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return d;
+}
+
+export default function SeanceDuJour({ elements, cycle, onChangerCycle, onOuvrirVideo, onFermer }: {
   elements: ElementSeance[];
+  cycle: InfosCycle | null;
+  onChangerCycle: (c: { prio?: any; sec?: any }) => void;
   onOuvrirVideo: (url: string, titre: string) => void;
   onFermer: () => void;
 }) {
@@ -58,26 +71,73 @@ export default function SeanceDuJour({ elements, onOuvrirVideo, onFermer }: {
 
   const peutTerminer = faits > 0 || !!ressenti.trim();
 
+  // Nombre de jours de la semaine où une perf a été notée sur la branche.
+  const lundi = debutSemaine();
+  const seancesSemaine = (noeudId: string) => {
+    const jours = new Set<string>();
+    for (const [moduleId, perfs] of parModule) {
+      if (!moduleId.startsWith(`${noeudId}::`)) continue;
+      for (const p of perfs) { const d = new Date(p.cree_le); if (d >= lundi) jours.add(d.toDateString()); }
+    }
+    return jours.size;
+  };
+  const select: React.CSSProperties = { background: COULEURS.surfaceForte, border: `1px solid ${COULEURS.bordure}`, borderRadius: 8, padding: '7px 8px', color: COULEURS.texte, fontSize: 13, fontFamily: 'inherit', maxWidth: '100%' };
+
   return (
     <div style={{ maxWidth: 720, marginInline: 'auto' }}>
       <button type="button" onClick={onFermer} style={{ background: 'none', border: 'none', color: COULEURS.texteFaible, cursor: 'pointer', fontSize: 13, padding: 0, fontFamily: 'inherit' }}>← Retour au tableau de bord</button>
       <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 24, letterSpacing: 0.5, margin: '10px 0 4px', color: COULEURS.texte }}>MA SÉANCE DU JOUR</h2>
       <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: '0 0 16px', lineHeight: 1.5 }}>
-        Composée à partir de tes objectifs en cours, elle change chaque jour. Note ce que tu fais au fur et à mesure : {faits}/{travail.length} exercice{travail.length > 1 ? 's' : ''} noté{faits > 1 ? 's' : ''}.
+        Composée à partir de tes objectifs en cours, elle change chaque jour. Compte 3 à 5 séances par semaine. Note ce que tu fais au fur et à mesure : {faits}/{travail.length} exercice{travail.length > 1 ? 's' : ''} noté{faits > 1 ? 's' : ''}.
       </p>
+
+      {cycle && (
+        <div style={{ border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: '14px 16px', marginBottom: 14 }}>
+          <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 15, margin: '0 0 4px', color: COULEURS.texte }}>Mon cycle</p>
+          <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: '0 0 12px', lineHeight: 1.5 }}>
+            Une branche prioritaire et une secondaire, à travailler environ 3 fois par semaine pendant 3 à 5 semaines. Les autres branches attendent le cycle suivant.
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 10 }}>
+            <label style={{ fontSize: 11, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 0.6, fontWeight: 700 }}>
+              Priorité
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 5 }}>
+                <select value={cycle.prio.domaine} onChange={(ev) => onChangerCycle({ prio: ev.target.value, sec: cycle.sec && cycle.sec.domaine !== ev.target.value ? cycle.sec.domaine : undefined })} style={select}>
+                  {cycle.options.map((o) => <option key={o.domaine} value={o.domaine}>{o.label}</option>)}
+                </select>
+                <span style={{ fontSize: 12, color: cycle.prio.couleur, fontWeight: 600, textTransform: 'none', letterSpacing: 0, whiteSpace: 'nowrap' }}>{seancesSemaine(cycle.prio.noeudId)}/3 cette semaine</span>
+              </span>
+            </label>
+            <label style={{ fontSize: 11, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 0.6, fontWeight: 700 }}>
+              Secondaire
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 5 }}>
+                <select value={cycle.sec?.domaine ?? 'aucune'} onChange={(ev) => onChangerCycle({ prio: cycle.prio.domaine, sec: ev.target.value })} style={select}>
+                  {cycle.options.filter((o) => o.domaine !== cycle.prio.domaine).map((o) => <option key={o.domaine} value={o.domaine}>{o.label}</option>)}
+                  <option value="aucune">Aucune</option>
+                </select>
+                {cycle.sec && <span style={{ fontSize: 12, color: cycle.sec.couleur, fontWeight: 600, textTransform: 'none', letterSpacing: 0, whiteSpace: 'nowrap' }}>{seancesSemaine(cycle.sec.noeudId)}/3 cette semaine</span>}
+              </span>
+            </label>
+          </div>
+        </div>
+      )}
 
       <ol style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
         {elements.map((e, i) => {
           const fait = !e.recuperation && perfDuJour(e.moduleId).length > 0;
+          const nouveauBloc = i === 0 || elements[i - 1].bloc !== e.bloc;
           return (
-            <li key={e.moduleId} style={{ border: `1px solid ${fait ? e.couleur : COULEURS.bordure}`, borderRadius: 12, padding: '14px 16px' }}>
+            <li key={e.moduleId} style={{ listStyle: 'none' }}>
+            {nouveauBloc && (
+              <p style={{ fontSize: 11, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, margin: `${i === 0 ? 0 : 6}px 0 8px` }}>{e.bloc}</p>
+            )}
+            <div style={{ border: `1px solid ${fait ? e.couleur : COULEURS.bordure}`, borderRadius: 12, padding: '14px 16px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ flexShrink: 0, width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1.5px solid ${e.couleur}`, background: fait ? e.couleur : 'transparent', color: fait ? '#04121A' : e.couleur, fontSize: 13, fontWeight: 700 }}>
                   {fait ? '✓' : i + 1}
                 </span>
                 <span style={{ minWidth: 0 }}>
                   <span style={{ display: 'block', fontSize: 11, color: e.couleur, letterSpacing: 0.8, fontWeight: 600 }}>
-                    {e.recuperation ? 'RÉCUPÉRATION' : e.libelleNiveau.toUpperCase()}{e.aRetravailler ? ' · À RETRAVAILLER' : ''}
+                    {e.recuperation ? 'OUTIL SANTÉ' : e.libelleNiveau.toUpperCase()}{e.aRetravailler ? ' · À RETRAVAILLER' : ''}
                   </span>
                   <span style={{ display: 'block', fontSize: 15, color: COULEURS.texte, fontWeight: 500 }}>{e.exercice.nom}</span>
                 </span>
@@ -104,6 +164,7 @@ export default function SeanceDuJour({ elements, onOuvrirVideo, onFermer }: {
               </div>
 
               {!e.recuperation && <SuiviPerf moduleId={e.moduleId} couleur={e.couleur} critere={e.exercice.critereValidation} />}
+            </div>
             </li>
           );
         })}
