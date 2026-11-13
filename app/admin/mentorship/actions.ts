@@ -4,6 +4,7 @@ import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { BRANCHES, TRONC } from '@/lib/mentorship-modules';
+import { notifierRetourVideo } from '@/lib/mentorship-notifs';
 
 function echouer(message: string): never {
   redirect(`/admin/mentorship?erreur=${encodeURIComponent(message)}`);
@@ -55,6 +56,7 @@ export async function validerSoumission(formData: FormData) {
     });
   }
 
+  await notifierRetourVideo(eleveId, moduleId, 'acquis');
   revalidatePath('/admin/mentorship');
   reussir('Vidéo validée.');
 }
@@ -82,6 +84,7 @@ export async function refuserSoumission(formData: FormData) {
     });
   }
 
+  await notifierRetourVideo(eleveId, moduleId, 'refuse', commentaire);
   revalidatePath('/admin/mentorship');
   reussir('Retour envoyé à l\'élève.');
 }

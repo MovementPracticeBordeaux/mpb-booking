@@ -1,5 +1,6 @@
 'use server';
 
+import { notifierVideoSoumise } from '@/lib/mentorship-notifs';
 import { supabaseServer } from '@/lib/supabase-server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -110,6 +111,7 @@ export async function soumettreVideo(formData: FormData) {
     .eq('eleve_id', user.id).eq('module_id', noeudId);
 
   if (error) echouer(error.message);
+  await notifierVideoSoumise(user.id, noeudId);
 
   revalidatePath('/mentorship');
 }
@@ -176,6 +178,7 @@ export async function soumettreVideoExercice(formData: FormData) {
   const { error } = await supabase.from('mentorship_progression')
     .upsert(valeurs, { onConflict: 'eleve_id,module_id' });
   if (error) echouer(error.message);
+  await notifierVideoSoumise(user.id, moduleId);
 
   revalidatePath('/mentorship');
 }
