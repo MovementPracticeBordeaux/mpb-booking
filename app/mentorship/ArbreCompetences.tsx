@@ -825,9 +825,9 @@ export default function ArbreCompetences({
   //        (après la Mobilité) ;
   //     3. fin de séance en Connexion, 15 minutes ;
   //     4. récupération (un outil santé de l'Armure).
-  //   Tant que la qualité de base du palier n'est pas validée, elle porte
-  //   l'essentiel de la séance (2 exercices, 1 pour la branche servie). Une
-  //   fois validée, on s'attache à valider la branche servie (2 exercices).
+  //   Tant que la qualité de base du palier n'est pas validée : 3 exercices
+  //   pour elle, 2 pour la branche servie. Une fois validée, on s'attache à
+  //   valider la branche servie (3 exercices).
   // Les exercices « à retravailler » passent d'abord, puis rotation quotidienne.
   const BLOC_CONNEXION = 'Fin de séance · Connexion, 15 min';
   const AXES = [
@@ -870,8 +870,8 @@ export default function ArbreCompetences({
     if (axe) {
       const base = parDomaine.get(axe.base);
       const cible = parDomaine.get(axe.cible);
-      if (base) elements.push(...choisir(base, cible ? 2 : 3, `1 · ${DOMAINE_LABELS[axe.base]}`));
-      if (cible) elements.push(...choisir(cible, base ? 1 : 2, `${base ? 2 : 1} · ${DOMAINE_LABELS[axe.cible]}`));
+      if (base) elements.push(...choisir(base, 3, `1 · ${DOMAINE_LABELS[axe.base]}`));
+      if (cible) elements.push(...choisir(cible, base ? 2 : 3, `${base ? 2 : 1} · ${DOMAINE_LABELS[axe.cible]}`));
     }
     const connexion = parDomaine.get('connexion');
     if (connexion) elements.push(...choisir(connexion, 1, BLOC_CONNEXION));
