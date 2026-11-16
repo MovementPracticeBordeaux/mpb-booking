@@ -105,7 +105,7 @@ export default async function AdminMentorshipPage({ searchParams }: { searchPara
 
               {perfsDe(s.eleve_id, s.module_id).length > 0 && (
                 <p style={{ fontSize: 12, color: COULEURS.texteAtt, margin: '10px 0 0' }}>
-                  Son suivi : {perfsDe(s.eleve_id, s.module_id).map((p: any) => `${new Date(p.cree_le).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} ${p.series}×${Number(p.valeur)}${p.unite === 'sec' ? 's' : ''}${p.charge_kg ? ` (${Number(p.charge_kg)} kg)` : ''}`).join(' · ')}
+                  Son suivi : {perfsDe(s.eleve_id, s.module_id).map((p: any) => `${new Date(p.cree_le).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} ${p.series}×${p.unite === 'sec' ? (Number(p.valeur) >= 60 ? `${Math.round(Number(p.valeur) / 6) / 10} min` : `${Number(p.valeur)} s`) : `${Number(p.valeur)} reps`}${p.charge_kg ? ` (${Number(p.charge_kg)} kg)` : ''}`).join(' · ')}
                 </p>
               )}
 
