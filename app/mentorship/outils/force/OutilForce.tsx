@@ -2,17 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { COULEURS, GRADIENT, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
-import { supabaseBrowser } from '@/lib/supabase-browser';
-import CourbeSimple from '../CourbeSimple';
 
-type EntreeHistorique = {
-  id: string;
-  exercice: string;
-  reps_par_set: string;
-  lieu: string | null;
-  ressenti: string | null;
-  cree_le: string;
-};
 
 function mmss(totalSecondes: number): string {
   const m = Math.floor(totalSecondes / 60).toString().padStart(2, '0');
@@ -209,212 +199,7 @@ function MinuteurEMOM() {
 }
 
 // ------------------------------------------------------------------------
-// COMPTEUR REPS / SETS + HISTORIQUE
-// ------------------------------------------------------------------------
-function CompteurRepsSets({ historiqueInitial }: { historiqueInitial: EntreeHistorique[] }) {
-  const supabase = supabaseBrowser();
-  const [exercice, setExercice] = useState('');
-  const [setsRealises, setSetsRealises] = useState<number[]>([]);
-  const [repsCourant, setRepsCourant] = useState(0);
-  const [saisieFinale, setSaisieFinale] = useState(false);
-  const [lieu, setLieu] = useState('');
-  const [ressenti, setRessenti] = useState('');
-  const [historique, setHistorique] = useState(historiqueInitial);
-  const [enregistrement, setEnregistrement] = useState(false);
-
-  function validerSet() {
-    if (repsCourant === 0) return;
-    setSetsRealises((prev) => [...prev, repsCourant]);
-    setRepsCourant(0);
-  }
-
-  function annulerTout() {
-    setSetsRealises([]);
-    setRepsCourant(0);
-    setSaisieFinale(false);
-    setLieu('');
-    setRessenti('');
-  }
-
-  async function enregistrer() {
-    if (!exercice.trim() || setsRealises.length === 0) return;
-    setEnregistrement(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setEnregistrement(false); return; }
-
-    const { data, error } = await supabase
-      .from('historique_reps_sets')
-      .insert({
-        eleve_id: user.id,
-        exercice: exercice.trim(),
-        reps_par_set: setsRealises.join(','),
-        lieu: lieu.trim() || null,
-        ressenti: ressenti.trim() || null,
-      })
-      .select('id, exercice, reps_par_set, lieu, ressenti, cree_le')
-      .single();
-
-    setEnregistrement(false);
-    if (!error && data) {
-      setHistorique((prev) => [data as EntreeHistorique, ...prev]);
-      setExercice('');
-      annulerTout();
-    }
-  }
-
-  async function supprimerEntree(id: string) {
-    setHistorique((prev) => prev.filter((h) => h.id !== id));
-    await supabase.from('historique_reps_sets').delete().eq('id', id);
-  }
-
-  return (
-    <section style={{ marginBottom: 32 }}>
-      <h2 style={{ fontSize: 15, fontWeight: 600, margin: '0 0 12px' }}>Compteur reps / sets</h2>
-
-      <div style={{ border: `1px solid ${COULEURS.bordure}`, borderRadius: 14, padding: 20, background: COULEURS.surface, marginBottom: 20 }}>
-        <input
-          type="text"
-          value={exercice}
-          onChange={(e) => setExercice(e.target.value)}
-          placeholder="Nom de l'exercice (ex. Tractions strictes)"
-          style={{ ...champStyle, width: '100%', marginBottom: 16, boxSizing: 'border-box' }}
-        />
-
-        {setsRealises.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-            {setsRealises.map((reps, i) => (
-              <span key={i} style={{ fontSize: 13, padding: '6px 12px', borderRadius: 999, background: COULEURS.surfaceForte, border: `1px solid ${COULEURS.bordure}` }}>
-                Set {i + 1} : <strong style={{ color: '#f0a' }}>{reps}</strong>
-              </span>
-            ))}
-          </div>
-        )}
-
-        {!saisieFinale ? (
-          <>
-            <div style={{ textAlign: 'center', marginBottom: 16 }}>
-              <p style={{ fontSize: 11, letterSpacing: 1, color: COULEURS.texteFaible, margin: '0 0 8px' }}>RÉPÉTITIONS — SET {setsRealises.length + 1}</p>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
-                <button type="button" onClick={() => setRepsCourant((r) => Math.max(0, r - 1))} style={{ width: 44, height: 44, borderRadius: 10, border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surfaceForte, color: COULEURS.texte, fontSize: 22, cursor: 'pointer' }}>−</button>
-                <span style={{ fontFamily: POLICE_DISPLAY, fontSize: 48, minWidth: 70, textAlign: 'center' }}>{repsCourant}</span>
-                <button type="button" onClick={() => setRepsCourant((r) => r + 1)} style={{ width: 44, height: 44, borderRadius: 10, border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surfaceForte, color: COULEURS.texte, fontSize: 22, cursor: 'pointer' }}>+</button>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <button type="button" onClick={validerSet} disabled={repsCourant === 0} style={{ fontSize: 13, padding: '10px 20px', borderRadius: 999, border: 'none', background: repsCourant === 0 ? COULEURS.surfaceForte : GRADIENT, color: repsCourant === 0 ? COULEURS.texteFaible : 'white', fontWeight: 600, cursor: repsCourant === 0 ? 'not-allowed' : 'pointer' }}>
-                Valider ce set
-              </button>
-              {setsRealises.length > 0 && (
-                <button type="button" onClick={() => setSaisieFinale(true)} style={{ fontSize: 13, padding: '10px 20px', borderRadius: 999, border: `1px solid ${COULEURS.bordure}`, background: 'transparent', color: COULEURS.texteAtt, cursor: 'pointer' }}>
-                  Terminer →
-                </button>
-              )}
-            </div>
-          </>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <input type="text" value={lieu} onChange={(e) => setLieu(e.target.value)} placeholder="Lieu (optionnel)" style={champStyle} />
-            <textarea value={ressenti} onChange={(e) => setRessenti(e.target.value)} placeholder="Ressenti (optionnel)" rows={2} style={{ ...champStyle, resize: 'vertical' }} />
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button type="button" onClick={enregistrer} disabled={enregistrement || !exercice.trim()} style={{ fontSize: 13, padding: '10px 20px', borderRadius: 999, border: 'none', background: GRADIENT, color: 'white', fontWeight: 600, cursor: 'pointer', opacity: enregistrement ? 0.6 : 1 }}>
-                {enregistrement ? 'Enregistrement…' : 'Enregistrer dans mon historique'}
-              </button>
-              <button type="button" onClick={() => setSaisieFinale(false)} style={{ fontSize: 13, padding: '10px 20px', borderRadius: 999, border: `1px solid ${COULEURS.bordure}`, background: 'transparent', color: COULEURS.texteFaible, cursor: 'pointer' }}>
-                ← Retour
-              </button>
-            </div>
-          </div>
-        )}
-
-        {setsRealises.length > 0 && !saisieFinale && (
-          <button type="button" onClick={annulerTout} style={{ display: 'block', margin: '12px auto 0', fontSize: 12, color: COULEURS.texteFaible, background: 'none', border: 'none', cursor: 'pointer' }}>
-            Tout annuler
-          </button>
-        )}
-      </div>
-
-      {historique.length > 0 && (
-        <>
-          <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>Progression</p>
-          <CourbeExercice historique={historique} />
-
-          <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: '20px 0 8px', textTransform: 'uppercase', letterSpacing: 0.5 }}>Historique</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {historique.map((h) => (
-              <div key={h.id} style={{ border: `1px solid ${COULEURS.bordure}`, borderRadius: 10, padding: 12 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-                  <strong style={{ fontSize: 14 }}>{h.exercice}</strong>
-                  <span style={{ fontSize: 11, color: COULEURS.texteFaible }}>
-                    {new Date(h.cree_le).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} à {new Date(h.cree_le).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                </div>
-                <p style={{ fontSize: 13, color: COULEURS.texteAtt, margin: '4px 0 0' }}>
-                  Sets : {h.reps_par_set.split(',').join(' · ')}
-                  {h.lieu && ` · ${h.lieu}`}
-                </p>
-                {h.ressenti && <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: '4px 0 0', fontStyle: 'italic' }}>{h.ressenti}</p>}
-                <button type="button" onClick={() => supprimerEntree(h.id)} style={{ fontSize: 11, color: COULEURS.texteFaible, background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: 6 }}>
-                  Supprimer
-                </button>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-    </section>
-  );
-}
-
-// ------------------------------------------------------------------------
-// COURBE DE PROGRESSION — volume total (somme des reps) par séance, pour un exercice choisi
-// ------------------------------------------------------------------------
-function CourbeExercice({ historique }: { historique: EntreeHistorique[] }) {
-  const exercicesDisponibles = useMemo(
-    () => Array.from(new Set(historique.map((h) => h.exercice))),
-    [historique]
-  );
-  const [exerciceChoisi, setExerciceChoisi] = useState(exercicesDisponibles[0] ?? '');
-
-  useEffect(() => {
-    if (!exercicesDisponibles.includes(exerciceChoisi)) setExerciceChoisi(exercicesDisponibles[0] ?? '');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [historique]);
-
-  const points = useMemo(() => {
-    return historique
-      .filter((h) => h.exercice === exerciceChoisi)
-      .slice()
-      .reverse() // du plus ancien au plus récent, pour lire la courbe chronologiquement
-      .map((h) => ({
-        date: h.cree_le,
-        valeur: h.reps_par_set.split(',').map(Number).reduce((a, b) => a + b, 0),
-      }));
-  }, [historique, exerciceChoisi]);
-
-  if (exercicesDisponibles.length === 0) return null;
-
-  return (
-    <div>
-      {exercicesDisponibles.length > 1 && (
-        <select
-          value={exerciceChoisi}
-          onChange={(e) => setExerciceChoisi(e.target.value)}
-          style={{ ...champStyle, width: '100%', boxSizing: 'border-box', marginBottom: 12 }}
-        >
-          {exercicesDisponibles.map((e) => <option key={e} value={e}>{e}</option>)}
-        </select>
-      )}
-      <p style={{ fontSize: 11, color: COULEURS.texteFaible, marginBottom: 8 }}>
-        Volume total (reps, tous sets confondus) par séance — {exerciceChoisi}
-      </p>
-      <CourbeSimple points={points} unite={(v) => `${v} reps`} couleur="#f0a" />
-    </div>
-  );
-}
-
-// ------------------------------------------------------------------------
-export default function OutilForce({ historiqueInitial }: { historiqueInitial: EntreeHistorique[] }) {
+export default function OutilForce() {
   return (
     <main style={{ maxWidth: 560, margin: '0 auto', padding: '24px 20px' }}>
       <a href="/mentorship" style={{ fontSize: 13, color: COULEURS.texteFaible, textDecoration: 'none' }}>← Retour au Mentorat</a>
@@ -423,12 +208,11 @@ export default function OutilForce({ historiqueInitial }: { historiqueInitial: E
         OUTIL <span style={GRADIENT_TEXTE}>FORCE</span>
       </h1>
       <p style={{ color: COULEURS.texteFaible, fontSize: 13, margin: '0 0 24px' }}>
-        Un minuteur pour tes EMOM et intervalles, et un compteur pour suivre tes reps et sets — avec un
-        historique daté que tu retrouves à chaque visite.
+        Un minuteur pour tes EMOM et intervalles. Tes séries et répétitions se notent directement sous
+        chaque exercice, dans « Mon suivi ».
       </p>
 
       <MinuteurEMOM />
-      <CompteurRepsSets historiqueInitial={historiqueInitial} />
     </main>
   );
 }

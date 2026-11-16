@@ -4,6 +4,7 @@ import { envoyerEmail } from '@/lib/resend';
 import { envoyerPushAEleve } from '@/lib/push';
 import { degelerAbonnement } from '@/lib/degel';
 import { alerterAdmin } from '@/lib/alerte-admin';
+import { envoyerRecapsHebdo, estDimancheAParis } from '@/lib/mentorship-recap';
 
 // Appelée automatiquement une fois par jour par Vercel Cron (voir vercel.json).
 // Envoie un email de rappel à chaque élève ayant un cours réservé le lendemain.
@@ -193,7 +194,20 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({ envoyes, echecs, eleves: parEleve.size, reservations: (reservations ?? []).length, degeles, comptesSupprimes });
+    // Récap hebdomadaire du Mentorat, le dimanche soir. Indépendant du reste :
+    // un échec ici ne doit pas faire échouer les rappels de cours.
+    let recapsMentorat = 0;
+    try {
+      if (estDimancheAParis(new Date())) {
+        const r = await envoyerRecapsHebdo(new Date());
+        recapsMentorat = r.envoyes;
+        if (r.echecs > 0) await alerterAdmin(`${r.echecs} récap(s) Mentorat non envoyé(s)`, `${r.envoyes} récap(s) hebdomadaire(s) sont bien partis, ${r.echecs} ont échoué.`);
+      }
+    } catch {
+      // non bloquant
+    }
+
+    return NextResponse.json({ envoyes, echecs, eleves: parEleve.size, reservations: (reservations ?? []).length, degeles, comptesSupprimes, recapsMentorat });
   } catch (e: any) {
     await alerterAdmin(
       'Le cron des rappels a planté',

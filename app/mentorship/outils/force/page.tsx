@@ -28,11 +28,5 @@ export default async function OutilForcePage() {
     );
   }
 
-  const { data: historiqueData } = await supabase
-    .from('historique_reps_sets')
-    .select('id, exercice, reps_par_set, lieu, ressenti, cree_le')
-    .order('cree_le', { ascending: false })
-    .limit(50);
-
-  return <OutilForce historiqueInitial={historiqueData ?? []} />;
+  return <OutilForce />;
 }

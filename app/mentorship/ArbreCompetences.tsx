@@ -114,9 +114,8 @@ function metaPour(statut: StatutAffiche, couleurBranche: string) {
 // Lien vers l'outil dédié de chaque branche, affiché dans l'accordéon
 // "Outil" de la vue chemin. Toutes les branches n'ont pas encore le leur.
 const OUTIL_PAR_BRANCHE: Partial<Record<Domaine, { href: string; label: string }>> = {
-  force: { href: '/mentorship/outils/force', label: 'Outil Force — EMOM + compteur reps/sets' },
+  force: { href: '/mentorship/outils/force', label: 'Outil Force — minuteur EMOM / intervalles' },
   locomotion: { href: '/mentorship/outils/locomotion', label: 'Outil Locomotion — combinaisons + métronome' },
-  figures: { href: '/mentorship/outils/figures', label: 'Outil Figures — chrono de tenue + récupération' },
 };
 
 // Comparaison de la première vidéo jamais soumise sur un module (nœud ou
@@ -1926,7 +1925,7 @@ export default function ArbreCompetences({
                 <span style={{ display: 'block', fontSize: 12, color: COULEURS.texteFaible, marginTop: 2 }}>Ouvrir →</span>
               </a>
             ))}
-            <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginTop: 4 }}>Les outils Flexibilité et Connexion arriveront progressivement.</p>
+            <p style={{ fontSize: 12, color: COULEURS.texteFaible, marginTop: 4 }}>Le chrono (tenue, récupération, temps de travail) et le suivi se trouvent directement sous chaque exercice.</p>
           </div>
         </div>
       )}
@@ -1990,136 +1989,6 @@ export default function ArbreCompetences({
             </div>
           </div>
 
-          {/* Volume Force */}
-          {(statsProgression.volumeForceParSemaine.length > 0 || statsProgression.volumeForceParMois.length > 0) && (
-            <div style={{ background: FOND_CARTE, border: `1px solid ${BORDURE_CARTE}`, borderRadius: 12, padding: '16px 18px' }}>
-              <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 15, letterSpacing: 0.3, margin: '0 0 4px', color: COULEURS.texte }}>Volume Force</p>
-              <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 12px' }}>Répétitions totales enregistrées dans l'outil Force.</p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20 }}>
-                <div>
-                  <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 0.5 }}>Par semaine</p>
-                  <BarresVolume
-                    points={statsProgression.volumeForceParSemaine}
-                    formatValeur={(v) => `${v}`}
-                    formatPeriode={(p) => new Date(p).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                    couleur={DOMAINE_COULEURS.force}
-                  />
-                </div>
-                <div>
-                  <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 0.5 }}>Par mois</p>
-                  <BarresVolume
-                    points={statsProgression.volumeForceParMois}
-                    formatValeur={(v) => `${v}`}
-                    formatPeriode={(p) => new Date(p + '-01').toLocaleDateString('fr-FR', { month: 'short' })}
-                    couleur={DOMAINE_COULEURS.force}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Temps de tenue Figures */}
-          {(statsProgression.tempsFiguresParSemaineSec.length > 0 || statsProgression.tempsFiguresParMoisSec.length > 0) && (
-            <div style={{ background: FOND_CARTE, border: `1px solid ${BORDURE_CARTE}`, borderRadius: 12, padding: '16px 18px' }}>
-              <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 15, letterSpacing: 0.3, margin: '0 0 4px', color: COULEURS.texte }}>Temps sur les mains (Figures)</p>
-              <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 12px' }}>Cumul des tenues chronométrées dans l'outil Figures.</p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20 }}>
-                <div>
-                  <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 0.5 }}>Par semaine</p>
-                  <BarresVolume
-                    points={statsProgression.tempsFiguresParSemaineSec}
-                    formatValeur={mmss}
-                    formatPeriode={(p) => new Date(p).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                    couleur={DOMAINE_COULEURS.figures}
-                  />
-                </div>
-                <div>
-                  <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 0.5 }}>Par mois</p>
-                  <BarresVolume
-                    points={statsProgression.tempsFiguresParMoisSec}
-                    formatValeur={mmss}
-                    formatPeriode={(p) => new Date(p + '-01').toLocaleDateString('fr-FR', { month: 'short' })}
-                    couleur={DOMAINE_COULEURS.figures}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Temps de travail Locomotion (chrono de séance) + combinaisons tirées au shaker */}
-          {(statsProgression.tempsLocomotionParSemaineSec.length > 0 || statsProgression.tempsLocomotionParMoisSec.length > 0) && (
-            <div style={{ background: FOND_CARTE, border: `1px solid ${BORDURE_CARTE}`, borderRadius: 12, padding: '16px 18px' }}>
-              <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 15, letterSpacing: 0.3, margin: '0 0 4px', color: COULEURS.texte }}>Temps de travail (Locomotion)</p>
-              <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 12px' }}>Séances chronométrées dans l'outil Locomotion.</p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20 }}>
-                <div>
-                  <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 0.5 }}>Par semaine</p>
-                  <BarresVolume
-                    points={statsProgression.tempsLocomotionParSemaineSec}
-                    formatValeur={mmss}
-                    formatPeriode={(p) => new Date(p).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                    couleur={DOMAINE_COULEURS.locomotion}
-                  />
-                </div>
-                <div>
-                  <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: 0.5 }}>Par mois</p>
-                  <BarresVolume
-                    points={statsProgression.tempsLocomotionParMoisSec}
-                    formatValeur={mmss}
-                    formatPeriode={(p) => new Date(p + '-01').toLocaleDateString('fr-FR', { month: 'short' })}
-                    couleur={DOMAINE_COULEURS.locomotion}
-                  />
-                </div>
-              </div>
-              {statsProgression.combinaisonsLocomotionParSemaine.length > 0 && (
-                <>
-                  <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '16px 0 8px', textTransform: 'uppercase', letterSpacing: 0.5 }}>Combinaisons tirées au shaker (par semaine)</p>
-                  <BarresVolume
-                    points={statsProgression.combinaisonsLocomotionParSemaine}
-                    formatValeur={(v) => `${v}`}
-                    formatPeriode={(p) => new Date(p).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                    couleur={DOMAINE_COULEURS.locomotion}
-                  />
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Points forts / à travailler */}
-          {(statsProgression.forcePointsForts.length > 0 || statsProgression.figuresMeilleures.length > 0) && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
-              {statsProgression.forcePointsForts.length > 0 && (
-                <div style={{ background: FOND_CARTE, border: `1px solid ${BORDURE_CARTE}`, borderRadius: 12, padding: '16px 18px' }}>
-                  <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 14, letterSpacing: 0.3, margin: '0 0 10px', color: COULEURS.texte }}>Force — les plus pratiqués</p>
-                  <ListeClassement items={statsProgression.forcePointsForts.map((p) => ({ nom: p.nom, valeur: `${p.total} reps` }))} couleur={DOMAINE_COULEURS.force} />
-                  {statsProgression.forcePointsFaibles.length > 0 && (
-                    <>
-                      <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 14, letterSpacing: 0.3, margin: '16px 0 10px', color: COULEURS.texte }}>Force — les moins pratiqués</p>
-                      <ListeClassement items={statsProgression.forcePointsFaibles.map((p) => ({ nom: p.nom, valeur: `${p.total} reps` }))} couleur={COULEURS.texteFaible} />
-                    </>
-                  )}
-                </div>
-              )}
-              {statsProgression.figuresMeilleures.length > 0 && (
-                <div style={{ background: FOND_CARTE, border: `1px solid ${BORDURE_CARTE}`, borderRadius: 12, padding: '16px 18px' }}>
-                  <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 14, letterSpacing: 0.3, margin: '0 0 10px', color: COULEURS.texte }}>Figures — meilleures tenues</p>
-                  <ListeClassement items={statsProgression.figuresMeilleures.map((p) => ({ nom: p.nom, valeur: mmss(p.meilleurTempsSec) }))} couleur={DOMAINE_COULEURS.figures} />
-                  {statsProgression.figuresAAmeliorer.length > 0 && (
-                    <>
-                      <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 14, letterSpacing: 0.3, margin: '16px 0 10px', color: COULEURS.texte }}>Figures — à travailler</p>
-                      <ListeClassement items={statsProgression.figuresAAmeliorer.map((p) => ({ nom: p.nom, valeur: mmss(p.meilleurTempsSec) }))} couleur={COULEURS.texteFaible} />
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {statsProgression.volumeForceParSemaine.length === 0 && statsProgression.tempsFiguresParSemaineSec.length === 0 && statsProgression.tempsLocomotionParSemaineSec.length === 0 && statsProgression.joursActifs30j === 0 && (
-            <p style={{ fontSize: 13, color: COULEURS.texteFaible, textAlign: 'center', padding: '20px 0' }}>
-              Utilise les outils Force, Figures ou Locomotion pour voir tes statistiques apparaître ici.
-            </p>
-          )}
         </div>
       )}
 

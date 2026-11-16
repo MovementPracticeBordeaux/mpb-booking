@@ -28,11 +28,5 @@ export default async function OutilLocomotionPage() {
     );
   }
 
-  const { data: historiqueData } = await supabase
-    .from('historique_locomotion')
-    .select('id, duree_secondes, nb_combinaisons, cree_le')
-    .order('cree_le', { ascending: false })
-    .limit(50);
-
-  return <OutilLocomotion historiqueInitial={historiqueData ?? []} />;
+  return <OutilLocomotion />;
 }

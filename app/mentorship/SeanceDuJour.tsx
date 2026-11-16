@@ -81,6 +81,12 @@ export default function SeanceDuJour({ elements, cycle, onChangerCycle, onOuvrir
     }
     return jours.size;
   };
+  // Séances de la semaine, tous axes confondus : jours où au moins une perf a été notée.
+  const seancesTotalSemaine = (() => {
+    const jours = new Set<string>();
+    for (const perfs of parModule.values()) for (const p of perfs) { const d = new Date(p.cree_le); if (d >= lundi) jours.add(d.toDateString()); }
+    return jours.size;
+  })();
 
   return (
     <div style={{ maxWidth: 720, marginInline: 'auto' }}>
@@ -97,13 +103,16 @@ export default function SeanceDuJour({ elements, cycle, onChangerCycle, onOuvrir
             {cycle.baseValidee
               ? "La qualité de base de cet axe est validée à ce palier : la séance s'attache maintenant à valider la branche qu'elle sert."
               : "On valide d'abord la qualité de base (Force ou Mobilité), puis la branche qu'elle sert (Figures ou Locomotion)."}
-            {' '}Les deux axes alternent d'une séance à l'autre : vise environ 3 séances par semaine sur chacun.
+            {' '}Les deux axes alternent d'une séance à l'autre, sur 3 à 5 séances par semaine au total.
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px 16px' }}>
             <span style={{ fontSize: 13, color: COULEURS.texte, fontWeight: 600 }}>Aujourd'hui : {cycle.options.find((o) => o.cle === cycle.axe)?.label}</span>
             {cycle.branches.map((b) => (
-              <span key={b.domaine} style={{ fontSize: 12, color: b.couleur, fontWeight: 600, whiteSpace: 'nowrap' }}>{b.label} : {seancesSemaine(b.noeudId)}/3 cette semaine</span>
+              <span key={b.domaine} style={{ fontSize: 12, color: b.couleur, fontWeight: 600, whiteSpace: 'nowrap' }}>{b.label} : {seancesSemaine(b.noeudId)} cette semaine</span>
             ))}
+            <span style={{ fontSize: 12, color: seancesTotalSemaine >= 3 ? '#00FF91' : COULEURS.texteAtt, fontWeight: 600, whiteSpace: 'nowrap' }}>
+              Semaine : {seancesTotalSemaine} séance{seancesTotalSemaine > 1 ? 's' : ''} sur 3 à 5{seancesTotalSemaine > 5 ? ' — pense à récupérer' : ''}
+            </span>
           </div>
           {cycle.options.filter((o) => o.cle !== cycle.axe).map((o) => (
             <button key={o.cle} type="button" onClick={() => onChangerCycle({ axe: o.cle })} style={{ marginTop: 10, background: 'none', border: 'none', padding: 0, color: COULEURS.texteFaible, fontSize: 12, textDecoration: 'underline', textUnderlineOffset: 2, cursor: 'pointer', fontFamily: 'inherit' }}>
