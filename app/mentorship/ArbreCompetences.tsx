@@ -21,7 +21,7 @@ import {
   palierFlamme,
   badgeEleve,
 } from '@/lib/mentorship-modules';
-import { COULEURS, POLICE_DISPLAY, POLICE_CORPS } from '@/lib/theme';
+import { COULEURS, GRADIENT_TEXTE, POLICE_DISPLAY, POLICE_CORPS } from '@/lib/theme';
 import { soumettreVideo, repondreQCM, soumettreVideoExercice } from './actions';
 import ChecklistNoeud from './ChecklistNoeud';
 import JournalDuNoeud from './JournalDuNoeud';
@@ -1138,7 +1138,9 @@ export default function ArbreCompetences({
       // point final -- peu importe l'angle d'approche de la courbe, puisque
       // ce n'est pas l'angle de la courbe qui compte mais la position de ce
       // point fixe par rapport à l'ellipse.
-      segs.push({ d: tracePath(x, BRANCH_LEVEL_Y[1] - POINT_MARGE_Y, TRUNK_POS[3].y - POINT_MARGE_Y, TRUNK_POS[3].x), active: troncComplet, key: `jonction-${d}` });
+      // Départ : la bille du BAS du niveau 1 (y + marge, l'axe y descend). Avec
+      // « - marge », le trait partait de la bille du haut et traversait la pastille.
+      segs.push({ d: tracePath(x, BRANCH_LEVEL_Y[1] + POINT_MARGE_Y, TRUNK_POS[3].y - POINT_MARGE_Y, TRUNK_POS[3].x), active: troncComplet, key: `jonction-${d}` });
     });
     return segs;
   }, [troncComplet]);
@@ -1655,6 +1657,13 @@ export default function ArbreCompetences({
 
       {onglet === 'arbre' && !vueBranche && !seanceOuverte && (
         <>
+          <div style={{ textAlign: 'center', maxWidth: 560, marginInline: 'auto', marginBottom: 18 }}>
+            <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 'clamp(22px, 5vw, 30px)', letterSpacing: 0.5, margin: 0, color: COULEURS.texte }}>
+              ARBRE DE <span style={GRADIENT_TEXTE}>COMPÉTENCES</span>
+            </h2>
+            <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: '4px 0 0' }}>La base de ta pratique et de ton évolution.</p>
+          </div>
+
           {/* En-têtes de branches — icône, nom, accroche, avant l'arbre lui-même. Cliquable : entre dans le chemin isolé de la branche. */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 4, maxWidth: 560, marginInline: 'auto', marginBottom: 4 }}>
             {ORDRE_VISUEL.map((d) => {
