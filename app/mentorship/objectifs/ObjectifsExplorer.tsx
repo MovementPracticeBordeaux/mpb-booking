@@ -9,6 +9,8 @@ type Objectif = {
   video_url: string | null; mots_cles: string | null; note: string | null;
   famille: string | null; niveau: number | null; tags: string | null; descriptif: string | null;
 };
+// Outil rattaché à un objectif précis dans l'arbre (ficheId = sa propre fiche, si elle existe).
+export type OutilPrecis = { nom: string; videoUrl: string; ficheId: string | null };
 type Relation = { id: string; objectif_source_id: string; objectif_cible_id: string; type: string };
 
 // Un mot du titre/mots-clés DOIT COMMENCER par la recherche pour matcher —
@@ -277,7 +279,7 @@ function PositionDansFamille({ selection, objectifs, choisir }: { selection: Obj
   );
 }
 
-export default function ObjectifsExplorer({ objectifs, relations }: { objectifs: Objectif[]; relations: Relation[] }) {
+export default function ObjectifsExplorer({ objectifs, relations, outilsPrecis = {}, placeArbre = {} }: { objectifs: Objectif[]; relations: Relation[]; outilsPrecis?: Record<string, OutilPrecis[]>; placeArbre?: Record<string, string> }) {
   const searchParams = useSearchParams();
   const [recherche, setRecherche] = useState('');
   const [selectionId, setSelectionId] = useState<string | null>(null);
@@ -331,6 +333,9 @@ export default function ObjectifsExplorer({ objectifs, relations }: { objectifs:
 
   if (selection) {
     const zones = zonesATravailler(selection, objectifs);
+    const precis = outilsPrecis[selection.id] ?? [];
+    const place = placeArbre[selection.id];
+    const pastilleOutil: React.CSSProperties = { fontSize: 12.5, padding: '6px 12px', borderRadius: 999, border: `1px solid rgba(2,159,214,0.5)`, background: 'transparent', color: COULEURS.texteAtt, cursor: 'pointer', textDecoration: 'none', fontFamily: 'inherit' };
     const labelSection: React.CSSProperties = { fontSize: 11, opacity: 0.6, margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: 0.5 };
 
     return (
@@ -343,6 +348,10 @@ export default function ObjectifsExplorer({ objectifs, relations }: { objectifs:
           {selection.branche}{selection.sous_groupe ? ` · ${selection.sous_groupe}` : ''}
         </p>
         <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 'clamp(24px, 7vw, 30px)', letterSpacing: 0.3, margin: '0 0 8px' }}>{formatTitre(selection.titre)}</h1>
+
+        {place && (
+          <p style={{ fontSize: 12, color: '#f0a', margin: '0 0 10px', fontWeight: 600 }}>Dans ton arbre : {place}</p>
+        )}
 
         {selection.descriptif && (
           <p style={{ fontSize: 13.5, color: COULEURS.texteAtt, lineHeight: 1.6, margin: '0 0 10px' }}>{selection.descriptif}</p>
@@ -366,6 +375,20 @@ export default function ObjectifsExplorer({ objectifs, relations }: { objectifs:
           </div>
         )}
 
+        {precis.length > 0 && (
+          <div style={{ background: 'rgba(2,159,214,0.06)', border: `1px solid #029FD6`, borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
+            <p style={{ fontSize: 11, color: '#029FD6', textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: 700, margin: '0 0 4px' }}>Outils pour cet objectif</p>
+            <p style={{ fontSize: 13, color: COULEURS.texteAtt, lineHeight: 1.6, margin: '0 0 10px' }}>Si tu bloques ici, commence par ceux-là : ce sont les outils choisis pour cet objectif précis.</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {precis.map((o) => o.ficheId ? (
+                <button key={o.videoUrl} type="button" onClick={() => choisir(o.ficheId as string)} style={pastilleOutil}>{o.nom}</button>
+              ) : (
+                <a key={o.videoUrl} href={o.videoUrl} target="_blank" rel="noopener noreferrer" style={pastilleOutil}>▶ {o.nom}</a>
+              ))}
+            </div>
+          </div>
+        )}
+
         {zones.outils.length > 0 && (
           <div style={{ background: 'rgba(139,92,246,0.06)', border: `1px solid #8B5CF6`, borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
             <p style={{ fontSize: 11, color: '#8B5CF6', textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: 700, margin: '0 0 4px' }}>🧭 Zones à travailler</p>
@@ -385,7 +408,7 @@ export default function ObjectifsExplorer({ objectifs, relations }: { objectifs:
           </div>
         )}
 
-        {!selection.descriptif && zones.outils.length === 0 && selection.niveau === null && (
+        {!selection.descriptif && zones.outils.length === 0 && precis.length === 0 && selection.niveau === null && (
           <p style={{ fontSize: 12, color: COULEURS.texteFaible }}>Pas encore de contenu renseigné pour cet objectif.</p>
         )}
       </main>

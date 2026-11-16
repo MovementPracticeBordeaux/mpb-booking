@@ -7,7 +7,10 @@
 
 import { createContext, useContext, useMemo, useState } from 'react';
 import { COULEURS } from '@/lib/theme';
+import { Timer } from 'lucide-react';
 import { supabaseBrowser } from '@/lib/supabase-browser';
+import { lireObjectif } from '@/lib/mentorship-chrono';
+import Chrono, { type ResultatChrono } from './Chrono';
 
 export type Perf = {
   id: string;
@@ -124,6 +127,8 @@ export default function SuiviPerf({ moduleId, couleur, critere, compact }: { mod
   const [avecCharge, setAvecCharge] = useState(!!derniere?.charge_kg);
   const [historique, setHistorique] = useState(false);
   const [envoi, setEnvoi] = useState(false);
+  const [chrono, setChrono] = useState(false);
+  const objectif = useMemo(() => lireObjectif(critere), [critere]);
   const lib = LIBELLES_MODE[mode];
 
   const s = parseInt(series, 10);
@@ -141,6 +146,19 @@ export default function SuiviPerf({ moduleId, couleur, critere, compact }: { mod
       unite: mode === 'reps' ? 'reps' : 'sec',
       charge_kg: c,
     });
+    setEnvoi(false);
+  }
+
+  // Fin du chrono : les séries comptées remplissent le suivi. Une tenue ou un
+  // temps de travail est noté directement ; pour des répétitions, il reste à
+  // indiquer leur nombre avant de noter.
+  async function finChrono(r: ResultatChrono) {
+    setChrono(false);
+    setSeries(String(r.series));
+    if (r.moyenneSec === null) return;
+    setValeur(nombre(mode === 'temps' ? Math.round((r.moyenneSec / 60) * 10) / 10 : r.moyenneSec));
+    setEnvoi(true);
+    await ajouter({ module_id: moduleId, series: r.series, valeur: r.moyenneSec, unite: 'sec', charge_kg: null });
     setEnvoi(false);
   }
 
@@ -178,6 +196,8 @@ export default function SuiviPerf({ moduleId, couleur, critere, compact }: { mod
         </div>
       )}
 
+      {chrono && <Chrono mode={mode} objectif={objectif} couleur={couleur} onTerminer={finChrono} onFermer={() => setChrono(false)} />}
+
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, flexWrap: 'wrap' }}>
         <label style={etiquette}>
           {lib.series}
@@ -197,6 +217,11 @@ export default function SuiviPerf({ moduleId, couleur, critere, compact }: { mod
         <button type="button" onClick={noter} disabled={!valide || envoi} style={{ fontSize: 12, fontWeight: 600, padding: '8px 16px', borderRadius: 999, border: `1px solid ${valide ? couleur : COULEURS.bordure}`, background: valide ? `${couleur}1a` : 'transparent', color: valide ? couleur : COULEURS.texteFaible, cursor: valide ? 'pointer' : 'not-allowed', fontFamily: 'inherit' }}>
           Noter
         </button>
+        {!chrono && (
+          <button type="button" onClick={() => setChrono(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, padding: '8px 14px', borderRadius: 999, border: `1px solid ${COULEURS.bordure}`, background: 'transparent', color: COULEURS.texteAtt, cursor: 'pointer', fontFamily: 'inherit' }}>
+            <Timer size={15} /> Chrono
+          </button>
+        )}
       </div>
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 14px', marginTop: 8 }}>
