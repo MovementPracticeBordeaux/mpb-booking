@@ -190,9 +190,15 @@ function zonesATravailler(selection: Objectif, objectifs: Objectif[]): { intro: 
 // Outils de cool down généraux (tag « Cool down … ») : utilisables à peu près
 // quand on veut, quelle que soit la branche travaillée.
 const BRANCHES_AVEC_RECUP = ['Force', 'Figures', 'Locomotion', 'Connexion', 'Flexibilité'];
-function outilsDeRecuperation(selection: Objectif, objectifs: Objectif[]): Objectif[] {
-  if (!BRANCHES_AVEC_RECUP.includes(selection.branche)) return [];
-  return objectifs.filter((o) => o.branche === 'Armure Organique' && !!o.tags && sansAccents(o.tags.toLowerCase()).includes('cool down'));
+// S'y ajoutent les outils de respiration et de système nerveux de l'Armure
+// (tag « Récupération »), la même famille que la partie récupération de l'arbre.
+function outilsDeRecuperation(selection: Objectif, objectifs: Objectif[]): { coolDown: Objectif[]; respiration: Objectif[] } {
+  if (!BRANCHES_AVEC_RECUP.includes(selection.branche)) return { coolDown: [], respiration: [] };
+  const armure = objectifs.filter((o) => o.branche === 'Armure Organique' && !!o.tags);
+  const tags = (o: Objectif) => sansAccents((o.tags ?? '').toLowerCase());
+  const coolDown = armure.filter((o) => tags(o).includes('cool down'));
+  const respiration = armure.filter((o) => !tags(o).includes('cool down') && tags(o).includes('recuperation'));
+  return { coolDown, respiration };
 }
 
 // Position d'un objectif au sein de sa famille — volontairement minimaliste
@@ -347,6 +353,7 @@ export default function ObjectifsExplorer({ objectifs, relations, outilsPrecis =
   if (selection) {
     const zones = zonesATravailler(selection, objectifs);
     const recup = outilsDeRecuperation(selection, objectifs);
+    const pastilleRecup: React.CSSProperties = { fontSize: 12.5, padding: '6px 12px', borderRadius: 999, border: `1px solid rgba(0,255,145,0.4)`, background: 'transparent', color: COULEURS.texteAtt, cursor: 'pointer' };
     const precis = outilsPrecis[selection.id] ?? [];
     const place = placeArbre[selection.id];
     const pastilleOutil: React.CSSProperties = { fontSize: 12.5, padding: '6px 12px', borderRadius: 999, border: `1px solid rgba(2,159,214,0.5)`, background: 'transparent', color: COULEURS.texteAtt, cursor: 'pointer', textDecoration: 'none', fontFamily: 'inherit' };
@@ -422,17 +429,30 @@ export default function ObjectifsExplorer({ objectifs, relations, outilsPrecis =
           </div>
         )}
 
-        {recup.length > 0 && (
+        {(recup.coolDown.length > 0 || recup.respiration.length > 0) && (
           <div style={{ background: 'rgba(0,255,145,0.05)', border: `1px solid rgba(0,255,145,0.45)`, borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
-            <p style={{ fontSize: 11, color: '#00FF91', textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: 700, margin: '0 0 4px' }}>Pour récupérer</p>
-            <p style={{ fontSize: 13, color: COULEURS.texteAtt, lineHeight: 1.6, margin: '0 0 10px' }}>Des outils de cool down généraux, à utiliser à peu près quand tu veux. Ils favorisent la décontraction, la détente articulaire et musculaire, la circulation de la lymphe et du sang : la récupération est globale.</p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {recup.map((o) => (
-                <button key={o.id} type="button" onClick={() => choisir(o.id)} style={{ fontSize: 12.5, padding: '6px 12px', borderRadius: 999, border: `1px solid rgba(0,255,145,0.4)`, background: 'transparent', color: COULEURS.texteAtt, cursor: 'pointer' }}>
-                  {formatTitre(o.titre)}
-                </button>
-              ))}
-            </div>
+            <p style={{ fontSize: 11, color: '#00FF91', textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: 700, margin: '0 0 8px' }}>Pour récupérer</p>
+            {recup.coolDown.length > 0 && (
+              <>
+                <p style={{ ...labelSection, margin: '0 0 4px' }}>Cool down</p>
+                <p style={{ fontSize: 13, color: COULEURS.texteAtt, lineHeight: 1.6, margin: '0 0 8px' }}>Des outils généraux, à utiliser à peu près quand tu veux. Ils favorisent la décontraction, la détente articulaire et musculaire, la circulation de la lymphe et du sang : la récupération est globale.</p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: recup.respiration.length > 0 ? 12 : 0 }}>
+                  {recup.coolDown.map((o) => (
+                    <button key={o.id} type="button" onClick={() => choisir(o.id)} style={pastilleRecup}>{formatTitre(o.titre)}</button>
+                  ))}
+                </div>
+              </>
+            )}
+            {recup.respiration.length > 0 && (
+              <>
+                <p style={{ ...labelSection, margin: '0 0 6px' }}>Respiration & système nerveux</p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {recup.respiration.map((o) => (
+                    <button key={o.id} type="button" onClick={() => choisir(o.id)} style={pastilleRecup}>{formatTitre(o.titre)}</button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         )}
 
