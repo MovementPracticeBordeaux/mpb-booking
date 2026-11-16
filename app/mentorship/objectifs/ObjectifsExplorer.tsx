@@ -132,6 +132,9 @@ function elargirRecherche(q: string): string[] {
 const ALIAS_FAMILLE_VERS_TAG: Record<string, string[]> = {
   'Tirer': ['tirer'],
   'Pousser': ['poussee', 'push-up'],
+  // « Préparation Calisthenics » = préparation à la Force (confirmé par Sylvain).
+  'Bras tendus': ['calisthenics'],
+  'Muscle up': ['calisthenics'],
   'Pont': ['pont'],
   'L-sit': ['l-sit'],
   'Handstand': ['handstand'],
