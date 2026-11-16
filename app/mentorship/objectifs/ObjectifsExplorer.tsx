@@ -178,11 +178,21 @@ function zonesATravailler(selection: Objectif, objectifs: Objectif[]): { intro: 
   if (motsCles.length === 0) return { intro: null, outils: [] };
   const outils = objectifs.filter((o) => {
     if (o.branche !== 'Armure Organique' || !o.tags) return false;
-    const tags = sansAccents(o.tags.toLowerCase());
+    // Les tags « Cool down … » désignent de la récupération, pas de la
+    // préparation : ils ne comptent pas ici (voir outilsDeRecuperation).
+    const tags = sansAccents(o.tags.toLowerCase()).split(',').map((t) => t.trim()).filter((t) => !t.startsWith('cool down')).join(', ');
     return motsCles.some((m) => tags.includes(m));
   });
   const intro = (selection.famille && INTRO_ZONES_FAMILLE[selection.famille]) || INTRO_ZONES_BRANCHE[selection.branche] || null;
   return { intro, outils };
+}
+
+// Outils de cool down généraux (tag « Cool down … ») : utilisables à peu près
+// quand on veut, quelle que soit la branche travaillée.
+const BRANCHES_AVEC_RECUP = ['Force', 'Figures', 'Locomotion', 'Connexion', 'Flexibilité'];
+function outilsDeRecuperation(selection: Objectif, objectifs: Objectif[]): Objectif[] {
+  if (!BRANCHES_AVEC_RECUP.includes(selection.branche)) return [];
+  return objectifs.filter((o) => o.branche === 'Armure Organique' && !!o.tags && sansAccents(o.tags.toLowerCase()).includes('cool down'));
 }
 
 // Position d'un objectif au sein de sa famille — volontairement minimaliste
@@ -336,6 +346,7 @@ export default function ObjectifsExplorer({ objectifs, relations, outilsPrecis =
 
   if (selection) {
     const zones = zonesATravailler(selection, objectifs);
+    const recup = outilsDeRecuperation(selection, objectifs);
     const precis = outilsPrecis[selection.id] ?? [];
     const place = placeArbre[selection.id];
     const pastilleOutil: React.CSSProperties = { fontSize: 12.5, padding: '6px 12px', borderRadius: 999, border: `1px solid rgba(2,159,214,0.5)`, background: 'transparent', color: COULEURS.texteAtt, cursor: 'pointer', textDecoration: 'none', fontFamily: 'inherit' };
@@ -404,6 +415,20 @@ export default function ObjectifsExplorer({ objectifs, relations, outilsPrecis =
                   key={o.id} type="button" onClick={() => choisir(o.id)}
                   style={{ fontSize: 12.5, padding: '6px 12px', borderRadius: 999, border: `1px solid rgba(139,92,246,0.4)`, background: 'transparent', color: COULEURS.texteAtt, cursor: 'pointer' }}
                 >
+                  {formatTitre(o.titre)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {recup.length > 0 && (
+          <div style={{ background: 'rgba(0,255,145,0.05)', border: `1px solid rgba(0,255,145,0.45)`, borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
+            <p style={{ fontSize: 11, color: '#00FF91', textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: 700, margin: '0 0 4px' }}>Pour récupérer</p>
+            <p style={{ fontSize: 13, color: COULEURS.texteAtt, lineHeight: 1.6, margin: '0 0 10px' }}>Des outils de cool down généraux, à utiliser à peu près quand tu veux. Ils favorisent la décontraction, la détente articulaire et musculaire, la circulation de la lymphe et du sang : la récupération est globale.</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {recup.map((o) => (
+                <button key={o.id} type="button" onClick={() => choisir(o.id)} style={{ fontSize: 12.5, padding: '6px 12px', borderRadius: 999, border: `1px solid rgba(0,255,145,0.4)`, background: 'transparent', color: COULEURS.texteAtt, cursor: 'pointer' }}>
                   {formatTitre(o.titre)}
                 </button>
               ))}
