@@ -445,9 +445,9 @@ export default function AdminSeancesCarousel({
                             <a
                               href={lienFiche(inscrit.eleveId)}
                               title={inscrit.aRegler ? 'Séance à régler (sans formule) — voir la fiche' : inscrit.decouverte ? 'Cours découverte — voir la fiche' : 'Voir la fiche de l\'élève'}
-                              style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: inscrit.decouverte ? '#4FE3C8' : 'inherit', fontWeight: inscrit.decouverte ? 700 : undefined, textDecoration: 'underline', textDecorationColor: inscrit.decouverte ? 'rgba(79,227,200,0.5)' : 'rgba(245,245,240,0.3)', textUnderlineOffset: 2 }}
+                              style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: inscrit.decouverte ? '#4FE3C8' : 'inherit', textDecoration: 'underline', textDecorationColor: inscrit.decouverte ? 'rgba(79,227,200,0.5)' : 'rgba(245,245,240,0.3)', textUnderlineOffset: 2 }}
                             >
-                              {inscrit.aRegler ? '⏳ ' : inscrit.decouverte ? '✨ ' : ''}{inscrit.nom}
+                              {inscrit.aRegler ? '⏳ ' : ''}{inscrit.nom}
                             </a>
                             <form action={annulerReservationAdmin}>
                               <input type="hidden" name="eleve_id" value={inscrit.eleveId} />
