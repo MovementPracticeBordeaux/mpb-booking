@@ -53,12 +53,25 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
     : { data: [] as { id: string; nom: string | null; email: string | null }[] };
   const nomParEleveId = new Map((profilsEleves ?? []).map((p) => [p.id, p.nom || p.email || 'Élève']));
 
-  type Inscrit = { eleveId: string; nom: string; aRegler?: boolean };
+  // Élève venu avec un cours découverte : la formule collective qui couvre la
+  // date de la séance (la plus récente) est un cours découverte.
+  const { data: abosInscrits } = idsEleves.length > 0
+    ? await admin.from('abonnements').select('eleve_id, formule_nom, date_debut_formule, date_expiration, created_at')
+        .in('eleve_id', idsEleves).eq('categorie', 'planning').order('created_at', { ascending: false })
+    : { data: [] as { eleve_id: string; formule_nom: string; date_debut_formule: string | null; date_expiration: string | null; created_at: string }[] };
+  const enDecouverte = (eleveId: string, date: string) => {
+    const abo = (abosInscrits ?? []).find((a) => a.eleve_id === eleveId
+      && (!a.date_debut_formule || a.date_debut_formule <= date)
+      && (!a.date_expiration || a.date_expiration >= date));
+    return abo?.formule_nom === 'cours_decouverte';
+  };
+
+  type Inscrit = { eleveId: string; nom: string; aRegler?: boolean; decouverte?: boolean };
   const inscritsParSeance = new Map<string, Inscrit[]>();
   for (const r of reservationsAVenir ?? []) {
     const cle = `${r.cours_id}::${r.date_seance}`;
     const liste = inscritsParSeance.get(cle) ?? [];
-    liste.push({ eleveId: r.eleve_id, nom: nomParEleveId.get(r.eleve_id) ?? 'Élève', aRegler: r.a_regler });
+    liste.push({ eleveId: r.eleve_id, nom: nomParEleveId.get(r.eleve_id) ?? 'Élève', aRegler: r.a_regler, decouverte: enDecouverte(r.eleve_id, r.date_seance) });
     inscritsParSeance.set(cle, liste);
   }
 
