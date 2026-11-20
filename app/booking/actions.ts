@@ -27,6 +27,14 @@ export async function reserverCours(formData: FormData) {
   // écritures dans 'profiles' — ça évite de s'appuyer sur la session de
   // l'élève pour modifier son propre quota.
   const admin = supabaseAdmin();
+  // Numéro de téléphone obligatoire pour réserver (vérifié côté serveur,
+  // en plus de la fenêtre qui le demande à la connexion).
+  const { data: profilTel } = await admin.from('profiles').select('telephone').eq('id', user.id).maybeSingle();
+  if (!profilTel?.telephone) {
+    echouer('Renseigne ton numéro de téléphone pour pouvoir réserver.');
+    return;
+  }
+
   const { data: resultat, error } = await admin.rpc('reserver_creneau', {
     p_eleve_id: user.id,
     p_cours_id: coursId,

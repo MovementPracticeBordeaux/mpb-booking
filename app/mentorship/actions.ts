@@ -2,7 +2,7 @@
 
 import { notifierVideoSoumise } from '@/lib/mentorship-notifs';
 import { prochaineRevision, INTERVALLES_REVISION_JOURS } from '@/lib/mentorship-engagement';
-import { supabaseServer } from '@/lib/supabase-server';
+import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { TOUS_LES_NOEUDS, estNoeudDeverrouille, estNoeudAcquisDepuisProgression, moduleIdExercice } from '@/lib/mentorship-modules';
@@ -69,7 +69,9 @@ export async function repondreQCM(formData: FormData) {
     redirect(`/mentorship?erreur=${encodeURIComponent(`QCM non validé (${score}%, il faut au moins 80%). Retente quand tu veux.`)}`);
   }
 
-  const { error } = await supabase.from('mentorship_progression').insert({
+  // Écriture par le serveur uniquement, après correction du QCM ci-dessus :
+  // l'élève n'a plus le droit d'écrire lui-même dans sa progression.
+  const { error } = await supabaseAdmin().from('mentorship_progression').insert({
     eleve_id: user.id,
     module_id: noeudId,
     quiz_reussi: true,
@@ -101,6 +103,8 @@ export async function soumettreVideo(formData: FormData) {
     .eq('module_id', noeudId)
     .maybeSingle();
 
+  if (ligneActuelle?.statut === 'acquis') echouer('Ce niveau est déjà validé.');
+  if (ligneActuelle?.statut === 'en_attente') echouer('Ta vidéo est déjà en attente de validation.');
   const peutSoumettre = ligneActuelle?.quiz_reussi === true || ligneActuelle?.statut === 'refuse';
   if (!peutSoumettre) echouer('Réussis le QCM de ce niveau avant de soumettre ta vidéo.');
 
@@ -113,7 +117,7 @@ export async function soumettreVideo(formData: FormData) {
     misAJour.premiere_video_date = new Date().toISOString();
   }
 
-  const { error } = await supabase.from('mentorship_progression')
+  const { error } = await supabaseAdmin().from('mentorship_progression')
     .update(misAJour)
     .eq('eleve_id', user.id).eq('module_id', noeudId);
 
@@ -171,10 +175,12 @@ export async function soumettreVideoExercice(formData: FormData) {
 
   const { data: ligneActuelle } = await supabase
     .from('mentorship_progression')
-    .select('premiere_video_url')
+    .select('premiere_video_url, statut')
     .eq('eleve_id', user.id)
     .eq('module_id', moduleId)
     .maybeSingle();
+  if (ligneActuelle?.statut === 'acquis') echouer('Cet exercice est déjà validé.');
+  if (ligneActuelle?.statut === 'en_attente') echouer('Ta vidéo est déjà en attente de validation.');
 
   const valeurs: Record<string, unknown> = { eleve_id: user.id, module_id: moduleId, statut: 'en_attente', video_url: videoUrl, submitted_at: new Date().toISOString() };
   if (!ligneActuelle?.premiere_video_url) {
@@ -182,7 +188,7 @@ export async function soumettreVideoExercice(formData: FormData) {
     valeurs.premiere_video_date = new Date().toISOString();
   }
 
-  const { error } = await supabase.from('mentorship_progression')
+  const { error } = await supabaseAdmin().from('mentorship_progression')
     .upsert(valeurs, { onConflict: 'eleve_id,module_id' });
   if (error) echouer(error.message);
   await notifierVideoSoumise(user.id, moduleId);

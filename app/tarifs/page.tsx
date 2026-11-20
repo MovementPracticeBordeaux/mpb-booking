@@ -141,6 +141,9 @@ export default function TarifsPage({ searchParams }: { searchParams: { erreur?: 
       <p style={{ color: COULEURS.texteFaible, fontSize: 13, margin: '0 0 16px' }}>
         Paiement sécurisé par Stripe. Sans engagement, sans abonnement caché.
       </p>
+      <p style={{ color: COULEURS.texteFaible, fontSize: 13, margin: '0 0 16px' }}>
+        Déjà une formule en cours ? La nouvelle démarre automatiquement quand elle est terminée (séances épuisées ou date de fin) : tu ne perds aucune séance.
+      </p>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: `1px solid ${COULEURS.bordure}`, borderRadius: 999, padding: '5px 6px 5px 14px', marginBottom: 24, width: 'fit-content' }}>
         <label htmlFor="date-debut" style={{ fontSize: 12, color: COULEURS.texteFaible }}>Faire démarrer ma formule le :</label>

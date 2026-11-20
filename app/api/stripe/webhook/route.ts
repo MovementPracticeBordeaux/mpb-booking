@@ -178,7 +178,7 @@ export async function POST(req: NextRequest) {
       let dateFinAffichee = expiration;
       let enAttente = false;
 
-      // Rachat de la MÊME formule alors que l'actuelle a encore des séances
+      // Rachat (même formule, ou n'importe quelle formule collective) alors que l'actuelle a encore des séances
       // (ou des jours, pour l'illimité) : la nouvelle formule est mise EN
       // ATTENTE et démarre quand l'actuelle est terminée — séances épuisées
       // (elle démarre alors le jour même) ou date de fin passée. Les séances
@@ -192,7 +192,10 @@ export async function POST(req: NextRequest) {
         .eq('abonnement_actif', true)
         .maybeSingle();
       const aujourdhuiISO = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Paris' });
-      const actuelEnCours = !!aboActuel && aboActuel.formule_nom === formuleNom && !aboActuel.gele
+      // Cours collectifs : toute formule (même une différente) attend la fin
+      // de l'actuelle, pour que l'élève ne perde jamais ses séances restantes.
+      const memeLogique = formule.categorie === 'planning' || aboActuel?.formule_nom === formuleNom;
+      const actuelEnCours = !!aboActuel && memeLogique && !aboActuel.gele
         && (aboActuel.quota_restant == null || aboActuel.quota_restant > 0)
         && (!aboActuel.date_expiration || aboActuel.date_expiration >= aujourdhuiISO);
 

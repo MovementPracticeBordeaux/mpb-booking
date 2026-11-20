@@ -27,10 +27,19 @@ export async function POST(req: NextRequest) {
   // Formules à conditions, vérifiées ici car l'API reste appelable en
   // direct, même pour une formule qui n'est pas affichée sur le site.
   const admin = supabaseAdmin();
+  // Numéro de téléphone obligatoire pour acheter.
+  const { data: profil } = await admin.from('profiles').select('telephone').eq('id', user.id).maybeSingle();
+  if (!profil?.telephone) {
+    return NextResponse.json({ error: 'Renseigne ton numéro de téléphone (sur ton profil) avant d’acheter une formule.' }, { status: 400 });
+  }
   if (formule_nom === 'cours_decouverte') {
-    // Réservé aux personnes qui n'ont encore jamais eu de formule collective.
+    // Réservé aux personnes qui n'ont encore jamais eu de formule collective,
+    // ni sur ce compte, ni sur un autre compte avec le même numéro.
+    const { data: memeNumero } = await admin.from('profiles').select('id').eq('telephone', profil.telephone);
+    const ids = (memeNumero ?? []).map((p) => p.id);
+    if (!ids.includes(user.id)) ids.push(user.id);
     const { count } = await admin.from('abonnements').select('id', { count: 'exact', head: true })
-      .eq('eleve_id', user.id).eq('categorie', 'planning');
+      .in('eleve_id', ids).eq('categorie', 'planning');
     if ((count ?? 0) > 0) {
       return NextResponse.json({ error: 'Le cours découverte est réservé à une première venue : choisis le cours à l’unité ou une formule.' }, { status: 400 });
     }

@@ -1,6 +1,6 @@
 'use server';
 
-import { supabaseServer } from '@/lib/supabase-server';
+import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
@@ -34,15 +34,19 @@ export async function choisirNiveauDefi(formData: FormData) {
   // exactement ce qui bloquait "changer de niveau" une fois qu'une
   // participation existait déjà. Update d'abord, insert seulement si rien
   // n'a été mis à jour (première participation à ce défi).
-  const { data: misAJour } = await supabase
-    .from('defi_participations')
-    .update({ niveau })
-    .eq('defi_id', defiId)
-    .eq('eleve_id', user.id)
-    .select('id');
-
-  if (!misAJour || misAJour.length === 0) {
-    await supabase.from('defi_participations').insert({ defi_id: defiId, eleve_id: user.id, niveau });
+  // Écritures par le serveur uniquement : l'élève ne peut ni se valider
+  // lui-même, ni changer le niveau d'une participation déjà validée.
+  const admin = supabaseAdmin();
+  const { data: existante } = await admin.from('defi_participations').select('id, valide')
+    .eq('defi_id', defiId).eq('eleve_id', user.id).maybeSingle();
+  if (existante?.valide) {
+    revalidatePath('/defi');
+    return;
+  }
+  if (existante) {
+    await admin.from('defi_participations').update({ niveau }).eq('id', existante.id).eq('valide', false);
+  } else {
+    await admin.from('defi_participations').insert({ defi_id: defiId, eleve_id: user.id, niveau });
   }
 
   revalidatePath('/defi');
@@ -63,7 +67,7 @@ export async function tenterNiveauSuperieur(formData: FormData) {
   const niveauVise = formData.get('niveau') as string;
   if (!['facile', 'moyen', 'dur', 'beast'].includes(niveauVise)) return;
 
-  await supabase
+  await supabaseAdmin()
     .from('defi_participations')
     .update({ tentative_superieure: niveauVise })
     .eq('defi_id', defiId)

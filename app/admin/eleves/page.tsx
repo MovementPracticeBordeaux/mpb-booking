@@ -130,7 +130,7 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
             contenu: (
           <form action={creerEleve} style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 420 }}>
           <input type="email" name="email" placeholder="Adresse email" required />
-          <input type="tel" name="telephone" placeholder="Téléphone (optionnel)" />
+          <input type="tel" name="telephone" placeholder="Téléphone" required />
           <input type="text" name="nom" placeholder="Nom (optionnel)" />
           <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13 }}>
             <input type="checkbox" name="invite" /> Statut invité (garde son compte sans formule)

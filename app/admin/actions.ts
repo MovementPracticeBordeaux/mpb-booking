@@ -184,7 +184,8 @@ export async function creerEleve(formData: FormData) {
   const telephoneBrut = (formData.get('telephone') as string)?.trim();
   const telephone = normaliserTelephone(telephoneBrut);
   if (!email) echouer('/admin/eleves', 'Renseigne une adresse email.');
-  if (telephoneBrut && !telephone) echouer('/admin/eleves', 'Numéro de téléphone invalide.');
+  if (!telephoneBrut) echouer('/admin/eleves', 'Renseigne le numéro de téléphone.');
+  if (!telephone) echouer('/admin/eleves', 'Numéro de téléphone invalide.');
 
   const { data: creation, error } = await admin.auth.admin.createUser({
     email,

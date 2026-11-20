@@ -58,10 +58,21 @@ beforeEach(() => {
 
 describe('reserverCours', () => {
   function mockAdminRpc(resultat: { data?: any; error?: any }) {
-    const admin = { rpc: vi.fn(async () => resultat) };
+    const admin = {
+      rpc: vi.fn(async () => resultat),
+      from: vi.fn(() => makeChainable({ data: { telephone: '+33612345678' }, error: null })),
+    };
     vi.mocked(supabaseAdmin).mockReturnValue(admin as any);
     return admin;
   }
+
+  it('refuse de réserver sans numéro de téléphone', async () => {
+    vi.mocked(supabaseServer).mockReturnValue(mockClient({ user: USER, fromResults: [] }) as any);
+    const admin = mockAdminRpc({ data: 'ok', error: null }) as any;
+    admin.from = vi.fn(() => makeChainable({ data: { telephone: null }, error: null }));
+    await expect(reserverCours(formData({ cours_id: 'c1', date_seance: '2026-08-10' }))).rejects.toThrow(/REDIRECT:\/planning\?erreur=/);
+    expect(admin.rpc).not.toHaveBeenCalled();
+  });
 
   it("redirige vers /login si l'utilisateur n'est pas connecté", async () => {
     vi.mocked(supabaseServer).mockReturnValue(mockClient({ user: null, fromResults: [] }) as any);
@@ -75,7 +86,7 @@ describe('reserverCours', () => {
     vi.mocked(supabaseServer).mockReturnValue(mockClient({ user: USER, fromResults: [] }) as any);
     const admin = mockAdminRpc({ data: 'ok', error: null }) as any;
     admin.from = vi.fn(() => makeChainable({
-      data: { discipline: 'Handstand', heure_debut: '18:00:00', heure_fin: '19:00:00', lieu: 'Darwin' },
+      data: { telephone: '+33612345678', discipline: 'Handstand', heure_debut: '18:00:00', heure_fin: '19:00:00', lieu: 'Darwin' },
       error: null,
     }));
 
