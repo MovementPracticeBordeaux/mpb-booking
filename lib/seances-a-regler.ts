@@ -34,7 +34,7 @@ export async function imputerSeancesARegler(eleveId: string): Promise<number> {
     if (finValidite && s.date_seance > finValidite) continue;
     // Formule à nombre de séances épuisée : la séance reste due.
     if (quota != null && quota <= 0) break;
-    const { error } = await admin.from('reservations').update({ a_regler: false }).eq('id', s.id).eq('a_regler', true);
+    const { error } = await admin.from('reservations').update({ a_regler: false, abonnement_id: abo.id }).eq('id', s.id).eq('a_regler', true);
     if (error) break;
     if (quota != null) quota -= 1;
     imputees++;

@@ -248,27 +248,52 @@ describe('annulerReservation', () => {
       user: USER,
       fromResults: [
         { data: { heure_debut: '18:00:00' }, error: null }, // cours
-        { data: { id: 'r1', a_regler: false }, error: null }, // réservation trouvée
-        { data: { formule_nom: 'mensuel_4', quota_restant: 2 }, error: null }, // abonnement
+        { data: { id: 'r1', eleve_id: 'u1', a_regler: false, abonnement_id: null }, error: null }, // réservation trouvée
       ],
     });
     vi.mocked(supabaseServer).mockReturnValue(client as any);
 
-    // Les écritures (annulation puis restitution du crédit) passent par le
-    // client admin : l'élève n'a aucun droit d'écriture direct sur ses
-    // réservations ni sur ses abonnements.
-    const adminClient = { from: vi.fn(() => makeChainable({ error: null })) };
+    // Écritures et lecture de la formule par le client admin.
+    const resultatsAdmin = [
+      { data: [{ id: 'r1' }], error: null }, // annulation
+      { data: { id: 'a1', formule_nom: 'mensuel_4', quota_restant: 2, quota_total: 4 }, error: null }, // formule active
+      { error: null }, // recrédit
+    ];
+    let i = 0;
+    const adminClient = { from: vi.fn(() => makeChainable(resultatsAdmin[i++] ?? { error: null })) };
     vi.mocked(supabaseAdmin).mockReturnValue(adminClient as any);
 
     await annulerReservation(formData({ cours_id: 'c1', date_seance: '2099-01-01' }));
 
     const annulationChain = adminClient.from.mock.results[0].value;
     expect(annulationChain.update).toHaveBeenCalledWith({ statut: 'annulee', a_regler: false });
-    const quotaChain = adminClient.from.mock.results[1].value;
+    const quotaChain = adminClient.from.mock.results[2].value;
     expect(quotaChain.update).toHaveBeenCalledWith({ quota_restant: 3 });
     expect(revalidatePath).toHaveBeenCalledWith('/planning');
     expect(revalidatePath).toHaveBeenCalledWith('/profil');
     expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it('ne rend jamais plus que le total de la formule', async () => {
+    const client = mockClient({
+      user: USER,
+      fromResults: [
+        { data: { heure_debut: '18:00:00' }, error: null },
+        { data: { id: 'r1', eleve_id: 'u1', a_regler: false, abonnement_id: null }, error: null },
+      ],
+    });
+    vi.mocked(supabaseServer).mockReturnValue(client as any);
+    const resultatsAdmin = [
+      { data: [{ id: 'r1' }], error: null },
+      { data: { id: 'a1', formule_nom: 'mensuel_8', quota_restant: 8, quota_total: 8 }, error: null },
+      { error: null },
+    ];
+    let i = 0;
+    const adminClient = { from: vi.fn(() => makeChainable(resultatsAdmin[i++] ?? { error: null })) };
+    vi.mocked(supabaseAdmin).mockReturnValue(adminClient as any);
+
+    await annulerReservation(formData({ cours_id: 'c1', date_seance: '2099-01-01' }));
+    expect(adminClient.from.mock.results[2].value.update).toHaveBeenCalledWith({ quota_restant: 8 });
   });
 
   it('ne touche pas au quota pour une formule illimitée', async () => {

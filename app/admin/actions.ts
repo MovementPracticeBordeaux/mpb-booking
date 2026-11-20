@@ -1,5 +1,7 @@
 'use server';
 
+import { formuleARecrediter, quotaApresRecredit } from '@/lib/recredit-seance';
+
 import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -246,10 +248,11 @@ export async function reserverCoursPourEleve(formData: FormData) {
     quota_epuise: 'Le quota de cet élève est épuisé.',
     deja_reserve: 'Cet élève a déjà réservé cette séance.',
     annulee: 'Cette séance est annulée.',
+    pas_commence: "La formule de cet élève n'a pas encore commencé à cette date.",
   };
   // Pas de formule utilisable : l'élève est inscrit quand même, séance à
   // régler (déduite de sa prochaine formule, ou réglée à l'unité).
-  if (['pas_abonne', 'expire', 'quota_epuise'].includes(resultat as string)) return inscrireSeanceARegler(eleveId, seance);
+  if (['pas_abonne', 'expire', 'quota_epuise', 'pas_commence'].includes(resultat as string)) return inscrireSeanceARegler(eleveId, seance);
   if (resultat !== 'ok') echouer('/admin/planning', messages[resultat as string] ?? 'Réservation impossible.');
 
   // Même confirmation (email + push) que si l'élève avait réservé
@@ -565,7 +568,7 @@ export async function annulerReservationAdmin(formData: FormData) {
 
   const { data: reservation } = await admin
     .from('reservations')
-    .select('id, a_regler')
+    .select('id, eleve_id, a_regler, abonnement_id')
     .eq('eleve_id', eleveId)
     .eq('cours_id', coursId)
     .eq('date_seance', dateSeance)
@@ -574,11 +577,14 @@ export async function annulerReservationAdmin(formData: FormData) {
 
   if (!reservation) echouer('/admin/planning', 'Réservation introuvable ou déjà annulée.');
 
-  const { error } = await admin
+  const { data: annulee, error } = await admin
     .from('reservations')
     .update({ statut: 'annulee', a_regler: false })
-    .eq('id', reservation.id);
+    .eq('id', reservation.id)
+    .eq('statut', 'confirmee')
+    .select('id');
   if (error) echouer('/admin/planning', error.message);
+  if (!annulee?.length) reussir('/admin/planning', 'Élève déjà retiré.');
 
   // Séance suivie sans formule : rien n'avait été décompté, rien à rendre.
   if (reservation.a_regler) {
@@ -587,19 +593,10 @@ export async function annulerReservationAdmin(formData: FormData) {
     reussir('/admin/planning', 'Élève retiré de la séance.');
   }
 
-  const { data: abo } = await admin
-    .from('abonnements')
-    .select('id, formule_nom, quota_restant')
-    .eq('eleve_id', eleveId)
-    .eq('categorie', 'planning')
-    .eq('abonnement_actif', true)
-    .maybeSingle();
-
-  if (abo && abo.formule_nom !== 'illimite' && abo.quota_restant != null) {
-    await admin
-      .from('abonnements')
-      .update({ quota_restant: abo.quota_restant + 1 })
-      .eq('id', abo.id);
+  const abo = await formuleARecrediter(admin, reservation, new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Paris' }));
+  const nouveauQuota = abo ? quotaApresRecredit(abo) : null;
+  if (abo && nouveauQuota != null) {
+    await admin.from('abonnements').update({ quota_restant: nouveauQuota }).eq('id', abo.id);
   }
 
   revalidatePath('/admin/planning');

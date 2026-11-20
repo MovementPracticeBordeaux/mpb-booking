@@ -1,3 +1,4 @@
+import { formuleARecrediter, quotaApresRecredit } from '@/lib/recredit-seance';
 import { supabaseAdmin } from '@/lib/supabase-server';
 import { envoyerEmail } from '@/lib/resend';
 import { envoyerPushAEleve } from '@/lib/push';
@@ -22,7 +23,7 @@ export async function annulerSeanceEtPrevenir(coursId: string, dateSeance: strin
 
   const { data: reservations } = await admin
     .from('reservations')
-    .select('id, eleve_id, a_regler')
+    .select('id, eleve_id, a_regler, abonnement_id')
     .eq('cours_id', coursId)
     .eq('date_seance', dateSeance)
     .eq('statut', 'confirmee');
@@ -43,21 +44,11 @@ export async function annulerSeanceEtPrevenir(coursId: string, dateSeance: strin
       .eq('statut', 'confirmee');
     if (errResa) continue;
 
-    let abo: { id: string; formule_nom: string; quota_restant: number | null; date_expiration: string | null } | null = null;
-    if (!r.a_regler) {
-      const { data } = await admin
-        .from('abonnements')
-        .select('id, formule_nom, quota_restant, date_expiration')
-        .eq('eleve_id', r.eleve_id)
-        .eq('categorie', 'planning')
-        .eq('abonnement_actif', true)
-        .maybeSingle();
-      abo = data;
-    }
+    const abo = await formuleARecrediter(admin, r, aujourdhuiISO);
     const cas = casPourInscrit(!!r.a_regler, abo);
 
     if (abo && (cas === 'recredite' || cas === 'une_seance')) {
-      const maj: Record<string, unknown> = { quota_restant: (abo.quota_restant ?? 0) + 1 };
+      const maj: Record<string, unknown> = { quota_restant: quotaApresRecredit(abo) ?? abo.quota_restant };
       if (cas === 'une_seance') {
         const exp = expirationPourNouvelleReservation(abo.date_expiration, aujourdhuiISO);
         if (exp && exp !== abo.date_expiration) maj.date_expiration = exp;

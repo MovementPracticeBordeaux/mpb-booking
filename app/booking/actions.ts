@@ -5,6 +5,8 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { envoyerEmail } from '@/lib/resend';
 import { envoyerPushAEleve } from '@/lib/push';
+import { parisVersUTC } from '@/lib/dates-paris';
+import { formuleARecrediter, quotaApresRecredit } from '@/lib/recredit-seance';
 
 export async function reserverCours(formData: FormData) {
   const supabase = supabaseServer();
@@ -56,6 +58,9 @@ export async function reserverCours(formData: FormData) {
       return;
     case 'annulee':
       echouer('Cette séance est annulée.');
+      return;
+    case 'pas_commence':
+      echouer("Ta formule n'a pas encore commencé : tu pourras réserver les séances à partir de sa date de début.");
       return;
     case 'trop_tard':
       echouer('Trop tard pour réserver cette séance (moins de 1h30 avant le début) — contacte directement Sylvain pour ce cas particulier.');
@@ -127,8 +132,14 @@ export async function annulerReservation(formData: FormData) {
   const DELAI_ANNULATION_MIN = 90; // 1h30 avant le début du cours
 
   const { data: cours } = await supabase.from('cours').select('heure_debut').eq('id', coursId).single();
-  if (cours) {
-    const debut = new Date(`${dateSeance}T${cours.heure_debut}`);
+  if (!cours) {
+    echouer('Cours introuvable.');
+    return;
+  }
+  {
+    // Heure du cours = heure de Paris (le serveur tourne en UTC : sans
+    // conversion, on pouvait annuler jusqu'à 30 min APRÈS le début en été).
+    const debut = new Date(parisVersUTC(`${dateSeance}T${String(cours.heure_debut).slice(0, 5)}`));
     const minutesAvantDebut = (debut.getTime() - Date.now()) / 60000;
     if (minutesAvantDebut < DELAI_ANNULATION_MIN) {
       echouer('Ce cours ne peut plus être annulé (moins de 1h30 avant le début) — contacte directement Sylvain pour ce cas particulier.');
@@ -138,7 +149,7 @@ export async function annulerReservation(formData: FormData) {
 
   const { data: reservation } = await supabase
     .from('reservations')
-    .select('id, a_regler')
+    .select('id, eleve_id, a_regler, abonnement_id')
     .eq('eleve_id', user.id)
     .eq('cours_id', coursId)
     .eq('date_seance', dateSeance)
@@ -154,14 +165,21 @@ export async function annulerReservation(formData: FormData) {
   // ses réservations depuis le navigateur. La réservation a été retrouvée
   // ci-dessus avec SA session, donc elle lui appartient bien.
   const admin = supabaseAdmin();
-  const { error } = await admin
+  // Ne passe qu'une fois : un double clic ne rend pas deux séances.
+  const { data: annulee, error } = await admin
     .from('reservations')
     .update({ statut: 'annulee', a_regler: false })
     .eq('id', reservation.id)
-    .eq('eleve_id', user.id);
+    .eq('eleve_id', user.id)
+    .eq('statut', 'confirmee')
+    .select('id');
 
   if (error) {
     echouer(error.message);
+    return;
+  }
+  if (!annulee?.length) {
+    revalidatePath('/planning');
     return;
   }
 
@@ -173,25 +191,11 @@ export async function annulerReservation(formData: FormData) {
     return;
   }
 
-  const { data: abo } = await supabase
-    .from('abonnements')
-    .select('id, formule_nom, quota_restant')
-    .eq('eleve_id', user.id)
-    .eq('categorie', 'planning')
-    .eq('abonnement_actif', true)
-    .maybeSingle();
-
-  if (abo && abo.formule_nom !== 'illimite' && abo.quota_restant != null) {
-    // Écriture volontairement faite avec le client admin plutôt que la
-    // session de l'élève : la policy RLS sur abonnements n'autorise que la
-    // LECTURE côté élève (pas l'update) — un élève ne doit jamais pouvoir
-    // s'auto-modifier son propre quota en manipulant le client depuis le
-    // navigateur. Le client admin ignore RLS et ne fait que ce que ce code
-    // précis autorise.
-    await admin
-      .from('abonnements')
-      .update({ quota_restant: abo.quota_restant + 1 })
-      .eq('id', abo.id);
+  const abo = await formuleARecrediter(admin, reservation, new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Paris' }));
+  const nouveauQuota = abo ? quotaApresRecredit(abo) : null;
+  if (abo && nouveauQuota != null) {
+    // Écriture avec le client admin : l'élève n'a que la lecture sur ses formules.
+    await admin.from('abonnements').update({ quota_restant: nouveauQuota }).eq('id', abo.id);
   }
 
   revalidatePath('/planning');
