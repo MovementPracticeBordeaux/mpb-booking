@@ -9,6 +9,7 @@ import FormulaireTelephone from '../components/FormulaireTelephone';
 import { formaterTelephone } from '@/lib/telephone';
 import BoutonRenouveler from './BoutonRenouveler';
 import { PRICE_IDS } from '@/lib/prix-stripe';
+import { parisVersUTC } from '@/lib/dates-paris';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,13 +42,20 @@ export default async function ProfilPage({ searchParams }: { searchParams: { pai
     .order('categorie');
 
   // Séances collectives déjà réservées à venir (déjà déduites du quota).
-  const aujourdhuiISO = new Date().toISOString().slice(0, 10);
-  const { count: seancesAVenir } = await supabase
+  // Seulement les séances qui n'ont pas encore commencé (heure de Paris) :
+  // un cours d'aujourd'hui déjà passé n'est plus "à venir".
+  const aujourdhuiISO = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Paris' });
+  const { data: reservationsProches } = await supabase
     .from('reservations')
-    .select('id', { count: 'exact', head: true })
+    .select('date_seance, cours(heure_debut)')
     .eq('eleve_id', user.id)
     .eq('statut', 'confirmee')
     .gte('date_seance', aujourdhuiISO);
+  const maintenant = Date.now();
+  const seancesAVenir = (reservationsProches ?? []).filter((r) => {
+    const heure = String((r.cours as any)?.heure_debut ?? '00:00').slice(0, 5);
+    return Date.parse(parisVersUTC(`${r.date_seance}T${heure}`)) > maintenant;
+  }).length;
 
   // Défi du mois : juste un petit pointeur vers /defi (qui gère toute la
   // logique — niveaux, validation, classement public) pour éviter de
@@ -187,7 +195,7 @@ export default async function ProfilPage({ searchParams }: { searchParams: { pai
                         {!avecQuota && <p style={{ fontSize: 14, margin: '0 0 6px' }}>Accès illimité</p>}
                         <p style={{ fontSize: 13, opacity: 0.75, margin: 0 }}>
                           {dateFin && <>Valable jusqu'au <strong>{dateFin}</strong>{joursRestants != null && joursRestants >= 0 ? ` (${joursRestants === 0 ? "dernier jour aujourd'hui" : `encore ${joursRestants} jour${joursRestants > 1 ? 's' : ''}`})` : ''}</>}
-                          {abo.categorie === 'planning' && (seancesAVenir ?? 0) > 0 && <><br />{seancesAVenir} séance{(seancesAVenir ?? 0) > 1 ? 's' : ''} déjà réservée{(seancesAVenir ?? 0) > 1 ? 's' : ''} à venir</>}
+                          {abo.categorie === 'planning' && seancesAVenir > 0 && <><br />+ {seancesAVenir} séance{seancesAVenir > 1 ? 's' : ''} déjà réservée{seancesAVenir > 1 ? 's' : ''} à venir (déjà décomptée{seancesAVenir > 1 ? 's' : ''})</>}
                         </p>
 
                         {(formulesEnAttente ?? []).filter((f) => f.categorie === abo.categorie).map((f) => (
