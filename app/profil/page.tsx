@@ -1,4 +1,4 @@
-import { supabaseServer } from '@/lib/supabase-server';
+import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { FORMULES } from '@/lib/formules';
 import { redirect } from 'next/navigation';
 import BoutonDeconnexion from '../components/BoutonDeconnexion';
@@ -24,6 +24,11 @@ export default async function ProfilPage({ searchParams }: { searchParams: { pai
   if (!user) redirect('/login');
 
   const { data: profil } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+
+  // Formule rachetée en attente : bascule si l'actuelle est terminée.
+  try { await supabaseAdmin().rpc('activer_formule_suivante', { p_eleve_id: user.id, p_categorie: 'planning' }); } catch {}
+  const { data: formulesEnAttente } = await supabaseAdmin().from('abonnements')
+    .select('id, categorie, formule_nom, date_debut_formule').eq('eleve_id', user.id).eq('en_attente', true);
 
   // Un élève peut avoir plusieurs abonnements actifs en même temps (une
   // catégorie chacun) : un pass collectif, un coaching, un mentorat — ou
@@ -185,11 +190,18 @@ export default async function ProfilPage({ searchParams }: { searchParams: { pai
                           {abo.categorie === 'planning' && (seancesAVenir ?? 0) > 0 && <><br />{seancesAVenir} séance{(seancesAVenir ?? 0) > 1 ? 's' : ''} déjà réservée{(seancesAVenir ?? 0) > 1 ? 's' : ''} à venir</>}
                         </p>
 
-                        {bientotFini && (
+                        {(formulesEnAttente ?? []).filter((f) => f.categorie === abo.categorie).map((f) => (
+                          <p key={f.id} style={{ marginTop: 12, marginBottom: 0, fontSize: 13, padding: '10px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.15)' }}>
+                            ➡️ Prochaine formule : <strong>{FORMULES[f.formule_nom]?.nom ?? f.formule_nom}</strong>, réglée. Elle démarre dès que celle-ci est terminée (séances épuisées ou date de fin).
+                          </p>
+                        ))}
+                        {bientotFini && !(formulesEnAttente ?? []).some((f) => f.categorie === abo.categorie) && (
                           <div style={{ marginTop: 14, padding: 14, borderRadius: 10, border: '1px solid rgba(255,138,0,0.5)', background: 'rgba(255,138,0,0.08)' }}>
                             <p style={{ margin: '0 0 10px', fontSize: 14 }}>
                               ⏳ Ta formule arrive bientôt à sa fin.
-                              {pasRenouvelable ? ' Choisis la suite pour continuer à pratiquer sans interruption.' : " Renouvelle-la en un clic : les séances qu'il te reste sont conservées."}
+                              {pasRenouvelable ? ' Choisis la suite pour continuer à pratiquer sans interruption.' : avecQuota && abo.quota_restant <= 0
+                                ? ' Renouvelle-la en un clic : ta nouvelle formule démarre aujourd’hui.'
+                                : ' Renouvelle-la en un clic : ta nouvelle formule démarrera dès que celle-ci sera terminée (séances épuisées ou date de fin).'}
                             </p>
                             {pasRenouvelable ? (
                               <a href="/tarifs" style={{ color: '#FF2D78', fontWeight: 700, fontSize: 14 }}>Voir les formules →</a>
@@ -197,18 +209,6 @@ export default async function ProfilPage({ searchParams }: { searchParams: { pai
                               <BoutonRenouveler
                                 formuleNom={abo.formule_nom}
                                 prix={formule.prixIndicatif}
-                                choix={(() => {
-                                  // Choix proposé seulement pour les formules à séances, et
-                                  // tant que la formule actuelle court encore (sinon les deux
-                                  // options reviennent au même : démarrage aujourd'hui).
-                                  if (!avecQuota || !abo.date_expiration || abo.date_expiration <= aujourdhuiISO) return null;
-                                  const ajouterMois = (iso: string) => {
-                                    const d = new Date(iso + 'T00:00:00Z');
-                                    d.setUTCMonth(d.getUTCMonth() + formule.validiteMois);
-                                    return d.toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', day: 'numeric', month: 'long' });
-                                  };
-                                  return { finAujourdhui: ajouterMois(aujourdhuiISO), finSuite: ajouterMois(abo.date_expiration) };
-                                })()}
                               />
                             )}
                           </div>

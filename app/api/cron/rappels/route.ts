@@ -39,6 +39,12 @@ export async function GET(req: NextRequest) {
       if (resultat.ok) degeles++;
     }
 
+    // Formules rachetées en attente : bascule quand l'actuelle est terminée.
+    const { data: enAttente } = await admin.from('abonnements').select('eleve_id, categorie').eq('en_attente', true);
+    for (const f of enAttente ?? []) {
+      try { await admin.rpc('activer_formule_suivante', { p_eleve_id: f.eleve_id, p_categorie: f.categorie }); } catch {}
+    }
+
     // Suppression automatique des comptes créés il y a plus de 7 jours et
     // n'ayant JAMAIS eu ni abonnement ni paiement (spam, curieux jamais
     // revenus...) — sans ça, la liste des élèves devient interminable avec

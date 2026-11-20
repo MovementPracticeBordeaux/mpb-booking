@@ -35,6 +35,7 @@ export default function ListeElevesRepliable({
   eleveOuvert,
   eleves,
   abonnements,
+  formulesEnAttente = [],
   idsAyantDejaEuFormule,
   suspendreAcces,
   modifierQuotaRestant,
@@ -50,6 +51,7 @@ export default function ListeElevesRepliable({
   eleveOuvert?: string | null;
   eleves: Eleve[];
   abonnements: Abonnement[];
+  formulesEnAttente?: { id: string; eleveId: string; nom: string }[];
   idsAyantDejaEuFormule: string[];
   suspendreAcces: (formData: FormData) => void;
   modifierQuotaRestant: (formData: FormData) => void;
@@ -272,6 +274,11 @@ export default function ListeElevesRepliable({
                     </button>
                   </form>
                   {abos.length === 0 && <p style={{ fontSize: 13, opacity: 0.6 }}>Aucun abonnement actif pour cet élève.</p>}
+                  {formulesEnAttente.filter((f) => f.eleveId === e.id).map((f) => (
+                    <p key={f.id} style={{ fontSize: 13, margin: '0 0 10px', padding: '8px 10px', border: '1px dashed #555', borderRadius: 6 }}>
+                      ➡️ En attente : {f.nom} (réglée) — démarre à la fin de la formule actuelle
+                    </p>
+                  ))}
                   {abos.map((a) => {
                     const formule = a.formuleAffichage;
                     const statut = a.gele ? '❄️ gelé' : '✅ actif';

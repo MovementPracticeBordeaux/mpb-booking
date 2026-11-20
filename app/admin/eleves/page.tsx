@@ -57,6 +57,9 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
     .eq('abonnement_actif', true)
     .order('categorie');
 
+  const { data: abonnementsEnAttente } = await admin.from('abonnements')
+    .select('id, eleve_id, formule_nom, date_debut_formule').eq('en_attente', true);
+
   // Pour classer chaque élève (jamais eu de formule / ancien client sans
   // rien d'actif / actif) — nécessaire pour les filtres de la liste et le
   // nettoyage automatique des comptes fantômes. On ne récupère que les
@@ -234,6 +237,7 @@ export default async function AdminElevesPage({ searchParams }: { searchParams: 
             formuleAffichage: FORMULES[a.formule_nom] ?? null,
           }))}
           idsAyantDejaEuFormule={[...idsAyantDejaEuFormule]}
+          formulesEnAttente={(abonnementsEnAttente ?? []).map((a) => ({ id: a.id, eleveId: a.eleve_id, nom: FORMULES[a.formule_nom]?.nom ?? a.formule_nom }))}
           suspendreAcces={suspendreAcces}
           modifierQuotaRestant={modifierQuotaRestant}
           modifierExpiration={modifierExpiration}
