@@ -164,8 +164,8 @@ function aujourdhuiParis() {
 const NOMS_JOURS_COURTS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 
 function formaterDate(dateISO: string) {
-  const d = new Date(dateISO + 'T00:00:00');
-  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+  const d = new Date(dateISO + 'T12:00:00Z');
+  return d.toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', day: 'numeric', month: 'short' });
 }
 
 

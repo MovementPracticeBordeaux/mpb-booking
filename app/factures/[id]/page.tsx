@@ -3,6 +3,7 @@ import { FORMULES } from '@/lib/formules';
 import { ENTREPRISE } from '@/lib/entreprise';
 import { redirect, notFound } from 'next/navigation';
 import BoutonImprimer from '../BoutonImprimer';
+import { anneeParis } from '@/lib/dates-paris';
 
 export default async function FacturePage({ params }: { params: { id: string } }) {
   const supabase = supabaseServer();
@@ -23,7 +24,7 @@ export default async function FacturePage({ params }: { params: { id: string } }
   }
 
   const formule = FORMULES[paiement.formule_nom];
-  const numeroFacture = `MPB-${new Date(paiement.created_at).getFullYear()}-${paiement.id.slice(0, 8).toUpperCase()}`;
+  const numeroFacture = `MPB-${anneeParis(paiement.created_at)}-${paiement.id.slice(0, 8).toUpperCase()}`;
 
   return (
     <div style={{ background: 'white', color: '#111', minHeight: '100vh' }}>
@@ -39,7 +40,7 @@ export default async function FacturePage({ params }: { params: { id: string } }
           <div style={{ textAlign: 'right' }}>
             <h2 style={{ margin: 0, fontSize: 18 }}>Facture</h2>
             <p style={{ margin: '4px 0 0', fontSize: 13 }}>N° {numeroFacture}</p>
-            <p style={{ margin: 0, fontSize: 13 }}>{new Date(paiement.created_at).toLocaleDateString('fr-FR')}</p>
+            <p style={{ margin: 0, fontSize: 13 }}>{new Date(paiement.created_at).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' })}</p>
           </div>
         </div>
 

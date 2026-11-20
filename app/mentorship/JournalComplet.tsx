@@ -28,7 +28,7 @@ function libelleJour(iso: string) {
   const hier = new Date(); hier.setDate(auj.getDate() - 1);
   if (cleJour(d.toISOString()) === cleJour(auj.toISOString())) return "Aujourd'hui";
   if (cleJour(d.toISOString()) === cleJour(hier.toISOString())) return 'Hier';
-  return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  return d.toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 }
 
 export default function JournalComplet() {
@@ -199,8 +199,8 @@ export default function JournalComplet() {
                         <span style={{ fontSize: 11, letterSpacing: 0.5, textTransform: 'uppercase', color: '#f0a', fontWeight: 700 }}>{NOM_BRANCHE[e.branche] ?? e.branche}</span>
                         <span style={{ fontSize: 11, color: COULEURS.texteFaible }}>
                           {vue === 'sujet'
-                            ? new Date(e.cree_le).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
-                            : new Date(e.cree_le).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                            ? new Date(e.cree_le).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', day: 'numeric', month: 'short', year: 'numeric' })
+                            : new Date(e.cree_le).toLocaleTimeString('fr-FR', { timeZone: 'Europe/Paris', hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
 

@@ -15,9 +15,9 @@ export function jourISO(d: Date): string {
 
 export function prochaineRevision(boiteActuelle: number | null, juste: boolean, maintenant: Date): { boite: number; prochaine_le: string } {
   const boite = !juste ? 0 : boiteActuelle === null ? 1 : Math.min(INTERVALLES_REVISION_JOURS.length - 1, boiteActuelle + 1);
-  const d = new Date(maintenant);
-  d.setDate(d.getDate() + INTERVALLES_REVISION_JOURS[boite]);
-  return { boite, prochaine_le: jourISO(d) };
+  const d = new Date(jourISO(maintenant) + 'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate() + INTERVALLES_REVISION_JOURS[boite]);
+  return { boite, prochaine_le: d.toISOString().slice(0, 10) };
 }
 
 // Choisit la question du jour parmi les questions des QCM déjà réussis :
@@ -40,7 +40,8 @@ export function choisirQuestionDuJour(idsQuestions: string[], lignes: LigneRevis
 
 // --- Série de semaines actives ------------------------------------------
 function lundi(d: Date): string {
-  const j = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  // Jour civil à Paris, puis recul jusqu'au lundi (calcul en UTC).
+  const j = new Date(jourISO(d) + 'T12:00:00Z');
   j.setUTCDate(j.getUTCDate() - ((j.getUTCDay() + 6) % 7));
   return j.toISOString().slice(0, 10);
 }

@@ -1,5 +1,6 @@
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { ENTREPRISE } from '@/lib/entreprise';
+import { anneeParis } from '@/lib/dates-paris';
 
 // Facture "manuelle" (prestation hors formules) au format PDF, identique à
 // la page /facture-externe/[id] : coordonnées, SIRET, numéro, lignes, total,
@@ -14,7 +15,7 @@ export type FacturePdf = {
 };
 
 export function numeroFacture(f: { id: string; created_at: string }) {
-  return `MPB-${new Date(f.created_at).getFullYear()}-${f.id.slice(0, 8).toUpperCase()}`;
+  return `MPB-${anneeParis(f.created_at)}-${f.id.slice(0, 8).toUpperCase()}`;
 }
 
 const euros = (n: number) => `${n.toFixed(2).replace('.', ',')} €`;

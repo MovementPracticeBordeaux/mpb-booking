@@ -2,6 +2,7 @@
 // son suivi chiffré : étape en cours et activité sur une période. Sert à la
 // vue d'ensemble du coach et au récap hebdomadaire envoyé à l'élève.
 import { TRONC, BRANCHES, estNoeudAcquisDepuisProgression } from '@/lib/mentorship-modules';
+import { parisVersUTC } from '@/lib/dates-paris';
 
 export type LigneProgression = {
   module_id: string;
@@ -52,10 +53,10 @@ export function bilanDepuis(lignes: LigneProgression[], perfs: LignePerf[], depu
   };
 }
 
-// Lundi 00:00 (heure du serveur) de la semaine de `maintenant`.
+// Lundi 00:00 (heure de Paris) de la semaine de `maintenant`.
 export function lundiDeLaSemaine(maintenant: Date): Date {
-  const d = new Date(maintenant);
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
-  return d;
+  const jour = maintenant.toLocaleDateString('sv-SE', { timeZone: 'Europe/Paris' });
+  const d = new Date(jour + 'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+  return new Date(parisVersUTC(`${d.toISOString().slice(0, 10)}T00:00`));
 }

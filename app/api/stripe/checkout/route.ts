@@ -3,6 +3,7 @@ import { stripe } from '@/lib/stripe';
 import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { FORMULES } from '@/lib/formules';
 import { PRICE_IDS } from '@/lib/prix-stripe';
+import { aujourdhuiParis } from '@/lib/dates-paris';
 
 // Attend un body JSON: { price_id, formule_nom, date_debut }
 // Le quota et la durée de validité sont dérivés du catalogue FORMULES côté
@@ -57,7 +58,7 @@ export async function POST(req: NextRequest) {
   // Validation stricte de la date de début choisie par l'élève : format
   // YYYY-MM-DD et pas dans le passé. Si absente ou invalide, on retombe sur
   // aujourd'hui plutôt que de faire échouer l'achat pour ce détail.
-  const aujourdhui = new Date().toISOString().slice(0, 10);
+  const aujourdhui = aujourdhuiParis();
   const dateDebutValide = typeof date_debut === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date_debut) && date_debut >= aujourdhui
     ? date_debut
     : aujourdhui;

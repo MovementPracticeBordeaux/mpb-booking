@@ -1,6 +1,7 @@
 'use server';
 
 import { formuleARecrediter, quotaApresRecredit } from '@/lib/recredit-seance';
+import { aujourdhuiParis, ajouterMoisISO } from '@/lib/dates-paris';
 
 import { supabaseServer, supabaseAdmin } from '@/lib/supabase-server';
 import { revalidatePath } from 'next/cache';
@@ -326,9 +327,8 @@ export async function attribuerFormule(formData: FormData) {
     ? (branche2 ? `${branche1},${branche2}` : branche1)
     : null;
 
-  const expiration = new Date();
-  expiration.setMonth(expiration.getMonth() + formule.validiteMois);
-  const aujourdhui = new Date().toISOString().slice(0, 10);
+  const aujourdhui = aujourdhuiParis();
+  const expiration = ajouterMoisISO(aujourdhui, formule.validiteMois);
 
   // Un élève ne peut avoir qu'un seul abonnement ACTIF par catégorie
   // (planning / coaching / mentorat) à la fois — mais peut très bien avoir
@@ -348,7 +348,7 @@ export async function attribuerFormule(formData: FormData) {
     quota_total: formule.quota,
     quota_restant: formule.quota,
     date_debut_formule: aujourdhui,
-    date_expiration: expiration.toISOString().slice(0, 10),
+    date_expiration: expiration,
     abonnement_actif: true,
     origine: 'manuel',
     paye,
@@ -450,7 +450,7 @@ export async function gelerPass(formData: FormData) {
   const dateFinGelPrevue = (formData.get('date_fin_gel_prevue') as string) || null;
   const { error } = await admin.from('abonnements').update({
     gele: true,
-    date_gel_debut: new Date().toISOString().slice(0, 10),
+    date_gel_debut: aujourdhuiParis(),
     // Optionnel : si une date de reprise est indiquée, le cron quotidien
     // dégèlera automatiquement le pass ce jour-là (voir
     // app/api/cron/rappels/route.ts) — sinon dégel manuel comme avant.
@@ -1254,9 +1254,8 @@ export async function inscrireAvecFormuleARegler(formData: FormData) {
   if (!formule || formule.retiree || formule.categorie !== 'planning') echouer('/admin/planning', 'Formule invalide.');
   const [coursId, dateSeance] = seance.split('::');
 
-  const debut = new Date().toISOString().slice(0, 10);
-  const expiration = new Date();
-  expiration.setMonth(expiration.getMonth() + formule.validiteMois);
+  const debut = aujourdhuiParis();
+  const expiration = ajouterMoisISO(debut, formule.validiteMois);
 
   await admin.from('abonnements').update({ abonnement_actif: false })
     .eq('eleve_id', eleveId).eq('categorie', 'planning').eq('abonnement_actif', true);
@@ -1267,7 +1266,7 @@ export async function inscrireAvecFormuleARegler(formData: FormData) {
     quota_total: formule.quota,
     quota_restant: formule.quota,
     date_debut_formule: debut,
-    date_expiration: expiration.toISOString().slice(0, 10),
+    date_expiration: expiration,
     abonnement_actif: true,
     origine: 'manuel',
     paye: false,
@@ -1421,15 +1420,14 @@ export async function reglerSeancesARegler(formData: FormData) {
     }
   } else {
     const debut = seances[0].date_seance as string;
-    const fin = new Date(debut + 'T12:00:00Z');
-    fin.setUTCMonth(fin.getUTCMonth() + formule.validiteMois);
+    const fin = ajouterMoisISO(debut, formule.validiteMois);
 
     await admin.from('abonnements').update({ abonnement_actif: false })
       .eq('eleve_id', eleveId).eq('categorie', 'planning').eq('abonnement_actif', true);
     const { data: abo, error } = await admin.from('abonnements').insert({
       eleve_id: eleveId, categorie: 'planning', formule_nom: formuleNom,
       quota_total: formule.quota, quota_restant: formule.quota,
-      date_debut_formule: debut, date_expiration: fin.toISOString().slice(0, 10),
+      date_debut_formule: debut, date_expiration: fin,
       abonnement_actif: true, origine: 'manuel', paye,
     }).select('id').single();
     if (error || !abo) echouer('/admin/eleves', error?.message ?? 'Création de la formule impossible.');

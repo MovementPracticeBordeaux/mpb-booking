@@ -22,8 +22,8 @@ export function joursChevauchement(
   if (debutCommun > finCommune) return 0;
 
   const msParJour = 24 * 60 * 60 * 1000;
-  const debutMs = new Date(debutCommun + 'T00:00:00').getTime();
-  const finMs = new Date(finCommune + 'T00:00:00').getTime();
+  const debutMs = new Date(debutCommun + 'T00:00:00Z').getTime();
+  const finMs = new Date(finCommune + 'T00:00:00Z').getTime();
   return Math.round((finMs - debutMs) / msParJour) + 1; // +1 : bornes inclusives
 }
 

@@ -218,8 +218,9 @@ describe('annulerReservation', () => {
 
   it('autorise l\'annulation si le cours commence dans plus de 1h30', async () => {
     const dansDeuxHeures = new Date(Date.now() + 120 * 60000);
-    const dateSeance = `${dansDeuxHeures.getFullYear()}-${String(dansDeuxHeures.getMonth() + 1).padStart(2, '0')}-${String(dansDeuxHeures.getDate()).padStart(2, '0')}`;
-    const heureDebut = `${String(dansDeuxHeures.getHours()).padStart(2, '0')}:${String(dansDeuxHeures.getMinutes()).padStart(2, '0')}:00`;
+    // Date et heure du cours à l'heure de Paris (comme en base).
+    const dateSeance = dansDeuxHeures.toLocaleDateString('sv-SE', { timeZone: 'Europe/Paris' });
+    const heureDebut = dansDeuxHeures.toLocaleTimeString('fr-FR', { timeZone: 'Europe/Paris', hour: '2-digit', minute: '2-digit' }) + ':00';
 
     const client = mockClient({
       user: USER,

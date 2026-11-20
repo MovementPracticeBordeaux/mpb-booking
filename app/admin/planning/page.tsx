@@ -4,6 +4,7 @@ import { calculerSemaine } from '@/lib/semaine';
 import AdminSeancesCarousel, { type CoachingDuJour } from '../AdminSeancesCarousel';
 import SelecteurDiscipline from '../SelecteurDiscipline';
 import { COULEURS, POLICE_DISPLAY } from '@/lib/theme';
+import { aujourdhuiParis, ajouterJoursISO, midiUTC } from '@/lib/dates-paris';
 
 export const dynamic = 'force-dynamic';
 
@@ -79,13 +80,13 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
   // visuel que le planning public, en un seul jour à la fois plutôt qu'une
   // liste empilée qui prenait beaucoup trop de place).
   // Coachings individuels sur la même fenêtre de dates.
-  const debutFenetre = new Date(); debutFenetre.setDate(debutFenetre.getDate() - JOURS_PASSES);
-  const finFenetre = new Date(); finFenetre.setDate(finFenetre.getDate() + JOURS_A_VENIR);
+  const debutFenetre = ajouterJoursISO(aujourdhuiParis(), -JOURS_PASSES);
+  const finFenetre = ajouterJoursISO(aujourdhuiParis(), JOURS_A_VENIR);
   const { data: coachingsBrut } = await admin
     .from('coaching_seances')
     .select('id, eleve_id, nom_libre, date_seance, heure_debut, duree_minutes, lieu, note, heures_decomptees, profiles(nom, email)')
-    .gte('date_seance', debutFenetre.toISOString().slice(0, 10))
-    .lte('date_seance', finFenetre.toISOString().slice(0, 10))
+    .gte('date_seance', debutFenetre)
+    .lte('date_seance', finFenetre)
     .order('heure_debut');
   const coachingsParJour = new Map<string, CoachingDuJour[]>();
   for (const c of coachingsBrut ?? []) {
@@ -136,18 +137,17 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
   if (ref) {
     const lundiRef = new Date(ref.date_lundi_reference);
     const periodesVacancesActives = periodesVacances ?? [];
-    const aujourdhuiISO = new Date().toISOString().slice(0, 10);
+    const aujourdhuiISO = aujourdhuiParis();
     for (let i = -JOURS_PASSES; i < JOURS_A_VENIR; i++) {
-      const d = new Date();
-      d.setDate(d.getDate() + i);
-      const dateStr = d.toISOString().slice(0, 10);
+      const dateStr = ajouterJoursISO(aujourdhuiISO, i);
+      const d = midiUTC(dateStr);
       if (dateStr === aujourdhuiISO) indexAujourdhuiCarousel = i + JOURS_PASSES;
       const enVacances = periodesVacancesActives.some((v) => dateStr >= v.date_debut && dateStr <= v.date_fin);
       const semaine = calculerSemaine(d, lundiRef, ref.semaine_ce_lundi);
-      const coursDuJour = enVacances ? [] : (coursListe ?? []).filter((c) => c.jour_semaine === d.getDay() && c.semaine === semaine);
+      const coursDuJour = enVacances ? [] : (coursListe ?? []).filter((c) => c.jour_semaine === d.getUTCDay() && c.semaine === semaine);
       joursCarousel.push({
         dateISO: dateStr,
-        jourSemaine: d.getDay(),
+        jourSemaine: d.getUTCDay(),
         semaine,
         enVacances,
         coachings: coachingsParJour.get(dateStr) ?? [],
@@ -294,11 +294,11 @@ export default async function AdminPlanningPage({ searchParams }: { searchParams
           {(periodesVacances ?? []).length > 0 && (
             <div style={{ marginBottom: 16 }}>
               {periodesVacances!.map((v) => {
-                const aujourdhui = new Date().toISOString().slice(0, 10);
+                const aujourdhui = aujourdhuiParis();
                 const statut = aujourdhui > v.date_fin ? 'passée' : aujourdhui >= v.date_debut ? 'en cours' : 'à venir';
                 const couleurStatut = statut === 'en cours' ? '#f0a' : statut === 'à venir' ? '#4caf7d' : '#666';
-                const debutAffiche = new Date(v.date_debut + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-                const finAffiche = new Date(v.date_fin + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+                const debutAffiche = new Date(v.date_debut + 'T12:00:00Z').toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+                const finAffiche = new Date(v.date_fin + 'T12:00:00Z').toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
                 const nbJours = Math.round((new Date(v.date_fin).getTime() - new Date(v.date_debut).getTime()) / 86400000) + 1;
                 return (
                   <div key={v.id} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 8, fontSize: 13, padding: '8px 0', borderBottom: '1px solid #333' }}>

@@ -224,7 +224,7 @@ export default async function AdminDefisPage({ searchParams }: { searchParams: {
         {(defis ?? []).map((d, i) => (
           <details key={d.id} style={{ borderBottom: '1px solid #333', padding: '10px 0' }}>
             <summary style={{ fontSize: 13, cursor: 'pointer' }}>
-              {new Date(d.created_at).toLocaleDateString('fr-FR')} · {d.titre}
+              {new Date(d.created_at).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' })} · {d.titre}
               {i === 0 && ' · (actuel)'}
             </summary>
             <p style={{ fontSize: 12, margin: '8px 0 4px' }}>🥉 {d.description_facile}</p>

@@ -49,7 +49,7 @@ export default function CourbeSimple({
             <text x={c.x} y={c.y - 10} fontSize={11} fill={COULEURS.texte} textAnchor="middle">{unite(c.valeur)}</text>
           )}
           <text x={c.x} y={svgH - 8} fontSize={9} fill={COULEURS.texteFaible} textAnchor="middle">
-            {new Date(c.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+            {new Date(c.date).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', day: 'numeric', month: 'short' })}
           </text>
         </g>
       ))}

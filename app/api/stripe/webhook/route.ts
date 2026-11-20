@@ -6,6 +6,7 @@ import { envoyerEmail } from '@/lib/resend';
 import { alerterAdmin, alerterAdminPush } from '@/lib/alerte-admin';
 import { imputerSeancesARegler } from '@/lib/seances-a-regler';
 import Stripe from 'stripe';
+import { aujourdhuiParis, ajouterMoisISO, midiUTC } from '@/lib/dates-paris';
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -91,9 +92,9 @@ export async function POST(req: NextRequest) {
               `Confirmation de ta réservation : ${evenement.titre}`,
               `<p>Merci pour ta réservation !</p>
                <p>Ta place pour <strong>${evenement.titre}</strong> est confirmée.</p>
-               <p>📅 ${new Date(evenement.date_debut).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
-               de ${new Date(evenement.date_debut).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-               à ${new Date(evenement.date_fin).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</p>
+               <p>📅 ${new Date(evenement.date_debut).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', weekday: 'long', day: 'numeric', month: 'long' })}
+               de ${new Date(evenement.date_debut).toLocaleTimeString('fr-FR', { timeZone: 'Europe/Paris', hour: '2-digit', minute: '2-digit' })}
+               à ${new Date(evenement.date_fin).toLocaleTimeString('fr-FR', { timeZone: 'Europe/Paris', hour: '2-digit', minute: '2-digit' })}</p>
                <p>📍 ${evenement.lieu}</p>
                <p>Montant réglé : ${montant.toFixed(2)} €${tarifAbonne ? ' (tarif abonné -50%)' : ''}.</p>
                <p>Une question avant l'événement ? <a href="https://wa.me/33620477064">Contacte Sylvain sur WhatsApp</a>.</p>`
@@ -169,12 +170,12 @@ export async function POST(req: NextRequest) {
       // départ pour la validité (au lieu de toujours partir du jour du
       // paiement) — utile pour démarrer un pass au retour de vacances, etc.
       const dateDebutMetadata = session.metadata?.date_debut;
-      const dateDebut = dateDebutMetadata && /^\d{4}-\d{2}-\d{2}$/.test(dateDebutMetadata)
-        ? new Date(dateDebutMetadata + 'T00:00:00')
-        : new Date();
-
-      const expiration = new Date(dateDebut);
-      expiration.setMonth(expiration.getMonth() + formule.validiteMois);
+      // Dates calendrier à l'heure de Paris (serveur en UTC).
+      const dateDebutISO = dateDebutMetadata && /^\d{4}-\d{2}-\d{2}$/.test(dateDebutMetadata) && dateDebutMetadata >= aujourdhuiParis()
+        ? dateDebutMetadata
+        : aujourdhuiParis();
+      const dateDebut = midiUTC(dateDebutISO);
+      const expiration = midiUTC(ajouterMoisISO(dateDebutISO, formule.validiteMois));
       let dateFinAffichee = expiration;
       let enAttente = false;
 
@@ -191,7 +192,7 @@ export async function POST(req: NextRequest) {
         .eq('categorie', formule.categorie)
         .eq('abonnement_actif', true)
         .maybeSingle();
-      const aujourdhuiISO = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Paris' });
+      const aujourdhuiISO = aujourdhuiParis();
       // Cours collectifs : toute formule (même une différente) attend la fin
       // de l'actuelle, pour que l'élève ne perde jamais ses séances restantes.
       const memeLogique = formule.categorie === 'planning' || aboActuel?.formule_nom === formuleNom;
@@ -205,8 +206,7 @@ export async function POST(req: NextRequest) {
           .eq('eleve_id', userId).eq('categorie', formule.categorie).eq('en_attente', true)
           .order('date_expiration', { ascending: false }).limit(1).maybeSingle();
         const debutISO = dejaEnAttente?.date_expiration ?? aboActuel.date_expiration ?? aujourdhuiISO;
-        const fin = new Date(debutISO + 'T12:00:00Z');
-        fin.setUTCMonth(fin.getUTCMonth() + formule.validiteMois);
+        const fin = midiUTC(ajouterMoisISO(debutISO, formule.validiteMois));
         await admin.from('abonnements').insert({
           eleve_id: userId,
           categorie: formule.categorie,
@@ -237,7 +237,7 @@ export async function POST(req: NextRequest) {
           formule_nom: formuleNom,
           quota_total: formule.quota,
           quota_restant: formule.quota,
-          date_debut_formule: dateDebut.toISOString().slice(0, 10),
+          date_debut_formule: dateDebutISO,
           date_expiration: expiration.toISOString().slice(0, 10),
           abonnement_actif: true,
           origine: 'stripe',

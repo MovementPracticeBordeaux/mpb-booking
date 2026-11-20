@@ -3,6 +3,7 @@ import { calculerSemaine } from '@/lib/semaine';
 import { annulerReservation, reserverCours } from '../booking/actions';
 import { COULEURS, POLICE_DISPLAY } from '@/lib/theme';
 import PlanningVue, { JourPlanning } from '../components/PlanningVue';
+import { aujourdhuiParis, ajouterJoursISO, midiUTC } from '@/lib/dates-paris';
 
 // Jour du retour = lendemain du dernier jour de vacances.
 function dateDeRetour(dateFin: string): string {
@@ -66,15 +67,15 @@ export default async function PlanningPage({ searchParams }: { searchParams: { e
   if (ref) {
     const lundiRef = new Date(ref.date_lundi_reference);
 
+    const aujourdhui = aujourdhuiParis();
     for (let i = -JOURS_PASSES; i < JOURS_FUTURS; i++) {
-      const d = new Date();
-      d.setDate(d.getDate() + i);
-      const dateStr = d.toISOString().slice(0, 10);
+      const dateStr = ajouterJoursISO(aujourdhui, i);
+      const d = midiUTC(dateStr);
       const periodeVacances = (periodesVacances ?? []).find((v) => dateStr >= v.date_debut && dateStr <= v.date_fin);
       const enVacances = !!periodeVacances;
       const semaine = calculerSemaine(d, lundiRef, ref.semaine_ce_lundi);
       const coursDuJour = enVacances ? [] : (coursListe ?? [])
-        .filter((c) => c.jour_semaine === d.getDay() && c.semaine === semaine)
+        .filter((c) => c.jour_semaine === d.getUTCDay() && c.semaine === semaine)
         .filter((c) => !clesAnnulees.has(`${c.id}::${dateStr}`))
         .map((c) => {
           return {
@@ -86,7 +87,7 @@ export default async function PlanningPage({ searchParams }: { searchParams: { e
             dejaReserve: mesReservations.some((r) => r.cours_id === c.id && r.date_seance === dateStr),
           };
         });
-      jours.push({ dateISO: dateStr, jourSemaine: d.getDay(), semaine, cours: coursDuJour, enVacances, retourVacances: periodeVacances ? dateDeRetour(periodeVacances.date_fin) : undefined });
+      jours.push({ dateISO: dateStr, jourSemaine: d.getUTCDay(), semaine, cours: coursDuJour, enVacances, retourVacances: periodeVacances ? dateDeRetour(periodeVacances.date_fin) : undefined });
     }
   }
 

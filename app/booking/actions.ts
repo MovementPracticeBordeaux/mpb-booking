@@ -88,8 +88,8 @@ export async function reserverCours(formData: FormData) {
     .single();
 
   if (cours) {
-    const dateAffichee = new Date(dateSeance + 'T00:00:00').toLocaleDateString('fr-FR', {
-      weekday: 'long', day: 'numeric', month: 'long',
+    const dateAffichee = new Date(dateSeance + 'T12:00:00Z').toLocaleDateString('fr-FR', {
+      timeZone: 'Europe/Paris', weekday: 'long', day: 'numeric', month: 'long',
     });
 
     if (user.email) {

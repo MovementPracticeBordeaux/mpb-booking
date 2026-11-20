@@ -1,5 +1,7 @@
 // Détermine si une date donnée tombe sur une "semaine A" ou "semaine B",
 // à partir d'un lundi de référence connu et de la semaine qu'il représente.
+// Calcul en UTC sur des dates calendrier (passer midiUTC('YYYY-MM-DD')) :
+// le résultat ne dépend pas du fuseau de la machine.
 export function calculerSemaine(
   date: Date,
   lundiReference: Date,
@@ -17,10 +19,9 @@ export function calculerSemaine(
 }
 
 function getLundiDeLaSemaine(date: Date): Date {
-  const d = new Date(date);
-  const jour = d.getDay(); // 0 = dimanche
+  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  const jour = d.getUTCDay(); // 0 = dimanche
   const diff = jour === 0 ? -6 : 1 - jour; // recule jusqu'au lundi
-  d.setDate(d.getDate() + diff);
-  d.setHours(0, 0, 0, 0);
+  d.setUTCDate(d.getUTCDate() + diff);
   return d;
 }

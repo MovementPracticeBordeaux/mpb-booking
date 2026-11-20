@@ -50,7 +50,7 @@ export default function ListePaiementsRepliable({
           {filtres.map((p) => (
             <details key={p.id} style={{ borderBottom: '1px solid #333', padding: 8 }}>
               <summary style={{ fontSize: 13, cursor: 'pointer' }}>
-                {new Date(p.created_at).toLocaleDateString('fr-FR')} · {p.email} · {Number(p.montant).toFixed(2)} €
+                {new Date(p.created_at).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' })} · {p.email} · {Number(p.montant).toFixed(2)} €
                 {p.rembourse && ' · ↩️ remboursé'}
               </summary>
               <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 8, fontSize: 13, marginTop: 8 }}>

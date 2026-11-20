@@ -183,7 +183,7 @@ export default function SuiviPerf({ moduleId, couleur, critere, compact }: { mod
         <p style={{ fontSize: 10, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 0.6, margin: 0, fontWeight: 700 }}>Mon suivi</p>
         {derniere && (
           <p style={{ fontSize: 11, color: COULEURS.texteAtt, margin: 0 }}>
-            Dernière fois : <strong style={{ color: couleur }}>{formaterPerf(derniere)}</strong> · {estAujourdhui(derniere.cree_le) ? "aujourd'hui" : new Date(derniere.cree_le).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+            Dernière fois : <strong style={{ color: couleur }}>{formaterPerf(derniere)}</strong> · {estAujourdhui(derniere.cree_le) ? "aujourd'hui" : new Date(derniere.cree_le).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', day: 'numeric', month: 'short' })}
           </p>
         )}
       </div>
@@ -242,7 +242,7 @@ export default function SuiviPerf({ moduleId, couleur, critere, compact }: { mod
         <ul style={{ listStyle: 'none', margin: '6px 0 0', padding: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
           {perfs.slice(0, 30).map((p) => (
             <li key={p.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 12, color: COULEURS.texteAtt }}>
-              <span>{new Date(p.cree_le).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} — {formaterPerf(p)}</span>
+              <span>{new Date(p.cree_le).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', day: 'numeric', month: 'short' })} — {formaterPerf(p)}</span>
               <button type="button" onClick={() => supprimer(p.id)} aria-label="Supprimer cette entrée" style={{ background: 'none', border: 'none', color: COULEURS.texteFaible, cursor: 'pointer', fontSize: 14, padding: '0 4px' }}>×</button>
             </li>
           ))}

@@ -123,7 +123,7 @@ export default async function AdminCandidaturesPage({ searchParams }: { searchPa
         <p style={{ fontSize: 13, color: COULEURS.texte, whiteSpace: 'pre-wrap', margin: '8px 0 0' }}>{c.objectifs}</p>
 
         <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '10px 0 0' }}>
-          Reçue le {new Date(c.cree_le).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+          Reçue le {new Date(c.cree_le).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', day: 'numeric', month: 'long', year: 'numeric' })}
         </p>
 
         <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap' }}>

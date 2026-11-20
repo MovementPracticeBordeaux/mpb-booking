@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase-server';
 import { FORMULES } from '@/lib/formules';
+import { aujourdhuiParis } from '@/lib/dates-paris';
 import {
   REVENUS_MENSUELS_WIX,
   TOTAL_ENCAISSE_WIX,
@@ -51,12 +52,12 @@ export default async function AdminStatistiquesPage() {
   }
   for (const p of paiementsTous ?? []) {
     if (!p.paye || p.rembourse) continue;
-    const mois = (p.created_at as string).slice(0, 7); // YYYY-MM
+    const mois = aujourdhuiParis(new Date(p.created_at as string)).slice(0, 7); // YYYY-MM, mois à Paris
     revenusParMois.set(mois, (revenusParMois.get(mois) ?? 0) + Number(p.montant));
   }
   // Répartition par moyen de paiement (nouveau site uniquement, l'historique
   // Wix n'a pas ce détail), sur le mois en cours et au total.
-  const moisCourant = new Date().toISOString().slice(0, 7);
+  const moisCourant = aujourdhuiParis().slice(0, 7);
   const LIBELLE_MOYEN: Record<string, string> = { carte: '💳 Carte', especes: '💶 Espèces', virement: '🏦 Virement' };
   const parMoyen = { mois: new Map<string, number>(), total: new Map<string, number>() };
   for (const p of paiementsTous ?? []) {

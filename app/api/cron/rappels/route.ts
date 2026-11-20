@@ -5,6 +5,7 @@ import { envoyerPushAEleve } from '@/lib/push';
 import { degelerAbonnement } from '@/lib/degel';
 import { alerterAdmin } from '@/lib/alerte-admin';
 import { envoyerRecapsHebdo, estDimancheAParis } from '@/lib/mentorship-recap';
+import { aujourdhuiParis, ajouterJoursISO } from '@/lib/dates-paris';
 
 // Appelée automatiquement une fois par jour par Vercel Cron (voir vercel.json).
 // Envoie un email de rappel à chaque élève ayant un cours réservé le lendemain.
@@ -25,7 +26,7 @@ export async function GET(req: NextRequest) {
     // rappels eux-mêmes. Un élève peut avoir plusieurs abonnements gelés
     // en parallèle (ex. planning ET coaching) — chacun est dégelé
     // indépendamment.
-    const aujourdhui = new Date().toISOString().slice(0, 10);
+    const aujourdhui = aujourdhuiParis();
     const { data: aDegeler } = await admin
       .from('abonnements')
       .select('id')
@@ -104,9 +105,8 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const demain = new Date();
-    demain.setDate(demain.getDate() + 1);
-    const demainStr = demain.toISOString().slice(0, 10);
+    // "Demain" à Paris (le serveur est en UTC).
+    const demainStr = ajouterJoursISO(aujourdhuiParis(), 1);
 
     const { data: reservations, error } = await admin
       .from('reservations')

@@ -65,7 +65,7 @@ export default function JournalDuNoeud({ noeudId, branche }: { noeudId: string; 
           {entrees.map((e) => (
             <div key={e.id} style={{ borderTop: `1px solid ${COULEURS.bordure}`, paddingTop: 8 }}>
               <p style={{ fontSize: 11, color: COULEURS.texteFaible, margin: '0 0 2px' }}>
-                {new Date(e.cree_le).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                {new Date(e.cree_le).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', day: 'numeric', month: 'short' })}
               </p>
               <RenduNote contenu={e.contenu} format={e.format} taille={13} couleur={COULEURS.texteAtt} />
             </div>

@@ -30,10 +30,10 @@ export type StatsProgression = {
   figuresAAmeliorer: { nom: string; meilleurTempsSec: number }[]; // 3 moins avancées
 };
 
+// Lundi (YYYY-MM-DD) de la semaine, à l'heure de Paris.
 function lundiDeLaSemaine(date: Date): string {
-  const d = new Date(date);
-  const jour = (d.getDay() + 6) % 7; // 0 = lundi
-  d.setDate(d.getDate() - jour);
+  const d = new Date(date.toLocaleDateString('sv-SE', { timeZone: 'Europe/Paris' }) + 'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
   return d.toISOString().slice(0, 10);
 }
 

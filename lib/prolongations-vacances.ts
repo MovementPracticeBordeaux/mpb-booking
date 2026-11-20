@@ -2,6 +2,7 @@ import { supabaseAdmin } from '@/lib/supabase-server';
 import { FORMULES } from '@/lib/formules';
 import { calculerSemaine } from '@/lib/semaine';
 import { joursChevauchement, ajouterJours, premierJourDeCours } from '@/lib/vacances';
+import { aujourdhuiParis } from '@/lib/dates-paris';
 
 // Prolongation des formules à cause des vacances, partagée entre l'admin
 // (création d'une période) et la planification automatique (toutes les
@@ -61,7 +62,7 @@ export async function appliquerProlongationsVacances(vacanceId: string): Promise
 // Sans risque de double prolongation (traçage dans vacances_prolongations).
 export async function appliquerProlongationsVacancesAVenir(): Promise<number> {
   const admin = supabaseAdmin();
-  const aujourdhui = new Date().toISOString().slice(0, 10);
+  const aujourdhui = aujourdhuiParis();
   const { data: periodes } = await admin.from('vacances').select('id').gte('date_fin', aujourdhui);
   let total = 0;
   for (const v of periodes ?? []) total += (await appliquerProlongationsVacances(v.id)).prolongees;

@@ -47,3 +47,41 @@ export function utcVersParisInput(iso: string): string {
   const p = (n: number) => String(n).padStart(2, '0');
   return `${annee}-${p(mois)}-${p(jour)}T${p(heure)}:${p(minute)}`;
 }
+
+// --- Dates "calendrier" à l'heure de Paris -------------------------------
+// Le serveur tourne en UTC : entre minuit et 1h (2h en été) à Paris,
+// new Date().toISOString() donne encore la date de la veille. Toute notion
+// de "aujourd'hui", "demain", "dans un mois" passe donc par ces fonctions.
+
+// Date du jour à Paris, "YYYY-MM-DD".
+export function aujourdhuiParis(maintenant: Date = new Date()): string {
+  return maintenant.toLocaleDateString('sv-SE', { timeZone: FUSEAU });
+}
+
+// "YYYY-MM-DD" -> Date à midi UTC ce jour-là : jour de la semaine
+// (getUTCDay) et calculs de dates sans aucun effet de fuseau.
+export function midiUTC(dateISO: string): Date {
+  return new Date(dateISO + 'T12:00:00Z');
+}
+
+export function ajouterJoursISO(dateISO: string, jours: number): string {
+  const d = midiUTC(dateISO);
+  d.setUTCDate(d.getUTCDate() + jours);
+  return d.toISOString().slice(0, 10);
+}
+
+export function ajouterMoisISO(dateISO: string, mois: number): string {
+  const d = midiUTC(dateISO);
+  d.setUTCMonth(d.getUTCMonth() + mois);
+  return d.toISOString().slice(0, 10);
+}
+
+// Nombre de jours entre deux dates "YYYY-MM-DD" (b - a).
+export function joursEntre(a: string, b: string): number {
+  return Math.round((midiUTC(b).getTime() - midiUTC(a).getTime()) / 86400000);
+}
+
+// Année à Paris d'un instant (numéros de facture).
+export function anneeParis(instant: string | Date): number {
+  return Number(new Date(instant).toLocaleDateString('sv-SE', { timeZone: FUSEAU }).slice(0, 4));
+}

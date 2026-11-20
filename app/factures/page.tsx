@@ -63,7 +63,7 @@ export default async function FacturesPage() {
           <div>
             <p style={{ margin: 0 }}>{l.libelle}</p>
             <p style={{ margin: 0, fontSize: 12, opacity: 0.6 }}>
-              {new Date(l.date).toLocaleDateString('fr-FR')} · {l.montant.toFixed(2)} €
+              {new Date(l.date).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' })} · {l.montant.toFixed(2)} €
             </p>
           </div>
           <a href={l.lien} style={{ color: '#f0a' }}>Voir la facture</a>

@@ -130,7 +130,7 @@ function CarteFormule({ cle, onAcheter, libelleBouton = 'Acheter' }: { cle: stri
 
 export default function TarifsPage({ searchParams }: { searchParams: { erreur?: string } }) {
   const [erreur, setErreur] = useState<Erreur | null>(null);
-  const aujourdhui = new Date().toISOString().slice(0, 10);
+  const aujourdhui = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Paris' });
   const [dateDebut, setDateDebut] = useState(aujourdhui);
 
   return (

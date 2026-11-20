@@ -55,7 +55,7 @@ export default async function AdminFacturesPage({ searchParams }: { searchParams
           return (
             <details key={f.id} style={{ borderBottom: '1px solid #333', padding: '10px 0' }}>
               <summary style={{ fontSize: 13, cursor: 'pointer' }}>
-                {new Date(f.created_at).toLocaleDateString('fr-FR')} · {f.nom_client} · {Number(f.total).toFixed(2)} €
+                {new Date(f.created_at).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' })} · {f.nom_client} · {Number(f.total).toFixed(2)} €
                 {f.envoyee_le && ' · ✓ envoyée'}
               </summary>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>

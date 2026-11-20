@@ -2,6 +2,7 @@ import { supabaseAdmin } from '@/lib/supabase-server';
 import { ENTREPRISE } from '@/lib/entreprise';
 import { notFound } from 'next/navigation';
 import BoutonImprimer from '../../factures/BoutonImprimer';
+import { anneeParis } from '@/lib/dates-paris';
 
 export default async function FactureExternePage({ params }: { params: { id: string } }) {
   // Consultation publique par id (le lien fait office de secret, comme un
@@ -14,7 +15,7 @@ export default async function FactureExternePage({ params }: { params: { id: str
   if (!facture) notFound();
 
   const lignes = facture.lignes as { description: string; prixUnitaire: number; quantite: number }[];
-  const numeroFacture = `MPB-${new Date(facture.created_at).getFullYear()}-${facture.id.slice(0, 8).toUpperCase()}`;
+  const numeroFacture = `MPB-${anneeParis(facture.created_at)}-${facture.id.slice(0, 8).toUpperCase()}`;
 
   return (
     <div style={{ background: 'white', color: '#111', minHeight: '100vh' }}>
@@ -30,7 +31,7 @@ export default async function FactureExternePage({ params }: { params: { id: str
           <div style={{ textAlign: 'right' }}>
             <h2 style={{ margin: 0, fontSize: 18 }}>Facture</h2>
             <p style={{ margin: '4px 0 0', fontSize: 13 }}>N° {numeroFacture}</p>
-            <p style={{ margin: 0, fontSize: 13 }}>{new Date(facture.created_at).toLocaleDateString('fr-FR')}</p>
+            <p style={{ margin: 0, fontSize: 13 }}>{new Date(facture.created_at).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' })}</p>
           </div>
         </div>
 

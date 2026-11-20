@@ -143,7 +143,7 @@ function ComparaisonVideo({
         >
           <span style={{ display: 'block', fontSize: 11, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 0.4 }}>Première vidéo</span>
           <span style={{ display: 'block', fontSize: 13, color: '#f0a', marginTop: 2 }}>
-            ▶ {premiereDate ? new Date(premiereDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Voir'}
+            ▶ {premiereDate ? new Date(premiereDate).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', day: 'numeric', month: 'short', year: 'numeric' }) : 'Voir'}
           </span>
         </button>
         {!memeVideo && (
@@ -447,7 +447,7 @@ function CourbeXP({ points }: { points: { jour: string; xp: number }[] }) {
             {!exemple && (i === coords.length - 1 || i === 0) && <text x={c.x} y={c.y - 10} fontSize={12} fill={COULEURS.texte} textAnchor="middle">{c.xp} XP</text>}
             {!exemple && (
               <text x={c.x} y={svgH - 8} fontSize={10} fill={COULEURS.texteFaible} textAnchor="middle">
-                {new Date(c.jour + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                {new Date(c.jour + 'T12:00:00Z').toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris', day: 'numeric', month: 'short' })}
               </text>
             )}
           </g>

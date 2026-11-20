@@ -39,7 +39,10 @@ describe('bilanDepuis', () => {
 
 describe('lundiDeLaSemaine', () => {
   it('revient au lundi', () => {
-    expect(lundiDeLaSemaine(new Date(2026, 10, 15, 14)).getDate()).toBe(9); // dimanche 15 -> lundi 9
-    expect(lundiDeLaSemaine(new Date(2026, 10, 16, 14)).getDate()).toBe(16);
+    const jourParis = (d: Date) => d.toLocaleString('sv-SE', { timeZone: 'Europe/Paris' });
+    expect(jourParis(lundiDeLaSemaine(new Date('2026-11-15T13:00:00Z')))).toBe('2026-11-09 00:00:00'); // dimanche 15 -> lundi 9, minuit à Paris
+    expect(jourParis(lundiDeLaSemaine(new Date('2026-11-16T13:00:00Z')))).toBe('2026-11-16 00:00:00');
+    // Dimanche 23h30 UTC = lundi 0h30 à Paris : déjà la nouvelle semaine.
+    expect(jourParis(lundiDeLaSemaine(new Date('2026-11-15T23:30:00Z')))).toBe('2026-11-16 00:00:00');
   });
 });

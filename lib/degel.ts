@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase-server';
+import { aujourdhuiParis, ajouterJoursISO, joursEntre, midiUTC } from '@/lib/dates-paris';
 
 // Hors des fichiers 'use server' : une fonction exportée depuis un tel
 // fichier devient une action appelable depuis Internet, or celle-ci ne
@@ -19,11 +20,10 @@ export async function degelerAbonnement(abonnementId: string): Promise<{ ok: boo
     .single();
   if (!abo?.date_gel_debut) return { ok: false, erreur: "Cet abonnement n'est pas gelé." };
 
-  const debutGel = new Date(abo.date_gel_debut);
-  const joursGeles = Math.max(0, Math.round((Date.now() - debutGel.getTime()) / (1000 * 60 * 60 * 24)));
-
-  const nouvelleExpiration = new Date(abo.date_expiration ?? new Date());
-  nouvelleExpiration.setDate(nouvelleExpiration.getDate() + joursGeles);
+  // Jours de gel comptés en dates calendrier à Paris.
+  const aujourdhui = aujourdhuiParis();
+  const joursGeles = Math.max(0, joursEntre(abo.date_gel_debut, aujourdhui));
+  const nouvelleExpiration = midiUTC(ajouterJoursISO(abo.date_expiration ?? aujourdhui, joursGeles));
 
   const { error } = await admin.from('abonnements').update({
     gele: false,
