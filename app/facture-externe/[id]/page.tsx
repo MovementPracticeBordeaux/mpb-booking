@@ -3,6 +3,7 @@ import { ENTREPRISE } from '@/lib/entreprise';
 import { notFound } from 'next/navigation';
 import BoutonImprimer from '../../factures/BoutonImprimer';
 import { anneeParis } from '@/lib/dates-paris';
+import CachetSignature from '../../factures/CachetSignature';
 
 export default async function FactureExternePage({ params }: { params: { id: string } }) {
   // Consultation publique par id (le lien fait office de secret, comme un
@@ -18,8 +19,8 @@ export default async function FactureExternePage({ params }: { params: { id: str
   const numeroFacture = `MPB-${anneeParis(facture.created_at)}-${facture.id.slice(0, 8).toUpperCase()}`;
 
   return (
-    <div style={{ background: 'white', color: '#111', minHeight: '100vh' }}>
-      <style>{`@media print { .no-print { display: none !important; } }`}</style>
+    <div className="zone-facture" style={{ background: 'white', color: '#111', minHeight: '100vh' }}>
+      <style>{`@media print { body * { visibility: hidden !important; } .zone-facture, .zone-facture * { visibility: visible !important; } .zone-facture { position: absolute; left: 0; top: 0; width: 100%; } .no-print { display: none !important; } @page { margin: 12mm; } }`}</style>
       <main style={{ maxWidth: 640, margin: '0 auto', padding: 32, fontFamily: 'sans-serif' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 32 }}>
           <div>
@@ -65,6 +66,8 @@ export default async function FactureExternePage({ params }: { params: { id: str
           <p style={{ fontSize: 16, fontWeight: 'bold', margin: 0 }}>Total : {facture.total.toFixed(2)} €</p>
           <p style={{ fontSize: 12, color: '#555', margin: '4px 0 0' }}>{ENTREPRISE.mentionTva}</p>
         </div>
+
+        <CachetSignature />
 
         <BoutonImprimer />
       </main>

@@ -1,3 +1,4 @@
+import { signatureFacturePng } from '@/lib/signature-facture';
 import { supabaseAdmin } from '@/lib/supabase-server';
 import { envoyerEmail } from '@/lib/resend';
 import { genererFacturePdf, numeroFacture } from '@/lib/facture-pdf';
@@ -16,8 +17,7 @@ export async function envoyerFactureManuelle(factureId: string): Promise<void> {
   const lignes = f.lignes as { description: string; prixUnitaire: number; quantite: number }[];
   const total = Number(f.total);
   const numero = numeroFacture(f);
-  const { data: sig } = await admin.from('config_interne').select('valeur').eq('cle', 'signature_facture_png').maybeSingle();
-  const signature = sig?.valeur ? Uint8Array.from(Buffer.from(sig.valeur, 'base64')) : null;
+  const signature = await signatureFacturePng();
   const pdf = await genererFacturePdf({ id: f.id, nom_client: f.nom_client, lignes, total, created_at: f.created_at }, signature);
   const lien = `${process.env.NEXT_PUBLIC_SITE_URL}/facture-externe/${f.id}`;
   const lignesHtml = lignes

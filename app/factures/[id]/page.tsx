@@ -4,6 +4,7 @@ import { ENTREPRISE } from '@/lib/entreprise';
 import { redirect, notFound } from 'next/navigation';
 import BoutonImprimer from '../BoutonImprimer';
 import { anneeParis } from '@/lib/dates-paris';
+import CachetSignature from '../CachetSignature';
 
 export default async function FacturePage({ params }: { params: { id: string } }) {
   const supabase = supabaseServer();
@@ -27,8 +28,8 @@ export default async function FacturePage({ params }: { params: { id: string } }
   const numeroFacture = `MPB-${anneeParis(paiement.created_at)}-${paiement.id.slice(0, 8).toUpperCase()}`;
 
   return (
-    <div style={{ background: 'white', color: '#111', minHeight: '100vh' }}>
-      <style>{`@media print { .no-print { display: none !important; } }`}</style>
+    <div className="zone-facture" style={{ background: 'white', color: '#111', minHeight: '100vh' }}>
+      <style>{`@media print { body * { visibility: hidden !important; } .zone-facture, .zone-facture * { visibility: visible !important; } .zone-facture { position: absolute; left: 0; top: 0; width: 100%; } .no-print { display: none !important; } @page { margin: 12mm; } }`}</style>
       <main style={{ maxWidth: 640, margin: '0 auto', padding: 32, fontFamily: 'sans-serif' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 32 }}>
           <div>
@@ -69,7 +70,14 @@ export default async function FacturePage({ params }: { params: { id: string } }
           <p style={{ fontSize: 12, color: '#555', margin: '4px 0 0' }}>{ENTREPRISE.mentionTva}</p>
         </div>
 
-        <BoutonImprimer />
+        <CachetSignature />
+
+        <div className="no-print" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <a href={`/factures/${paiement.id}/pdf`} style={{ padding: '10px 16px', background: '#111', color: 'white', borderRadius: 6, textDecoration: 'none', fontSize: 14 }}>
+            Télécharger le PDF
+          </a>
+          <BoutonImprimer />
+        </div>
       </main>
     </div>
   );
