@@ -20,8 +20,8 @@ const BRANCHES = [
   { cle: 'force', titre: 'Force', texte: 'La force du haut du corps, avec les anneaux de gymnastique.', cap: 'muscle-up aux anneaux, push-up unilatéral' },
   { cle: 'figures', titre: 'Figures', texte: 'Les figures en équilibre, sur les mains ou sur les coudes.', cap: 'handstand, pont haut, elbow lever straddle' },
   { cle: 'locomotion', titre: 'Locomotion', texte: 'Les déplacements au sol : un mélange de force, de mobilité et de coordination.', cap: 'QDR switch, lizard crawl, improvisation au sol' },
-  { cle: 'connexion', titre: 'Connexion', texte: "L'habileté et la coordination, avec des jeux de manipulation d'objets.", cap: 'dribbles à deux balles, ballon tenu sur le front' },
-  { cle: 'flexibilite', titre: 'Flexibilité', texte: 'La mobilité active du bas du corps.', cap: 'grand écart facial vers écart latéral, en actif' },
+  { cle: 'connexion', titre: 'Connexion', texte: "L'habileté et la coordination, avec des jeux de manipulation d'objets.", cap: "des défis de manipulation d'objets et de coordination" },
+  { cle: 'flexibilite', titre: 'Flexibilité', texte: 'La mobilité active du bas du corps.', cap: 'écarts en actif, squats unilatéraux, défis de squat, force en grande amplitude du bas du corps' },
 ] as const;
 
 const POURQUOI = [
