@@ -29,3 +29,19 @@ describe('phraseDuJour', () => {
     expect(PHRASES).toContain(phraseDuJour(2, matin));
   });
 });
+
+import { xpPrioriteTenue, XP_PRIORITE_TENUE } from './mentorship-engagement';
+
+describe('xpPrioriteTenue', () => {
+  it('récompense une priorité choisie ET pratiquée', () => {
+    const r = xpPrioriteTenue(
+      [{ jour: '2026-11-23', priorite: 'figures' }, { jour: '2026-11-24', priorite: 'force' }],
+      [{ module_id: 'figures-1::hs', cree_le: '2026-11-23T10:00:00Z' }, { module_id: 'flexibilite-1::x', cree_le: '2026-11-24T10:00:00Z' }],
+    );
+    expect(r.total).toBe(XP_PRIORITE_TENUE);
+    expect(r.parJour).toEqual([{ jour: '2026-11-23', xp: XP_PRIORITE_TENUE }]);
+  });
+  it('ne rapporte rien pour un choix sans pratique', () => {
+    expect(xpPrioriteTenue([{ jour: '2026-11-23', priorite: 'force' }], []).total).toBe(0);
+  });
+});

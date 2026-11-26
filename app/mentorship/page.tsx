@@ -7,7 +7,7 @@ import { COULEURS, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
 import ArbreCompetences from './ArbreCompetences';
 import { PerfsProvider, type Perf } from './SuiviPerf';
 import type { QuestionRevision } from './RevisionDuJour';
-import { choisirQuestionDuJour, serieSemaines, calculerBadges, xpPresence, type LigneRevision } from '@/lib/mentorship-engagement';
+import { choisirQuestionDuJour, serieSemaines, calculerBadges, xpPresence, xpPrioriteTenue, type LigneRevision } from '@/lib/mentorship-engagement';
 import { CoeursProvider } from './Coeurs';
 import { DOMAINE_COULEURS, DOMAINE_LABELS, COULEUR_TRONC, type Domaine } from '@/lib/mentorship-modules';
 
@@ -157,9 +157,13 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
 
   // Présence récompensée : XP pour chaque jour de pratique noté (plafonné par semaine).
   const presence = xpPresence(perfsInitiales.map((p) => p.cree_le));
-  xpTotal += presence.total;
+  // Priorité du jour choisie par l'élève, et XP quand elle a été tenue.
+  const { data: prioritesData } = await supabase.from('mentorship_priorite_jour').select('jour, priorite').eq('eleve_id', user.id).order('jour', { ascending: false }).limit(400);
+  const prioritesRecentes = (prioritesData ?? []).map((p) => ({ jour: String(p.jour), priorite: String(p.priorite) }));
+  const prioriteTenue = xpPrioriteTenue(prioritesRecentes, perfsInitiales);
+  xpTotal += presence.total + prioriteTenue.total;
   const niveau = niveauGlobal(xpTotal);
-  const courbeXP = courbeXPParJour(progressionData ?? [], defisHistoriqueData ?? [], presence.parJour);
+  const courbeXP = courbeXPParJour(progressionData ?? [], defisHistoriqueData ?? [], [...presence.parJour, ...prioriteTenue.parJour]);
 
   // Coups de cœur (exercices pratiqués pour le plaisir).
   const { data: coeursData } = await supabase.from('mentorship_coeur').select('module_id').eq('eleve_id', user.id);
@@ -250,6 +254,7 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
         serie={serie}
         badges={badges}
         revision={{ question: questionRevision, faiteAujourdhui: choix.faiteAujourdhui }}
+        prioritesRecentes={prioritesRecentes}
       />
       </CoeursProvider>
       </PerfsProvider>

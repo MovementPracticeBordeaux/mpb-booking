@@ -29,6 +29,8 @@ import JournalComplet from './JournalComplet';
 import SuiviPerf, { usePerfs } from './SuiviPerf';
 import SeanceDuJour, { type ElementSeance, type InfosCycle } from './SeanceDuJour';
 import { BoutonCoeur, useCoeurs } from './Coeurs';
+import { jourParisAujourdhui, XP_PRIORITE_TENUE } from '@/lib/mentorship-engagement';
+import { supabaseBrowser } from '@/lib/supabase-browser';
 import { phraseDuJour } from '@/lib/mentorship-phrases';
 import RevisionDuJour, { type QuestionRevision } from './RevisionDuJour';
 import type { Badge } from '@/lib/mentorship-engagement';
@@ -560,6 +562,7 @@ export default function ArbreCompetences({
   serie,
   badges,
   revision,
+  prioritesRecentes,
 }: {
   tronc: NoeudMentorshipPublic[];
   branches: NoeudMentorshipPublic[];
@@ -581,6 +584,7 @@ export default function ArbreCompetences({
   serie: { semaines: number; activeCetteSemaine: boolean };
   badges: Badge[];
   revision: { question: QuestionRevision | null; faiteAujourdhui: boolean };
+  prioritesRecentes: { jour: string; priorite: string }[];
 }) {
   const [selection, setSelection] = useState<string | null>(null);
   // Vue isolée d'une branche (chemin vertical) — null = vue globale (dashboard).
@@ -603,24 +607,26 @@ export default function ArbreCompetences({
     });
   }
   const { coeurs } = useCoeurs();
-  // Axe de la séance : alterné automatiquement d'une séance à l'autre
-  // (Force -> Figures, puis Mobilité -> Locomotion), d'après les perfs
-  // notées. L'élève peut forcer l'autre axe pour la journée (choix gardé
-  // sur l'appareil, valable le jour même seulement).
+  // Priorité du jour : l'élève choisit chaque jour ce qui sera « l'essentiel »
+  // de sa séance (« on continue ça, ou plutôt ça ? »). Choix enregistré en
+  // base (mentorship_priorite_jour), un par jour à l'heure de Paris. Sans
+  // choix, une suggestion suit la méthode : Force ou Mobilité d'abord, en
+  // alternance, puis la branche qu'elles servent une fois validées.
   const { parModule: perfsParModule } = usePerfs();
-  const [axeForce, setAxeForce] = useState<{ jour: string; axe: 'force' | 'flexibilite' } | null>(null);
   const jourLocal = new Date().toDateString();
-  useEffect(() => {
-    try {
-      const brut = window.localStorage.getItem('mentorat-axe-du-jour');
-      if (brut) setAxeForce(JSON.parse(brut));
-    } catch { /* stockage indisponible : alternance automatique seule */ }
-  }, []);
-  function changerCycle(c: { axe?: 'force' | 'flexibilite' }) {
-    if (!c.axe) return;
-    const v = { jour: jourLocal, axe: c.axe };
-    setAxeForce(v);
-    try { window.localStorage.setItem('mentorat-axe-du-jour', JSON.stringify(v)); } catch { /* idem */ }
+  const jourParisAuj = jourParisAujourdhui();
+  const [priorites, setPriorites] = useState(prioritesRecentes);
+  const prioriteDuJour = priorites.find((p) => p.jour === jourParisAuj)?.priorite as Domaine | undefined;
+  const dernierePriorite = [...priorites].filter((p) => p.jour < jourParisAuj).sort((x, y) => y.jour.localeCompare(x.jour))[0];
+  async function choisirPriorite(d: Domaine) {
+    const avant = priorites;
+    setPriorites([...priorites.filter((p) => p.jour !== jourParisAuj), { jour: jourParisAuj, priorite: d }]);
+    const supabase = supabaseBrowser();
+    const { data: { user } } = await supabase.auth.getUser();
+    const { error } = user
+      ? await supabase.from('mentorship_priorite_jour').upsert({ eleve_id: user.id, jour: jourParisAuj, priorite: d }, { onConflict: 'eleve_id,jour' })
+      : { error: new Error('non connecté') };
+    if (error) setPriorites(avant);
   }
   const refNoeudCourant = useRef<HTMLDivElement | null>(null);
   const [reponsesQCM, setReponsesQCM] = useState<Record<string, number>>({});
@@ -853,6 +859,7 @@ export default function ArbreCompetences({
   const ESSENTIEL = "L'essentiel";
   const BLOC_CONNEXION = 'Bonus · Connexion en fin de séance, 15 min';
   const BLOC_RECUP = 'Bonus · Récupération';
+  const JUMELLE: Record<string, Domaine> = { force: 'figures', figures: 'force', flexibilite: 'locomotion', locomotion: 'flexibilite' };
   const AXES = [
     { cle: 'force' as const, base: 'force' as Domaine, cible: 'figures' as Domaine, label: 'Force → Figures' },
     { cle: 'flexibilite' as const, base: 'flexibilite' as Domaine, cible: 'locomotion' as Domaine, label: 'Mobilité → Locomotion' },
@@ -887,9 +894,43 @@ export default function ArbreCompetences({
     }
 
     const parDomaine = new Map(etape.map((n) => [n.domaine as Domaine, n]));
-    // Axes encore ouverts à ce palier (au moins une des deux branches reste à valider).
+    const { suggestion, ouvertes } = suggestionPriorite(parDomaine);
+    const priorite = prioriteDuJour && ouvertes.includes(prioriteDuJour) ? prioriteDuJour : suggestion;
+    const elements: ElementSeance[] = [];
+    if (priorite) {
+      // L'essentiel = la priorité choisie (3 exercices). En bonus, sa branche
+      // jumelle (Force <-> Figures, Flexibilité <-> Locomotion), 2 exercices.
+      const jumelle = JUMELLE[priorite];
+      const principale = parDomaine.get(priorite)!;
+      elements.push(...choisir(principale, 3, `${ESSENTIEL} · ${DOMAINE_LABELS[priorite]}`));
+      const nJumelle = parDomaine.get(jumelle);
+      if (nJumelle) elements.push(...choisir(nJumelle, 2, `Bonus · ${DOMAINE_LABELS[jumelle]}`));
+    }
+    const connexion = parDomaine.get('connexion');
+    if (connexion) elements.push(...choisir(connexion, 1, BLOC_CONNEXION));
+    if (elements.length > 0) {
+      const recup = tronc.flatMap((t) => (t.exercices ?? []).filter((ex) => ex.theme === 'recuperation').map((ex) => ({ t, ex })));
+      if (recup.length > 0) { const r = recup[jourIndex % recup.length]; elements.push(element(r.t, r.ex, BLOC_RECUP, true)); }
+    }
+    return {
+      elements,
+      cycle: priorite ? {
+        axe: priorite,
+        options: ouvertes.map((d) => ({ cle: d, label: DOMAINE_LABELS[d] })),
+        branches: [priorite, JUMELLE[priorite]].filter((d) => parDomaine.has(d)).map((d) => ({ domaine: d, label: DOMAINE_LABELS[d], couleur: DOMAINE_COULEURS[d], noeudId: parDomaine.get(d)!.id })),
+        baseValidee: false,
+        suggestion,
+        choisie: !!prioriteDuJour,
+      } : null,
+    };
+  }
+
+  // Suggestion de priorité selon la méthode : l'axe Force -> Figures et l'axe
+  // Flexibilité -> Locomotion alternent (le moins récemment travaillé d'abord) ;
+  // dans un axe, la qualité de base passe avant la branche qu'elle sert.
+  function suggestionPriorite(parDomaine: Map<Domaine, NoeudMentorshipPublic>): { suggestion: Domaine | undefined; ouvertes: Domaine[] } {
+    const ouvertes = (['force', 'flexibilite', 'figures', 'locomotion'] as Domaine[]).filter((d) => parDomaine.has(d));
     const axesOuverts = AXES.filter((x) => parDomaine.has(x.base) || parDomaine.has(x.cible));
-    // Dernier jour travaillé sur chaque axe (perfs notées sur ses deux branches).
     const dernierJour = (x: typeof AXES[number]) => {
       let max = '';
       for (const [moduleId, perfs] of perfsParModule) {
@@ -898,45 +939,22 @@ export default function ArbreCompetences({
       }
       return max;
     };
-    let cleAxe: string | undefined;
-    if (axeForce && axeForce.jour === jourLocal) cleAxe = axeForce.axe;
-    else if (axesOuverts.length > 1) {
+    let axe = axesOuverts[0];
+    if (axesOuverts.length > 1) {
       const [a, b] = axesOuverts;
       const da = dernierJour(a), db = dernierJour(b);
       const aujourdhui = (iso: string) => !!iso && new Date(iso).toDateString() === jourLocal;
-      // Séance déjà entamée aujourd'hui : on reste sur son axe. Sinon, l'axe
-      // travaillé le moins récemment (la Force d'abord, faute d'historique).
-      cleAxe = aujourdhui(da) && da >= db ? a.cle : aujourdhui(db) ? b.cle : da <= db ? a.cle : b.cle;
+      axe = aujourdhui(da) && da >= db ? a : aujourdhui(db) ? b : da <= db ? a : b;
     }
-    const axe = axesOuverts.find((x) => x.cle === cleAxe) ?? axesOuverts[0];
-    const elements: ElementSeance[] = [];
-    if (axe) {
-      const base = parDomaine.get(axe.base);
-      const cible = parDomaine.get(axe.cible);
-      if (base) elements.push(...choisir(base, 3, `${ESSENTIEL} · ${DOMAINE_LABELS[axe.base]}`));
-      if (cible) elements.push(...choisir(cible, base ? 2 : 3, `${base ? 'Bonus' : ESSENTIEL} · ${DOMAINE_LABELS[axe.cible]}`));
-    }
-    const connexion = parDomaine.get('connexion');
-    if (connexion) elements.push(...choisir(connexion, 1, BLOC_CONNEXION));
-    if (elements.length > 0) {
-      const recup = tronc.flatMap((t) => (t.exercices ?? []).filter((ex) => ex.theme === 'recuperation').map((ex) => ({ t, ex })));
-      if (recup.length > 0) { const r = recup[jourIndex % recup.length]; elements.push(element(r.t, r.ex, BLOC_RECUP, true)); }
-    }
-    const info = (d: Domaine) => ({ domaine: d, label: DOMAINE_LABELS[d], couleur: DOMAINE_COULEURS[d], noeudId: parDomaine.get(d)!.id });
-    return {
-      elements,
-      cycle: axe ? {
-        axe: axe.cle,
-        options: axesOuverts.map((x) => ({ cle: x.cle, label: x.label })),
-        branches: [axe.base, axe.cible].filter((d) => parDomaine.has(d)).map(info),
-        baseValidee: !parDomaine.has(axe.base),
-      } : null,
-    };
+    const suggestion = axe ? (parDomaine.has(axe.base) ? axe.base : axe.cible) : ouvertes[0];
+    return { suggestion, ouvertes };
   }
 
   function renderAccueil(partie: 'present' | 'suite') {
     const tousNoeuds = [...tronc, ...branches];
-    const seanceDuJour = planSeance().elements;
+    const plan = planSeance();
+    const seanceDuJour = plan.elements;
+    const cyclePlan = plan.cycle;
     // Étape en cours : le niveau de l'Armure à valider, ou le palier commun
     // aux 5 branches (règle de progression horizontale).
     let titreEtape = '';
@@ -998,6 +1016,30 @@ export default function ArbreCompetences({
       partie === 'present' ? (
       <div style={{ marginTop: 8, marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 860, marginInline: 'auto' }}>
         <p style={{ fontSize: 14, color: COULEURS.texteAtt, fontStyle: 'italic', margin: '0 0 2px', textAlign: 'center', lineHeight: 1.5 }}>« {phraseDuJour(0)} »</p>
+        {/* Question du jour : « on continue ça, ou plutôt ça ? » */}
+        {cyclePlan && !cyclePlan.choisie && !estAdmin && (
+          <div style={{ ...carte, borderColor: '#029FD688' }}>
+            <p style={titreCarte}>Aujourd'hui, quelle est ta priorité ?</p>
+            <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: '0 0 12px', lineHeight: 1.5 }}>
+              Choisis ton essentiel : s'il est fait, ta séance est réussie. Priorité tenue (au moins un exercice noté) : +{XP_PRIORITE_TENUE} XP.
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {cyclePlan.suggestion && (
+                <button type="button" onClick={() => void choisirPriorite(cyclePlan.suggestion as Domaine)}
+                  style={{ fontSize: 14, fontWeight: 700, padding: '10px 18px', borderRadius: 999, border: `1px solid ${DOMAINE_COULEURS[cyclePlan.suggestion as Domaine]}`, background: `${DOMAINE_COULEURS[cyclePlan.suggestion as Domaine]}22`, color: COULEURS.texte, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  {dernierePriorite?.priorite === cyclePlan.suggestion ? 'On continue' : 'Suggéré'} : {DOMAINE_LABELS[cyclePlan.suggestion as Domaine]}
+                </button>
+              )}
+              {cyclePlan.options.filter((o) => o.cle !== cyclePlan.suggestion).map((o) => (
+                <button key={o.cle} type="button" onClick={() => void choisirPriorite(o.cle as Domaine)}
+                  style={{ fontSize: 13, padding: '9px 14px', borderRadius: 999, border: `1px solid ${COULEURS.bordure}`, background: 'transparent', color: COULEURS.texteAtt, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  {dernierePriorite?.priorite === o.cle ? `On continue : ${o.label}` : `Plutôt ${o.label}`}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Séance du jour */}
         {seanceDuJour.length > 0 && (
           <button
@@ -1695,7 +1737,7 @@ export default function ArbreCompetences({
 
       {onglet === 'arbre' && !vueBranche && seanceOuverte && (
         <>
-          <SeanceDuJour {...planSeance()} onChangerCycle={changerCycle} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} onFermer={() => setSeanceOuverte(false)} />
+          <SeanceDuJour {...planSeance()} onChangerCycle={(c) => { if (c.axe) void choisirPriorite(c.axe as Domaine); }} onOuvrirVideo={(url, titre) => setVideoOuverteChemin({ url, titre })} onFermer={() => setSeanceOuverte(false)} />
           {videoOuverteChemin && (
             <LecteurVideoModal url={videoOuverteChemin.url} titre={videoOuverteChemin.titre} onFermer={() => setVideoOuverteChemin(null)} />
           )}

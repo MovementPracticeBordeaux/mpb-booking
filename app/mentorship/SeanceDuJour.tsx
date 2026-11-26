@@ -95,7 +95,7 @@ function MinuteurSeance() {
 }
 
 type BrancheCycle = { domaine: string; label: string; couleur: string; noeudId: string };
-export type InfosCycle = { axe: string; options: { cle: string; label: string }[]; branches: BrancheCycle[]; baseValidee: boolean };
+export type InfosCycle = { axe: string; options: { cle: string; label: string }[]; branches: BrancheCycle[]; baseValidee: boolean; suggestion?: string; choisie?: boolean };
 
 function debutSemaine(): Date {
   const d = new Date();
@@ -180,15 +180,11 @@ export default function SeanceDuJour({ elements, cycle, onChangerCycle, onOuvrir
 
       {cycle && (
         <div style={{ border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: '14px 16px', marginBottom: 14 }}>
-          <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 15, margin: '0 0 4px', color: COULEURS.texte }}>Mon cycle</p>
+          <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 15, margin: '0 0 4px', color: COULEURS.texte }}>Ma priorité du jour : {cycle.options.find((o) => o.cle === cycle.axe)?.label}</p>
           <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: '0 0 12px', lineHeight: 1.5 }}>
-            {cycle.baseValidee
-              ? "La qualité de base de cet axe est validée à ce palier : la séance s'attache maintenant à valider la branche qu'elle sert."
-              : "On valide d'abord la qualité de base (Force ou Mobilité), puis la branche qu'elle sert (Figures ou Locomotion)."}
-            {' '}Les deux axes alternent d'une séance à l'autre, sur 3 à 5 séances par semaine au total.
+            C'est ton essentiel d'aujourd'hui{cycle.branches[1] ? `, avec ${cycle.branches[1].label} en bonus` : ''}. Tu peux en changer : ta séance s'adapte à tes objectifs.
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px 16px' }}>
-            <span style={{ fontSize: 13, color: COULEURS.texte, fontWeight: 600 }}>Aujourd'hui : {cycle.options.find((o) => o.cle === cycle.axe)?.label}</span>
             {cycle.branches.map((b) => (
               <span key={b.domaine} style={{ fontSize: 12, color: b.couleur, fontWeight: 600, whiteSpace: 'nowrap' }}>{b.label} : {seancesSemaine(b.noeudId)} cette semaine</span>
             ))}
@@ -196,11 +192,13 @@ export default function SeanceDuJour({ elements, cycle, onChangerCycle, onOuvrir
               Semaine : {seancesTotalSemaine} séance{seancesTotalSemaine > 1 ? 's' : ''} sur 3 à 5{seancesTotalSemaine > 5 ? ' — pense à récupérer' : ''}
             </span>
           </div>
-          {cycle.options.filter((o) => o.cle !== cycle.axe).map((o) => (
-            <button key={o.cle} type="button" onClick={() => onChangerCycle({ axe: o.cle })} style={{ marginTop: 10, background: 'none', border: 'none', padding: 0, color: COULEURS.texteFaible, fontSize: 12, textDecoration: 'underline', textUnderlineOffset: 2, cursor: 'pointer', fontFamily: 'inherit' }}>
-              Faire plutôt {o.label} aujourd'hui
-            </button>
-          ))}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
+            {cycle.options.filter((o) => o.cle !== cycle.axe).map((o) => (
+              <button key={o.cle} type="button" onClick={() => onChangerCycle({ axe: o.cle })} style={{ fontSize: 12, padding: '6px 12px', borderRadius: 999, border: `1px solid ${COULEURS.bordure}`, background: 'transparent', color: COULEURS.texteAtt, cursor: 'pointer', fontFamily: 'inherit' }}>
+                Plutôt {o.label}{o.cle === cycle.suggestion ? ' (suggéré)' : ''}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 

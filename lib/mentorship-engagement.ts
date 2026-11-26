@@ -118,3 +118,39 @@ export function xpPresence(datesPerfs: string[]): { total: number; parJour: { jo
   }
   return { total: parJour.length * XP_PAR_SEANCE, parJour };
 }
+
+// --- Priorité du jour tenue -------------------------------------------------
+// L'élève choisit sa priorité du jour (« on continue ça, ou plutôt ça ? »).
+// Ce n'est pas le choix qui rapporte, c'est de l'avoir tenue : un jour où la
+// priorité choisie a au moins un exercice noté rapporte XP_PRIORITE_TENUE,
+// dans la même limite de jours par semaine que la présence.
+export const XP_PRIORITE_TENUE = 5;
+
+export function xpPrioriteTenue(
+  priorites: { jour: string; priorite: string }[],
+  perfs: { module_id: string; cree_le: string }[],
+): { total: number; parJour: { jour: string; xp: number }[] } {
+  const domainesParJour = new Map<string, Set<string>>();
+  for (const p of perfs) {
+    const j = jourParis(p.cree_le);
+    if (!domainesParJour.has(j)) domainesParJour.set(j, new Set());
+    domainesParJour.get(j)!.add(p.module_id.split('-')[0]);
+  }
+  const parSemaine = new Map<string, number>();
+  const parJour: { jour: string; xp: number }[] = [];
+  for (const { jour, priorite } of [...priorites].sort((a, b) => a.jour.localeCompare(b.jour))) {
+    if (!domainesParJour.get(jour)?.has(priorite)) continue;
+    const d = new Date(`${jour}T12:00:00Z`);
+    d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+    const cle = d.toISOString().slice(0, 10);
+    const deja = parSemaine.get(cle) ?? 0;
+    if (deja >= SEANCES_RECOMPENSEES_PAR_SEMAINE) continue;
+    parSemaine.set(cle, deja + 1);
+    parJour.push({ jour, xp: XP_PRIORITE_TENUE });
+  }
+  return { total: parJour.length * XP_PRIORITE_TENUE, parJour };
+}
+
+export function jourParisAujourdhui(maintenant = new Date()): string {
+  return jourParis(maintenant.toISOString());
+}
