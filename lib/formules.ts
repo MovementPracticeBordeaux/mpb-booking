@@ -113,9 +113,13 @@ export const FORMULES: Record<string, Formule> = {
   // programme statique).
   mentorship_3: { nom: 'Mentorat — 3 mois', categorie: 'mentorat', unite: null, quota: null, validiteMois: 3, prixIndicatif: 289 },
   mentorship_6: { nom: 'Mentorat — 6 mois', categorie: 'mentorat', unite: null, quota: null, validiteMois: 6, prixIndicatif: 499 },
-  mentorship_12: { nom: 'Mentorat — 12 mois', categorie: 'mentorat', unite: null, quota: null, validiteMois: 12, prixIndicatif: 849 },
+  // 12 mois : remise réduite le 26/11/2026 (849 -> 949 €) -- avec 12 places par
+  // session, une place bloquée un an à prix trop bas rapporte moins qu'une place
+  // renouvelée ; la formule 6 mois est celle mise en avant.
+  mentorship_12: { nom: 'Mentorat — 12 mois', categorie: 'mentorat', unite: null, quota: null, validiteMois: 12, prixIndicatif: 949 },
 
-  post_mentorship: { nom: 'Suivi Post-Mentorat', categorie: 'mentorat', unite: null, quota: null, validiteMois: 1, prixIndicatif: 80 },
+  // Retiré de l'offre le 26/11/2026 (aucun abonnement en cours) ; clé conservée pour l'historique.
+  post_mentorship: { nom: 'Suivi Post-Mentorat (retiré)', categorie: 'mentorat', unite: null, quota: null, validiteMois: 1, prixIndicatif: 80, retiree: true },
 };
 
 // Toutes les clés de formule donnant accès à l'espace /mentorship (ancienne
@@ -130,12 +134,13 @@ export const CLES_ACCES_MENTORAT = [
   'mentorship_niveau2_3', 'mentorship_niveau2_6', 'mentorship_niveau2_12',
   'mentorship_complet_3', 'mentorship_complet_6', 'mentorship_complet_12',
   'mentorship_3', 'mentorship_6', 'mentorship_12',
-  'post_mentorship',
 ];
 
 // Les 3 formules Mentorat par durée -- accès complet dans les trois cas,
 // seule la durée change.
 export const FORMULES_MENTORAT_DUREE = ['mentorship_3', 'mentorship_6', 'mentorship_12'];
+// Formule mise en avant : 3 mois sert surtout d'essai, le parcours demande du temps.
+export const FORMULE_MENTORAT_RECOMMANDEE = 'mentorship_6';
 
 // Les 5 branches de spécialisation (mêmes clés que le champ `domaine` dans
 // lib/mentorship-modules.ts, pour rester cohérent avec le modèle de données

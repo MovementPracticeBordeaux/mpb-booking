@@ -1,7 +1,7 @@
 import { COULEURS, GRADIENT, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
 import ApercuArbre from './ApercuArbre';
 import { DOMAINE_COULEURS } from '@/lib/mentorship-modules';
-import { MENTORAT_OUVERT, MENTORAT_PLACES_PAR_SESSION, FORMULES, FORMULES_MENTORAT_DUREE } from '@/lib/formules';
+import { MENTORAT_OUVERT, MENTORAT_PLACES_PAR_SESSION, FORMULES, FORMULES_MENTORAT_DUREE, FORMULE_MENTORAT_RECOMMANDEE } from '@/lib/formules';
 
 export const metadata = {
   title: 'Mentorat — Calisthenics, Handstand, Locomotion & Mobilité | Movement Practice Bordeaux',
@@ -17,11 +17,11 @@ export const metadata = {
 };
 
 const BRANCHES = [
-  { cle: 'force', titre: 'Force', texte: 'La force du haut du corps, avec les anneaux de gymnastique.' },
-  { cle: 'figures', titre: 'Figures', texte: 'Les figures en équilibre, sur les mains ou sur les coudes.' },
-  { cle: 'locomotion', titre: 'Locomotion', texte: 'Les déplacements au sol : un mélange de force, de mobilité et de coordination.' },
-  { cle: 'connexion', titre: 'Connexion', texte: "L'habileté et la coordination, avec des jeux de manipulation d'objets." },
-  { cle: 'flexibilite', titre: 'Flexibilité', texte: 'La mobilité active du bas du corps.' },
+  { cle: 'force', titre: 'Force', texte: 'La force du haut du corps, avec les anneaux de gymnastique.', cap: 'muscle-up aux anneaux, push-up unilatéral' },
+  { cle: 'figures', titre: 'Figures', texte: 'Les figures en équilibre, sur les mains ou sur les coudes.', cap: 'handstand, pont haut, elbow lever straddle' },
+  { cle: 'locomotion', titre: 'Locomotion', texte: 'Les déplacements au sol : un mélange de force, de mobilité et de coordination.', cap: 'QDR switch, lizard crawl, improvisation au sol' },
+  { cle: 'connexion', titre: 'Connexion', texte: "L'habileté et la coordination, avec des jeux de manipulation d'objets.", cap: 'dribbles à deux balles, ballon tenu sur le front' },
+  { cle: 'flexibilite', titre: 'Flexibilité', texte: 'La mobilité active du bas du corps.', cap: 'grand écart facial vers écart latéral, en actif' },
 ] as const;
 
 const POURQUOI = [
@@ -83,7 +83,8 @@ export default function MentoratPage() {
         <p style={intro}>
           Toute ta pratique tient dans un arbre. Tu pars des racines, l'Armure Organique : trois niveaux de
           fondations pour tout le corps. Une fois validée, cinq branches s'ouvrent et grandissent ensemble,
-          niveau par niveau. Débutant comme pratiquant confirmé, chacun suit ce chemin.
+          niveau par niveau. Débutant comme pratiquant confirmé, chacun suit ce chemin : si tu as déjà une
+          bonne base, tu peux ouvrir toute l'Armure d'un coup et la valider à ton rythme.
         </p>
         <ApercuArbre />
         <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', marginTop: 32 }}>
@@ -92,6 +93,7 @@ export default function MentoratPage() {
               <span style={{ width: 10, height: 10, borderRadius: '50%', background: DOMAINE_COULEURS[b.cle], flexShrink: 0, transform: 'translateY(1px)' }} />
               <p style={{ margin: 0, fontSize: 14, color: COULEURS.texteAtt, lineHeight: 1.5 }}>
                 <strong style={{ color: DOMAINE_COULEURS[b.cle], fontWeight: 600 }}>{b.titre}</strong> · {b.texte}
+                <span style={{ display: 'block', fontSize: 13, color: COULEURS.texteFaible, marginTop: 2 }}>Au bout du chemin : {b.cap}…</span>
               </p>
             </div>
           ))}
@@ -153,14 +155,18 @@ export default function MentoratPage() {
               </p>
 
               <div style={{ display: 'flex', gap: 24, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
-                {FORMULES_MENTORAT_DUREE.map((cle) => (
-                  <div key={cle} style={{ fontSize: 14, color: COULEURS.texteAtt }}>
-                    <span style={{ display: 'block', fontFamily: POLICE_DISPLAY, fontSize: 22, ...GRADIENT_TEXTE }}>
-                      {FORMULES[cle].prixIndicatif} €
-                    </span>
-                    {FORMULES[cle].nom.replace('Mentorat — ', '')}
-                  </div>
-                ))}
+                {FORMULES_MENTORAT_DUREE.map((cle) => {
+                  const f = FORMULES[cle];
+                  const reco = cle === FORMULE_MENTORAT_RECOMMANDEE;
+                  return (
+                    <div key={cle} style={{ fontSize: 14, color: COULEURS.texteAtt, padding: '12px 16px', borderRadius: 12, border: `1px solid ${reco ? '#FF2D78' : 'transparent'}`, position: 'relative' }}>
+                      {reco && <span style={{ position: 'absolute', top: -9, left: '50%', transform: 'translateX(-50%)', background: GRADIENT, color: 'white', fontSize: 10, fontWeight: 700, letterSpacing: 0.8, textTransform: 'uppercase', padding: '2px 8px', borderRadius: 999, whiteSpace: 'nowrap' }}>Recommandé</span>}
+                      <span style={{ display: 'block', fontFamily: POLICE_DISPLAY, fontSize: 22, ...GRADIENT_TEXTE }}>{f.prixIndicatif} €</span>
+                      {f.nom.replace('Mentorat — ', '')}
+                      <span style={{ display: 'block', fontSize: 12, color: COULEURS.texteFaible }}>soit {Math.round(f.prixIndicatif / (f.validiteMois ?? 1))} € / mois</span>
+                    </div>
+                  );
+                })}
               </div>
 
               <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: '0 0 20px' }}>Accès complet au parcours, quelle que soit la durée choisie.</p>

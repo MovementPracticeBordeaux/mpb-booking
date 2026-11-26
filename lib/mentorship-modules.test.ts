@@ -90,3 +90,15 @@ describe('Exercices "récupération" -- jamais soumis à validation (outils sant
     expect(xpNoeudExercices(armure1, (id) => acquisAvecRecup.has(id))).toBe(xp);
   });
 });
+
+describe('estNoeudDeverrouille — mode accéléré de l\'Armure', () => {
+  const trouver = (id: string) => TOUS_LES_NOEUDS.find((n) => n.id === id)!;
+  it('ouvre les trois niveaux de l\'Armure d\'un coup', () => {
+    expect(estNoeudDeverrouille(trouver('armure-3'), new Set(), false)).toBe(false);
+    expect(estNoeudDeverrouille(trouver('armure-2'), new Set(), true)).toBe(true);
+    expect(estNoeudDeverrouille(trouver('armure-3'), new Set(), true)).toBe(true);
+  });
+  it('laisse les branches fermées tant que l\'Armure n\'est pas validée', () => {
+    expect(estNoeudDeverrouille(trouver('force-1'), new Set(['armure-1']), true)).toBe(false);
+  });
+});

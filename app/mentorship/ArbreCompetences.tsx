@@ -22,7 +22,7 @@ import {
   badgeEleve,
 } from '@/lib/mentorship-modules';
 import { COULEURS, GRADIENT_TEXTE, POLICE_DISPLAY, POLICE_CORPS } from '@/lib/theme';
-import { soumettreVideo, repondreQCM, soumettreVideoExercice } from './actions';
+import { soumettreVideo, repondreQCM, soumettreVideoExercice, activerArmureAcceleree } from './actions';
 import ChecklistNoeud from './ChecklistNoeud';
 import JournalDuNoeud from './JournalDuNoeud';
 import JournalComplet from './JournalComplet';
@@ -565,6 +565,7 @@ export default function ArbreCompetences({
   badges,
   revision,
   prioritesRecentes,
+  armureAcceleree,
 }: {
   tronc: NoeudMentorshipPublic[];
   branches: NoeudMentorshipPublic[];
@@ -587,6 +588,7 @@ export default function ArbreCompetences({
   badges: Badge[];
   revision: { question: QuestionRevision | null; faiteAujourdhui: boolean };
   prioritesRecentes: { jour: string; priorite: string }[];
+  armureAcceleree: boolean;
 }) {
   const [selection, setSelection] = useState<string | null>(null);
   // Vue isolée d'une branche (chemin vertical) — null = vue globale (dashboard).
@@ -734,7 +736,7 @@ export default function ArbreCompetences({
   function estDeverrouille(noeud: NoeudMentorshipPublic): boolean {
     if (noeud.domaine !== 'tronc' && !niveauInclus(noeud.niveau)) return false;
     if (noeud.domaine === 'tronc') {
-      if (noeud.niveau === 1) return true;
+      if (noeud.niveau === 1 || armureAcceleree) return true;
       const precedent = tronc.find((n) => n.niveau === noeud.niveau - 1);
       return precedent ? idsAcquis.has(precedent.id) : true;
     }
@@ -1030,6 +1032,20 @@ export default function ArbreCompetences({
         </div>
         {!troncComplet && (
           <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: 0, textAlign: 'center' }}>Tant que l'Armure Organique n'est pas validée, ta séance suit ses exercices. Le choix d'une priorité du jour s'ouvrira avec les branches.</p>
+        )}
+        {!troncComplet && !armureAcceleree && (
+          <details style={{ ...carte, borderColor: '#029FD666' }}>
+            <summary style={{ cursor: 'pointer', fontFamily: POLICE_DISPLAY, fontSize: 15, color: COULEURS.texte }}>Tu as déjà une bonne base en force et en mobilité ?</summary>
+            <p style={{ fontSize: 13, color: COULEURS.texteAtt, lineHeight: 1.6, margin: '10px 0 12px' }}>
+              Passe en mode accéléré : les trois niveaux de l'Armure s'ouvrent d'un coup. Tu réussis leurs QCM et tu envoies tes vidéos dans l'ordre que tu veux.
+              L'Armure doit quand même être validée en entier : c'est ce qui garantit ta base avant d'ouvrir les cinq branches.
+            </p>
+            <form action={activerArmureAcceleree}>
+              <button type="submit" style={{ fontSize: 13, fontWeight: 600, padding: '9px 18px', borderRadius: 999, border: '1px solid #029FD6', background: 'rgba(2,159,214,0.12)', color: COULEURS.texte, cursor: 'pointer', fontFamily: 'inherit' }}>
+                Activer le mode accéléré
+              </button>
+            </form>
+          </details>
         )}
         {/* Question du jour : « on continue ça, ou plutôt ça ? » */}
         {cyclePlan && !cyclePlan.choisie && (

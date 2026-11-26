@@ -21,6 +21,24 @@ const SEUIL_REUSSITE_QCM = 0.8; // 80% de bonnes réponses pour débloquer la vi
 // On n'écrit en base QUE si le QCM est réussi : un échec ne laisse aucune
 // trace, l'élève peut retenter autant de fois qu'il veut sans qu'on ait à
 // gérer un état "échoué" dans la table de progression.
+// Mode accéléré de l'Armure (option propre à l'élève).
+async function armureAcceleree(supabase: ReturnType<typeof supabaseServer>, eleveId: string): Promise<boolean> {
+  const { data } = await supabase.from('mentorship_options').select('armure_acceleree').eq('eleve_id', eleveId).maybeSingle();
+  return !!data?.armure_acceleree;
+}
+
+// L'élève qui a déjà une bonne base ouvre les trois niveaux de l'Armure d'un
+// coup. Il doit toujours tous les valider (QCM + vidéos) avant les branches.
+export async function activerArmureAcceleree() {
+  const supabase = supabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/login');
+  const { error } = await supabase.from('mentorship_options').upsert({ eleve_id: user.id, armure_acceleree: true, modifie_le: new Date().toISOString() }, { onConflict: 'eleve_id' });
+  if (error) echouer("Le mode accéléré n'a pas pu être activé. Réessaie dans un instant.");
+  revalidatePath('/mentorship');
+  redirect('/mentorship');
+}
+
 export async function repondreQCM(formData: FormData) {
   const supabase = supabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
@@ -43,7 +61,7 @@ export async function repondreQCM(formData: FormData) {
   const idsAcquis = new Set(
     TOUS_LES_NOEUDS.filter((n) => estNoeudAcquisDepuisProgression(n, (id) => idsModulesAcquis.has(id))).map((n) => n.id)
   );
-  if (!estNoeudDeverrouille(noeud, idsAcquis)) echouer('Ce niveau est encore verrouillé.');
+  if (!estNoeudDeverrouille(noeud, idsAcquis, await armureAcceleree(supabase, user.id))) echouer('Ce niveau est encore verrouillé.');
 
   // Déjà réussi précédemment : rien à refaire, on renvoie directement vers
   // l'écran de soumission vidéo.
@@ -158,7 +176,7 @@ export async function soumettreVideoExercice(formData: FormData) {
   const idsNoeudsAcquis = new Set(
     TOUS_LES_NOEUDS.filter((n) => estNoeudAcquisDepuisProgression(n, estModuleAcquis)).map((n) => n.id)
   );
-  if (!estNoeudDeverrouille(noeud, idsNoeudsAcquis)) echouer('Ce niveau est encore verrouillé.');
+  if (!estNoeudDeverrouille(noeud, idsNoeudsAcquis, await armureAcceleree(supabase, user.id))) echouer('Ce niveau est encore verrouillé.');
 
   // Le QCM du niveau est la porte d'entrée : tant qu'il n'est pas réussi,
   // aucune vidéo d'exercice (obligatoire ou bonus) ne peut être soumise.

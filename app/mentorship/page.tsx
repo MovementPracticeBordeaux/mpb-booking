@@ -169,6 +169,10 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
   const { data: coeursData } = await supabase.from('mentorship_coeur').select('module_id').eq('eleve_id', user.id);
   const coeursInitiaux = (coeursData ?? []).map((c) => c.module_id as string);
 
+  // Mode accéléré de l'Armure (option de parcours propre à l'élève).
+  const { data: optionsData } = await supabase.from('mentorship_options').select('armure_acceleree').eq('eleve_id', user.id).maybeSingle();
+  const armureAcceleree = !!optionsData?.armure_acceleree;
+
   // --- Révision espacée : question du jour parmi les QCM déjà réussis ---
   const { data: revisionsData } = await supabase
     .from('mentorship_revision')
@@ -255,6 +259,7 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
         badges={badges}
         revision={{ question: questionRevision, faiteAujourdhui: choix.faiteAujourdhui }}
         prioritesRecentes={prioritesRecentes}
+        armureAcceleree={armureAcceleree}
       />
       </CoeursProvider>
       </PerfsProvider>

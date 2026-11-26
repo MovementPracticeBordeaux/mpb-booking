@@ -46,7 +46,7 @@ const GROUPES = [
 // Formules mises en avant (badge). Clé -> libellé du badge.
 const MIS_EN_AVANT: Record<string, string> = {
   illimite: 'Le + populaire',
-  mentorship_6: 'Le + choisi',
+  mentorship_6: 'Recommandé',
 };
 
 

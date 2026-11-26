@@ -2128,9 +2128,12 @@ export function troncComplet(idsAcquis: Set<string>): boolean {
   return TRONC.every((n) => idsAcquis.has(n.id));
 }
 
-export function estNoeudDeverrouille(noeud: NoeudMentorship, idsAcquis: Set<string>): boolean {
+// armureAcceleree : mode accéléré choisi par un élève qui a déjà une bonne
+// base -- les trois niveaux de l'Armure sont ouverts d'un coup. Les branches
+// restent fermées tant que l'Armure n'est pas validée en entier.
+export function estNoeudDeverrouille(noeud: NoeudMentorship, idsAcquis: Set<string>, armureAcceleree = false): boolean {
   if (noeud.domaine === 'tronc') {
-    if (noeud.niveau === 1) return true;
+    if (noeud.niveau === 1 || armureAcceleree) return true;
     const precedent = TRONC.find((n) => n.niveau === noeud.niveau - 1);
     return precedent ? idsAcquis.has(precedent.id) : true;
   }
