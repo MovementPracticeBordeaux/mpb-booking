@@ -3,7 +3,7 @@
 // élève) qui montre le chemin de progression — l'Armure Organique d'abord,
 // puis les cinq branches qui s'ouvrent ensemble, niveau par niveau.
 import { DOMAINE_COULEURS, DOMAINE_LABELS, type Domaine } from '@/lib/mentorship-modules';
-import { COULEURS, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
+import { COULEURS, POLICE_DISPLAY } from '@/lib/theme';
 
 const ORDRE: Domaine[] = ['connexion', 'flexibilite', 'force', 'figures', 'locomotion'];
 const COULEUR_ARMURE = '#ff00aa';
@@ -30,16 +30,7 @@ export default function ApercuArbre() {
   const trait = (couleur: string, eclat: number): React.CSSProperties => ({ width: 2, height: 22, background: couleur, opacity: 0.25 + eclat * 0.6, margin: '0 auto' });
 
   return (
-    <section style={{ maxWidth: 860, margin: '0 auto', padding: '0 20px 56px' }}>
-      <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 26, letterSpacing: 0.5, margin: '0 0 12px', textAlign: 'center' }}>
-        Ton <span style={GRADIENT_TEXTE}>arbre de compétences</span>
-      </h2>
-      <p style={{ color: COULEURS.texteAtt, lineHeight: 1.6, textAlign: 'center', maxWidth: 600, margin: '0 auto 28px' }}>
-        Toute ta pratique tient dans un arbre. Tu pars des racines, l'Armure Organique, puis tu fais grandir
-        cinq branches, niveau par niveau. Chaque pastille est une étape : de la théorie, un QCM, des exercices
-        avec un objectif chiffré, et une vidéo que je valide moi-même.
-      </p>
-
+    <div>
       <div style={{ maxWidth: 560, margin: '0 auto', display: 'flex', gap: 'clamp(6px, 2vw, 14px)' }}>
         {/* Repères de niveau */}
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', paddingTop: 34, paddingBottom: 6, fontSize: 10, color: COULEURS.texteFaible, letterSpacing: 0.6, textTransform: 'uppercase', fontWeight: 700, minWidth: 0 }}>
@@ -75,23 +66,6 @@ export default function ApercuArbre() {
         <span style={{ fontSize: 12, color: COULEURS.texteFaible }}>3 niveaux de fondations</span>
       </div>
 
-      {/* Le chemin, en quatre temps */}
-      <ol style={{ listStyle: 'none', padding: 0, margin: '28px auto 0', maxWidth: 640, display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))' }}>
-        {[
-          { n: 1, titre: 'Les racines', texte: "L'Armure Organique prépare tout le corps : mobilité, force de base, respiration. Elle se valide en entier, sans raccourci." },
-          { n: 2, titre: 'Les cinq branches', texte: 'Force, Figures, Locomotion, Connexion, Flexibilité s’ouvrent ensemble, et grandissent ensemble, niveau par niveau.' },
-          { n: 3, titre: 'Chaque jour, une séance', texte: "Tu choisis ta priorité du jour, la séance se compose à partir de tes objectifs en cours. L'essentiel d'abord, le reste en bonus." },
-          { n: 4, titre: 'Ma validation', texte: "Quand tu atteins l'objectif d'un exercice, tu m'envoies une vidéo. Je la regarde et je te réponds : validé, ou ce qu'il faut retravailler." },
-        ].map((e) => (
-          <li key={e.n} style={{ border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: '14px 16px', background: COULEURS.surface, display: 'flex', gap: 12 }}>
-            <span style={{ ...GRADIENT_TEXTE, fontFamily: POLICE_DISPLAY, fontSize: 22, lineHeight: 1.1, flexShrink: 0 }}>{e.n}</span>
-            <span>
-              <span style={{ display: 'block', fontSize: 15, fontWeight: 600, marginBottom: 4 }}>{e.titre}</span>
-              <span style={{ display: 'block', fontSize: 13, color: COULEURS.texteAtt, lineHeight: 1.55 }}>{e.texte}</span>
-            </span>
-          </li>
-        ))}
-      </ol>
-    </section>
+    </div>
   );
 }
