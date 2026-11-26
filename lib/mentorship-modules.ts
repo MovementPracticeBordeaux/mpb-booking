@@ -213,6 +213,13 @@ export const TRONC: NoeudMentorship[] = [
         texte: "Les mains d'un forgeron s'adaptent au fil du temps à son travail : des callosités se forment en réponse aux frictions répétées, ses mains, ses poignets et ses avant-bras se renforcent. Elles deviennent un mélange de rigidité, pour tenir fermement les outils, et de souplesse, pour les gestes délicats.\n\nC'est exactement cette dynamique d'adaptation que symbolise l'« armure organique ». Le mot « armure » (du latin armatura) évoque une protection, un rempart contre les agressions extérieures ; « organique » (du grec organikos) évoque ce qui est vivant, capable de croître et de s'adapter.\n\nL'armure organique n'est donc pas une protection statique, mais un système dynamique, forgé non pas de métal mais de muscles, d'os, de tendons et d'une conscience aiguë du corps. Ce premier niveau en pose les toutes premières pièces.",
         aRetenir: "L'armure organique n'est pas une carapace figée : c'est un système vivant qui se forge par la répétition.",
       },
+      {
+        titre: "Organiser ta pratique",
+        sousTitre: "Une durée fixe, l'essentiel d'abord",
+        texte: "Une séance a une durée fixe, décidée à l'avance : 60 minutes recommandées, récupération comprise. À toi de la régler selon ton rythme et ta vie, mais une fois choisie, tiens-t'y : quand elle est écoulée, c'est fini. Ce qui n'est pas fait attendra, sans culpabilité.\n\nChaque séance a un essentiel : les exercices prioritaires du jour. S'il est fait, ta séance est réussie. Le reste est du bonus, si tu as le temps et l'envie.\n\nPourquoi fixer une limite ? Parce que le temps est compté et que tu ne feras jamais tout. Plutôt que de courir après une séance parfaite, choisis consciemment ce qui compte aujourd'hui, et fais-le bien.",
+        aRetenir: "Durée fixe, essentiel d'abord : l'essentiel fait, ta séance est réussie.",
+        source: "Oliver Burkeman, 4000 semaines : antimanuel de gestion du temps à l'usage des mortels, First, 2025.",
+      },
     ],
     exercices: [
       {
@@ -289,6 +296,12 @@ export const TRONC: NoeudMentorship[] = [
         choix: ["Sa conformité à un standard technique de référence", "Son faible risque de blessure", "Le fait que le pratiquant soit prêt à le réaliser"],
         bonneReponse: 2,
       },
+      {
+        id: 'armure1-q5',
+        question: "Ta durée de séance est écoulée et il te reste deux exercices bonus. Que fais-tu ?",
+        choix: ["Je m'arrête : l'essentiel est fait, ma séance est réussie", "Je les enchaîne rapidement pour finir le programme", "Je les ajoute à ma prochaine séance, en plus de celle prévue"],
+        bonneReponse: 0,
+      },
     ],
     contenuDefini: true,
     image: '/mentorship/armure-organique.jpg',
@@ -353,6 +366,12 @@ export const TRONC: NoeudMentorship[] = [
         titre: "Une bibliothèque qui grandit",
         sousTitre: "Des outils qui s'ajoutent, sans jamais se remplacer",
         texte: "À ce niveau, ta pratique de récupération et de bien-être s'enrichit : chaque nouvel outil rejoint ceux déjà acquis, pour te constituer une véritable bibliothèque de routines mobilisables selon ton besoin du moment.\n\nCe n'est pas un remplacement du travail précédent, mais un ajout.",
+      },
+      {
+        titre: "La régularité et le carnet",
+        sousTitre: "Revenir souvent, noter, garder du plaisir",
+        texte: "La régularité compte plus que l'intensité : 3 à 5 séances par semaine, tenues dans la durée, valent mieux qu'une semaine énorme suivie d'un arrêt. Venir, même fatigué, même pour une séance courte, c'est déjà avancer.\n\nNote toujours ce que tu as fait : séries, répétitions, temps. C'est ce carnet qui te montrera tes progrès, bien mieux que ta mémoire ou ton ressenti du jour.\n\nEnfin, tu as le droit de pratiquer certains exercices juste pour le plaisir, sans chercher à les valider ni à être bon. Marque-les d'un cœur : ils t'attendront.",
+        aRetenir: "Reviens souvent, note ce que tu fais, garde du plaisir.",
       },
     ],
     exercices: [
@@ -441,6 +460,12 @@ export const TRONC: NoeudMentorship[] = [
         question: "Quelle est l'erreur la plus courante sur l'Angola PU ?",
         choix: ["Garder le corps légèrement latéral au lieu de l'aligner", "Laisser le bassin s'affaisser vers le sol", "Perdre la rétraction des omoplates et laisser l'épaule de poussée monter vers l'oreille"],
         bonneReponse: 2,
+      },
+      {
+        id: 'armure2-q5',
+        question: "Que faut-il noter à chaque séance ?",
+        choix: ["Seulement les records, pour suivre les progrès", "Les séries, répétitions ou temps réalisés", "Rien : le ressenti du jour suffit"],
+        bonneReponse: 1,
       },
     ],
     contenuDefini: true,
@@ -664,6 +689,12 @@ const FORCE: NoeudMentorship[] = [
         aRetenir: "La force s'entraîne à tout âge et pour tous : bien dosée, elle protège plus qu'elle n'expose.",
         source: "Watson et al., « High-Intensity Resistance and Impact Training Improves Bone Mineral Density and Physical Function in Postmenopausal Women With Osteopenia and Osteoporosis: The LIFTMOR Randomized Controlled Trial », Journal of Bone and Mineral Research, 2018.",
       },
+      {
+        titre: "Choisir ta priorité",
+        sousTitre: "Ta séance s'adapte à tes objectifs",
+        texte: "La méthode suit deux axes : la Force, qui sert les Figures, et la Mobilité (Flexibilité), qui sert la Locomotion. La Connexion se travaille en fin de séance, une quinzaine de minutes, puis vient la récupération.\n\nPar défaut, on valide la qualité de base avant la branche qu'elle sert, en alternant les deux axes d'une séance à l'autre. Mais si tu as déjà le niveau en Force ou en Mobilité, ou si ton objectif est la Locomotion ou les Figures, choisis-la comme priorité : ce sera ton essentiel, pas un bonus.\n\nChaque jour, la page te demande ta priorité : on continue, ou plutôt autre chose ? Une même priorité travaillée environ trois fois par semaine progresse.",
+        aRetenir: "Ta priorité du jour est ton essentiel : choisis-la selon ton niveau et tes objectifs.",
+      },
     ],
     qcm: [
       {
@@ -688,6 +719,12 @@ const FORCE: NoeudMentorship[] = [
         id: 'force1-q4',
         question: "Qu'est-ce qui protège réellement l'épaule dans les positions extrêmes de cette branche ?",
         choix: ["Une rétraction des omoplates maintenue dans tous les exercices", "L'équilibre entre rétraction et protraction des omoplates", "La force des gros muscles visibles, pectoraux et dorsaux"],
+        bonneReponse: 1,
+      },
+      {
+        id: 'force1-q5',
+        question: "Tu as déjà un bon niveau de Force et ton objectif, ce sont les Figures. Quelle priorité choisis-tu ?",
+        choix: ["La Force, qu'il faut toujours valider en premier", "Les Figures : ce sera ton essentiel, la Force passe en bonus", "Les deux à égalité, pour ne rien négliger"],
         bonneReponse: 1,
       },
     ],
@@ -953,6 +990,12 @@ const FLEXIBILITE: NoeudMentorship[] = [
         aRetenir: "S'étirer, c'est d'abord rééduquer une sensation : l'exposition régulière compte plus que l'intensité.",
         source: "Weppler et Magnusson, « Increasing muscle extensibility: a matter of increasing length or modifying sensation? », Physical Therapy, 2010.",
       },
+      {
+        titre: "Choisir ta priorité",
+        sousTitre: "Ta séance s'adapte à tes objectifs",
+        texte: "La méthode suit deux axes : la Force, qui sert les Figures, et la Mobilité (Flexibilité), qui sert la Locomotion. La Connexion se travaille en fin de séance, une quinzaine de minutes, puis vient la récupération.\n\nPar défaut, on valide la qualité de base avant la branche qu'elle sert, en alternant les deux axes d'une séance à l'autre. Mais si tu as déjà le niveau en Force ou en Mobilité, ou si ton objectif est la Locomotion ou les Figures, choisis-la comme priorité : ce sera ton essentiel, pas un bonus.\n\nChaque jour, la page te demande ta priorité : on continue, ou plutôt autre chose ? Une même priorité travaillée environ trois fois par semaine progresse.",
+        aRetenir: "Ta priorité du jour est ton essentiel : choisis-la selon ton niveau et tes objectifs.",
+      },
     ],
     qcm: [
       {
@@ -978,6 +1021,12 @@ const FLEXIBILITE: NoeudMentorship[] = [
         question: "Pourquoi combiner étirements statiques et dynamiques dès le départ ?",
         choix: ["Le statique prépare à l'effort, le dynamique sert au retour au calme", "Le statique construit l'amplitude, le dynamique la rend disponible en action", "Le statique travaille les muscles, le dynamique les tendons"],
         bonneReponse: 1,
+      },
+      {
+        id: 'flexibilite1-q5',
+        question: "Quelle branche la Mobilité (Flexibilité) sert-elle dans la méthode ?",
+        choix: ["La Connexion", "Les Figures", "La Locomotion"],
+        bonneReponse: 2,
       },
     ],
     contenuDefini: true,
@@ -1229,6 +1278,12 @@ const LOCOMOTION: NoeudMentorship[] = [
         texte: "Tout ce qui est développé ailleurs se retrouve ici. La force de la branche Force soutient chaque répulsion au sol ; la souplesse de la branche Flexibilité permet les amplitudes de hanche nécessaires à la quadrupédie ; la précision de la Connexion se lit dans la qualité de chaque transition.\n\nLa Locomotion ne construit pas des qualités isolées : elle les exprime dans un mouvement global et intentionnel.",
         aRetenir: "Un blocage en Locomotion se résout souvent ailleurs : en Force, en Flexibilité ou en Connexion.",
       },
+      {
+        titre: "Choisir ta priorité",
+        sousTitre: "Ta séance s'adapte à tes objectifs",
+        texte: "La méthode suit deux axes : la Force, qui sert les Figures, et la Mobilité (Flexibilité), qui sert la Locomotion. La Connexion se travaille en fin de séance, une quinzaine de minutes, puis vient la récupération.\n\nPar défaut, on valide la qualité de base avant la branche qu'elle sert, en alternant les deux axes d'une séance à l'autre. Mais si tu as déjà le niveau en Force ou en Mobilité, ou si ton objectif est la Locomotion ou les Figures, choisis-la comme priorité : ce sera ton essentiel, pas un bonus.\n\nChaque jour, la page te demande ta priorité : on continue, ou plutôt autre chose ? Une même priorité travaillée environ trois fois par semaine progresse.",
+        aRetenir: "Ta priorité du jour est ton essentiel : choisis-la selon ton niveau et tes objectifs.",
+      },
     ],
     qcm: [
       {
@@ -1254,6 +1309,12 @@ const LOCOMOTION: NoeudMentorship[] = [
         question: "Quels sont, selon la théorie, les freins les plus courants au floor work ?",
         choix: ["Le manque de force dans les bras pour se relever du sol", "Le manque de mobilité des hanches et de la colonne", "Des freins mentaux : le regard des autres, le refus du contact avec le sol"],
         bonneReponse: 2,
+      },
+      {
+        id: 'locomotion1-q5',
+        question: "Tu as déjà une bonne mobilité et tu veux progresser en Locomotion. Quelle est ta priorité ?",
+        choix: ["La Locomotion : ce sera ton essentiel", "La Mobilité, à valider d'abord quoi qu'il arrive", "Aucune : on alterne au hasard"],
+        bonneReponse: 0,
       },
     ],
     contenuDefini: true,
@@ -1513,6 +1574,12 @@ const CONNEXION: NoeudMentorship[] = [
         texte: "Chaque répétition attentive d'un geste de coordination renforce les circuits nerveux qu'il sollicite : la gaine de myéline qui entoure les fibres nerveuses s'épaissit, rendant le signal plus rapide et plus fiable.\n\nC'est pourquoi un jeu de manipulation qui semble anodin, comme faire passer une balle d'une main à l'autre, a un effet réel sur la qualité motrice globale : le système nerveux ne fait pas la différence entre un geste « utile » et un geste « ludique ». Il renforce ce qui est répété avec attention.",
         aRetenir: "Le système nerveux renforce ce qui est répété avec attention, que le geste soit sérieux ou ludique.",
       },
+      {
+        titre: "Choisir ta priorité",
+        sousTitre: "Ta séance s'adapte à tes objectifs",
+        texte: "La méthode suit deux axes : la Force, qui sert les Figures, et la Mobilité (Flexibilité), qui sert la Locomotion. La Connexion se travaille en fin de séance, une quinzaine de minutes, puis vient la récupération.\n\nPar défaut, on valide la qualité de base avant la branche qu'elle sert, en alternant les deux axes d'une séance à l'autre. Mais si tu as déjà le niveau en Force ou en Mobilité, ou si ton objectif est la Locomotion ou les Figures, choisis-la comme priorité : ce sera ton essentiel, pas un bonus.\n\nChaque jour, la page te demande ta priorité : on continue, ou plutôt autre chose ? Une même priorité travaillée environ trois fois par semaine progresse.",
+        aRetenir: "Ta priorité du jour est ton essentiel : choisis-la selon ton niveau et tes objectifs.",
+      },
     ],
     qcm: [
       {
@@ -1537,6 +1604,12 @@ const CONNEXION: NoeudMentorship[] = [
         id: 'connexion1-q4',
         question: "Que se passe-t-il dans le système nerveux quand on répète un geste avec attention ?",
         choix: ["Le muscle mémorise le geste, indépendamment du cerveau", "La gaine de myéline s'épaissit, le signal devient plus rapide et plus fiable", "De nouveaux neurones se forment dans le muscle sollicité"],
+        bonneReponse: 1,
+      },
+      {
+        id: 'connexion1-q5',
+        question: "À quel moment de la séance travaille-t-on la Connexion ?",
+        choix: ["En début de séance, pour s'échauffer", "En fin de séance, une quinzaine de minutes", "Seulement les jours de repos"],
         bonneReponse: 1,
       },
     ],
@@ -1796,6 +1869,12 @@ const FIGURES: NoeudMentorship[] = [
         texte: "Les Figures expriment la maîtrise : elles ne la construisent pas seules. La force de poussée et la stabilité d'épaule viennent de la branche Force ; l'ouverture d'épaule et de hanche vient de la branche Flexibilité ; le contrôle fin qui permet de tenir sans se crisper vient de la Connexion.\n\nC'est pourquoi un blocage sur une figure se résout souvent ailleurs. Si une position reste impossible à tenir malgré un travail régulier, pose-toi la question : est-ce la force, la souplesse ou le contrôle qui manque ?",
         aRetenir: "Une figure bloque ? Cherche la qualité manquante : force, souplesse ou contrôle.",
       },
+      {
+        titre: "Choisir ta priorité",
+        sousTitre: "Ta séance s'adapte à tes objectifs",
+        texte: "La méthode suit deux axes : la Force, qui sert les Figures, et la Mobilité (Flexibilité), qui sert la Locomotion. La Connexion se travaille en fin de séance, une quinzaine de minutes, puis vient la récupération.\n\nPar défaut, on valide la qualité de base avant la branche qu'elle sert, en alternant les deux axes d'une séance à l'autre. Mais si tu as déjà le niveau en Force ou en Mobilité, ou si ton objectif est la Locomotion ou les Figures, choisis-la comme priorité : ce sera ton essentiel, pas un bonus.\n\nChaque jour, la page te demande ta priorité : on continue, ou plutôt autre chose ? Une même priorité travaillée environ trois fois par semaine progresse.",
+        aRetenir: "Ta priorité du jour est ton essentiel : choisis-la selon ton niveau et tes objectifs.",
+      },
     ],
     qcm: [
       {
@@ -1821,6 +1900,12 @@ const FIGURES: NoeudMentorship[] = [
         question: "Une figure reste impossible malgré un travail régulier. Quelle question se poser en premier ?",
         choix: ["Faut-il passer à une variante plus avancée pour débloquer la progression ?", "Faut-il augmenter la durée de tenue à chaque séance ?", "Est-ce la force, la souplesse ou le contrôle qui manque ?"],
         bonneReponse: 2,
+      },
+      {
+        id: 'figures1-q5',
+        question: "Ton objectif, ce sont les Figures, mais ta Force est encore faible. Que te propose la méthode par défaut ?",
+        choix: ["La Force d'abord, puis les Figures qu'elle sert", "Les Figures seules, la Force viendra avec", "Une séance différente chaque jour, au hasard"],
+        bonneReponse: 0,
       },
     ],
     contenuDefini: true,

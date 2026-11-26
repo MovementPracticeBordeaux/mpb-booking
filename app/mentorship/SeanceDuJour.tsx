@@ -5,7 +5,7 @@
 // exercice : consigne, objectif de réalisation, vidéo de référence, outils,
 // et le suivi chiffré pour noter ce qui a été fait. À la fin, un clic
 // consigne la séance dans le journal d'entraînement.
-// Méthode de Sylvain : 60 minutes maximum ; l'essentiel (priorité n° 1)
+// Méthode de Sylvain : durée fixe (60 min recommandées, réglable) ; l'essentiel (priorité n° 1)
 // d'abord : s'il est fait, la séance est réussie, le reste est du bonus.
 
 import { useEffect, useState } from 'react';
@@ -31,12 +31,43 @@ export type ElementSeance = {
   essentiel?: boolean; // priorité n° 1 de la séance
 };
 
-const DUREE_MAX_MIN = 60;
+// Durée de séance : 60 minutes recommandées, réglable par l'élève (son choix
+// est mémorisé sur l'appareil). Une fois choisie, c'est une limite : quand
+// elle est écoulée, la séance est finie.
+export const DUREE_RECOMMANDEE_MIN = 60;
+const DUREE_MIN_MIN = 20;
+const DUREE_MAX_REGLABLE_MIN = 180;
+const PAS_DUREE_MIN = 15;
 const CLE_DEBUT = 'mentorat-seance-debut';
+const CLE_DUREE = 'mentorat-duree-seance';
+
+export function useDureeSeance(): [number, (m: number) => void] {
+  const [duree, setDuree] = useState(DUREE_RECOMMANDEE_MIN);
+  useEffect(() => {
+    try {
+      const m = Number(localStorage.getItem(CLE_DUREE));
+      if (Number.isFinite(m) && m >= DUREE_MIN_MIN && m <= DUREE_MAX_REGLABLE_MIN) setDuree(m);
+    } catch { /* stockage indisponible : durée recommandée */ }
+  }, []);
+  function changer(m: number) {
+    const v = Math.min(DUREE_MAX_REGLABLE_MIN, Math.max(DUREE_MIN_MIN, m));
+    setDuree(v);
+    try { localStorage.setItem(CLE_DUREE, String(v)); } catch { /* idem */ }
+  }
+  return [duree, changer];
+}
+
+function formaterDuree(m: number): string {
+  if (m < 60) return `${m} min`;
+  const h = Math.floor(m / 60), r = m % 60;
+  return r === 0 ? `${h} h` : `${h} h ${String(r).padStart(2, '0')}`;
+}
+const boutonRond: React.CSSProperties = { width: 32, height: 32, borderRadius: 999, border: `1px solid ${COULEURS.bordure}`, background: 'transparent', color: COULEURS.texte, fontSize: 18, lineHeight: 1, cursor: 'pointer', fontFamily: 'inherit' };
 
 // Minuteur de séance : démarré par l'élève, mémorisé sur l'appareil pour la
-// journée (un rechargement de page ne le remet pas à zéro), plafonné à 60 min.
+// journée (un rechargement de page ne le remet pas à zéro), plafonné à la durée choisie.
 function MinuteurSeance() {
+  const [DUREE_MAX_MIN, setDuree] = useDureeSeance();
   const [debut, setDebut] = useState<number | null>(null);
   const [, setTic] = useState(0);
   useEffect(() => {
@@ -72,15 +103,22 @@ function MinuteurSeance() {
       <Timer size={20} color={couleur} style={{ flexShrink: 0 }} />
       {debut === null ? (
         <>
-          <span style={{ flexGrow: 1, fontSize: 13, color: COULEURS.texteAtt, minWidth: 180 }}>Séance de {DUREE_MAX_MIN} minutes maximum, récupération comprise.</span>
-          <button type="button" onClick={demarrer} style={{ background: GRADIENT, color: 'white', border: 'none', borderRadius: 999, padding: '8px 16px', fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>Démarrer les 60 min</button>
+          <span style={{ flexGrow: 1, minWidth: 200, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <span style={{ fontSize: 13, color: COULEURS.texteAtt }}>Durée de ta séance, récupération comprise ({DUREE_RECOMMANDEE_MIN} min recommandées) :</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <button type="button" aria-label="Raccourcir la séance" onClick={() => setDuree(DUREE_MAX_MIN - PAS_DUREE_MIN)} style={boutonRond}>−</button>
+              <strong style={{ fontSize: 16, color: COULEURS.texte, minWidth: 64, textAlign: 'center' }}>{formaterDuree(DUREE_MAX_MIN)}</strong>
+              <button type="button" aria-label="Allonger la séance" onClick={() => setDuree(DUREE_MAX_MIN + PAS_DUREE_MIN)} style={boutonRond}>+</button>
+            </span>
+          </span>
+          <button type="button" onClick={demarrer} style={{ background: GRADIENT, color: 'white', border: 'none', borderRadius: 999, padding: '8px 16px', fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>Démarrer</button>
         </>
       ) : fini ? (
-        <span style={{ flexGrow: 1, fontSize: 13, color: couleur, fontWeight: 600 }}>60 minutes : c'est fini pour aujourd'hui. Ce qui n'est pas fait attendra, sans culpabilité. Pense juste à noter ce que tu as fait.</span>
+        <span style={{ flexGrow: 1, fontSize: 13, color: couleur, fontWeight: 600 }}>{formaterDuree(DUREE_MAX_MIN)} : c'est fini pour aujourd'hui. Ce qui n'est pas fait attendra, sans culpabilité. Pense juste à noter ce que tu as fait.</span>
       ) : (
         <>
           <span style={{ flexGrow: 1, fontSize: 13, color: COULEURS.texte }}>
-            <strong style={{ color: couleur, fontSize: 16 }}>{restant} min</strong> restantes sur {DUREE_MAX_MIN}
+            <strong style={{ color: couleur, fontSize: 16 }}>{restant} min</strong> restantes sur {formaterDuree(DUREE_MAX_MIN)}
           </span>
           <span style={{ flexBasis: '100%', height: 4, borderRadius: 2, background: COULEURS.bordure, overflow: 'hidden' }}>
             <span style={{ display: 'block', height: '100%', width: `${Math.min(100, (ecoule / DUREE_MAX_MIN) * 100)}%`, background: couleur }} />

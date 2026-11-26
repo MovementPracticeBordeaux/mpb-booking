@@ -27,11 +27,12 @@ import ChecklistNoeud from './ChecklistNoeud';
 import JournalDuNoeud from './JournalDuNoeud';
 import JournalComplet from './JournalComplet';
 import SuiviPerf, { usePerfs } from './SuiviPerf';
-import SeanceDuJour, { type ElementSeance, type InfosCycle } from './SeanceDuJour';
+import SeanceDuJour, { useDureeSeance, type ElementSeance, type InfosCycle } from './SeanceDuJour';
 import { BoutonCoeur, useCoeurs } from './Coeurs';
 import { jourParisAujourdhui, XP_PRIORITE_TENUE } from '@/lib/mentorship-engagement';
 import { supabaseBrowser } from '@/lib/supabase-browser';
 import { phraseDuJour } from '@/lib/mentorship-phrases';
+import { BIBLIOGRAPHIE, INTRO_BIBLIOGRAPHIE } from '@/lib/mentorship-bibliographie';
 import RevisionDuJour, { type QuestionRevision } from './RevisionDuJour';
 import type { Badge } from '@/lib/mentorship-engagement';
 import type { StatsProgression } from '@/lib/stats-progression';
@@ -607,6 +608,8 @@ export default function ArbreCompetences({
     });
   }
   const { coeurs } = useCoeurs();
+  const [dureeSeance] = useDureeSeance();
+  const formaterDureeCourte = (m: number) => (m < 60 ? `${m} min` : m % 60 === 0 ? `${m / 60} h` : `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')}`);
   // Priorité du jour : l'élève choisit chaque jour ce qui sera « l'essentiel »
   // de sa séance (« on continue ça, ou plutôt ça ? »). Choix enregistré en
   // base (mentorship_priorite_jour), un par jour à l'heure de Paris. Sans
@@ -855,7 +858,7 @@ export default function ArbreCompetences({
   //   valider la branche servie (3 exercices).
   // Les exercices « à retravailler » passent d'abord, puis rotation quotidienne.
   // Priorité n° 1 = « l'essentiel » : s'il est fait, la séance est réussie,
-  // tout le reste est du bonus (méthode de Sylvain, séance de 60 min maximum).
+  // tout le reste est du bonus (méthode de Sylvain, séance à durée fixe, 60 min recommandées).
   const ESSENTIEL = "L'essentiel";
   const BLOC_CONNEXION = 'Bonus · Connexion en fin de séance, 15 min';
   const BLOC_RECUP = 'Bonus · Récupération';
@@ -1050,7 +1053,7 @@ export default function ArbreCompetences({
             <span style={{ flexGrow: 1, minWidth: 0 }}>
               <span style={{ display: 'block', fontFamily: POLICE_DISPLAY, fontSize: 18, color: COULEURS.texte }}>Ma séance du jour</span>
               <span style={{ display: 'block', fontSize: 12, color: COULEURS.texteFaible, marginTop: 2 }}>
-                60 min maximum · l'essentiel : {[...new Set(seanceDuJour.filter((e) => e.essentiel).map((e) => e.libelleNiveau.split(' · ')[0]))].join(' + ')}, le reste en bonus
+                {formaterDureeCourte(dureeSeance)} · l'essentiel : {[...new Set(seanceDuJour.filter((e) => e.essentiel).map((e) => e.libelleNiveau.split(' · ')[0]))].join(' + ')}, le reste en bonus
               </span>
             </span>
             <ChevronRight size={16} color={COULEURS.texteFaible} style={{ flexShrink: 0 }} />
@@ -1933,18 +1936,43 @@ export default function ArbreCompetences({
             if (noeudsAvecTheorie.length === 0) {
               return <p style={{ fontSize: 13, color: COULEURS.texteFaible }}>Rien à lire pour l'instant — la théorie apparaît ici au fil de ta progression.</p>;
             }
+            // Un fragment commun à plusieurs niveaux (ex. « Choisir ta priorité »,
+            // présent dans le niveau 1 des cinq branches) n'est affiché qu'une fois ici.
+            const dejaVus = new Set<string>();
             return noeudsAvecTheorie.map((n) => {
               const couleur = n.domaine === 'tronc' ? COULEUR_TRONC : DOMAINE_COULEURS[n.domaine as Domaine];
               const label = n.domaine === 'tronc' ? 'Armure Organique' : DOMAINE_LABELS[n.domaine as Domaine];
+              const theorie = n.theorie.filter((f) => { const cle = `${f.titre}|${f.texte.slice(0, 60)}`; if (dejaVus.has(cle)) return false; dejaVus.add(cle); return true; });
+              if (theorie.length === 0) return null;
               return (
                 <div key={n.id} style={{ marginBottom: 28 }}>
                   <span style={{ fontSize: 11, color: couleur, letterSpacing: 1, fontWeight: 600 }}>{label.toUpperCase()} · NIVEAU {n.niveau}</span>
                   <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 17, margin: '2px 0 10px', color: COULEURS.texte }}>{n.titre}</p>
-                  <BlocTheorie theorie={n.theorie} couleur={couleur} objectif={n.objectifPedagogique} />
+                  <BlocTheorie theorie={theorie} couleur={couleur} objectif={n.objectifPedagogique} />
                 </div>
               );
             });
           })()}
+
+          <div style={{ borderTop: `1px solid ${COULEURS.bordure}`, marginTop: 12, paddingTop: 22 }}>
+            <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 18, letterSpacing: 0.3, margin: '0 0 6px', color: COULEURS.texte, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <BookOpen size={18} color="#ff00aa" /> Bibliographie
+            </p>
+            <p style={{ fontSize: 13, color: COULEURS.texteAtt, margin: '0 0 16px', lineHeight: 1.6 }}>{INTRO_BIBLIOGRAPHIE}</p>
+            {BIBLIOGRAPHIE.map((g) => (
+              <div key={g.groupe} style={{ marginBottom: 18 }}>
+                <p style={{ fontSize: 11, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, margin: '0 0 8px' }}>{g.groupe}</p>
+                <ul style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {g.ouvrages.map((o) => (
+                    <li key={o.titre} style={{ fontSize: 13.5, color: COULEURS.texte, lineHeight: 1.5 }}>
+                      <span style={{ fontStyle: 'italic' }}>{o.titre}</span>
+                      <span style={{ color: COULEURS.texteFaible }}> — {o.auteur}{o.editeur ? `, ${o.editeur}` : ''}, {o.annee}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

@@ -9,7 +9,7 @@ export const PHRASES = [
   'Une séance courte faite vaut mieux qu’une séance parfaite remise à demain.',
   'Tu ne feras jamais tout. Choisis, et fais-le bien.',
   "Ce n'est pas l'intensité d'un jour qui te fait progresser, c'est le retour, semaine après semaine.",
-  "60 minutes, pas plus. Ce qui n'est pas fait aujourd'hui attendra, sans culpabilité.",
+  "Ta durée de séance est fixée : quand elle est écoulée, c'est fini. Le reste attendra, sans culpabilité.",
   'Le progrès se voit en mois, pas en jours. Note ce que tu fais, ton carnet s’en souviendra.',
   "Tu as le droit d'être moyen dans ce que tu aimes. Le plaisir est une raison suffisante.",
   'Venir, même fatigué, même pour 20 minutes, c’est déjà gagner.',
