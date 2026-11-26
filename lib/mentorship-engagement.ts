@@ -90,3 +90,31 @@ export function calculerBadges(d: DonneesBadges): Badge[] {
     { id: 'palier-3', nom: 'Arbre complet', description: 'Valider le niveau 3 des cinq branches.', obtenu: d.paliersBranchesValides >= 3 },
   ];
 }
+
+// --- XP de présence ---------------------------------------------------------
+// La présence et la régularité sont récompensées, pas seulement les
+// validations : chaque jour où l'élève note au moins un exercice rapporte
+// XP_PAR_SEANCE, dans la limite de SEANCES_RECOMPENSEES_PAR_SEMAINE jours par
+// semaine (au-delà, on ne pousse pas à en faire plus : 3 à 5 séances suffisent).
+export const XP_PAR_SEANCE = 10;
+export const SEANCES_RECOMPENSEES_PAR_SEMAINE = 5;
+
+function jourParis(iso: string): string {
+  return new Intl.DateTimeFormat('fr-CA', { timeZone: 'Europe/Paris' }).format(new Date(iso));
+}
+
+export function xpPresence(datesPerfs: string[]): { total: number; parJour: { jour: string; xp: number }[] } {
+  const jours = [...new Set(datesPerfs.map(jourParis))].sort();
+  const parSemaine = new Map<string, number>();
+  const parJour: { jour: string; xp: number }[] = [];
+  for (const jour of jours) {
+    const d = new Date(`${jour}T12:00:00Z`);
+    d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); // lundi de la semaine
+    const cle = d.toISOString().slice(0, 10);
+    const deja = parSemaine.get(cle) ?? 0;
+    if (deja >= SEANCES_RECOMPENSEES_PAR_SEMAINE) continue;
+    parSemaine.set(cle, deja + 1);
+    parJour.push({ jour, xp: XP_PAR_SEANCE });
+  }
+  return { total: parJour.length * XP_PAR_SEANCE, parJour };
+}

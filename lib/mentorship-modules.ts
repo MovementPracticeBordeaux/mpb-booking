@@ -2166,7 +2166,8 @@ export type PointCourbeXP = { jour: string; xp: number };
 
 export function courbeXPParJour(
   progressionRows: { module_id: string; statut: string | null; quiz_valide_le: string | null; reviewed_at: string | null }[],
-  defisRows: { jour: string }[]
+  defisRows: { jour: string }[],
+  autresGains: { jour: string; xp: number }[] = [] // ex. XP de présence
 ): PointCourbeXP[] {
   const gainsParJour = new Map<string, number>();
   const ajouter = (jourISO: string | null, montant: number) => {
@@ -2183,6 +2184,7 @@ export function courbeXPParJour(
     if (p.statut === 'acquis' && p.reviewed_at) ajouter(p.reviewed_at, xpGagneParNoeud(noeud, 'acquis') - partiel);
   }
   for (const d of defisRows) ajouter(d.jour, XP_BONUS_DEFI_QUOTIDIEN);
+  for (const g of autresGains) ajouter(g.jour, g.xp);
 
   const jours = [...gainsParJour.keys()].sort();
   let cumule = 0;

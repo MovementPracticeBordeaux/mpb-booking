@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { Zap, Moon, Wind, HeartPulse, Eye, Mountain, Play, BookOpen, NotebookText, Wrench, ChevronRight, Video, Send, Lock, Clock, Check, X, Lightbulb, FlaskConical, Target } from 'lucide-react';
+import { Zap, Moon, Wind, HeartPulse, Heart, Eye, Mountain, Play, BookOpen, NotebookText, Wrench, ChevronRight, Video, Send, Lock, Clock, Check, X, Lightbulb, FlaskConical, Target } from 'lucide-react';
 import {
   ORDRE_DOMAINES,
   DOMAINE_LABELS,
@@ -28,6 +28,8 @@ import JournalDuNoeud from './JournalDuNoeud';
 import JournalComplet from './JournalComplet';
 import SuiviPerf, { usePerfs } from './SuiviPerf';
 import SeanceDuJour, { type ElementSeance, type InfosCycle } from './SeanceDuJour';
+import { BoutonCoeur, useCoeurs } from './Coeurs';
+import { phraseDuJour } from '@/lib/mentorship-phrases';
 import RevisionDuJour, { type QuestionRevision } from './RevisionDuJour';
 import type { Badge } from '@/lib/mentorship-engagement';
 import type { StatsProgression } from '@/lib/stats-progression';
@@ -588,6 +590,19 @@ export default function ArbreCompetences({
   const [avantApresOuvert, setAvantApresOuvert] = useState(false);
   const [videoOuverteChemin, setVideoOuverteChemin] = useState<{ url: string; titre: string } | null>(null);
   const [seanceOuverte, setSeanceOuverte] = useState(false);
+  // Le présent avant l'étape : l'arbre est replié par défaut sur le tableau de
+  // bord (la séance du jour passe devant), dépliable, choix mémorisé.
+  const [arbreDeplie, setArbreDeplie] = useState(false);
+  useEffect(() => {
+    try { if (localStorage.getItem('mentorat-arbre-deplie') === '1') setArbreDeplie(true); } catch { /* stockage indisponible */ }
+  }, []);
+  function basculerArbre() {
+    setArbreDeplie((v) => {
+      try { localStorage.setItem('mentorat-arbre-deplie', v ? '0' : '1'); } catch { /* idem */ }
+      return !v;
+    });
+  }
+  const { coeurs } = useCoeurs();
   // Axe de la séance : alterné automatiquement d'une séance à l'autre
   // (Force -> Figures, puis Mobilité -> Locomotion), d'après les perfs
   // notées. L'élève peut forcer l'autre axe pour la journée (choix gardé
@@ -833,7 +848,11 @@ export default function ArbreCompetences({
   //   pour elle, 2 pour la branche servie. Une fois validée, on s'attache à
   //   valider la branche servie (3 exercices).
   // Les exercices « à retravailler » passent d'abord, puis rotation quotidienne.
-  const BLOC_CONNEXION = 'Fin de séance · Connexion, 15 min';
+  // Priorité n° 1 = « l'essentiel » : s'il est fait, la séance est réussie,
+  // tout le reste est du bonus (méthode de Sylvain, séance de 60 min maximum).
+  const ESSENTIEL = "L'essentiel";
+  const BLOC_CONNEXION = 'Bonus · Connexion en fin de séance, 15 min';
+  const BLOC_RECUP = 'Bonus · Récupération';
   const AXES = [
     { cle: 'force' as const, base: 'force' as Domaine, cible: 'figures' as Domaine, label: 'Force → Figures' },
     { cle: 'flexibilite' as const, base: 'flexibilite' as Domaine, cible: 'locomotion' as Domaine, label: 'Mobilité → Locomotion' },
@@ -848,6 +867,7 @@ export default function ArbreCompetences({
       aRetravailler: statutExercice(n, ex) === 'refuse',
       recuperation,
       bloc,
+      essentiel: bloc.startsWith(ESSENTIEL),
     });
     const choisir = (n: NoeudMentorshipPublic, combien: number, bloc: string): ElementSeance[] => {
       const candidats = exercicesAValider(n).filter((ex) => { const st = statutExercice(n, ex); return st !== 'acquis' && st !== 'en_attente'; });
@@ -860,9 +880,9 @@ export default function ArbreCompetences({
     if (etape.length === 0) return { elements: [], cycle: null };
     if (etape[0].domaine === 'tronc') {
       const n = etape[0];
-      const elements = choisir(n, 4, 'Armure Organique');
+      const elements = choisir(n, 4, `${ESSENTIEL} · Armure Organique`);
       const recup = (n.exercices ?? []).filter((ex) => ex.theme === 'recuperation');
-      if (elements.length > 0 && recup.length > 0) elements.push(element(n, recup[jourIndex % recup.length], 'Récupération', true));
+      if (elements.length > 0 && recup.length > 0) elements.push(element(n, recup[jourIndex % recup.length], BLOC_RECUP, true));
       return { elements, cycle: null };
     }
 
@@ -893,14 +913,14 @@ export default function ArbreCompetences({
     if (axe) {
       const base = parDomaine.get(axe.base);
       const cible = parDomaine.get(axe.cible);
-      if (base) elements.push(...choisir(base, 3, `1 · ${DOMAINE_LABELS[axe.base]}`));
-      if (cible) elements.push(...choisir(cible, base ? 2 : 3, `${base ? 2 : 1} · ${DOMAINE_LABELS[axe.cible]}`));
+      if (base) elements.push(...choisir(base, 3, `${ESSENTIEL} · ${DOMAINE_LABELS[axe.base]}`));
+      if (cible) elements.push(...choisir(cible, base ? 2 : 3, `${base ? 'Bonus' : ESSENTIEL} · ${DOMAINE_LABELS[axe.cible]}`));
     }
     const connexion = parDomaine.get('connexion');
     if (connexion) elements.push(...choisir(connexion, 1, BLOC_CONNEXION));
     if (elements.length > 0) {
       const recup = tronc.flatMap((t) => (t.exercices ?? []).filter((ex) => ex.theme === 'recuperation').map((ex) => ({ t, ex })));
-      if (recup.length > 0) { const r = recup[jourIndex % recup.length]; elements.push(element(r.t, r.ex, 'Récupération', true)); }
+      if (recup.length > 0) { const r = recup[jourIndex % recup.length]; elements.push(element(r.t, r.ex, BLOC_RECUP, true)); }
     }
     const info = (d: Domaine) => ({ domaine: d, label: DOMAINE_LABELS[d], couleur: DOMAINE_COULEURS[d], noeudId: parDomaine.get(d)!.id });
     return {
@@ -914,7 +934,7 @@ export default function ArbreCompetences({
     };
   }
 
-  function renderAccueil() {
+  function renderAccueil(partie: 'present' | 'suite') {
     const tousNoeuds = [...tronc, ...branches];
     const seanceDuJour = planSeance().elements;
     // Étape en cours : le niveau de l'Armure à valider, ou le palier commun
@@ -964,13 +984,20 @@ export default function ArbreCompetences({
       .flatMap((n) => (n.progressionBonus ?? []).filter((ex) => statutExercice(n, ex) === null).map((ex) => ({ noeud: n, ex })));
     const quete = quetes.length > 0 ? quetes[(jourIndex * 7) % quetes.length] : null;
 
+    // Coups de cœur : exercices aimés, à pratiquer pour le plaisir.
+    const coupsDeCoeur = tousNoeuds
+      .filter((n) => estDeverrouille(n))
+      .flatMap((n) => [...(n.exercices ?? []), ...(n.progressionBonus ?? [])].filter((ex) => coeurs.has(moduleIdExercice(n, ex))).map((ex) => ({ noeud: n, ex })));
+
     const carte: React.CSSProperties = { background: FOND_CARTE, border: `1px solid ${BORDURE_CARTE}`, borderRadius: 12, padding: '16px 18px' };
     const titreCarte: React.CSSProperties = { fontFamily: POLICE_DISPLAY, fontSize: 15, letterSpacing: 0.3, margin: '0 0 4px', color: COULEURS.texte };
     const labelNoeud = (n: NoeudMentorshipPublic) => (n.domaine === 'tronc' ? 'Armure Organique' : DOMAINE_LABELS[n.domaine as Domaine]);
     const couleurNoeud = (n: NoeudMentorshipPublic) => (n.domaine === 'tronc' ? COULEUR_TRONC : DOMAINE_COULEURS[n.domaine as Domaine]);
 
     return (
-      <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 860, marginInline: 'auto' }}>
+      partie === 'present' ? (
+      <div style={{ marginTop: 8, marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 860, marginInline: 'auto' }}>
+        <p style={{ fontSize: 14, color: COULEURS.texteAtt, fontStyle: 'italic', margin: '0 0 2px', textAlign: 'center', lineHeight: 1.5 }}>« {phraseDuJour(0)} »</p>
         {/* Séance du jour */}
         {seanceDuJour.length > 0 && (
           <button
@@ -979,9 +1006,9 @@ export default function ArbreCompetences({
           >
             <Play size={22} color="#ff00aa" style={{ flexShrink: 0 }} />
             <span style={{ flexGrow: 1, minWidth: 0 }}>
-              <span style={{ display: 'block', fontFamily: POLICE_DISPLAY, fontSize: 16, color: COULEURS.texte }}>Ma séance du jour</span>
+              <span style={{ display: 'block', fontFamily: POLICE_DISPLAY, fontSize: 18, color: COULEURS.texte }}>Ma séance du jour</span>
               <span style={{ display: 'block', fontSize: 12, color: COULEURS.texteFaible, marginTop: 2 }}>
-{seanceDuJour.length} exercice{seanceDuJour.length > 1 ? 's' : ''} · {[...new Set(seanceDuJour.filter((e) => !e.recuperation).map((e) => e.libelleNiveau.split(' · ')[0]))].join(' + ')}
+                60 min maximum · l'essentiel : {[...new Set(seanceDuJour.filter((e) => e.essentiel).map((e) => e.libelleNiveau.split(' · ')[0]))].join(' + ')}, le reste en bonus
               </span>
             </span>
             <ChevronRight size={16} color={COULEURS.texteFaible} style={{ flexShrink: 0 }} />
@@ -1048,6 +1075,25 @@ export default function ArbreCompetences({
           )}
         </div>
 
+      </div>
+      ) : (
+      <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 860, marginInline: 'auto' }}>
+        {coupsDeCoeur.length > 0 && (
+          <div style={carte}>
+            <p style={{ ...titreCarte, display: 'flex', alignItems: 'center', gap: 8 }}><Heart size={16} color="#FF2D78" fill="#FF2D78" /> Pour le plaisir</p>
+            <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: '0 0 10px' }}>Tes coups de cœur. À pratiquer quand tu veux, sans objectif : tu as le droit d'être moyen dans ce que tu aimes.</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {coupsDeCoeur.map(({ noeud, ex }) => (
+                <button key={moduleIdExercice(noeud, ex)} type="button" onClick={() => entrerBranche(noeud.domaine as Domaine | 'tronc', noeud.id, 'pratique')}
+                  style={{ fontSize: 13, padding: '7px 12px', borderRadius: 999, border: `1px solid ${couleurNoeud(noeud)}66`, background: 'transparent', color: COULEURS.texte, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  {ex.nom}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <p style={{ fontSize: 11, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, margin: '8px 0 0' }}>Pour aller plus loin · facultatif</p>
         {/* Cartes secondaires : côte à côte dès que la largeur le permet */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: 12, alignItems: 'start' }}>
         {/* Idée clé du jour */}
@@ -1098,6 +1144,7 @@ export default function ArbreCompetences({
         )}
         </div>
       </div>
+      )
     );
   }
 
@@ -1657,12 +1704,21 @@ export default function ArbreCompetences({
 
       {onglet === 'arbre' && !vueBranche && !seanceOuverte && (
         <>
+          {renderAccueil('present')}
+
           <div style={{ textAlign: 'center', maxWidth: 560, marginInline: 'auto', marginBottom: 18 }}>
             <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 'clamp(22px, 5vw, 30px)', letterSpacing: 0.5, margin: 0, color: COULEURS.texte }}>
               ARBRE DE <span style={GRADIENT_TEXTE}>COMPÉTENCES</span>
             </h2>
             <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: '4px 0 0' }}>La base de ta pratique et de ton évolution.</p>
+            <button type="button" onClick={basculerArbre} aria-expanded={arbreDeplie}
+              style={{ marginTop: 10, display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, padding: '8px 16px', borderRadius: 999, border: `1px solid ${COULEURS.bordure}`, background: 'transparent', color: COULEURS.texteAtt, cursor: 'pointer', fontFamily: 'inherit' }}>
+              <ChevronRight size={15} style={{ transform: arbreDeplie ? 'rotate(-90deg)' : 'rotate(90deg)', transition: 'transform .2s' }} />
+              {arbreDeplie ? "Replier l'arbre" : "Déplier l'arbre"}
+            </button>
           </div>
+
+          {arbreDeplie && (<>
 
           {/* En-têtes de branches — icône, nom, accroche, avant l'arbre lui-même. Cliquable : entre dans le chemin isolé de la branche. */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 4, maxWidth: 560, marginInline: 'auto', marginBottom: 4 }}>
@@ -1818,8 +1874,9 @@ export default function ArbreCompetences({
               Les branches restent verrouillées tant que l'Armure Organique n'est pas validée en entier (niveau 3).
             </p>
           )}
+          </>)}
 
-          {renderAccueil()}
+          {renderAccueil('suite')}
         </>
       )}
 
@@ -2553,6 +2610,7 @@ function BlocExercice({
           </span>
         </span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+          {!estOutilSante && !estAdmin && <span style={{ marginRight: 8 }}><BoutonCoeur moduleId={moduleIdExercice(noeud, exercice)} taille={17} /></span>}
           {estOutilSante && <ChevronRight size={14} color={COULEURS.texteFaible} />}
           <span role="button" tabIndex={0} aria-label="Aller à l'envoi de la vidéo" onClick={allerALEnvoi} onKeyDown={(e) => { if (e.key === 'Enter') allerALEnvoi(e as unknown as React.MouseEvent); }} style={{ display: 'inline-flex', padding: 6, margin: -6, cursor: 'pointer' }}>
             <StatutExercicePastille statut={statutEx} estOutilSante={estOutilSante} couleur={teinte} />

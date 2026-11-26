@@ -7,7 +7,8 @@ import { COULEURS, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
 import ArbreCompetences from './ArbreCompetences';
 import { PerfsProvider, type Perf } from './SuiviPerf';
 import type { QuestionRevision } from './RevisionDuJour';
-import { choisirQuestionDuJour, serieSemaines, calculerBadges, type LigneRevision } from '@/lib/mentorship-engagement';
+import { choisirQuestionDuJour, serieSemaines, calculerBadges, xpPresence, type LigneRevision } from '@/lib/mentorship-engagement';
+import { CoeursProvider } from './Coeurs';
 import { DOMAINE_COULEURS, DOMAINE_LABELS, COULEUR_TRONC, type Domaine } from '@/lib/mentorship-modules';
 
 export const dynamic = 'force-dynamic';
@@ -96,8 +97,6 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
       xpTotal += xpGagneParNoeud(noeud, statutXP(p?.statut ?? null, p?.quiz_reussi ?? false));
     }
   }
-  const niveau = niveauGlobal(xpTotal);
-  const courbeXP = courbeXPParJour(progressionData ?? [], defisHistoriqueData ?? []);
 
   // Stats de l'onglet "Progression" — historiques bruts des outils Force
   // (reps_par_set) et Figures (tentatives, en secondes tenues), + le
@@ -155,6 +154,16 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
     .order('cree_le', { ascending: false })
     .limit(1000);
   const perfsInitiales = (perfsData ?? []) as Perf[];
+
+  // Présence récompensée : XP pour chaque jour de pratique noté (plafonné par semaine).
+  const presence = xpPresence(perfsInitiales.map((p) => p.cree_le));
+  xpTotal += presence.total;
+  const niveau = niveauGlobal(xpTotal);
+  const courbeXP = courbeXPParJour(progressionData ?? [], defisHistoriqueData ?? [], presence.parJour);
+
+  // Coups de cœur (exercices pratiqués pour le plaisir).
+  const { data: coeursData } = await supabase.from('mentorship_coeur').select('module_id').eq('eleve_id', user.id);
+  const coeursInitiaux = (coeursData ?? []).map((c) => c.module_id as string);
 
   // --- Révision espacée : question du jour parmi les QCM déjà réussis ---
   const { data: revisionsData } = await supabase
@@ -223,6 +232,7 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
       )}
 
       <PerfsProvider initial={perfsInitiales}>
+      <CoeursProvider initiaux={coeursInitiaux}>
       <ArbreCompetences
         tronc={troncPublic}
         branches={branchesPublic}
@@ -241,6 +251,7 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
         badges={badges}
         revision={{ question: questionRevision, faiteAujourdhui: choix.faiteAujourdhui }}
       />
+      </CoeursProvider>
       </PerfsProvider>
     </main>
   );

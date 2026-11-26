@@ -5,8 +5,14 @@
 // exercice : consigne, objectif de réalisation, vidéo de référence, outils,
 // et le suivi chiffré pour noter ce qui a été fait. À la fin, un clic
 // consigne la séance dans le journal d'entraînement.
+// Méthode de Sylvain : 60 minutes maximum ; l'essentiel (priorité n° 1)
+// d'abord : s'il est fait, la séance est réussie, le reste est du bonus.
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Timer } from 'lucide-react';
+import { phraseDuJour } from '@/lib/mentorship-phrases';
+import { XP_PAR_SEANCE, SEANCES_RECOMPENSEES_PAR_SEMAINE } from '@/lib/mentorship-engagement';
+import { BoutonCoeur } from './Coeurs';
 import { COULEURS, GRADIENT, POLICE_DISPLAY } from '@/lib/theme';
 import { supabaseBrowser } from '@/lib/supabase-browser';
 import type { ExerciceMentorship } from '@/lib/mentorship-modules';
@@ -21,8 +27,72 @@ export type ElementSeance = {
   brancheJournal: string; // clé de branche pour le journal ('tronc', 'force'...)
   aRetravailler: boolean;
   recuperation?: boolean; // outil de récupération : pas de suivi chiffré
-  bloc: string; // « Échauffement cognitif », « Objectif prioritaire »…
+  bloc: string; // « L'essentiel · Force », « Bonus · Figures »…
+  essentiel?: boolean; // priorité n° 1 de la séance
 };
+
+const DUREE_MAX_MIN = 60;
+const CLE_DEBUT = 'mentorat-seance-debut';
+
+// Minuteur de séance : démarré par l'élève, mémorisé sur l'appareil pour la
+// journée (un rechargement de page ne le remet pas à zéro), plafonné à 60 min.
+function MinuteurSeance() {
+  const [debut, setDebut] = useState<number | null>(null);
+  const [, setTic] = useState(0);
+  useEffect(() => {
+    try {
+      const brut = localStorage.getItem(CLE_DEBUT);
+      const t = brut ? Number(brut) : NaN;
+      if (Number.isFinite(t) && new Date(t).toDateString() === new Date().toDateString()) setDebut(t);
+    } catch { /* stockage indisponible : minuteur non mémorisé */ }
+  }, []);
+  useEffect(() => {
+    if (debut === null) return;
+    const id = setInterval(() => setTic((n) => n + 1), 15000);
+    return () => clearInterval(id);
+  }, [debut]);
+
+  function demarrer() {
+    const t = Date.now();
+    setDebut(t);
+    try { localStorage.setItem(CLE_DEBUT, String(t)); } catch { /* idem */ }
+  }
+  function reinitialiser() {
+    setDebut(null);
+    try { localStorage.removeItem(CLE_DEBUT); } catch { /* idem */ }
+  }
+
+  const ecoule = debut === null ? 0 : Math.floor((Date.now() - debut) / 60000);
+  const fini = ecoule >= DUREE_MAX_MIN;
+  const restant = Math.max(0, DUREE_MAX_MIN - ecoule);
+  const couleur = fini ? '#00FF91' : restant <= 10 ? '#FFC24B' : '#ff00aa';
+
+  return (
+    <div style={{ border: `1px solid ${couleur}55`, borderRadius: 12, padding: '12px 14px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+      <Timer size={20} color={couleur} style={{ flexShrink: 0 }} />
+      {debut === null ? (
+        <>
+          <span style={{ flexGrow: 1, fontSize: 13, color: COULEURS.texteAtt, minWidth: 180 }}>Séance de {DUREE_MAX_MIN} minutes maximum, récupération comprise.</span>
+          <button type="button" onClick={demarrer} style={{ background: GRADIENT, color: 'white', border: 'none', borderRadius: 999, padding: '8px 16px', fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>Démarrer les 60 min</button>
+        </>
+      ) : fini ? (
+        <span style={{ flexGrow: 1, fontSize: 13, color: couleur, fontWeight: 600 }}>60 minutes : c'est fini pour aujourd'hui. Ce qui n'est pas fait attendra, sans culpabilité. Pense juste à noter ce que tu as fait.</span>
+      ) : (
+        <>
+          <span style={{ flexGrow: 1, fontSize: 13, color: COULEURS.texte }}>
+            <strong style={{ color: couleur, fontSize: 16 }}>{restant} min</strong> restantes sur {DUREE_MAX_MIN}
+          </span>
+          <span style={{ flexBasis: '100%', height: 4, borderRadius: 2, background: COULEURS.bordure, overflow: 'hidden' }}>
+            <span style={{ display: 'block', height: '100%', width: `${Math.min(100, (ecoule / DUREE_MAX_MIN) * 100)}%`, background: couleur }} />
+          </span>
+        </>
+      )}
+      {debut !== null && (
+        <button type="button" onClick={reinitialiser} style={{ background: 'none', border: 'none', padding: 0, color: COULEURS.texteFaible, fontSize: 12, textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit' }}>Remettre à zéro</button>
+      )}
+    </div>
+  );
+}
 
 type BrancheCycle = { domaine: string; label: string; couleur: string; noeudId: string };
 export type InfosCycle = { axe: string; options: { cle: string; label: string }[]; branches: BrancheCycle[]; baseValidee: boolean };
@@ -49,6 +119,8 @@ export default function SeanceDuJour({ elements, cycle, onChangerCycle, onOuvrir
   const perfDuJour = (moduleId: string) => (parModule.get(moduleId) ?? []).filter((p) => estAujourdhui(p.cree_le));
   const travail = elements.filter((e) => !e.recuperation);
   const faits = travail.filter((e) => perfDuJour(e.moduleId).length > 0).length;
+  const essentiels = travail.filter((e) => e.essentiel);
+  const essentielFait = essentiels.length > 0 && essentiels.every((e) => perfDuJour(e.moduleId).length > 0);
 
   async function terminer() {
     if (etat !== 'saisie') return;
@@ -92,9 +164,19 @@ export default function SeanceDuJour({ elements, cycle, onChangerCycle, onOuvrir
     <div style={{ maxWidth: 720, marginInline: 'auto' }}>
       <button type="button" onClick={onFermer} style={{ background: 'none', border: 'none', color: COULEURS.texteFaible, cursor: 'pointer', fontSize: 13, padding: 0, fontFamily: 'inherit' }}>← Retour au tableau de bord</button>
       <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 24, letterSpacing: 0.5, margin: '10px 0 4px', color: COULEURS.texte }}>MA SÉANCE DU JOUR</h2>
-      <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: '0 0 16px', lineHeight: 1.5 }}>
-        Composée à partir de tes objectifs en cours, elle change chaque jour. Compte 3 à 5 séances par semaine. Note ce que tu fais au fur et à mesure : {faits}/{travail.length} exercice{travail.length > 1 ? 's' : ''} noté{faits > 1 ? 's' : ''}.
+      <p style={{ fontSize: 14, color: COULEURS.texte, margin: '0 0 6px', lineHeight: 1.5, fontStyle: 'italic' }}>« {phraseDuJour(1)} »</p>
+      <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: '0 0 14px', lineHeight: 1.5 }}>
+        Commence par <strong style={{ color: COULEURS.texte }}>l'essentiel</strong> : s'il est fait, ta séance est réussie. Le reste est du bonus, si tu as le temps et l'envie.
+        {' '}Une seule chose à ne pas oublier : <strong style={{ color: COULEURS.texte }}>note ce que tu fais</strong> (séries, répétitions, temps) au fur et à mesure : {faits}/{travail.length} exercice{travail.length > 1 ? 's' : ''} noté{faits > 1 ? 's' : ''}.
       </p>
+
+      <MinuteurSeance />
+
+      {essentielFait && (
+        <p style={{ border: '1px solid #00FF9166', background: 'rgba(0,255,145,0.07)', color: '#00FF91', borderRadius: 12, padding: '10px 14px', fontSize: 14, fontWeight: 600, margin: '0 0 14px' }}>
+          ✓ L'essentiel est fait : ta séance est réussie. Tout le reste est du bonus.
+        </p>
+      )}
 
       {cycle && (
         <div style={{ border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: '14px 16px', marginBottom: 14 }}>
@@ -129,7 +211,7 @@ export default function SeanceDuJour({ elements, cycle, onChangerCycle, onOuvrir
           return (
             <li key={e.moduleId} style={{ listStyle: 'none' }}>
             {nouveauBloc && (
-              <p style={{ fontSize: 11, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, margin: `${i === 0 ? 0 : 6}px 0 8px` }}>{e.bloc}</p>
+              <p style={{ fontSize: 11, color: e.essentiel ? '#ff00aa' : COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, margin: `${i === 0 ? 0 : 14}px 0 8px` }}>{e.bloc}</p>
             )}
             <div style={{ border: `1px solid ${fait ? e.couleur : COULEURS.bordure}`, borderRadius: 12, padding: '14px 16px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -142,6 +224,7 @@ export default function SeanceDuJour({ elements, cycle, onChangerCycle, onOuvrir
                   </span>
                   <span style={{ display: 'block', fontSize: 15, color: COULEURS.texte, fontWeight: 500 }}>{e.exercice.nom}</span>
                 </span>
+                {!e.recuperation && <span style={{ marginLeft: 'auto' }}><BoutonCoeur moduleId={e.moduleId} /></span>}
               </div>
 
               {e.exercice.critereValidation && (
@@ -173,7 +256,10 @@ export default function SeanceDuJour({ elements, cycle, onChangerCycle, onOuvrir
 
       <div style={{ marginTop: 18, border: `1px solid ${COULEURS.bordure}`, borderRadius: 12, padding: '14px 16px' }}>
         {etat === 'fait' ? (
-          <p style={{ margin: 0, fontSize: 14, color: '#00FF91' }}>✓ Séance consignée dans ton journal (sujet « Séances du jour »).</p>
+          <>
+            <p style={{ margin: 0, fontSize: 14, color: '#00FF91' }}>✓ Séance consignée dans ton journal (sujet « Séances du jour »). {faits > 0 ? `Ta présence compte : chaque jour de pratique noté rapporte ${XP_PAR_SEANCE} XP (jusqu'à ${SEANCES_RECOMPENSEES_PAR_SEMAINE} jours par semaine).` : ''}</p>
+            <p style={{ margin: '8px 0 0', fontSize: 13, color: COULEURS.texteAtt, fontStyle: 'italic' }}>« {phraseDuJour(2)} »</p>
+          </>
         ) : (
           <>
             <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 15, margin: '0 0 8px', color: COULEURS.texte }}>Fin de séance</p>
