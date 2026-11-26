@@ -1,4 +1,5 @@
 import { COULEURS, GRADIENT, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
+import ApercuArbre from './ApercuArbre';
 import { MENTORAT_OUVERT, MENTORAT_PLACES_PAR_SESSION, FORMULES, FORMULES_MENTORAT_DUREE } from '@/lib/formules';
 
 export const metadata = {
@@ -87,6 +88,9 @@ export default function MentoratPage() {
           rythme, débutant comme pratiquant confirmé.
         </p>
       </section>
+
+      {/* APERÇU DE L'ARBRE : le chemin de progression, concret */}
+      <ApercuArbre />
 
       {/* MÉTHODOLOGIE / FORCE THÉORIQUE */}
       <section style={{ maxWidth: 720, margin: '0 auto', padding: '0 20px 56px' }}>

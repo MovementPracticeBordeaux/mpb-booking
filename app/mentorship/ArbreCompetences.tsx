@@ -29,6 +29,7 @@ import JournalComplet from './JournalComplet';
 import SuiviPerf, { usePerfs } from './SuiviPerf';
 import SeanceDuJour, { useDureeSeance, type ElementSeance, type InfosCycle } from './SeanceDuJour';
 import { BoutonCoeur, useCoeurs } from './Coeurs';
+import GuideMentorat, { CLE_GUIDE_VU } from './GuideMentorat';
 import { jourParisAujourdhui, XP_PRIORITE_TENUE } from '@/lib/mentorship-engagement';
 import { supabaseBrowser } from '@/lib/supabase-browser';
 import { phraseDuJour } from '@/lib/mentorship-phrases';
@@ -595,11 +596,16 @@ export default function ArbreCompetences({
   const [avantApresOuvert, setAvantApresOuvert] = useState(false);
   const [videoOuverteChemin, setVideoOuverteChemin] = useState<{ url: string; titre: string } | null>(null);
   const [seanceOuverte, setSeanceOuverte] = useState(false);
-  // Le présent avant l'étape : l'arbre est replié par défaut sur le tableau de
-  // bord (la séance du jour passe devant), dépliable, choix mémorisé.
-  const [arbreDeplie, setArbreDeplie] = useState(false);
+  // Le présent avant l'étape : la séance du jour passe devant l'arbre. L'arbre
+  // est déplié à la première visite (pour comprendre le parcours), repliable,
+  // choix mémorisé sur l'appareil. Visite guidée à la première ouverture.
+  const [arbreDeplie, setArbreDeplie] = useState(true);
+  const [guideOuvert, setGuideOuvert] = useState(false);
   useEffect(() => {
-    try { if (localStorage.getItem('mentorat-arbre-deplie') === '1') setArbreDeplie(true); } catch { /* stockage indisponible */ }
+    try {
+      if (localStorage.getItem('mentorat-arbre-deplie') === '0') setArbreDeplie(false);
+      if (!localStorage.getItem(CLE_GUIDE_VU)) setGuideOuvert(true);
+    } catch { /* stockage indisponible */ }
   }, []);
   function basculerArbre() {
     setArbreDeplie((v) => {
@@ -1017,10 +1023,16 @@ export default function ArbreCompetences({
 
     return (
       partie === 'present' ? (
-      <div style={{ marginTop: 8, marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 860, marginInline: 'auto' }}>
-        <p style={{ fontSize: 14, color: COULEURS.texteAtt, fontStyle: 'italic', margin: '0 0 2px', textAlign: 'center', lineHeight: 1.5 }}>« {phraseDuJour(0)} »</p>
+      <div data-guide="present" style={{ marginTop: 8, marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 860, marginInline: 'auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <p style={{ flexGrow: 1, fontSize: 14, color: COULEURS.texteAtt, fontStyle: 'italic', margin: '0 0 2px', textAlign: 'center', lineHeight: 1.5 }}>« {phraseDuJour(0)} »</p>
+          <button type="button" onClick={() => setGuideOuvert(true)} style={{ flexShrink: 0, fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 999, border: '1px solid #029FD6', background: 'transparent', color: '#029FD6', cursor: 'pointer', fontFamily: 'inherit' }}>? Guide</button>
+        </div>
+        {!troncComplet && (
+          <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: 0, textAlign: 'center' }}>Tant que l'Armure Organique n'est pas validée, ta séance suit ses exercices. Le choix d'une priorité du jour s'ouvrira avec les branches.</p>
+        )}
         {/* Question du jour : « on continue ça, ou plutôt ça ? » */}
-        {cyclePlan && !cyclePlan.choisie && !estAdmin && (
+        {cyclePlan && !cyclePlan.choisie && (
           <div style={{ ...carte, borderColor: '#029FD688' }}>
             <p style={titreCarte}>Aujourd'hui, quelle est ta priorité ?</p>
             <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: '0 0 12px', lineHeight: 1.5 }}>
@@ -1308,9 +1320,11 @@ export default function ArbreCompetences({
 
       {/* Onglets et badge XP sur la même ligne ; le badge ouvre la vue Progression (plus d'onglet dédié). */}
       <div style={{ display: 'flex', flexWrap: 'wrap-reverse', alignItems: 'center', columnGap: 12, rowGap: 6, marginBottom: 24, borderBottom: `1px solid ${COULEURS.bordure}` }}>
-        <MenuOnglets actif={onglet} onChange={setOnglet} />
-        <BandeauXP xpTotal={xpTotal} niveau={niveau} serie={serie} actif={onglet === 'progression'} onOuvrir={() => { setVueBranche(null); setOnglet('progression'); }} />
+        <div data-guide="onglets" style={{ display: 'flex', flex: '1 1 auto', minWidth: 0 }}><MenuOnglets actif={onglet} onChange={setOnglet} /></div>
+        <div data-guide="xp" style={{ marginLeft: 'auto', display: 'flex' }}><BandeauXP xpTotal={xpTotal} niveau={niveau} serie={serie} actif={onglet === 'progression'} onOuvrir={() => { setVueBranche(null); setOnglet('progression'); }} /></div>
       </div>
+      <GuideMentorat ouvert={guideOuvert} onFermer={() => setGuideOuvert(false)}
+        avantEtape={(cible) => { setVueBranche(null); setSeanceOuverte(false); setOnglet('arbre'); if (cible === 'arbre') setArbreDeplie(true); }} />
 
       {estAdmin && (
         <div style={{ marginBottom: 12, padding: '10px 12px', border: `1px dashed ${COULEURS.bordure}`, borderRadius: 8 }}>
@@ -1796,7 +1810,7 @@ export default function ArbreCompetences({
           </div>
 
           {/* Arbre — en vedette, section large */}
-          <div style={{ position: 'relative', width: '100%', maxWidth: 560, marginInline: 'auto', aspectRatio: '3 / 4' }}>
+          <div data-guide="arbre" style={{ position: 'relative', width: '100%', maxWidth: 560, marginInline: 'auto', aspectRatio: '3 / 4' }}>
             <svg viewBox="0 0 100 100" preserveAspectRatio="none" width="100%" height="100%" style={{ position: 'absolute', inset: 0, display: 'block' }}>
               <defs>
                 <linearGradient id="gradient-lignes" gradientUnits="userSpaceOnUse" x1="0" y1="100" x2="0" y2="0">
