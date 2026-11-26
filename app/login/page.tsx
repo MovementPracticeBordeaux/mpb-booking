@@ -195,7 +195,9 @@ export default function LoginPage() {
       return;
     }
     try { sessionStorage.removeItem(CLE_SESSION); } catch {}
-    router.replace('/planning');
+    // Retour vers la page demandée (ex. /mentorat/inscription), chemins internes uniquement.
+    const suite = searchParams.get('next');
+    router.replace(suite && suite.startsWith('/') && !suite.startsWith('//') ? suite : '/planning');
   }
 
   function changerAdresse() {

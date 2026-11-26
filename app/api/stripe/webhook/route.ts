@@ -21,7 +21,9 @@ export async function POST(req: NextRequest) {
 
   const admin = supabaseAdmin();
 
-  if (event.type === 'checkout.session.completed') {
+  // « async_payment_succeeded » : paiement confirmé après coup (certains moyens
+  // de paiement). Même traitement, l'idempotence évite tout double crédit.
+  if (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') {
     const session = event.data.object as Stripe.Checkout.Session;
     // Sécurité : on ne crédite rien tant que l'argent n'est pas réellement
     // encaissé (cas des moyens de paiement différés).

@@ -46,11 +46,16 @@ export async function POST(req: NextRequest) {
     }
   }
   if (formule.categorie === 'mentorat') {
-    // Le Mentorat se fait sur candidature : le suivi post-Mentorat n'est
-    // achetable que par un ancien élève du Mentorat.
+    // Le Mentorat se fait sur candidature : seuls un candidat accepté (même
+    // adresse email que sa candidature) ou un élève qui a déjà eu le Mentorat
+    // (renouvellement) peuvent payer en ligne.
     const { count } = await admin.from('abonnements').select('id', { count: 'exact', head: true })
       .eq('eleve_id', user.id).eq('categorie', 'mentorat');
-    if ((count ?? 0) === 0) {
+    const { count: acceptees } = user.email
+      ? await admin.from('mentorat_candidatures').select('id', { count: 'exact', head: true })
+        .ilike('email', user.email.replace(/[\\%_]/g, (c) => `\\${c}`)).eq('statut', 'acceptee')
+      : { count: 0 };
+    if ((count ?? 0) === 0 && (acceptees ?? 0) === 0) {
       return NextResponse.json({ error: 'Le Mentorat se fait sur candidature.' }, { status: 403 });
     }
   }
@@ -63,10 +68,12 @@ export async function POST(req: NextRequest) {
     ? date_debut
     : aujourdhui;
 
-  try {
-    const session = await stripe.checkout.sessions.create({
+  // Mentorat : paiement en plusieurs fois possible avec Klarna (Sylvain est
+  // payé en entier d'avance, Klarna porte le risque d'impayé). Si Klarna
+  // n'est pas encore activé sur le compte Stripe, on retombe sur la carte.
+  const creerSession = (moyens: ('card' | 'klarna')[]) => stripe.checkout.sessions.create({
       mode: 'payment',
-      payment_method_types: ['card'],
+      payment_method_types: moyens,
       line_items: [{ price: price_id, quantity: 1 }],
       customer_email: user.email,
       success_url: retour === 'profil'
@@ -75,6 +82,17 @@ export async function POST(req: NextRequest) {
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/tarifs?paiement=annule`,
       metadata: { user_id: user.id, formule_nom, date_debut: dateDebutValide, depart: depart === 'aujourdhui' ? 'aujourdhui' : 'suite' },
     });
+  try {
+    let session;
+    if (formule.categorie === 'mentorat') {
+      try {
+        session = await creerSession(['card', 'klarna']);
+      } catch {
+        session = await creerSession(['card']);
+      }
+    } else {
+      session = await creerSession(['card']);
+    }
     return NextResponse.json({ url: session.url });
   } catch (e: any) {
     return NextResponse.json({ error: e.message ?? 'Erreur Stripe inconnue' }, { status: 500 });

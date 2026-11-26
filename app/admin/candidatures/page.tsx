@@ -141,7 +141,7 @@ export default async function AdminCandidaturesPage({ searchParams }: { searchPa
           )}
           {c.statut === 'acceptee' && (
             <a href="/admin/eleves" style={{ fontSize: 13, color: '#f0a', alignSelf: 'center' }}>
-              → Attribuer la formule depuis Élèves &amp; paiements
+              Lien d'inscription envoyé (/mentorat/inscription) · ou attribuer à la main depuis Élèves &amp; paiements
             </a>
           )}
           {c.statut !== 'nouvelle' && (
