@@ -1,5 +1,7 @@
 'use client';
 
+import { Lock } from 'lucide-react';
+
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { COULEURS, GRADIENT, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
@@ -298,7 +300,7 @@ function PositionDansFamille({ selection, objectifs, choisir }: { selection: Obj
   );
 }
 
-export default function ObjectifsExplorer({ objectifs, relations, outilsPrecis = {}, placeArbre = {} }: { objectifs: Objectif[]; relations: Relation[]; outilsPrecis?: Record<string, OutilPrecis[]>; placeArbre?: Record<string, string> }) {
+export default function ObjectifsExplorer({ objectifs, relations, outilsPrecis = {}, placeArbre = {}, verrouillees = {}, estAdmin = false }: { objectifs: Objectif[]; relations: Relation[]; outilsPrecis?: Record<string, OutilPrecis[]>; placeArbre?: Record<string, string>; verrouillees?: Record<string, string>; estAdmin?: boolean }) {
   const searchParams = useSearchParams();
   const [recherche, setRecherche] = useState('');
   const [selectionId, setSelectionId] = useState<string | null>(null);
@@ -350,6 +352,22 @@ export default function ObjectifsExplorer({ objectifs, relations, outilsPrecis =
     setRecherche('');
   }
 
+  if (selection && verrouillees[selection.id] && !estAdmin) {
+    return (
+      <main style={{ maxWidth: 560, margin: '0 auto', padding: '24px 20px' }}>
+        <button type="button" onClick={() => setSelectionId(null)} style={{ background: 'none', border: 'none', fontSize: 13, color: COULEURS.texteFaible, cursor: 'pointer', padding: 0, marginBottom: 12 }}>
+          ← Nouvelle recherche
+        </button>
+        <p style={{ fontSize: 11, letterSpacing: 1, opacity: 0.5, textTransform: 'uppercase', margin: '0 0 4px' }}>{selection.branche}</p>
+        <h1 style={{ fontFamily: POLICE_DISPLAY, fontSize: 'clamp(24px, 7vw, 30px)', letterSpacing: 0.3, margin: '0 0 12px' }}><Lock size={22} style={{ marginRight: 8, verticalAlign: '-2px', opacity: 0.7 }} />{formatTitre(selection.titre)}</h1>
+        <p style={{ fontSize: 14, color: COULEURS.texteAtt, lineHeight: 1.6, margin: 0 }}>
+          Cet objectif t'attend plus loin dans ton parcours : il s'ouvre avec <strong style={{ color: COULEURS.texte }}>{verrouillees[selection.id]}</strong>.
+          Pour l'instant, concentre-toi sur ton étape en cours : c'est elle qui t'y mènera.
+        </p>
+      </main>
+    );
+  }
+
   if (selection) {
     const zones = zonesATravailler(selection, objectifs);
     const recup = outilsDeRecuperation(selection, objectifs);
@@ -372,6 +390,9 @@ export default function ObjectifsExplorer({ objectifs, relations, outilsPrecis =
 
         {place && (
           <p style={{ fontSize: 12, color: '#f0a', margin: '0 0 10px', fontWeight: 600 }}>Dans ton arbre : {place}</p>
+        )}
+        {estAdmin && verrouillees[selection.id] && (
+          <p style={{ fontSize: 12, color: '#FFC24B', margin: '0 0 10px' }}>Aperçu admin : pour l'élève, cette fiche reste fermée jusqu'à {verrouillees[selection.id]}.</p>
         )}
 
         {selection.descriptif && (
@@ -504,7 +525,7 @@ export default function ObjectifsExplorer({ objectifs, relations, outilsPrecis =
                   key={o.id} type="button" onClick={() => choisir(o.id)}
                   style={{ textAlign: 'left', padding: '10px 14px', borderRadius: 8, border: `1px solid ${COULEURS.bordure}`, background: COULEURS.surface, color: COULEURS.texte, cursor: 'pointer' }}
                 >
-                  <span style={{ fontSize: 14 }}>{formatTitre(o.titre)}</span>
+                  <span style={{ fontSize: 14 }}>{verrouillees[o.id] && <Lock size={12} style={{ marginRight: 6, verticalAlign: '-1px', opacity: 0.7 }} />}{formatTitre(o.titre)}</span>
                   <span style={{ display: 'block', fontSize: 11, color: COULEURS.texteFaible, marginTop: 2 }}>{o.branche}{o.sous_groupe ? ` · ${o.sous_groupe}` : ''}</span>
                 </button>
               ))}
@@ -519,7 +540,7 @@ export default function ObjectifsExplorer({ objectifs, relations, outilsPrecis =
                       key={o.id} type="button" onClick={() => choisir(o.id)}
                       style={{ textAlign: 'left', padding: '8px 14px', borderRadius: 8, border: `1px solid ${COULEURS.bordure}`, background: 'transparent', color: COULEURS.texteAtt, cursor: 'pointer' }}
                     >
-                      <span style={{ fontSize: 13 }}>{formatTitre(o.titre)}</span>
+                      <span style={{ fontSize: 13 }}>{verrouillees[o.id] && <Lock size={12} style={{ marginRight: 6, verticalAlign: '-1px', opacity: 0.7 }} />}{formatTitre(o.titre)}</span>
                       <span style={{ display: 'block', fontSize: 11, color: COULEURS.texteFaible, marginTop: 2 }}>{o.branche}{o.sous_groupe ? ` · ${o.sous_groupe}` : ''}</span>
                     </button>
                   ))}

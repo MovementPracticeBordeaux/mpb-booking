@@ -1,7 +1,7 @@
 import { supabaseServer } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
 import { COULEURS, POLICE_DISPLAY } from '@/lib/theme';
-import { TOUS_LES_NOEUDS, DOMAINE_LABELS } from '@/lib/mentorship-modules';
+import { TOUS_LES_NOEUDS, DOMAINE_LABELS, estNoeudDeverrouille, estNoeudAcquisDepuisProgression } from '@/lib/mentorship-modules';
 import ObjectifsExplorer, { type OutilPrecis } from './ObjectifsExplorer';
 
 // Identifiant YouTube d'un lien, pour rapprocher une vidéo de l'arbre de sa
@@ -69,5 +69,40 @@ export default async function ObjectifsPage() {
     }
   }
 
-  return <ObjectifsExplorer objectifs={objectifs ?? []} relations={relations ?? []} outilsPrecis={outilsPrecis} placeArbre={placeArbre} />;
+  // Étapes à venir : une fiche qui n'apparaît que dans des niveaux encore
+  // verrouillés pour cet élève reste visible par son nom, mais sa vidéo et son
+  // détail restent fermés (l'élève se concentre sur son étape en cours). Les
+  // fiches de l'Armure et celles hors de l'arbre restent toujours ouvertes.
+  const { data: profil } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
+  const estAdmin = profil?.role === 'admin';
+  const [{ data: lignesProg }, { data: options }] = await Promise.all([
+    supabase.from('mentorship_progression').select('module_id, statut').eq('eleve_id', user.id),
+    supabase.from('mentorship_options').select('armure_acceleree').eq('eleve_id', user.id).maybeSingle(),
+  ]);
+  const modulesAcquis = new Set((lignesProg ?? []).filter((l) => l.statut === 'acquis').map((l) => l.module_id as string));
+  const idsAcquis = new Set(TOUS_LES_NOEUDS.filter((n) => estNoeudAcquisDepuisProgression(n, (id) => modulesAcquis.has(id))).map((n) => n.id));
+  const occurrences = new Map<string, { ouvert: boolean; label: string; niveau: number }[]>();
+  for (const noeud of TOUS_LES_NOEUDS) {
+    const ouvert = estNoeudDeverrouille(noeud, idsAcquis, !!options?.armure_acceleree);
+    const label = `${noeud.domaine === 'tronc' ? 'Armure Organique' : DOMAINE_LABELS[noeud.domaine]} · niveau ${noeud.niveau}`;
+    for (const ex of [...(noeud.exercices ?? []), ...(noeud.progressionBonus ?? [])]) {
+      for (const url of [ex.videoUrl, ...(ex.outils ?? []).map((o) => o.videoUrl)]) {
+        const ficheId = url ? ficheParVideo.get(idVideo(url)) : undefined;
+        if (!ficheId) continue;
+        if (!occurrences.has(ficheId)) occurrences.set(ficheId, []);
+        occurrences.get(ficheId)!.push({ ouvert, label, niveau: noeud.niveau });
+      }
+    }
+  }
+  const verrouillees: Record<string, string> = {};
+  for (const o of objectifs ?? []) {
+    const occ = occurrences.get(o.id);
+    if (!occ || o.branche === 'Armure Organique' || occ.some((x) => x.ouvert)) continue;
+    verrouillees[o.id] = [...occ].sort((a, b) => a.niveau - b.niveau)[0].label;
+  }
+  // Côté élève, le contenu verrouillé ne part même pas dans la page.
+  const objectifsEnvoyes = (objectifs ?? []).map((o) => (!estAdmin && verrouillees[o.id] ? { ...o, video_url: null, descriptif: null, note: null } : o));
+  if (!estAdmin) for (const id of Object.keys(verrouillees)) delete outilsPrecis[id];
+
+  return <ObjectifsExplorer objectifs={objectifsEnvoyes} relations={relations ?? []} outilsPrecis={outilsPrecis} placeArbre={placeArbre} verrouillees={verrouillees} estAdmin={estAdmin} />;
 }
