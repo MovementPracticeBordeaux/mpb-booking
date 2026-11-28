@@ -522,17 +522,27 @@ function BandeauXP({ xpTotal, niveau, actif, serie, onOuvrir }: { xpTotal: numbe
   );
 }
 
-function MenuOnglets({ actif, onChange }: { actif: Onglet; onChange: (o: Onglet) => void }) {
+// Un onglet « à signaler » clignote doucement avec une pastille (ex. Théorie
+// tant que le QCM du niveau en cours n'est pas réussi). Pas d'animation pour
+// qui a demandé à réduire les animations dans son système.
+function MenuOnglets({ actif, onChange, aSignaler }: { actif: Onglet; onChange: (o: Onglet) => void; aSignaler?: Onglet | null }) {
   return (
     <div style={{ display: 'flex', gap: 2, overflowX: 'auto', flex: '1 1 auto', minWidth: 0, alignSelf: 'stretch' }}>
+      <style>{`@keyframes mpbSignal { 0%, 100% { color: #ff00aa; text-shadow: 0 0 0 transparent; } 50% { color: #ffffff; text-shadow: 0 0 10px #ff00aa; } }
+        .mpb-signal { animation: mpbSignal 1.6s ease-in-out infinite; }
+        @media (prefers-reduced-motion: reduce) { .mpb-signal { animation: none; color: #ff00aa !important; } }`}</style>
       {ONGLETS.map((o) => {
         const est = o.id === actif;
-        const c = est ? '#ff00aa' : COULEURS.texteFaible;
+        const signale = o.id === aSignaler && !est;
+        const c = est || signale ? '#ff00aa' : COULEURS.texteFaible;
         return (
           <button
             key={o.id}
             onClick={() => onChange(o.id)}
+            className={signale ? 'mpb-signal' : undefined}
+            aria-label={signale ? `${o.label} : QCM à faire` : undefined}
             style={{
+              position: 'relative',
               display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer',
               padding: '10px 10px', fontSize: 13, fontFamily: POLICE_DISPLAY, letterSpacing: 0.3, color: c,
               borderBottom: `2px solid ${est ? '#ff00aa' : 'transparent'}`, whiteSpace: 'nowrap',
@@ -540,6 +550,7 @@ function MenuOnglets({ actif, onChange }: { actif: Onglet; onChange: (o: Onglet)
           >
             <svg width="16" height="16" viewBox="0 0 24 24">{o.icone(c)}</svg>
             {o.label}
+            {signale && <span aria-hidden style={{ position: 'absolute', top: 6, right: 2, width: 8, height: 8, borderRadius: 999, background: '#ff00aa', boxShadow: '0 0 8px #ff00aa' }} />}
           </button>
         );
       })}
@@ -843,6 +854,12 @@ export default function ArbreCompetences({
 
   // Étape en cours : le niveau de l'Armure à valider, ou le palier commun
   // aux 5 branches. Sert à l'accueil et à la composition de la séance.
+  // QCM du niveau en cours pas encore réussi : l'onglet Théorie est signalé et
+  // le QCM y est proposé, juste sous la théorie du niveau.
+  function qcmAFaire(n: NoeudMentorshipPublic): boolean {
+    return estDeverrouille(n) && !idsAcquis.has(n.id) && n.qcm.length > 0 && (n.exercices?.length ?? 0) > 0 && !progression.get(n.id)?.quiz_reussi;
+  }
+
   function noeudsEtapeEnCours(): NoeudMentorshipPublic[] {
     if (!troncComplet) {
       const n = [...tronc].sort((a, b) => a.niveau - b.niveau).find((t) => !idsAcquis.has(t.id));
@@ -852,6 +869,7 @@ export default function ArbreCompetences({
     if (!palier) return [];
     return ORDRE_DOMAINES.map((d) => branches.find((b) => b.domaine === d && b.niveau === palier)).filter((b): b is NoeudMentorshipPublic => !!b);
   }
+  const qcmsEnAttente = noeudsEtapeEnCours().filter(qcmAFaire);
 
   // Séance du jour, composée selon la méthode de Sylvain :
   // - Armure : 4 exercices du niveau + 1 outil de récupération.
@@ -1106,7 +1124,7 @@ export default function ArbreCompetences({
                   const prochain = exos.find((ex) => statutExercice(n, ex) === null);
                   const action = acquis ? 'Niveau validé'
                     : !accessible ? 'Pas inclus dans ta formule actuelle'
-                    : !qcmOk ? 'Commence par le QCM du niveau (onglet Théorie)'
+                    : !qcmOk ? 'Commence par lire la théorie et réussir le QCM (onglet Théorie)'
                     : aRefaire ? `À retravailler : ${aRefaire.nom}`
                     : prochain ? `Prochain objectif : ${prochain.nom}`
                     : 'En attente du retour de Sylvain';
@@ -1336,10 +1354,10 @@ export default function ArbreCompetences({
 
       {/* Onglets et badge XP sur la même ligne ; le badge ouvre la vue Progression (plus d'onglet dédié). */}
       <div style={{ display: 'flex', flexWrap: 'wrap-reverse', alignItems: 'center', columnGap: 12, rowGap: 6, marginBottom: 24, borderBottom: `1px solid ${COULEURS.bordure}` }}>
-        <div data-guide="onglets" style={{ display: 'flex', flex: '1 1 auto', minWidth: 0 }}><MenuOnglets actif={onglet} onChange={setOnglet} /></div>
+        <div data-guide="onglets" style={{ display: 'flex', flex: '1 1 auto', minWidth: 0 }}><MenuOnglets actif={onglet} onChange={setOnglet} aSignaler={qcmsEnAttente.length > 0 ? 'theorie' : null} /></div>
         <div data-guide="xp" style={{ marginLeft: 'auto', display: 'flex' }}><BandeauXP xpTotal={xpTotal} niveau={niveau} serie={serie} actif={onglet === 'progression'} onOuvrir={() => { setVueBranche(null); setOnglet('progression'); }} /></div>
       </div>
-      <GuideMentorat ouvert={guideOuvert} onFermer={() => setGuideOuvert(false)}
+      <GuideMentorat ouvert={guideOuvert} onFermer={() => setGuideOuvert(false)} branchesOuvertes={troncComplet}
         avantEtape={(cible) => { setVueBranche(null); setSeanceOuverte(false); setOnglet('arbre'); if (cible === 'arbre') setArbreDeplie(true); }} />
 
       {estAdmin && (
@@ -1961,6 +1979,21 @@ export default function ArbreCompetences({
           <p style={{ fontSize: 13, color: COULEURS.texteFaible, margin: '0 0 20px' }}>
             Tout le contenu théorique des niveaux que tu as atteints, à relire à volonté.
           </p>
+          {qcmsEnAttente.length > 0 && (
+            <div style={{ border: '1px solid #ff00aa', background: 'rgba(255,0,170,0.08)', borderRadius: 12, padding: '12px 14px', margin: '0 0 22px' }}>
+              <p style={{ margin: '0 0 6px', fontSize: 14, fontWeight: 700, color: '#ff00aa' }}>À faire en premier : {qcmsEnAttente.length > 1 ? 'les QCM de tes niveaux en cours' : 'le QCM de ton niveau en cours'}</p>
+              <p style={{ margin: '0 0 10px', fontSize: 13, color: COULEURS.texteAtt, lineHeight: 1.5 }}>
+                Lis la théorie du niveau, puis réponds au QCM juste en dessous (quelques questions à choix multiples). Le réussir ouvre l'envoi de tes vidéos d'exercices.
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {qcmsEnAttente.map((n) => (
+                  <a key={n.id} href={`#theorie-${n.id}`} style={{ fontSize: 13, padding: '6px 12px', borderRadius: 999, border: `1px solid ${n.domaine === 'tronc' ? COULEUR_TRONC : DOMAINE_COULEURS[n.domaine as Domaine]}`, color: COULEURS.texte, textDecoration: 'none' }}>
+                    {n.domaine === 'tronc' ? 'Armure Organique' : DOMAINE_LABELS[n.domaine as Domaine]} · niveau {n.niveau} ↓
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
           {(() => {
             const noeudsAvecTheorie = [...tronc, ...branches].filter((n) => estDeverrouille(n) && n.theorie.length > 0);
             if (noeudsAvecTheorie.length === 0) {
@@ -1973,12 +2006,16 @@ export default function ArbreCompetences({
               const couleur = n.domaine === 'tronc' ? COULEUR_TRONC : DOMAINE_COULEURS[n.domaine as Domaine];
               const label = n.domaine === 'tronc' ? 'Armure Organique' : DOMAINE_LABELS[n.domaine as Domaine];
               const theorie = n.theorie.filter((f) => { const cle = `${f.titre}|${f.texte.slice(0, 60)}`; if (dejaVus.has(cle)) return false; dejaVus.add(cle); return true; });
-              if (theorie.length === 0) return null;
+              const aQcm = qcmAFaire(n);
+              if (theorie.length === 0 && !aQcm) return null;
               return (
-                <div key={n.id} style={{ marginBottom: 28 }}>
+                <div key={n.id} id={`theorie-${n.id}`} style={{ marginBottom: 28, scrollMarginTop: 90 }}>
                   <span style={{ fontSize: 11, color: couleur, letterSpacing: 1, fontWeight: 600 }}>{label.toUpperCase()} · NIVEAU {n.niveau}</span>
                   <p style={{ fontFamily: POLICE_DISPLAY, fontSize: 17, margin: '2px 0 10px', color: COULEURS.texte }}>{n.titre}</p>
                   <BlocTheorie theorie={theorie} couleur={couleur} objectif={n.objectifPedagogique} />
+                  {aQcm && (
+                    <BlocQCM noeud={n} couleur={couleur} reussi={false} score={progression.get(n.id)?.quiz_score} reponsesQCM={reponsesQCM} setReponsesQCM={setReponsesQCM} />
+                  )}
                 </div>
               );
             });
@@ -2629,7 +2666,7 @@ function BlocQCM({
       <input type="hidden" name="noeud_id" value={noeud.id} />
       <p style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 700, color: couleur }}>QCM du niveau</p>
       <p style={{ margin: '0 0 14px', fontSize: 12, color: COULEURS.texteFaible, lineHeight: 1.5 }}>
-        Toutes les réponses se trouvent dans la théorie. Aucune erreur n'est tolérée : réussis-le pour débloquer l'envoi de tes vidéos. Tu peux retenter autant de fois que tu veux.
+        Toutes les réponses se trouvent dans la théorie. Il faut au moins 80 % de bonnes réponses pour débloquer l'envoi de tes vidéos. Tu peux retenter autant de fois que tu veux.
       </p>
       {noeud.qcm.map((q, i) => (
         <fieldset key={q.id} style={{ border: 'none', padding: 0, margin: '0 0 16px' }}>
