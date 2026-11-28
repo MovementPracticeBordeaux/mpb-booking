@@ -5,7 +5,7 @@
 // (MOTS_DU_COACH_VALIDES), en aperçu côté admin en attendant.
 import type { BilanEntree, Qualite } from './mentorship-bilan-entree';
 
-export const MOTS_DU_COACH_VALIDES = false;
+export const MOTS_DU_COACH_VALIDES = true; // phrases validées par Sylvain le 28/11/2026
 
 export type PerfCoach = { cree_le: string; valeur: number | null; series: number | null; unite?: string | null };
 export type MotCoach = { id: string; texte: string; poids: number };

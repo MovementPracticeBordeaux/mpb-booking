@@ -631,6 +631,9 @@ export default function ArbreCompetences({
   // choix mémorisé sur l'appareil. Visite guidée à la première ouverture.
   const [arbreDeplie, setArbreDeplie] = useState(true);
   const [guideOuvert, setGuideOuvert] = useState(false);
+  // L'arbre montre le présent : ce qui vient plus tard (niveaux au-dessus de
+  // l'étape en cours) est voilé par défaut, dévoilable d'un geste.
+  const [suiteVisible, setSuiteVisible] = useState(false);
   const [bilanOuvert, setBilanOuvert] = useState(false);
   useEffect(() => {
     try {
@@ -1494,7 +1497,7 @@ export default function ArbreCompetences({
         <div data-guide="xp" style={{ marginLeft: 'auto', display: 'flex' }}><BandeauXP xpTotal={xpTotal} niveau={niveau} serie={serie} actif={onglet === 'progression'} onOuvrir={() => { setVueBranche(null); setOnglet('progression'); }} /></div>
       </div>
       <GuideMentorat ouvert={guideOuvert} onFermer={() => setGuideOuvert(false)} branchesOuvertes={troncComplet}
-        avantEtape={(cible) => { setVueBranche(null); setSeanceOuverte(false); setOnglet('arbre'); if (cible === 'arbre') setArbreDeplie(true); }} />
+        avantEtape={(cible) => { setVueBranche(null); setSeanceOuverte(false); setOnglet('arbre'); if (cible === 'arbre') { setArbreDeplie(true); setSuiteVisible(true); } }} />
 
       {estAdmin && (
         <div style={{ marginBottom: 12, padding: '10px 12px', border: `1px dashed ${COULEURS.bordure}`, borderRadius: 8 }}>
@@ -2093,6 +2096,36 @@ export default function ArbreCompetences({
                 onClick={() => entrerBranche('tronc', noeud.id)}
               />
             ))}
+            {(() => {
+              // Limite du voile (en % de la hauteur de l'arbre) selon l'étape en cours.
+              const etape = noeudsEtapeEnCours();
+              const palier = troncComplet && etape.length > 0 ? Math.min(...etape.map((n) => n.niveau)) : null;
+              const limite = !troncComplet ? 52 : palier === 1 ? 29 : palier === 2 ? 12 : 0;
+              if (limite === 0) return null;
+              if (suiteVisible) {
+                return (
+                  <button type="button" onClick={() => setSuiteVisible(false)}
+                    style={{ position: 'absolute', top: 0, right: 0, fontSize: 11, padding: '5px 10px', borderRadius: 999, border: `1px solid ${COULEURS.bordure}`, background: 'rgba(11,11,13,0.8)', color: COULEURS.texteFaible, cursor: 'pointer', fontFamily: 'inherit', zIndex: 3 }}>
+                    Voiler la suite
+                  </button>
+                );
+              }
+              return (
+                <div style={{ position: 'absolute', left: '-4%', right: '-4%', top: '-2%', height: `${limite + 2}%`, zIndex: 3,
+                  background: 'linear-gradient(to bottom, rgba(11,11,13,0.94) 0%, rgba(11,11,13,0.88) 65%, rgba(11,11,13,0) 100%)',
+                  backdropFilter: 'blur(3px)', WebkitBackdropFilter: 'blur(3px)',
+                  maskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, textAlign: 'center' }}>
+                  <p style={{ margin: 0, fontSize: 13, color: COULEURS.texteAtt, maxWidth: 280, lineHeight: 1.5 }}>
+                    {troncComplet ? 'Les niveaux suivants t’attendent.' : 'Les cinq branches t’attendent après l’Armure.'} Concentre-toi sur ton étape en cours.
+                  </p>
+                  <button type="button" onClick={() => setSuiteVisible(true)}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, padding: '7px 14px', borderRadius: 999, border: '1px solid #029FD6', background: 'transparent', color: '#029FD6', cursor: 'pointer', fontFamily: 'inherit' }}>
+                    <Eye size={14} /> Voir la suite de l'arbre
+                  </button>
+                </div>
+              );
+            })()}
           </div>
           <p style={{ textAlign: 'center', fontFamily: POLICE_DISPLAY, fontSize: 12, letterSpacing: '0.05em', textTransform: 'uppercase', color: '#ff00aa', marginTop: 8 }}>
             Armure Organique
