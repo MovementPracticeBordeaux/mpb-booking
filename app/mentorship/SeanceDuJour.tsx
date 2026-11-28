@@ -133,7 +133,7 @@ function MinuteurSeance() {
 }
 
 type BrancheCycle = { domaine: string; label: string; couleur: string; noeudId: string };
-export type InfosCycle = { axe: string; options: { cle: string; label: string }[]; branches: BrancheCycle[]; baseValidee: boolean; suggestion?: string; choisie?: boolean };
+export type InfosCycle = { axe: string; options: { cle: string; label: string }[]; branches: BrancheCycle[]; baseValidee: boolean; suggestion?: string; raison?: string | null; choisie?: boolean };
 
 function debutSemaine(): Date {
   const d = new Date();

@@ -4,6 +4,7 @@ import { BRANCHES, TRONC, TOUS_LES_NOEUDS, DOMAINE_LABELS, Domaine } from '@/lib
 import { COULEURS, GRADIENT_TEXTE, POLICE_DISPLAY } from '@/lib/theme';
 import { validerSoumission, refuserSoumission } from './actions';
 import FormulaireRefus from './FormulaireRefus';
+import { LIBELLES_EXPERIENCE, LIBELLES_SEANCES, NOMS_COURTS_QUALITES, type BilanEntree } from '@/lib/mentorship-bilan-entree';
 import { bilanDepuis, etapeEnCours, lundiDeLaSemaine } from '@/lib/mentorship-bilan';
 
 // Modèles généraux de retour (rédaction provisoire, à ajuster) : ils s'insèrent
@@ -49,6 +50,21 @@ export default async function AdminMentorshipPage({ searchParams }: { searchPara
     : { data: [] as { id: string; email: string; nom: string | null }[] };
   const profilParId = new Map((profilsEleves ?? []).map((p) => [p.id, p]));
   const soumissions = (soumissionsBrutes ?? []).map((s) => ({ ...s, profiles: profilParId.get(s.eleve_id) ?? null }));
+
+  // Bilans d'entrée (portrait de l'élève) : élèves du Mentorat et auteurs des vidéos à valider.
+  const { data: abosPourBilan } = await admin.from('abonnements').select('eleve_id').eq('categorie', 'mentorat').eq('abonnement_actif', true);
+  const idsBilans = [...new Set([...idsEleves, ...(abosPourBilan ?? []).map((a) => a.eleve_id as string)])];
+  const { data: bilansData } = idsBilans.length > 0
+    ? await admin.from('mentorship_bilan').select('eleve_id, experience, points_forts, points_faibles, objectif, seances_semaine, blessures').in('eleve_id', idsBilans)
+    : { data: [] as any[] };
+  const bilanParEleve = new Map((bilansData ?? []).map((b: any) => [b.eleve_id as string, b as BilanEntree]));
+  const resumeBilan = (b: BilanEntree | undefined) => !b ? null : [
+    LIBELLES_EXPERIENCE[b.experience],
+    b.points_forts.length ? `forts : ${b.points_forts.map((q) => NOMS_COURTS_QUALITES[q]).join(', ')}` : null,
+    b.points_faibles.length ? `à améliorer : ${b.points_faibles.map((q) => NOMS_COURTS_QUALITES[q]).join(', ')}` : null,
+    b.objectif ? `envie : ${NOMS_COURTS_QUALITES[b.objectif]}` : 'envie : tout découvrir',
+    LIBELLES_SEANCES[b.seances_semaine],
+  ].filter(Boolean).join(' · ');
 
   // Suivi chiffré de l'élève sur l'exercice soumis (ses dernières perfs notées).
   const { data: perfsEleves } = idsEleves.length > 0
@@ -138,10 +154,10 @@ export default async function AdminMentorshipPage({ searchParams }: { searchPara
         <p style={{ color: COULEURS.texteAtt, fontSize: 13, marginBottom: 28 }}>Aucun élève avec un Mentorat actif.</p>
       ) : (
         <div style={{ overflowX: 'auto', marginBottom: 28, border: `1px solid ${COULEURS.bordure}`, borderRadius: 12 }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 760 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 980 }}>
             <thead>
               <tr style={{ textAlign: 'left', color: COULEURS.texteFaible, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                {['Élève', 'Étape', 'Dernière activité', 'Séances cette semaine', 'Validés', 'En attente', 'À retravailler'].map((t) => (
+                {['Élève', 'Étape', 'Dernière activité', 'Séances cette semaine', 'Validés', 'En attente', 'À retravailler', 'Bilan d’entrée'].map((t) => (
                   <th key={t} style={{ padding: '10px 12px', fontWeight: 600, borderBottom: `1px solid ${COULEURS.bordure}` }}>{t}</th>
                 ))}
               </tr>
@@ -159,6 +175,18 @@ export default async function AdminMentorshipPage({ searchParams }: { searchPara
                     <td style={{ padding: '10px 12px' }}>{e.acquis}</td>
                     <td style={{ padding: '10px 12px', color: e.bilan.enAttente.length > 0 ? '#f0a' : COULEURS.texteAtt }}>{e.bilan.enAttente.length}</td>
                     <td style={{ padding: '10px 12px' }}>{e.aRetravailler}</td>
+                    <td style={{ padding: '10px 12px', fontSize: 12, color: COULEURS.texteAtt, minWidth: 220 }}>
+                      {(() => {
+                        const b = bilanParEleve.get(e.id);
+                        if (!b) return <span style={{ color: COULEURS.texteFaible }}>Pas encore rempli</span>;
+                        return (
+                          <>
+                            {resumeBilan(b)}
+                            {b.blessures && <span style={{ display: 'block', color: '#FFC24B', marginTop: 4 }}>⚠ {b.blessures}</span>}
+                          </>
+                        );
+                      })()}
+                    </td>
                   </tr>
                 );
               })}
@@ -190,6 +218,16 @@ export default async function AdminMentorshipPage({ searchParams }: { searchPara
                 {eleve?.nom ?? eleve?.email ?? s.eleve_id}
                 {info.sousTitre ? ` — ${info.sousTitre}` : ''}
               </p>
+              {(() => {
+                const b = bilanParEleve.get(s.eleve_id);
+                if (!b) return null;
+                return (
+                  <p style={{ fontSize: 12, color: COULEURS.texteAtt, margin: '4px 0 0', lineHeight: 1.5 }}>
+                    {resumeBilan(b)}
+                    {b.blessures && <span style={{ display: 'block', color: '#FFC24B' }}>⚠ Blessures ou douleurs signalées : {b.blessures}</span>}
+                  </p>
+                );
+              })()}
               <h2 style={{ fontFamily: POLICE_DISPLAY, fontSize: 22, letterSpacing: 0.3, margin: '2px 0 10px' }}>
                 {info.titre}
               </h2>

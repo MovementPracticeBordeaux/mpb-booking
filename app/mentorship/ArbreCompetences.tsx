@@ -30,6 +30,9 @@ import SuiviPerf, { usePerfs } from './SuiviPerf';
 import SeanceDuJour, { useDureeSeance, type ElementSeance, type InfosCycle } from './SeanceDuJour';
 import { BoutonCoeur, useCoeurs } from './Coeurs';
 import GuideMentorat, { CLE_GUIDE_VU } from './GuideMentorat';
+import BilanEntreeForm from './BilanEntreeForm';
+import { motsDuCoach, brancheDelaissee, MOTS_DU_COACH_VALIDES, type DonneesCoach } from '@/lib/mentorship-coach';
+import { profilSolide, type BilanEntree, type Qualite } from '@/lib/mentorship-bilan-entree';
 import { jourParisAujourdhui, XP_PRIORITE_TENUE } from '@/lib/mentorship-engagement';
 import { supabaseBrowser } from '@/lib/supabase-browser';
 import { phraseDuJour } from '@/lib/mentorship-phrases';
@@ -577,6 +580,7 @@ export default function ArbreCompetences({
   revision,
   prioritesRecentes,
   armureAcceleree,
+  bilanEntree,
 }: {
   tronc: NoeudMentorshipPublic[];
   branches: NoeudMentorshipPublic[];
@@ -600,6 +604,7 @@ export default function ArbreCompetences({
   revision: { question: QuestionRevision | null; faiteAujourdhui: boolean };
   prioritesRecentes: { jour: string; priorite: string }[];
   armureAcceleree: boolean;
+  bilanEntree: BilanEntree | null;
 }) {
   const [selection, setSelection] = useState<string | null>(null);
   // Vue isolée d'une branche (chemin vertical) — null = vue globale (dashboard).
@@ -614,10 +619,11 @@ export default function ArbreCompetences({
   // choix mémorisé sur l'appareil. Visite guidée à la première ouverture.
   const [arbreDeplie, setArbreDeplie] = useState(true);
   const [guideOuvert, setGuideOuvert] = useState(false);
+  const [bilanOuvert, setBilanOuvert] = useState(false);
   useEffect(() => {
     try {
       if (localStorage.getItem('mentorat-arbre-deplie') === '0') setArbreDeplie(false);
-      if (!localStorage.getItem(CLE_GUIDE_VU)) setGuideOuvert(true);
+      if (!localStorage.getItem(CLE_GUIDE_VU) && bilanEntree) setGuideOuvert(true);
     } catch { /* stockage indisponible */ }
   }, []);
   function basculerArbre() {
@@ -871,6 +877,50 @@ export default function ArbreCompetences({
   }
   const qcmsEnAttente = noeudsEtapeEnCours().filter(qcmAFaire);
 
+  // --- Le mot du coach : données de l'élève -> quelques phrases d'orientation.
+  const libelleNoeud = (n: NoeudMentorshipPublic) => `${n.domaine === 'tronc' ? 'Armure Organique' : DOMAINE_LABELS[n.domaine as Domaine]} niveau ${n.niveau}`;
+  const donneesCoach: DonneesCoach = (() => {
+    const tous = [...tronc, ...branches];
+    const nomParModule = new Map<string, string>();
+    const aRetravailler: DonneesCoach['aRetravailler'] = [];
+    for (const n of tous) {
+      for (const ex of [...(n.exercices ?? []), ...(n.progressionBonus ?? [])]) nomParModule.set(moduleIdExercice(n, ex), ex.nom);
+      if (!estDeverrouille(n)) continue;
+      for (const ex of exercicesAValider(n)) {
+        if (statutExercice(n, ex) === 'refuse') aRetravailler.push({ nom: ex.nom, commentaire: progression.get(moduleIdExercice(n, ex))?.commentaire_coach ?? null });
+      }
+    }
+    let derniere: string | null = null;
+    const lundi = new Date(); lundi.setHours(0, 0, 0, 0); lundi.setDate(lundi.getDate() - ((lundi.getDay() + 6) % 7));
+    const joursSemaine = new Set<string>();
+    const perfsParExercice: DonneesCoach['perfsParExercice'] = [];
+    for (const [moduleId, perfs] of perfsParModule) {
+      for (const pf of perfs) {
+        if (!derniere || pf.cree_le > derniere) derniere = pf.cree_le;
+        if (new Date(pf.cree_le) >= lundi) joursSemaine.add(new Date(pf.cree_le).toDateString());
+      }
+      const nom = nomParModule.get(moduleId);
+      if (nom) perfsParExercice.push({ nom, perfs });
+    }
+    const derniereDe = (noeudId: string) => {
+      let max: string | null = null;
+      for (const [moduleId, perfs] of perfsParModule) if (moduleId.startsWith(`${noeudId}::`) && perfs[0] && (!max || perfs[0].cree_le > max)) max = perfs[0].cree_le;
+      return max;
+    };
+    return {
+      maintenant: new Date(),
+      aRetravailler,
+      qcmEnAttente: qcmsEnAttente.map(libelleNoeud),
+      perfsParExercice,
+      branchesOuvertes: troncComplet ? noeudsEtapeEnCours().map((n) => ({ domaine: n.domaine as Qualite, label: DOMAINE_LABELS[n.domaine as Domaine], dernierePerf: derniereDe(n.id) })) : [],
+      seancesSemaine: joursSemaine.size,
+      derniereActivite: derniere,
+      bilan: bilanEntree,
+    };
+  })();
+  const motsCoach = motsDuCoach(donneesCoach);
+  const afficherMotsCoach = MOTS_DU_COACH_VALIDES || estAdmin;
+
   // Séance du jour, composée selon la méthode de Sylvain :
   // - Armure : 4 exercices du niveau + 1 outil de récupération.
   // - Branches, dans cet ordre :
@@ -923,7 +973,7 @@ export default function ArbreCompetences({
     }
 
     const parDomaine = new Map(etape.map((n) => [n.domaine as Domaine, n]));
-    const { suggestion, ouvertes } = suggestionPriorite(parDomaine);
+    const { suggestion, ouvertes, raison } = suggestionPriorite(parDomaine);
     const priorite = prioriteDuJour && ouvertes.includes(prioriteDuJour) ? prioriteDuJour : suggestion;
     const elements: ElementSeance[] = [];
     if (priorite) {
@@ -949,6 +999,7 @@ export default function ArbreCompetences({
         branches: [priorite, JUMELLE[priorite]].filter((d) => parDomaine.has(d)).map((d) => ({ domaine: d, label: DOMAINE_LABELS[d], couleur: DOMAINE_COULEURS[d], noeudId: parDomaine.get(d)!.id })),
         baseValidee: false,
         suggestion,
+        raison,
         choisie: !!prioriteDuJour,
       } : null,
     };
@@ -957,7 +1008,7 @@ export default function ArbreCompetences({
   // Suggestion de priorité selon la méthode : l'axe Force -> Figures et l'axe
   // Flexibilité -> Locomotion alternent (le moins récemment travaillé d'abord) ;
   // dans un axe, la qualité de base passe avant la branche qu'elle sert.
-  function suggestionPriorite(parDomaine: Map<Domaine, NoeudMentorshipPublic>): { suggestion: Domaine | undefined; ouvertes: Domaine[] } {
+  function suggestionPriorite(parDomaine: Map<Domaine, NoeudMentorshipPublic>): { suggestion: Domaine | undefined; ouvertes: Domaine[]; raison: string | null } {
     const ouvertes = (['force', 'flexibilite', 'figures', 'locomotion'] as Domaine[]).filter((d) => parDomaine.has(d));
     const axesOuverts = AXES.filter((x) => parDomaine.has(x.base) || parDomaine.has(x.cible));
     const dernierJour = (x: typeof AXES[number]) => {
@@ -975,8 +1026,21 @@ export default function ArbreCompetences({
       const aujourdhui = (iso: string) => !!iso && new Date(iso).toDateString() === jourLocal;
       axe = aujourdhui(da) && da >= db ? a : aujourdhui(db) ? b : da <= db ? a : b;
     }
-    const suggestion = axe ? (parDomaine.has(axe.base) ? axe.base : axe.cible) : ouvertes[0];
-    return { suggestion, ouvertes };
+    let suggestion = axe ? (parDomaine.has(axe.base) ? axe.base : axe.cible) : ouvertes[0];
+    let raison: string | null = null;
+    // Orientation selon l'élève : une branche délaissée passe devant ; sinon,
+    // l'objectif du bilan quand sa qualité de base est déjà un point fort.
+    const delaissee = brancheDelaissee(donneesCoach);
+    const objectif = bilanEntree?.objectif as Domaine | undefined;
+    const BASE_DE: Partial<Record<Domaine, Domaine>> = { figures: 'force', locomotion: 'flexibilite' };
+    if (delaissee && ouvertes.includes(delaissee.domaine as Domaine)) {
+      suggestion = delaissee.domaine as Domaine;
+      raison = delaissee.jours === null ? `pas encore travaillée sur ce palier` : `pas travaillée depuis ${delaissee.jours} jours`;
+    } else if (objectif && ouvertes.includes(objectif) && BASE_DE[objectif] && bilanEntree?.points_forts.includes(BASE_DE[objectif] as Qualite)) {
+      suggestion = objectif;
+      raison = `ton objectif, et ta ${DOMAINE_LABELS[BASE_DE[objectif] as Domaine]} est déjà un point fort`;
+    }
+    return { suggestion, ouvertes, raison };
   }
 
   function renderAccueil(partie: 'present' | 'suite') {
@@ -1046,14 +1110,26 @@ export default function ArbreCompetences({
       <div data-guide="present" style={{ marginTop: 8, marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 860, marginInline: 'auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <p style={{ flexGrow: 1, fontSize: 14, color: COULEURS.texteAtt, fontStyle: 'italic', margin: '0 0 2px', textAlign: 'center', lineHeight: 1.5 }}>« {phraseDuJour(0)} »</p>
-          <button type="button" onClick={() => setGuideOuvert(true)} style={{ flexShrink: 0, fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 999, border: '1px solid #029FD6', background: 'transparent', color: '#029FD6', cursor: 'pointer', fontFamily: 'inherit' }}>? Guide</button>
+          <span style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+            {bilanEntree && <button type="button" onClick={() => setBilanOuvert((v) => !v)} style={{ fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 999, border: `1px solid ${COULEURS.bordure}`, background: 'transparent', color: COULEURS.texteAtt, cursor: 'pointer', fontFamily: 'inherit' }}>Mon bilan</button>}
+            <button type="button" onClick={() => setGuideOuvert(true)} style={{ fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 999, border: '1px solid #029FD6', background: 'transparent', color: '#029FD6', cursor: 'pointer', fontFamily: 'inherit' }}>? Guide</button>
+          </span>
         </div>
+        {(!bilanEntree || bilanOuvert) && <BilanEntreeForm initial={bilanEntree} onAnnuler={bilanEntree ? () => setBilanOuvert(false) : undefined} />}
+        {afficherMotsCoach && motsCoach.length > 0 && (
+          <div style={{ ...carte, borderColor: '#00FF9166' }}>
+            <p style={{ ...titreCarte, color: '#00FF91' }}>Le mot du coach</p>
+            {!MOTS_DU_COACH_VALIDES && <p style={{ fontSize: 11, color: '#FFC24B', margin: '0 0 8px' }}>Aperçu admin : invisible pour les élèves tant que ces phrases ne sont pas validées.</p>}
+            {motsCoach.map((m) => <p key={m.id} style={{ fontSize: 14, color: COULEURS.texte, lineHeight: 1.55, margin: '0 0 6px' }}>{m.texte}</p>)}
+          </div>
+        )}
         {!troncComplet && (
           <p style={{ fontSize: 12, color: COULEURS.texteFaible, margin: 0, textAlign: 'center' }}>Tant que l'Armure Organique n'est pas validée, ta séance suit ses exercices. Le choix d'une priorité du jour s'ouvrira avec les branches.</p>
         )}
         {!troncComplet && !armureAcceleree && (
-          <details style={{ ...carte, borderColor: '#029FD666' }}>
+          <details open={profilSolide(bilanEntree)} style={{ ...carte, borderColor: '#029FD666' }}>
             <summary style={{ cursor: 'pointer', fontFamily: POLICE_DISPLAY, fontSize: 15, color: COULEURS.texte }}>Tu as déjà une bonne base en force et en mobilité ?</summary>
+            {profilSolide(bilanEntree) && <p style={{ fontSize: 13, color: '#029FD6', margin: '10px 0 0', fontWeight: 600 }}>D'après ton bilan, ce mode est fait pour toi.</p>}
             <p style={{ fontSize: 13, color: COULEURS.texteAtt, lineHeight: 1.6, margin: '10px 0 12px' }}>
               Passe en mode accéléré : les trois niveaux de l'Armure s'ouvrent d'un coup. Tu réussis leurs QCM et tu envoies tes vidéos dans l'ordre que tu veux.
               L'Armure doit quand même être validée en entier : c'est ce qui garantit ta base avant d'ouvrir les cinq branches.
@@ -1078,6 +1154,9 @@ export default function ArbreCompetences({
                   style={{ fontSize: 14, fontWeight: 700, padding: '10px 18px', borderRadius: 999, border: `1px solid ${DOMAINE_COULEURS[cyclePlan.suggestion as Domaine]}`, background: `${DOMAINE_COULEURS[cyclePlan.suggestion as Domaine]}22`, color: COULEURS.texte, cursor: 'pointer', fontFamily: 'inherit' }}>
                   {dernierePriorite?.priorite === cyclePlan.suggestion ? 'On continue' : 'Suggéré'} : {DOMAINE_LABELS[cyclePlan.suggestion as Domaine]}
                 </button>
+              )}
+              {cyclePlan.raison && afficherMotsCoach && (
+                <p style={{ flexBasis: '100%', margin: 0, fontSize: 12, color: COULEURS.texteFaible }}>Pourquoi {DOMAINE_LABELS[cyclePlan.suggestion as Domaine]} : {cyclePlan.raison}.</p>
               )}
               {cyclePlan.options.filter((o) => o.cle !== cyclePlan.suggestion).map((o) => (
                 <button key={o.cle} type="button" onClick={() => void choisirPriorite(o.cle as Domaine)}

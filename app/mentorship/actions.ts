@@ -39,6 +39,30 @@ export async function activerArmureAcceleree() {
   redirect('/mentorship');
 }
 
+// Bilan d'entrée : rempli à la première ouverture du Mentorat, modifiable ensuite.
+export async function enregistrerBilan(formData: FormData) {
+  const supabase = supabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/login');
+  const QUALITES = ['force', 'figures', 'locomotion', 'connexion', 'flexibilite'];
+  const experience = String(formData.get('experience') ?? '');
+  const seances = String(formData.get('seances_semaine') ?? '');
+  if (!['debut', 'moins_1_an', '1_3_ans', 'plus_3_ans'].includes(experience)) echouer("Indique ton expérience de pratique.");
+  if (!['1_2', '3', '4_5'].includes(seances)) echouer('Indique combien de séances tu peux faire par semaine.');
+  const forts = formData.getAll('points_forts').map(String).filter((q) => QUALITES.includes(q));
+  const faibles = formData.getAll('points_faibles').map(String).filter((q) => QUALITES.includes(q));
+  const objectifBrut = String(formData.get('objectif') ?? '');
+  const objectif = QUALITES.includes(objectifBrut) ? objectifBrut : null;
+  const blessures = String(formData.get('blessures') ?? '').trim().slice(0, 1000) || null;
+  const { error } = await supabase.from('mentorship_bilan').upsert({
+    eleve_id: user.id, experience, points_forts: forts, points_faibles: faibles, objectif,
+    seances_semaine: seances, blessures, modifie_le: new Date().toISOString(),
+  }, { onConflict: 'eleve_id' });
+  if (error) echouer("Ton bilan n'a pas pu être enregistré. Réessaie dans un instant.");
+  revalidatePath('/mentorship');
+  redirect('/mentorship?succes=' + encodeURIComponent('Merci ! Ton bilan est enregistré : ton parcours en tiendra compte.'));
+}
+
 export async function repondreQCM(formData: FormData) {
   const supabase = supabaseServer();
   const { data: { user } } = await supabase.auth.getUser();

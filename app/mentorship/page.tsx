@@ -9,6 +9,7 @@ import { PerfsProvider, type Perf } from './SuiviPerf';
 import type { QuestionRevision } from './RevisionDuJour';
 import { choisirQuestionDuJour, serieSemaines, calculerBadges, xpPresence, xpPrioriteTenue, type LigneRevision } from '@/lib/mentorship-engagement';
 import { CoeursProvider } from './Coeurs';
+import type { BilanEntree } from '@/lib/mentorship-bilan-entree';
 import { DOMAINE_COULEURS, DOMAINE_LABELS, COULEUR_TRONC, type Domaine } from '@/lib/mentorship-modules';
 
 export const dynamic = 'force-dynamic';
@@ -26,7 +27,7 @@ type Progression = {
   premiere_video_date: string | null;
 };
 
-export default async function MentorshipPage({ searchParams }: { searchParams: { erreur?: string } }) {
+export default async function MentorshipPage({ searchParams }: { searchParams: { erreur?: string; succes?: string } }) {
   const supabase = supabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
@@ -173,6 +174,10 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
   const { data: optionsData } = await supabase.from('mentorship_options').select('armure_acceleree').eq('eleve_id', user.id).maybeSingle();
   const armureAcceleree = !!optionsData?.armure_acceleree;
 
+  // Bilan d'entrée (null tant que l'élève ne l'a pas rempli).
+  const { data: bilanData } = await supabase.from('mentorship_bilan').select('experience, points_forts, points_faibles, objectif, seances_semaine, blessures').eq('eleve_id', user.id).maybeSingle();
+  const bilanEntree = (bilanData ?? null) as BilanEntree | null;
+
   // --- Révision espacée : question du jour parmi les QCM déjà réussis ---
   const { data: revisionsData } = await supabase
     .from('mentorship_revision')
@@ -238,6 +243,9 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
       {searchParams.erreur && (
         <p style={{ color: '#ff6b6b', fontSize: 13, marginBottom: 12 }}>{searchParams.erreur}</p>
       )}
+      {searchParams.succes && (
+        <p style={{ color: '#00FF91', fontSize: 13, marginBottom: 12 }}>{searchParams.succes}</p>
+      )}
 
       <PerfsProvider initial={perfsInitiales}>
       <CoeursProvider initiaux={coeursInitiaux}>
@@ -260,6 +268,7 @@ export default async function MentorshipPage({ searchParams }: { searchParams: {
         revision={{ question: questionRevision, faiteAujourdhui: choix.faiteAujourdhui }}
         prioritesRecentes={prioritesRecentes}
         armureAcceleree={armureAcceleree}
+        bilanEntree={bilanEntree}
       />
       </CoeursProvider>
       </PerfsProvider>
