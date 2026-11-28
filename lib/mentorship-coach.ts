@@ -38,6 +38,25 @@ export function brancheDelaissee(d: DonneesCoach, seuil = 8): { domaine: Qualite
   return c ? { domaine: c.domaine, label: c.label, jours: c.jours } : null;
 }
 
+// Stagnation : on ne conclut qu'avec assez de recul. Il faut au moins
+// STAGNATION_MIN_SEANCES séances notées sur au moins STAGNATION_MIN_SEMAINES
+// semaines ; le meilleur résultat de la seconde moitié ne dépasse pas celui
+// de la première. (3 séances, c'était trop peu pour mesurer un progrès.)
+export const STAGNATION_MIN_SEANCES = 6;
+export const STAGNATION_MIN_SEMAINES = 4;
+export function stagne(perfs: PerfCoach[], maintenant: Date): boolean {
+  const unite = perfs[0]?.unite ?? null;
+  const serie = perfs.filter((p) => (p.unite ?? null) === unite && typeof p.valeur === 'number');
+  if (serie.length < STAGNATION_MIN_SEANCES) return false;
+  const plusAncienne = serie[serie.length - 1].cree_le;
+  if (jours(plusAncienne, new Date(serie[0].cree_le)) < STAGNATION_MIN_SEMAINES * 7) return false;
+  if (jours(serie[0].cree_le, maintenant) > 14) return false; // exercice plus pratiqué : rien à dire
+  const moitie = Math.floor(serie.length / 2);
+  const recentes = serie.slice(0, moitie).map((p) => p.valeur as number);
+  const anciennes = serie.slice(moitie).map((p) => p.valeur as number);
+  return Math.max(...recentes) <= Math.max(...anciennes);
+}
+
 function valeurs(perfs: PerfCoach[]): number[] {
   const unite = perfs[0]?.unite ?? null;
   return perfs.filter((p) => (p.unite ?? null) === unite && typeof p.valeur === 'number').map((p) => p.valeur as number);
@@ -71,9 +90,8 @@ export function motsDuCoach(d: DonneesCoach): MotCoach[] {
     }
   }
   for (const ex of d.perfsParExercice) {
-    const v = valeurs(ex.perfs);
-    if (v.length >= 3 && v[0] <= v[1] && v[1] <= v[2]) {
-      mots.push({ id: `stagne-${ex.nom}`, poids: 50, texte: `« ${ex.nom} » n'avance plus depuis 3 séances. Regarde les outils proposés sous l'exercice : ils sont faits pour débloquer ce passage.` });
+    if (stagne(ex.perfs, d.maintenant)) {
+      mots.push({ id: `stagne-${ex.nom}`, poids: 50, texte: `« ${ex.nom} » n'avance plus depuis plusieurs semaines. Regarde les outils proposés sous l'exercice : ils sont faits pour débloquer ce passage.` });
       break;
     }
   }

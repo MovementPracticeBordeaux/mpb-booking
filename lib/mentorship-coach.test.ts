@@ -22,8 +22,15 @@ describe('motsDuCoach', () => {
   it('repère un record et une stagnation', () => {
     const record = motsDuCoach({ ...base, perfsParExercice: [{ nom: 'Dips', perfs: [p('27', 10), p('24', 8), p('20', 7)] }] });
     expect(record[0].id).toBe('record-Dips');
-    const stagne = motsDuCoach({ ...base, perfsParExercice: [{ nom: 'Dips', perfs: [p('27', 8), p('24', 8), p('20', 9)] }] });
-    expect(stagne[0].id).toBe('stagne-Dips');
+    // 3 séances : trop peu pour parler de stagnation.
+    expect(motsDuCoach({ ...base, perfsParExercice: [{ nom: 'Dips', perfs: [p('27', 8), p('24', 8), p('20', 9)] }] })).toEqual([]);
+    // 6 séances sur plus de 4 semaines, sans progrès : stagnation.
+    const q = (date: string, valeur: number) => ({ cree_le: `${date}T10:00:00Z`, valeur, series: 3, unite: 'reps' });
+    const longue = [q('2026-11-27', 8), q('2026-11-20', 9), q('2026-11-13', 8), q('2026-11-06', 9), q('2026-10-30', 8), q('2026-10-23', 7)];
+    expect(motsDuCoach({ ...base, perfsParExercice: [{ nom: 'Dips', perfs: longue }] })[0].id).toBe('stagne-Dips');
+    // Même durée, mais un progrès récent : pas de stagnation.
+    const progres = [q('2026-11-27', 10), ...longue.slice(1)];
+    expect(motsDuCoach({ ...base, perfsParExercice: [{ nom: 'Dips', perfs: progres }] }).map((m) => m.id)).not.toContain('stagne-Dips');
   });
 });
 
