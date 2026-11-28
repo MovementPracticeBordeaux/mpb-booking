@@ -30,6 +30,7 @@ import SuiviPerf, { usePerfs } from './SuiviPerf';
 import SeanceDuJour, { useDureeSeance, type ElementSeance, type InfosCycle } from './SeanceDuJour';
 import { BoutonCoeur, useCoeurs } from './Coeurs';
 import GuideMentorat, { CLE_GUIDE_VU } from './GuideMentorat';
+import { ongletsVisibles, aDecouvrirPlusLoin, DEVOILEMENT, type Avancement } from '@/lib/mentorship-devoilement';
 import BilanEntreeForm from './BilanEntreeForm';
 import { motsDuCoach, brancheDelaissee, MOTS_DU_COACH_VALIDES, type DonneesCoach } from '@/lib/mentorship-coach';
 import { profilSolide, type BilanEntree, type Qualite } from '@/lib/mentorship-bilan-entree';
@@ -528,14 +529,23 @@ function BandeauXP({ xpTotal, niveau, actif, serie, onOuvrir }: { xpTotal: numbe
 // Un onglet « à signaler » clignote doucement avec une pastille (ex. Théorie
 // tant que le QCM du niveau en cours n'est pas réussi). Pas d'animation pour
 // qui a demandé à réduire les animations dans son système.
-function MenuOnglets({ actif, onChange, aSignaler }: { actif: Onglet; onChange: (o: Onglet) => void; aSignaler?: Onglet | null }) {
+// Dévoilement progressif : l'élève ne voit que les onglets débloqués (avec
+// « Nouveau » tant qu'il ne les a pas ouverts) ; l'admin voit tout, les
+// onglets encore masqués pour l'élève en grisé.
+function MenuOnglets({ actif, onChange, aSignaler, visibles, nouveaux, admin }: {
+  actif: Onglet; onChange: (o: Onglet) => void; aSignaler?: Onglet | null;
+  visibles: Set<Onglet>; nouveaux: Set<Onglet>; admin: boolean;
+}) {
   return (
     <div style={{ display: 'flex', gap: 2, overflowX: 'auto', flex: '1 1 auto', minWidth: 0, alignSelf: 'stretch' }}>
       <style>{`@keyframes mpbSignal { 0%, 100% { color: #ff00aa; text-shadow: 0 0 0 transparent; } 50% { color: #ffffff; text-shadow: 0 0 10px #ff00aa; } }
         .mpb-signal { animation: mpbSignal 1.6s ease-in-out infinite; }
         @media (prefers-reduced-motion: reduce) { .mpb-signal { animation: none; color: #ff00aa !important; } }`}</style>
-      {ONGLETS.map((o) => {
+      {ONGLETS.filter((o) => admin || visibles.has(o.id)).map((o) => {
         const est = o.id === actif;
+        const masque = !visibles.has(o.id);
+        const nouveau = !masque && nouveaux.has(o.id) && !est;
+        const quand = DEVOILEMENT.find((d) => d.onglet === o.id)?.quand;
         const signale = o.id === aSignaler && !est;
         const c = est || signale ? '#ff00aa' : COULEURS.texteFaible;
         return (
@@ -544,8 +554,9 @@ function MenuOnglets({ actif, onChange, aSignaler }: { actif: Onglet; onChange: 
             onClick={() => onChange(o.id)}
             className={signale ? 'mpb-signal' : undefined}
             aria-label={signale ? `${o.label} : QCM à faire` : undefined}
+            title={masque ? `Masqué pour l'élève, apparaît ${quand}` : undefined}
             style={{
-              position: 'relative',
+              position: 'relative', opacity: masque ? 0.4 : 1,
               display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer',
               padding: '10px 10px', fontSize: 13, fontFamily: POLICE_DISPLAY, letterSpacing: 0.3, color: c,
               borderBottom: `2px solid ${est ? '#ff00aa' : 'transparent'}`, whiteSpace: 'nowrap',
@@ -553,6 +564,7 @@ function MenuOnglets({ actif, onChange, aSignaler }: { actif: Onglet; onChange: 
           >
             <svg width="16" height="16" viewBox="0 0 24 24">{o.icone(c)}</svg>
             {o.label}
+            {nouveau && <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 0.5, padding: '1px 6px', borderRadius: 999, background: '#029FD6', color: 'white', fontFamily: 'inherit' }}>NOUVEAU</span>}
             {signale && <span aria-hidden style={{ position: 'absolute', top: 6, right: 2, width: 8, height: 8, borderRadius: 999, background: '#ff00aa', boxShadow: '0 0 8px #ff00aa' }} />}
           </button>
         );
@@ -876,6 +888,47 @@ export default function ArbreCompetences({
     return ORDRE_DOMAINES.map((d) => branches.find((b) => b.domaine === d && b.niveau === palier)).filter((b): b is NoeudMentorshipPublic => !!b);
   }
   const qcmsEnAttente = noeudsEtapeEnCours().filter(qcmAFaire);
+
+  // --- Dévoilement progressif (onglets et cartes secondaires).
+  const avancement: Avancement = (() => {
+    const jours = new Set<string>();
+    for (const perfs of perfsParModule.values()) for (const pf of perfs) jours.add(new Date(pf.cree_le).toDateString());
+    return {
+      qcmReussi: [...progression.values()].some((l) => !!l?.quiz_reussi),
+      joursDePratique: jours.size,
+      niveauxValides: [...tronc, ...branches].filter((n) => idsAcquis.has(n.id)).length,
+    };
+  })();
+  const ongletsDevoiles = ongletsVisibles(avancement) as Set<Onglet>;
+  const plusLoinDevoile = aDecouvrirPlusLoin(avancement);
+  // Onglets déjà ouverts par l'élève (sur cet appareil) : les autres onglets
+  // débloqués portent « Nouveau ». À la toute première visite, rien n'est
+  // « nouveau » : on enregistre ce qui est déjà visible.
+  const [ongletsVus, setOngletsVus] = useState<Set<string> | null>(null);
+  useEffect(() => {
+    try {
+      const brut = localStorage.getItem('mentorat-onglets-vus');
+      if (brut) setOngletsVus(new Set(JSON.parse(brut) as string[]));
+      else {
+        const init = [...ongletsDevoiles];
+        localStorage.setItem('mentorat-onglets-vus', JSON.stringify(init));
+        setOngletsVus(new Set(init));
+      }
+    } catch { setOngletsVus(new Set(ongletsDevoiles)); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  function marquerVu(o: Onglet) {
+    setOngletsVus((v) => {
+      const n = new Set(v ?? []); n.add(o);
+      try { localStorage.setItem('mentorat-onglets-vus', JSON.stringify([...n])); } catch { /* stockage indisponible */ }
+      return n;
+    });
+  }
+  const ongletsNouveaux = new Set<Onglet>(ongletsVus ? [...ongletsDevoiles].filter((o) => !ongletsVus.has(o) && o !== 'progression') : []);
+  useEffect(() => {
+    if (!estAdmin && !ongletsDevoiles.has(onglet)) setOnglet('arbre');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onglet, estAdmin, ongletsDevoiles.size]);
 
   // --- Le mot du coach : données de l'élève -> quelques phrases d'orientation.
   const libelleNoeud = (n: NoeudMentorshipPublic) => `${n.domaine === 'tronc' ? 'Armure Organique' : DOMAINE_LABELS[n.domaine as Domaine]} niveau ${n.niveau}`;
@@ -1263,7 +1316,10 @@ export default function ArbreCompetences({
           </div>
         )}
 
-        <p style={{ fontSize: 11, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, margin: '8px 0 0' }}>Pour aller plus loin · facultatif</p>
+        {(plusLoinDevoile || estAdmin) && (<>
+        <p style={{ fontSize: 11, color: COULEURS.texteFaible, textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, margin: '8px 0 0' }}>
+          Pour aller plus loin · facultatif{!plusLoinDevoile && <span style={{ color: '#FFC24B', textTransform: 'none', letterSpacing: 0, fontWeight: 400 }}> — aperçu admin : l'élève le verra après son premier niveau validé</span>}
+        </p>
         {/* Cartes secondaires : côte à côte dès que la largeur le permet */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: 12, alignItems: 'start' }}>
         {/* Idée clé du jour */}
@@ -1313,6 +1369,7 @@ export default function ArbreCompetences({
           </div>
         )}
         </div>
+        </>)}
       </div>
       )
     );
@@ -1433,7 +1490,7 @@ export default function ArbreCompetences({
 
       {/* Onglets et badge XP sur la même ligne ; le badge ouvre la vue Progression (plus d'onglet dédié). */}
       <div style={{ display: 'flex', flexWrap: 'wrap-reverse', alignItems: 'center', columnGap: 12, rowGap: 6, marginBottom: 24, borderBottom: `1px solid ${COULEURS.bordure}` }}>
-        <div data-guide="onglets" style={{ display: 'flex', flex: '1 1 auto', minWidth: 0 }}><MenuOnglets actif={onglet} onChange={setOnglet} aSignaler={qcmsEnAttente.length > 0 ? 'theorie' : null} /></div>
+        <div data-guide="onglets" style={{ display: 'flex', flex: '1 1 auto', minWidth: 0 }}><MenuOnglets actif={onglet} onChange={(o) => { marquerVu(o); setOnglet(o); }} aSignaler={qcmsEnAttente.length > 0 ? 'theorie' : null} visibles={ongletsDevoiles} nouveaux={ongletsNouveaux} admin={!!estAdmin} /></div>
         <div data-guide="xp" style={{ marginLeft: 'auto', display: 'flex' }}><BandeauXP xpTotal={xpTotal} niveau={niveau} serie={serie} actif={onglet === 'progression'} onOuvrir={() => { setVueBranche(null); setOnglet('progression'); }} /></div>
       </div>
       <GuideMentorat ouvert={guideOuvert} onFermer={() => setGuideOuvert(false)} branchesOuvertes={troncComplet}

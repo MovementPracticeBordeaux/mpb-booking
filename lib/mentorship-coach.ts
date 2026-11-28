@@ -91,7 +91,7 @@ export function motsDuCoach(d: DonneesCoach): MotCoach[] {
   }
   for (const ex of d.perfsParExercice) {
     if (stagne(ex.perfs, d.maintenant)) {
-      mots.push({ id: `stagne-${ex.nom}`, poids: 50, texte: `« ${ex.nom} » n'avance plus depuis plusieurs semaines. Regarde les outils proposés sous l'exercice : ils sont faits pour débloquer ce passage.` });
+      mots.push({ id: `stagne-${ex.nom}`, poids: 50, texte: `Sur « ${ex.nom} », tu es sur un plateau depuis quelques semaines : ça arrive à tout le monde, c'est une étape normale de la progression. Les outils proposés sous l'exercice peuvent t'aider à passer ce cap.` });
       break;
     }
   }

@@ -46,7 +46,7 @@ function etapes(branchesOuvertes: boolean): Etape[] {
     {
       cible: 'onglets',
       titre: 'Les onglets, en haut',
-      texte: "Tableau de bord : ta séance du jour et ton arbre, l'écran où tu es. Théorie : les textes et les QCM de tes niveaux. Séances : comment se construit un bon entraînement. Journal : ton carnet de notes. Outils : rechercher un exercice, des minuteurs. Validation : les vidéos que tu as envoyées et les réponses de Sylvain.",
+      texte: "Pour ne pas tout découvrir d'un coup, les onglets apparaissent au fil de ta progression, avec la mention « Nouveau ». Au départ : Tableau de bord (ta séance du jour et ton arbre, l'écran où tu es) et Théorie (les textes et les QCM de tes niveaux). Viendront ensuite : Validation (tes vidéos et les réponses de Sylvain), Journal (ton carnet de notes), Séances (comment se construit un entraînement) et Outils (rechercher un exercice, des minuteurs).",
     },
     {
       cible: 'xp',
